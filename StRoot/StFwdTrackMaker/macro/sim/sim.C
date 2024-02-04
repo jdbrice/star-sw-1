@@ -118,9 +118,9 @@ void sim( int n = 5, // nEvents to run
         fwdTrack->SetGenerateHistograms( true );
         fwdTrack->SetDebug();
 
-        StFwdFitQAMaker *fwdFitQA = new StFwdFitQAMaker();
-        fwdFitQA->SetDebug();
-        chain->AddAfter("fwdTrack", fwdFitQA);
+        //StFwdFitQAMaker *fwdFitQA = new StFwdFitQAMaker();
+        //fwdFitQA->SetDebug();
+        //chain->AddAfter("fwdTrack", fwdFitQA);
 
         cout << "fwd tracker setup" << endl;
 

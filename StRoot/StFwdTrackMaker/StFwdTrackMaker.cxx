@@ -735,7 +735,7 @@ void StFwdTrackMaker::loadFttHitsFromGEANT( FwdDataSource::McTrackMap_t &mcTrack
         // Add hit pointer to the track
         if (mcTrackMap[track_id]){
             mcTrackMap[track_id]->addHit(hit);
-            mTreeData.mcNumFtt[track_id-1] ++;
+            if (mGenTree) { mTreeData.mcNumFtt[track_id-1] ++; }
         } else {
             LOG_ERROR << "Cannot find MC track for GEANT hit (FTT), track_id = " << track_id << endm;
         }
@@ -959,7 +959,6 @@ int StFwdTrackMaker::loadFstHitsFromGEANT( FwdDataSource::McTrackMap_t &mcTrackM
 
     int nfsi = g2t_fsi_hits->GetNRows();
     
-
     // reuse this to store cov mat
     TMatrixDSym hitCov3(3);
     
@@ -1011,13 +1010,14 @@ int StFwdTrackMaker::loadFstHitsFromGEANT( FwdDataSource::McTrackMap_t &mcTrackM
         FwdHit *hit = new FwdHit(count++, x, y, z, d, track_id, hitCov3, mcTrackMap[track_id]);
         mFstHits.push_back( TVector3( x, y, z )  );
 
-        mTreeData.fstX.push_back( x );
-        mTreeData.fstY.push_back( y );
-        mTreeData.fstZ.push_back( z );
-        mTreeData.fstTrackId.push_back( track_id );
+	if (mGenTree && (unsigned)mTreeData.fstN < MAX_TREE_ELEMENTS) {
+        	mTreeData.fstX.push_back( x );
+        	mTreeData.fstY.push_back( y );
+        	mTreeData.fstZ.push_back( z );
+        	mTreeData.fstTrackId.push_back( track_id );
 
-        mTreeData.fstN++;
-        count++;
+        	mTreeData.fstN++;
+	}
 
         // Add the hit to the hit map
         hitMap[hit->getSector()].push_back(hit);
@@ -1025,8 +1025,11 @@ int StFwdTrackMaker::loadFstHitsFromGEANT( FwdDataSource::McTrackMap_t &mcTrackM
         // Add hit pointer to the track
         if (mcTrackMap[track_id]){
             mcTrackMap[track_id]->addFstHit(hit);
-            mTreeData.mcNumFst[track_id-1] ++;
-            LOG_DEBUG << TString::Format("Adding FST Hit to McTrack, mcPt=%f", mTreeData.mcPt[track_id-1] ) << endm;
+
+	    if (mGenTree){
+            	mTreeData.mcNumFst[track_id-1] ++;
+            	LOG_DEBUG << TString::Format("Adding FST Hit to McTrack, mcPt=%f", mTreeData.mcPt[track_id-1] ) << endm;
+	    }
 
         } else {
             LOG_ERROR << "Cannot find MC track for GEANT hit (FTT), track_id = " << track_id << endm;
