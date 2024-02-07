@@ -1208,9 +1208,9 @@ class ForwardTrackMaker {
                     LOG_DEBUG << "Track Refit with FTT points converged" << endm;
                     t.addFTT( hits_to_add, mTrackFitter->getTrack() );
                     LOG_DEBUG << "Track Refit with " << t.track->getNumPoints() << " points" << endm;
-                    mHist["FitStatus"]->Fill("GoodReFit", 1);
+                    if ( mGenHistograms ){ mHist["FitStatus"]->Fill("GoodReFit", 1); }
                 } else {
-                    mHist["FitStatus"]->Fill("BadReFit", 1);
+                    if ( mGenHistograms ){ mHist["FitStatus"]->Fill("BadReFit", 1); }
                     LOG_DEBUG << "Track Refit with FTT points FAILED" << endm;
                 }
             }
@@ -1285,9 +1285,9 @@ class ForwardTrackMaker {
                     LOG_DEBUG << "Track Refit with FTT points converged" << endm;
                     gtr.addFTT( fttHitsForThisTrack, mTrackFitter->getTrack() );
                     LOG_DEBUG << "Track Refit with " << gtr.track->getNumPoints() << " points" << endm;
-                    mHist["FitStatus"]->Fill("GoodReFit", 1);
+                    if ( mGenHistograms ){ mHist["FitStatus"]->Fill("GoodReFit", 1); }
                 } else {
-                    mHist["FitStatus"]->Fill("BadReFit", 1);
+                    if ( mGenHistograms ){ mHist["FitStatus"]->Fill("BadReFit", 1); }
                     LOG_DEBUG << "Track Refit with FTT points FAILED" << endm;
                 }
             } // we have at least one Fst hit to refit with
