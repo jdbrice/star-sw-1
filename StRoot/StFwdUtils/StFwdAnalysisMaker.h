@@ -5,6 +5,8 @@
 
 #include "StChain/StMaker.h"
 
+class St_g2t_track;
+class St_g2t_vertex;
 
 class StFwdAnalysisMaker : public StMaker
 {
@@ -18,6 +20,7 @@ class StFwdAnalysisMaker : public StMaker
     void Clear(const Option_t *opts = "");
     void ProcessFwdTracks();
     void ProcessFwdMuTracks();
+    void ProcessG2TTracks();
 
     // StEvent analyzed by default
     // call this to analyze the MuDst instead
@@ -25,6 +28,8 @@ class StFwdAnalysisMaker : public StMaker
 
   protected:
 
+    St_g2t_track* trackTable = nullptr;
+    St_g2t_vertex* vertextTable = nullptr;
     /**
      * @brief Map of <name (TString), histogram>
      * 

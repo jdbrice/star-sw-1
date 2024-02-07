@@ -54,11 +54,16 @@
 #include "StarClassLibrary/StPhysicalHelix.hh"
 #include "StarClassLibrary/SystemOfUnits.h"
 
-
 #include "TROOT.h"
 #include "TLorentzVector.h"
 #include "StEvent/StFwdTrack.h"
 #include "StFcsDbMaker/StFcsDb.h"
+
+//G2T Record
+#include "tables/St_g2t_fts_hit_Table.h"
+#include "tables/St_g2t_track_Table.h"
+#include "tables/St_g2t_vertex_Table.h"
+#include "tables/St_g2t_event_Table.h"
 
 //________________________________________________________________________
 StFwdAnalysisMaker::StFwdAnalysisMaker() : StMaker("fwdAna"){};
@@ -97,9 +102,19 @@ int StFwdAnalysisMaker::Init() {
     addHist( new TH1F("fwdMultEcalClusters", ";N_{Clu}^{ECAL}; counts", 100, 0, 100) );
     addHist( new TH1F("fwdMultHcalClusters", ";N_{Clu}^{HCAL}; counts", 100, 0, 100) );
     addHist( new TH1F("eta", ";#eta; counts", 100, 0, 5) );
+    addHist( new TH1F("etaMC", "MC #eta ;#eta; counts", 100, 0, 5) );
     addHist( new TH1F("phi", ";#phi; counts", 100, -3.1415926, 3.1415926) );
-    addHist( new TH1F("pt", "; pT; counts", 500, 0, 10) );
-    addHist( new TH1F("charge", "; charge; counts", 4, -2, 2) );
+    addHist( new TH1F("phiMC", "MC #phi;#phi; counts", 100, -3.1415926, 3.1415926) );
+    addHist( new TH1F("px", "; px; counts", 500, -10, 10) );
+    addHist( new TH1F("pxMC", "MC px; px; counts", 500, -10, 10) );
+    addHist( new TH1F("py", "; py; counts", 500, -10, 10) );
+    addHist( new TH1F("pyMC", "MC py; py; counts", 500, -10, 10) );
+    addHist( new TH1F("pz", "; pz; counts", 1000, -100, 100) );
+    addHist( new TH1F("pzMC", "MC pz; pz; counts", 1000, -100, 100) );
+    addHist( new TH1F("pt", "; pT; counts", 500, -1, 20) );
+    addHist( new TH1F("ptMC", "MC pT; pT; counts", 500, -1, 20) );
+    addHist( new TH1F("charge", "; charge; counts", 6, -3, 3) );
+    addHist( new TH1F("chargeMC", "MC Charge; charge; counts", 6, -3, 3) );
     addHist( new TH1F("ecalMatchPerTrack", ";N_{match} / track; counts", 5, 0, 5) );
     addHist( new TH1F("hcalMatchPerTrack", ";N_{match} / track; counts", 5, 0, 5) );
     addHist( new TH1F("matchedEcalEnergy", ";Energy; counts", 100, 0, 15) );
@@ -146,9 +161,23 @@ int StFwdAnalysisMaker::Make() {
         }
     }
     long long itStart = FwdTrackerUtils::nowNanoSecond();
-    if (!mAnalyzeMuDst)
+    if (!mAnalyzeMuDst){
         ProcessFwdTracks();
-    else 
+
+        
+        trackTable = static_cast<St_g2t_track*>(GetDataSet("g2t_track")); //G2T Track Table
+        vertextTable = static_cast<St_g2t_vertex*>(GetDataSet("g2t_vertex")); //G2T Vertex Table
+        if(trackTable){
+            LOG_DEBUG << "Available g2t_track on Record" << endm;
+            if(vertextTable){
+                LOG_DEBUG << "Available g2t_vertex on Record" << endm;
+                LOG_DEBUG << "Proceeding to reconstruct G2T Record" << endm;
+                
+                ProcessG2TTracks();
+            }
+        }
+    }
+    else
         ProcessFwdMuTracks();
     LOG_DEBUG << "Processing Fwd Tracks took: " << (FwdTrackerUtils::nowNanoSecond() - itStart) * 1e6 << " ms" << endm;
     return kStOK;
@@ -225,8 +254,10 @@ void StFwdAnalysisMaker::ProcessFwdTracks(  ){
 
         getHist("eta")->Fill( fwdTrack->momentum().pseudoRapidity() );
         getHist("phi")->Fill( fwdTrack->momentum().phi() );
+        getHist("px")->Fill( fwdTrack->momentum().x() );
+        getHist("py")->Fill( fwdTrack->momentum().y() );
+        getHist("pz")->Fill( fwdTrack->momentum().z() );
         getHist("pt")->Fill( fwdTrack->momentum().perp() );
-
         getHist("charge")->Fill( fwdTrack->charge() );
     
         // ecal proj
@@ -387,6 +418,10 @@ void StFwdAnalysisMaker::ProcessFwdMuTracks(  ){
 
         getHist("eta")->Fill( muFwdTrack->momentum().Eta() );
         getHist("phi")->Fill( muFwdTrack->momentum().Phi() );
+        getHist("px")->Fill( muFwdTrack->momentum().x() );
+        getHist("py")->Fill( muFwdTrack->momentum().y() );
+        getHist("pz")->Fill( muFwdTrack->momentum().z() );
+        getHist("pt")->Fill( muFwdTrack->momentum().Pt() );
 
         if (muFwdTrack->mFSTPoints.size() > 0){
             fwdMultFST ++;
@@ -459,4 +494,65 @@ void StFwdAnalysisMaker::ProcessFwdMuTracks(  ){
     getHist("fwdMultFST")->Fill( fwdMultFST );
     getHist("fwdMultHcalMatch")->Fill( fwdMultHcalMatch );
     getHist("fwdMultEcalMatch")->Fill( fwdMultEcalMatch );
+}
+
+
+void StFwdAnalysisMaker::ProcessG2TTracks(){
+    
+    g2t_track_st* g2ttrk=0;
+    g2t_vertex_st* mg2tVrtx=0;
+    
+    int nMCTrk = trackTable->GetNRows();
+    int nMCVrtx = vertextTable->GetNRows();
+    
+    if((nMCTrk>0)&&(nMCVrtx>0)){
+        g2ttrk = trackTable->GetTable();
+        mg2tVrtx = vertextTable->GetTable();
+
+        if(!g2ttrk){
+          LOG_INFO << "g2t_track GetTable failed" << endm;
+        }
+        if(!mg2tVrtx){
+            LOG_INFO << "g2t_vertex GetTable failed" << endm;
+        }
+    }
+    
+    int nIncMCTrks = 0;
+    
+    for(int k=0;k<nMCTrk;k++){
+        
+        if(g2ttrk[k].next_parent_p == 0){//Check For Incident Particle Only
+            
+            int g2t_vertexID =  g2ttrk[k].start_vertex_p - 1;//Vrtx table starts at 0
+            float g2t_trk_px =  g2ttrk[k].p[0];
+            float g2t_trk_py =  g2ttrk[k].p[1];
+            float g2t_trk_pz =  g2ttrk[k].p[2];
+            float g2t_trk_pt =  g2ttrk[k].pt;  // -inf for secondary tracks on record
+            int   g2t_trk_ge_id = g2ttrk[k].ge_pid;
+            float g2t_trk_charge = g2ttrk[k].charge;
+            
+            float g2t_trk_vertex_x = mg2tVrtx[g2t_vertexID].ge_x[0];
+            float g2t_trk_vertex_y = mg2tVrtx[g2t_vertexID].ge_x[1];
+            float g2t_trk_vertex_z = mg2tVrtx[g2t_vertexID].ge_x[2];
+            
+            float g2t_trk_phi = atan2(g2t_trk_py, g2t_trk_px);
+            float g2t_trk_eta = g2ttrk[k].eta;
+            
+            // ~FCS Acceptance
+            if((g2t_trk_eta < 2) || (g2t_trk_eta > 4.5)) continue;
+            
+            float g2t_trk_p = sqrt(pow(g2t_trk_px,2)+pow(g2t_trk_py,2)+pow(g2t_trk_pz,2));
+            float g2t_trk_pt_reco = g2t_trk_p / TMath::CosH(g2t_trk_eta);
+            
+            getHist("etaMC")->Fill(g2t_trk_eta);
+            getHist("phiMC")->Fill(g2t_trk_phi);
+            getHist("pxMC")->Fill(g2t_trk_px);
+            getHist("pyMC")->Fill(g2t_trk_py);
+            getHist("pzMC")->Fill(g2t_trk_pz);
+            getHist("ptMC")->Fill(g2t_trk_pt_reco);
+            getHist("chargeMC")->Fill( g2t_trk_charge );
+
+        }
+    }//End of MC Track Loops
+    
 }
