@@ -870,12 +870,10 @@ class TrackFitter {
         }
 
         // create the track representations
-        auto trackRepPos = new genfit::RKTrackRep(mPdgMuon);
-        auto trackRepNeg = new genfit::RKTrackRep(mPdgAntiMuon);
+        auto trackRepNeg = new genfit::RKTrackRep(mPdgMuon);
         
         // Create the track
-        mFitTrack = new genfit::Track(trackRepPos, seedPos, seedMom);
-        mFitTrack->addTrackRep(trackRepNeg);
+        mFitTrack = new genfit::Track(trackRepNeg, seedPos, seedMom);
 
         // TODO: TVector3 can fault on Eta() if Pt=0... Find a better fallback in this case for the seed 
         if ( fabs(seedMom.Z() / seedMom.Y()) > 1e10 ){
@@ -947,8 +945,7 @@ class TrackFitter {
 		 ******************************************************************************************************************/
         try {
             // do the fit
-            mFitter->processTrackWithRep(&fitTrack, trackRepPos);
-            mFitter->processTrackWithRep(&fitTrack, trackRepNeg);
+            mFitter->processTrack(&fitTrack);
 
         } catch (genfit::Exception &e) {
             if (mGenHistograms) mHist["FitStatus"]->Fill("Exception", 1);
@@ -960,9 +957,6 @@ class TrackFitter {
 		 * Now check the fit
 		 ******************************************************************************************************************/
         try {
-            //check
-            fitTrack.checkConsistency();
-
             // find track rep with smallest chi2
             fitTrack.determineCardinalRep();
             auto cardinalRep = fitTrack.getCardinalRep();
@@ -979,9 +973,7 @@ class TrackFitter {
                 this->mHist["FitStatus"]->Fill("GoodCardinal", 1);
             }
 
-            if (fitTrack.getFitStatus(trackRepPos)->isFitConverged() == false &&
-                fitTrack.getFitStatus(trackRepNeg)->isFitConverged() == false) {
-            
+            if (fitTrack.getFitStatus(trackRepNeg)->isFitConverged() == false) {
                 LOG_WARN << "FWD Track GenFit Failed" << endm;
 
                 p.SetXYZ(0, 0, 0);
@@ -1026,8 +1018,6 @@ class TrackFitter {
     int getCharge() {
         return (int)mQ;
     }
-
-    
 
     // Store the planes for FTT and FST
     vector<genfit::SharedPlanePtr> mFTTPlanes;

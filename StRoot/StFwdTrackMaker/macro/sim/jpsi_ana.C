@@ -137,6 +137,12 @@ void jpsi_ana( int n = 5, // nEvents to run
         fwdJPsi->SetDebug();
         chain->AddAfter("FcsTrkMatch", fwdJPsi);
 
+	gSystem->Load("StFcsDiLeptonMaker");
+        StFcsDiLeptonMaker *dilep = new StFcsDiLeptonMaker;
+	//TString dilepfile(outfile); dilepfile.ReplaceAll(".root",".dilep.root");                                                                  
+        dilep->setFileName("dilep.root");//dilepfile.Data());                                                                                       
+        //chain->AddAfter("FcsTrkMatch", dilep);            
+
         // Produce MuDst output
         chain->AddAfter( "FcsTrkMatch", muDstMaker );
     } else {

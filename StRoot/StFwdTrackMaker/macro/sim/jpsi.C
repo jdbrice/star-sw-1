@@ -125,7 +125,7 @@ void Kinematics()
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
-void jpsi( Int_t nevents=100, Int_t rngSeed=12352342, bool decayToElectrons = false )
+void jpsi( Int_t nevents=100, Int_t rngSeed=12352342, bool decayToElectrons = true )
 { 
 
   hMll = new TH1F("hMll",";Mll;counts [10MeV]", 200, 2.0, 4.0 );
