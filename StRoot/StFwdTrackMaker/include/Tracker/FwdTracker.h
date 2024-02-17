@@ -77,6 +77,14 @@ public:
                         genfit::Track *track ) {
         set( fttSeed, fstSeed, track );
     }
+    ~GenfitTrackResult(){
+        // Clear();
+    }
+    void Clear() {
+        if ( track ){
+            track->Clear();
+        }
+    }
 void set(   Seed_t &fttSeed, 
                 Seed_t &fstSeed, 
                 genfit::Track *track ){
@@ -84,7 +92,8 @@ void set(   Seed_t &fttSeed,
         this->fstSeed = fstSeed;
 
         try {
-            this->track = new genfit::Track(*track);
+            // this->track = new genfit::Track(*track);
+            this->track = track;
             this->status = *(this->track->getFitStatus());
             this->trackRep = this->track->getCardinalRep();
 
@@ -124,8 +133,6 @@ void set(   Seed_t &fttSeed,
     size_t numFTT() const { return fttSeed.size();}
     size_t numFST() const { return fstSeed.size();}
 
-    ~GenfitTrackResult() {}
-
 
     Seed_t fttSeed;
     Seed_t fstSeed;
@@ -156,6 +163,13 @@ class ForwardTrackMaker {
     
     const std::vector<GenfitTrackResult> &getTrackResults() const { return mTrackResults; }
     const std::vector<Seed_t> &getTrackSeeds() const { return mRecoTracks; }
+
+    void Clear(){
+        for ( auto gtr : mTrackResults ){
+            gtr.Clear();
+        }
+        mTrackResults.clear();
+    }
 
     /**
      * @brief Set the Config File object
@@ -191,7 +205,7 @@ class ForwardTrackMaker {
         if (mGenHistograms) setupHistograms();
 
         mGeoCache = geoCache;
-        mDoTrackFitting = !(mConfig.get<bool>("TrackFitter:off", false));
+        mDoTrackFitting = mConfig.get<bool>("TrackFitter:active", true);
 
         if (!mConfig.exists("TrackFitter"))
             mDoTrackFitting = false;
@@ -260,6 +274,16 @@ class ForwardTrackMaker {
 
         return crits;
     } // loadCriteria
+
+    void clearCriteria( std::vector<KiTrack::ICriterion *> &crits ){
+        for ( size_t i = 0; i < crits.size(); i++ ){
+            if ( crits[i] ){
+                delete crits[i];
+                crits[i] = nullptr;
+            }
+        }
+        crits.clear();
+    }
 
     /**
      * @brief Get the Criteria Values object
@@ -658,21 +682,29 @@ class ForwardTrackMaker {
                 }
             }
 
-            genTrack = new genfit::Track(*mTrackFitter->getTrack());
-            genTrack->setMcTrackId(idt);
-            Seed_t nonSeeds; // none
-            GenfitTrackResult gtr;
-            if ( useFttAsSource )
-                gtr.set( seed, nonSeeds, genTrack );
-            else 
-                gtr.set( nonSeeds, seed, genTrack );
+            // for ( int i = 0; i < 10000; i ++ )
+            {
+                genTrack = new genfit::Track(*mTrackFitter->getTrack());
+                genTrack->setMcTrackId(idt);
+                Seed_t nonSeeds; // none
+                GenfitTrackResult gtr;
+                if ( useFttAsSource )
+                    gtr.set( seed, nonSeeds, genTrack );
+                else 
+                    gtr.set( nonSeeds, seed, genTrack );
 
-            if ( mGenHistograms && genTrack->getFitStatus(genTrack->getCardinalRep())->isFitConverged()) {
-                mHist["FitStatus"]->Fill("GoodCardinal", 1);
+                if ( mGenHistograms && genTrack->getFitStatus(genTrack->getCardinalRep())->isFitConverged()) {
+                    mHist["FitStatus"]->Fill("GoodCardinal", 1);
+                }
+                mTrackResults.push_back( gtr );
             }
-            mTrackResults.push_back( gtr );
+            // genTrack->Clear();
             
+            // genTrack->Clear();
+            // delete genTrack;
+            // genTrack = nullptr;
             LOG_DEBUG << "FwdTracker::fitTrack complete" << endm;
+            
         } // if (mDoTrackFitting)
     } // fitTrack
 
@@ -810,7 +842,7 @@ class ForwardTrackMaker {
             criteriaPath = "TrackFinder.SegmentBuilder";
         }
 
-        mTwoHitCrit.clear();
+        clearCriteria( mTwoHitCrit );
         mTwoHitCrit = loadCriteria(criteriaPath);
         builder.addCriteria(mTwoHitCrit);
 
@@ -856,7 +888,7 @@ class ForwardTrackMaker {
         if (false == mConfig.exists(criteriaPath))
             criteriaPath = "TrackFinder.ThreeHitSegments";
 
-        mThreeHitCrit.clear();
+        clearCriteria( mThreeHitCrit );
         mThreeHitCrit = loadCriteria(criteriaPath);
         automaton.addCriteria(mThreeHitCrit);
         automaton.lengthenSegments();
@@ -1208,9 +1240,9 @@ class ForwardTrackMaker {
                     LOG_DEBUG << "Track Refit with FTT points converged" << endm;
                     t.addFTT( hits_to_add, mTrackFitter->getTrack() );
                     LOG_DEBUG << "Track Refit with " << t.track->getNumPoints() << " points" << endm;
-                    if ( mGenHistograms ){ mHist["FitStatus"]->Fill("GoodReFit", 1); }
+                    if ( mGenHistograms ) mHist["FitStatus"]->Fill("GoodReFit", 1);
                 } else {
-                    if ( mGenHistograms ){ mHist["FitStatus"]->Fill("BadReFit", 1); }
+                    if ( mGenHistograms ) mHist["FitStatus"]->Fill("BadReFit", 1);
                     LOG_DEBUG << "Track Refit with FTT points FAILED" << endm;
                 }
             }
@@ -1285,9 +1317,9 @@ class ForwardTrackMaker {
                     LOG_DEBUG << "Track Refit with FTT points converged" << endm;
                     gtr.addFTT( fttHitsForThisTrack, mTrackFitter->getTrack() );
                     LOG_DEBUG << "Track Refit with " << gtr.track->getNumPoints() << " points" << endm;
-                    if ( mGenHistograms ){ mHist["FitStatus"]->Fill("GoodReFit", 1); }
+                    if (mGenHistograms) mHist["FitStatus"]->Fill("GoodReFit", 1);
                 } else {
-                    if ( mGenHistograms ){ mHist["FitStatus"]->Fill("BadReFit", 1); }
+                    if (mGenHistograms) mHist["FitStatus"]->Fill("BadReFit", 1);
                     LOG_DEBUG << "Track Refit with FTT points FAILED" << endm;
                 }
             } // we have at least one Fst hit to refit with
@@ -1520,7 +1552,7 @@ class ForwardTrackMaker {
     unsigned long long int nEvents;
 
     bool mDoTrackFitting = true;
-    bool mSaveCriteriaValues = true;
+    bool mSaveCriteriaValues = false;
 
     FwdTrackerConfig mConfig;
     std::string mConfigFile;

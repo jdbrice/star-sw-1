@@ -6,6 +6,18 @@ StFwdTrack::StFwdTrack() {
 
 }
 
+StFwdTrack::~StFwdTrack() { 
+    for (unsigned int i=0; i<mEcalClusters.size(); i++) {
+       delete mEcalClusters[i];
+       mEcalClusters[i] = 0;
+   }
+
+   for (unsigned int i=0; i<mHcalClusters.size(); i++) {
+       delete mHcalClusters[i];
+       mHcalClusters[i] = 0;
+   }
+}
+
 
 /* momentum
  * get the track momentum at the first point (PV if included)

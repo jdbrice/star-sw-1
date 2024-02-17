@@ -865,15 +865,17 @@ class TrackFitter {
             seedPos.SetXYZ(pv[0], pv[1], pv[2]);
         }
 
-        if (mFitTrack){
-            delete mFitTrack;
-        }
-
         // create the track representations
-        auto trackRepNeg = new genfit::RKTrackRep(mPdgMuon);
+        auto theTrackRep = new genfit::RKTrackRep(mPdgMuon);
+
+        if (mFitTrack){
+            mFitTrack->Clear();
+            delete mFitTrack;
+            mFitTrack = nullptr;
+        }
         
-        // Create the track
-        mFitTrack = new genfit::Track(trackRepNeg, seedPos, seedMom);
+        // Create the track    
+        mFitTrack = new genfit::Track(theTrackRep, seedPos, seedMom);
 
         // TODO: TVector3 can fault on Eta() if Pt=0... Find a better fallback in this case for the seed 
         if ( fabs(seedMom.Z() / seedMom.Y()) > 1e10 ){
@@ -923,7 +925,8 @@ class TrackFitter {
             genfit::SharedPlanePtr plane;
             if (isFTT && mFTTPlanes.size() <= planeId) {
                 LOG_ERROR << "invalid VolumId -> out of bounds DetPlane, vid = " << planeId << endm;
-                return TVector3(0, 0, 0);
+                delete measurement;
+                continue;
             }
 
             if (isFTT)
@@ -963,17 +966,13 @@ class TrackFitter {
             auto cardinalStatus = fitTrack.getFitStatus(cardinalRep);
             mFitStatus = *cardinalStatus; // save the status of last fit
 
-            // Delete any previous track rep
-            if (mTrackRep)
-                delete mTrackRep;
-
             // Clone the cardinal rep for persistency
             mTrackRep = cardinalRep->clone(); // save the result of the fit
             if (fitTrack.getFitStatus(cardinalRep)->isFitConverged() && mGenHistograms ) {
                 this->mHist["FitStatus"]->Fill("GoodCardinal", 1);
             }
 
-            if (fitTrack.getFitStatus(trackRepNeg)->isFitConverged() == false) {
+            if (fitTrack.getFitStatus(cardinalRep)->isFitConverged() == false) {
                 LOG_WARN << "FWD Track GenFit Failed" << endm;
 
                 p.SetXYZ(0, 0, 0);

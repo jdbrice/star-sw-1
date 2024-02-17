@@ -98,6 +98,8 @@ class StFwdTrack : public StObject {
 
 public:
     StFwdTrack(  );
+    // dtor needed for releasing associations
+    ~StFwdTrack(  );
 
     vector<StFwdTrackProjection> mProjections;
     vector<StFwdTrackSeedPoint> mFTTPoints;
