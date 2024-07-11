@@ -210,7 +210,7 @@ void genDst(unsigned int First,
   loadLibs();
 
   StChain fullChain("genDst");
-  fullChain.SetDebug(1);
+  fullChain.SetDebug(100);
 
   StMuDstMaker muDstMaker(0, 0, "", infile, "st:MuDst.root", 1e9); // set up maker in read mode
   //                      0, 0                        this means read mode
@@ -225,7 +225,7 @@ void genDst(unsigned int First,
   unsigned int LastToRead = Last > 0 ? min(Last, nEntries) : nEntries;
   gMessMgr->Info() << nEntries << " events in chain, " << LastToRead-First+1 << " will be read." << endm;
 
-  // St_db_Maker* db = new St_db_Maker("db", "StarDb", "MySQL:StarDb", "$STAR/StarDb");
+  St_db_Maker* db = new St_db_Maker("db", "StarDb", "MySQL:StarDb", "$STAR/StarDb");
 
   // Initialize some values and pointers
   StMaker* processMaker = 0;
@@ -239,6 +239,8 @@ void genDst(unsigned int First,
   TString optDelim = " ,";
   TObjArray* optionTokens = Options.Tokenize(optDelim);
   optionTokens->SetOwner(kTRUE);
+  
+  optionTokens->Print();
 
   // Determine database flavors
   TString flavors = "ofl"; // default flavor for offline
@@ -258,8 +260,10 @@ void genDst(unsigned int First,
     }
   }
  
-  // gMessMgr->Info() << "Using DB flavors: " << flavors << endm;
-  // db->SetFlavor(flavors.Data());
+  
+
+  gMessMgr->Info() << "Using DB flavors: " << flavors << endm;
+  db->SetFlavor(flavors.Data());
 
   if (findAndRemoveOption("picodst",optionTokens)) {
     // _________________________________________________________________
@@ -333,19 +337,19 @@ void genDst(unsigned int First,
     fwdTrack->setSeedFindingWithFst();
     fwdTrack->SetGenerateTree( false );
     fwdTrack->SetGenerateHistograms( false );
-    fwdTrack->SetDebug();
+    fwdTrack->SetDebug(100);
 
     StFcsTrackMatchMaker *match = new StFcsTrackMatchMaker();
     match->setMaxDistance(6,10);
     match->setFileName("fcstrk.root");
-    match->SetDebug();
+    match->SetDebug(100);
 
     StFwdAnalysisMaker *fwdAna = new StFwdAnalysisMaker();
-    fwdAna->SetDebug();
+    fwdAna->SetDebug(100);
     fwdAna->setLocalOutputFile( "StFwdAnalysisMaker.root");
 
     StFwdFitQAMaker *fwdFitQA = new StFwdFitQAMaker();
-    fwdFitQA->SetDebug();
+    fwdFitQA->SetDebug(100);
 
     if (findAndRemoveOption("btofmatch",optionTokens)) {
 
@@ -445,9 +449,9 @@ void genDst(unsigned int First,
         if (Tag.Length() == 11)  (void) sscanf(Tag.Data(),"dbv%8d",&FDate);
         if (Tag.Length() == 18)  (void) sscanf(Tag.Data(),"dbv%8d.%6d",&FDate,&FTime);
         if (FDate) {
-          // db->SetMaxEntryTime(FDate,FTime);
-          // gMessMgr->Info() << "\tSet DataBase max entry time " << FDate << "/" << FTime
-          //                  << " for St_db_Maker(\"" << db->GetName() <<"\")" << endm;
+           db->SetMaxEntryTime(FDate,FTime);
+           gMessMgr->Info() << "\tSet DataBase max entry time " << FDate << "/" << FTime
+                            << " for St_db_Maker(\"" << db->GetName() <<"\")" << endm;
         }
         continue;
       }
@@ -461,6 +465,7 @@ void genDst(unsigned int First,
         // GetMaker...() functions are case sensitive, so find original case
         Ssiz_t casedMakerNameIdx = CasedOptions.Index(altMakerName,0,TString::ECaseCompare::kIgnoreCase);
         if (casedMakerNameIdx >= 0) altMakerName = CasedOptions(casedMakerNameIdx,delim);
+        //cout << altMakerName.Data() << endl;
         StMaker* altMaker = fullChain.GetMaker(altMakerName.Data());
         if (!altMaker) altMaker = fullChain.GetMakerInheritsFrom(altMakerName.Data());
         if (!altMaker) {
@@ -493,8 +498,12 @@ void genDst(unsigned int First,
 
   gMessMgr->Info() << "Chain setup Complete" << endm;
 
+  fullChain.PrintInfo();
+  fullChain.ls();
   // Main loop over events
+  cout << "Before fullChain.Init()" << endl;
   int iInit = fullChain.Init();
+  cout << "After fullChain.Init()" << endl;
   if (iInit >= kStEOF) {fullChain.FatalErr(iInit,"on init"); return;}
   if (Last == 0) return;
   int eventCount = 0;
@@ -532,7 +541,7 @@ void genDst(unsigned int First,
     delete outFile;
   }
 
-  // delete db;
+  delete db;
   delete processMaker;
   delete optionTokens;
 }

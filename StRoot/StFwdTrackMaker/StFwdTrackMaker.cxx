@@ -942,6 +942,7 @@ int StFwdTrackMaker::Init() {
     
 
     LOG_DEBUG << "StFwdTrackMaker::Init" << endm;
+    cout << "StFwdTrackMaker::Init" << endl;
     return kStOK;
 };
 
@@ -1003,7 +1004,7 @@ TMatrixDSym makeSiCovMat(TVector3 hit, FwdTrackerConfig &xfg) {
 }
 
 void StFwdTrackMaker::loadFttHits( FwdDataSource::McTrackMap_t &mcTrackMap, FwdDataSource::HitMap_t &hitMap, int count ){
-    LOG_DEBUG << "Loading FTT Hits" << endm;
+    LOG_INFO << "Loading FTT Hits" << endm;
     // Get the StEvent handle to see if the rndCollection is available
     StEvent *event = (StEvent *)GetDataSet("StEvent");
     string fttFromSource = mFwdConfig.get<string>( "Source:ftt", "" );
@@ -1015,13 +1016,13 @@ void StFwdTrackMaker::loadFttHits( FwdDataSource::McTrackMap_t &mcTrackMap, FwdD
 
     // Load GEANT hits directly if requested
     if ( "GEANT" == fttFromSource  ) {
-        LOG_DEBUG << "Loading sTGC hits directly from GEANT hits" << endm;
+        LOG_INFO << "Loading sTGC hits directly from GEANT hits" << endm;
         loadFttHitsFromGEANT( mcTrackMap, hitMap, count );
         return;
     }
     
     if ( "FASTSIM" == fttFromSource ) {
-        LOG_DEBUG << "Loading sTGC hits from StFttFastSim hits" << endm;
+        LOG_INFO << "Loading sTGC hits from StFttFastSim hits" << endm;
         loadFttHitsFromFastSim( mcTrackMap, hitMap, count );
         return;
     }
@@ -1029,20 +1030,21 @@ void StFwdTrackMaker::loadFttHits( FwdDataSource::McTrackMap_t &mcTrackMap, FwdD
     StFttCollection *col = event->fttCollection();
     // From Data
     if ( col || "DATA" == fttFromSource ) {
+        LOG_INFO << "Loading sTGC hits from StEvent hits" << endm;
         loadFttHitsFromStEvent( mcTrackMap, hitMap, count );
         return;
     }
 } // loadFttHits
 
 void StFwdTrackMaker::loadFttHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTrackMap, FwdDataSource::HitMap_t &hitMap, int count ){
-    LOG_DEBUG << "Loading FTT Hits from Data" << endm;
+    LOG_INFO << "Loading FTT Hits from Data" << endm;
     StEvent *event = (StEvent *)GetDataSet("StEvent");
     StFttCollection *col = event->fttCollection();
     
     mTreeData.fttN = 0;
 
     if ( col && col->numberOfPoints() > 0 ){
-        LOG_DEBUG << "The Ftt Collection has " << col->numberOfPoints() << " points" << endm;
+        LOG_INFO << "The Ftt Collection has " << col->numberOfPoints() << " points" << endm;
         TMatrixDSym hitCov3(3);
         const double sigXY = 0.2; // 
         hitCov3(0, 0) = sigXY * sigXY;
@@ -1053,6 +1055,7 @@ void StFwdTrackMaker::loadFttHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTra
             
             mFwdHits.push_back(FwdHit(count++, point->xyz().x()*mm_to_cm, point->xyz().y()*mm_to_cm, point->xyz().z(), -point->plane(), 0, hitCov3, nullptr));
             auto hit = &(mFwdHits.back());
+            cout << "Ftt hit->getLayer() = " << hit->getLayer() << endl;
             hit->setSensor(point->quadrant());
             mFttHits.push_back( TVector3( hit->getX(), hit->getY(), point->xyz().z() )  );
             if ( mGenHistograms ) {
@@ -1076,9 +1079,9 @@ void StFwdTrackMaker::loadFttHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTra
 
         return;
     } else {
-        LOG_DEBUG << "The Ftt Collection is EMPTY points" << endm;
+        LOG_INFO << "The Ftt Collection is EMPTY points" << endm;
     }
-    LOG_DEBUG << "Number of FTT in TTree: " << mTreeData.fttN << endm;
+    LOG_INFO << "Number of FTT in TTree: " << mTreeData.fttN << endm;
 }
 
 void StFwdTrackMaker::loadFttHitsFromFastSim( FwdDataSource::McTrackMap_t &mcTrackMap, FwdDataSource::HitMap_t &hitMap, int count ){
@@ -1329,8 +1332,10 @@ void StFwdTrackMaker::loadFttHitsFromGEANT( FwdDataSource::McTrackMap_t &mcTrack
 int StFwdTrackMaker::loadFstHits( FwdDataSource::McTrackMap_t &mcTrackMap, FwdDataSource::HitMap_t &hitMap ){
     
     int count = loadFstHitsFromMuDst(mcTrackMap, hitMap); 
+    cout << "We have " << count << " Fst Hits From MuDst " << endl;
     if ( count > 0 ) return count; // only load from one source at a time
-    
+    cout << "Are we doing anything else? " << endl;    
+
     count += loadFstHitsFromStEvent(mcTrackMap, hitMap); 
     if ( count > 0 ) return count; // only load from one source at a time
     
@@ -1383,24 +1388,31 @@ int StFwdTrackMaker::loadFstHitsFromMuDst( FwdDataSource::McTrackMap_t &mcTrackM
         float x0 = vR * cos( vPhi );
         float y0 = vR * sin( vPhi );
 
+        cout << "vR = " << vR << endl;
+        cout << "vPhi = " << vPhi << endl;
+
         //const float dz0 = fabs( vZ - 151.75 );
         //const float dz1 = fabs( vZ - 165.248 );
         //const float dz2 = fabs( vZ - 178.781 );
 
         //int d = 0 * ( dz0 < 1.0 ) + 1 * ( dz1 < 1.0 ) + 2 * ( dz2 < 1.0 );
 
-        int iw = muFstHit->getWedge();
+        int iw = muFstHit->getWedge()-1;
         int is = muFstHit->getSensor();
 
-        //LOG_INFO << "iw = " << iw << ", is = " << is << endm;
+        LOG_INFO << "iw = " << iw << ", is = " << is << endm;
 
         int d = iw/12;
         int ds = (is == 0)? 0 : 1; // +0 for inner, +1 for outer
         int defaultZidx = d * 4 + 2 * (iw % 2) + ds;
         vZ = fstDefaultZ[defaultZidx];
+      
+        cout << "defaultZidx = " << defaultZidx << endl;
+        cout << "vZ = " << vZ << endl;
 
         int sensorIdx = iw*3 + is; 
-
+        cout << "sensorIdx = " << sensorIdx << endl;
+        
         //double phiAxisShift = 0.0;
         //if((d) == 0 || (d) == 2)
         //{
@@ -1434,12 +1446,14 @@ int StFwdTrackMaker::loadFstHitsFromMuDst( FwdDataSource::McTrackMap_t &mcTrackM
 
         hitCov3 = makeSiCovMat( TVector3( x0, x0, vZ ), mFwdConfig );
 
-        LOG_DEBUG << "FST HIT: d = " << d << ", x=" << x0 << ", y=" << y0 << ", z=" << vZ << endm;                
+        LOG_INFO << "FST HIT: d = " << d << ", x=" << x0 << ", y=" << y0 << ", z=" << vZ << endm;                
         mFstHits.push_back( TVector3( x0, y0, vZ)  );
 
         // we use d+4 so that both FTT and FST start at 4
         mFwdHits.push_back(FwdHit(count++, x0, y0, vZ, d+4, 0, hitCov3, nullptr));
+        cout << "d+4 for setting layer = " << d+4 << endl;
         auto hit = &(mFwdHits.back());
+        cout << "hit->getLayer() = " << hit->getLayer() << endl;
         hit->setSensor(sensorIdx);
         // Add the hit to the hit map
         hitMap[d+4].push_back(hit);
@@ -1449,7 +1463,7 @@ int StFwdTrackMaker::loadFstHitsFromMuDst( FwdDataSource::McTrackMap_t &mcTrackM
         mTreeData.fstZ.push_back( vZ );
 
         mTreeData.fstN++;
-        count++;
+        //count++;
     } // index
     return count;
 } // loadFstHitsFromMuDst
@@ -1510,6 +1524,7 @@ int StFwdTrackMaker::loadFstHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTrac
                     hit->setSensor(sensorIdx);
                     // Add the hit to the hit map
                     hitMap[d+4].push_back(hit);
+                    cout << "Layer = " << hit->getLayer() << endl;
 
                     if ( mGenTree ){
                         mTreeData.fstX.push_back( x0 );

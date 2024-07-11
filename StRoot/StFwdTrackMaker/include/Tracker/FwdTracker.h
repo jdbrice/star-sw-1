@@ -547,11 +547,15 @@ class ForwardTrackMaker {
 
         if ( useFttAsSource == false ){
             for (auto hp : fstHitmap){
-                LOG_DEBUG << "HITMAP [" << hp.first << ", { ";
+                cout << "HITMAP [" << hp.first << ", { ";
                 for ( auto h: hp.second ){
-                    LOG_DEBUG << "z=" << h->getZ() << " ";
+                    cout << "x=" << h->getX() << " " << endl;
+                    cout << "y=" << h->getY() << " " << endl;
+                    cout << "z=" << h->getZ() << " " << endl;
+                    //cout << "sensor = " << h->getSensor() << " " << endl;
+                    //cout << "layer = " << h->getLayer() << " " << endl;
                 }
-                LOG_DEBUG << " }" << endm;
+                cout << " }" << endl;
             }
         }
         FwdDataSource::McTrackMap_t &mcTrackMap = mDataSource->getMcTracks();
@@ -604,8 +608,10 @@ class ForwardTrackMaker {
         size_t nIterations = mConfig.get<size_t>("TrackFinder:nIterations", 0);
         for (size_t iIteration = 0; iIteration < nIterations; iIteration++) {
             if (useFttAsSource){
+                LOG_INFO << "Using FTT as source" << endm;
                 doTrackIteration(iIteration, fttHitmap);
             } else {
+                LOG_INFO << "Using FST as source" << endm;
                 doTrackIteration(iIteration, fstHitmap);
             }
         } // iIteration
@@ -852,6 +858,7 @@ class ForwardTrackMaker {
         // Initialize the segment builder with sorted hits
         KiTrack::SegmentBuilder builder(hitmap);
 
+
         // Load the criteria used for 2-hit segments
         // This loads from XML config if available
         std::string criteriaPath = "TrackFinder.Iteration[" + std::to_string(iIteration) + "].SegmentBuilder";
@@ -868,17 +875,20 @@ class ForwardTrackMaker {
 
         // Setup the connector (this tells it how to connect hits together into segments)
         std::string connPath = "TrackFinder.Iteration[" + std::to_string(iIteration) + "].Connector";
+        cout << "connPath = " << connPath << endl;
 
         if (false == mConfig.exists(connPath))
             connPath = "TrackFinder.Connector";
 
         unsigned int distance = mConfig.get<unsigned int>(connPath + ":distance", 1);
         
+        cout << "distance = " << distance << endl;
+
         FwdConnector connector(distance);
         builder.addSectorConnector(&connector);
 
         // Get the segments and return an automaton object for further work
-        
+         
         KiTrack::Automaton automaton = builder.get1SegAutomaton();
         LOG_DEBUG << TString::Format( "nSegments=%lu", automaton.getSegments().size() ).Data() << endm;
         LOG_DEBUG << TString::Format( "nConnections=%u", automaton.getNumberOfConnections() ).Data() << endm;
