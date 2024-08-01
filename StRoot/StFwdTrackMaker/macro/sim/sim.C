@@ -3,7 +3,7 @@
 
 
 // Run very fast fwd tracking
-// generate some input data using genfzd 
+// generate some input data using genfzd
 
 TFile *output = 0;
 
@@ -24,7 +24,7 @@ void reportMem(){
     LOG_INFO << "MEM USED % = " << ( (double)virtualMemUsed / (double)totalVirtualMem ) << endm;
 }
 
-void sim( int n = 5, // nEvents to run
+void sim( int n = 100, // nEvents to run
                 string outputName = "stFwdTrackMaker_ideal_sim.root",
                 bool useFstForSeedFinding = false, // use FTT (default) or FST for track finding
                 bool enableTrackRefit = true, // Enable track refit (default off)
@@ -35,7 +35,7 @@ void sim( int n = 5, // nEvents to run
     const char *geom = "y2023 agml usexgeom";
     TString _geom = geom;
 
-    // Switches for common options 
+    // Switches for common options
     bool SiIneff = false;
     bool useConstBz = false;
     bool useFCS = true;
@@ -43,12 +43,12 @@ void sim( int n = 5, // nEvents to run
     // to use the geom cache (skip agml build which is faster)
     // set the _geom string to "" and make sure the cache file ("fGeom.root") is present
     // _geom = "";
-    
+
     // Setup the chain for reading an FZD
     TString _chain;
     if ( useFCS )
-        _chain = Form("fzin %s sdt20211016 fstFastSim fcsSim fcsWFF fcsCluster fwdTrack MakeEvent StEvent ReverseField bigbig  evout cmudst tree", _geom.Data() );
-    else 
+        _chain = Form("fzin %s sdt20211016 fstFastSim fcsSim fcsWFF fcsCluster fwdTrack MakeEvent StEvent ReverseField bigbig evout cmudst tree", _geom.Data() );
+    else
         _chain = Form("fzin %s sdt20211016 MakeEvent StEvent ReverseField bigbig fstFastSim fcsSim fwdTrack evout cmudst tree", _geom.Data());
 
     gSystem->Load( "libStarRoot.so" );
@@ -64,15 +64,17 @@ void sim( int n = 5, // nEvents to run
 
     gSystem->Load( "libMathMore.so" );
     gSystem->Load( "libStarGeneratorUtil" );
-    
+
 
     // FCS setup, if included
     if (useFCS) {
 
-        StFcsDbMaker* fcsdbmkr = (StFcsDbMaker*) chain->GetMaker("fcsDbMkr");  
+        StFcsDbMaker* fcsdbmkr = (StFcsDbMaker*) chain->GetMaker("fcsDbMkr");
         cout << "fcsdbmkr="<<fcsdbmkr<<endl;
-        StFcsDb* fcsdb = (StFcsDb*) chain->GetDataSet("fcsDb");  
-        cout << "fcsdb="<<fcsdb<<endl;    
+        StFcsDb* fcsdb = (StFcsDb*) chain->GetDataSet("fcsDb");
+        fcsdb->forceFixGain();
+        fcsdb->forceFixGainCorrection();
+        cout << "fcsdb="<<fcsdb<<endl;
         //fcsdbmkr->setDbAccess(1);
 
         // Configure FCS simulator
@@ -94,7 +96,7 @@ void sim( int n = 5, // nEvents to run
     //     chain->AddMaker(fwdJPsi);
     //     goto chain_loop;
     // }
-    
+
 
     // Configure FST FastSim
         TString qaoutname(gSystem->BaseName(inFile));
@@ -102,17 +104,17 @@ void sim( int n = 5, // nEvents to run
         StFstFastSimMaker *fstFastSim = (StFstFastSimMaker*) chain->GetMaker( "fstFastSim" );;
 
         if (SiIneff)
-            fstFastSim->SetInEfficiency(0.1); // inefficiency of Si 
+            fstFastSim->SetInEfficiency(0.1); // inefficiency of Si
 
         fstFastSim->SetQAFileName(qaoutname);
 
         cout << "Adding StFstFastSimMaker to chain" << endl;
         chain->AddMaker(fstFastSim);
 
-    
+
     // Configure the Forward Tracker
         StFwdTrackMaker * fwdTrack = (StFwdTrackMaker*) chain->GetMaker( "fwdTrack" );
-        
+
         if ( fwdTrack ){
             // config file set here for ideal simulation
             if (!realisticSim){
@@ -129,29 +131,33 @@ void sim( int n = 5, // nEvents to run
                 fwdTrack->setGeoCache( "fGeom.root" );
             }
 
-            if (useFstForSeedFinding)
+            // choose 
                 fwdTrack->setSeedFindingWithFst();
-            else
-                fwdTrack->setSeedFindingWithFtt();
+            // other options
+                // fwdTrack->setSeedFindingWithFtt();
+                // fwdTrack->setSeedFindingWithFstFttSequential();
+                // fwdTrack->setSeedFindingWithFstFttSimultaneous();
 
-            fwdTrack->setTrackRefit( enableTrackRefit );
+            fwdTrack->setTrackRefit( false );
             fwdTrack->setOutputFilename( outputName );
-            fwdTrack->SetGenerateTree( false );
+            // fwdTrack->SetGenerateTree( false );
             fwdTrack->SetGenerateHistograms( false );
             fwdTrack->SetVisualize( false );
             fwdTrack->SetDebug();
-
+            // fwdTrack->setTrackFittingOff();
+            fwdTrack->setIncludePrimaryVertexInFit( false );
+            fwdTrack->setUseMcSeedForFit(true);
+            // fwdTrack->setConfigKeyValue("")
             // fwdTrack->setZeroB( true );
-        
             bool doFitQA = true;
-            if ( doFitQA ){    
+            if ( doFitQA ){
                 StFwdFitQAMaker *fwdFitQA = new StFwdFitQAMaker();
                 fwdFitQA->SetDebug();
                 chain->AddAfter("fwdTrack", fwdFitQA);
             }
             cout << "fwd tracker setup" << endl;
         }
-        
+
         bool doFwdAna = true;
         if (!useFCS && doFwdAna ){
             StFwdAnalysisMaker *fwdAna = new StFwdAnalysisMaker();
@@ -184,7 +190,19 @@ void sim( int n = 5, // nEvents to run
             chain->AddAfter( "fwdAna", muDstMaker );
     }
 
-    
+    if (muDstMaker){
+        StFwdQAMaker *fwdQA = new StFwdQAMaker();
+        fwdQA->SetDebug(2);
+        chain->AddAfter("MuDst", fwdQA);
+    }
+
+    // The PicoDst
+    gSystem->Load("libStPicoEvent");
+    gSystem->Load("libStPicoDstMaker");
+    StPicoDstMaker *picoMk = new StPicoDstMaker(StPicoDstMaker::IoWrite);
+    cout << "picoMk = " << picoMk << endl;
+    picoMk->setVtxMode(StPicoDstMaker::Default);
+
 
 chain_loop:
 	chain->Init();

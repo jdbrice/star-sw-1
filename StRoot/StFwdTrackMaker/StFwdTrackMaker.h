@@ -40,74 +40,9 @@ class McTrack;
 // STL includes
 #include <vector>
 #include <memory>
-
-
-// 877-369-6347
 class StFwdTrack;
 class GenfitTrackResult;
 
-
-
-const size_t MAX_TREE_ELEMENTS = 4000;
-struct FwdTreeData {
-  
-    /** @brief Ftt hit related info*/
-    int fttN;
-    vector<float> fttX, fttY, fttZ;
-    vector<int> fttVolumeId;
-    // Note: Below are only avalaible for hits if MC
-    vector<float> fttPt;
-    vector<int> fttTrackId, fttVertexId;
-
-    /** @brief Fst hit related info*/
-    int fstN;
-    vector<float> fstX, fstY, fstZ;
-    vector<int> fstTrackId;
-
-    /** @brief Fcs hit related info*/
-    int fcsN;
-    vector<float> fcsX, fcsY, fcsZ, fcsE;
-    vector<int> fcsDet;
-
-    /** @brief EPD hit related info */
-    vector<float> epdX, epdY, epdZ, epdE;
-
-    /** @brief RC track related info*/
-    int rcN;
-    vector<float> rcPt, rcEta, rcPhi, rcQuality, rcEpdX, rcEpdY;
-    vector<int> rcTrackId, rcNumFST, rcCharge, rcNumFTT, rcNumPV;
-
-    /** @brief MC Track related info*/
-    int mcN;
-    vector<float> mcPt, mcEta, mcPhi;
-    vector<int> mcVertexId, mcCharge;
-    vector<int> mcNumFtt, mcNumFst;
-
-    /** @brief MC Vertex related info*/
-    int vmcN;
-    vector<float> vmcX, vmcY, vmcZ;
-
-    /** @brief Track Projection related info*/
-    int tprojN;
-    vector<float> tprojX, tprojY, tprojZ;
-    vector<float> tprojPx, tprojPy, tprojPz;
-    vector<int> tprojIdD, tprojIdT;
-
-    /** @brief RAVE RC Vertex related info*/
-    int vrcN;
-    vector<float> vrcX, vrcY, vrcZ;
-
-    /** @brief Track-to-hit delta related info*/
-    int thdN;
-    vector<float> thdX, thdY, thdP, thdR, thaX, thaY, thaZ;
-
-    /** @brief Seed finding Criteria related info*/
-    bool saveCrit = false;
-    std::map<string, std::vector<float>> Crits;
-    std::map<string, std::vector<int>> CritTrackIds;
-
-    void clear();
-};
 
 class StFwdTrackMaker : public StMaker {
 
@@ -131,35 +66,44 @@ class StFwdTrackMaker : public StMaker {
     }
     void LoadConfiguration();
     void SetGenerateHistograms( bool _genHisto ){ mGenHistograms = _genHisto; }
-    void SetGenerateTree(bool _genTree) { mGenTree = _genTree; }
     void SetVisualize( bool _viz ) { mVisualize = _viz; }
 
     vector<StFwdTrack*> mFwdTracks;
+
+    vector<FwdHit> &GetFttHits() { return mFwdHitsFtt; }
+    vector<FwdHit> &GetFstHits() { return mFwdHitsFst; }
+
+  #ifndef __CINT__
+    // Get the FwdTracker object
+    std::shared_ptr<ForwardTracker> GetForwardTracker() { return mForwardTracker; }
+    const std::vector<Seed_t> &getTrackSeeds() const;
+    const std::vector<GenfitTrackResult> &getFitResults() const;
+  #endif
+    TVector3 GetEventPrimaryVertex();
 
   private:
     
   
   protected:
 
-    // Track Seed typdef 
-    typedef std::vector<KiTrack::IHit *> Seed_t;
+    // Event Filters
+    float mEventFilterMinTofMult = 2;
+    bool  mEventFilterRequireEventVertex = false;
+    bool  mEventFilterRequireVpdVertex = true;
+    float mEventFilterMinVpdZ = -99;
+    float mEventFilterMaxVpdZ = 99;
 
-    
     // for Wavefront OBJ export
     size_t eventIndex = 0; // counts up for processed events
     size_t mEventNum = 0; // global event num (index)
+    TVector3 mEventVertex; // primary vertex used in fwd tracking this event
 
     bool mGenHistograms = false;
-    bool mGenTree = false;
     std::string mConfigFile;
 
-
     std::map<std::string, TH1 *> mHistograms;
-    TFile *mTreeFile = nullptr;
-    TTree *mTree     = nullptr;
-    FwdTreeData mTreeData;
 
-    bool mVisualize = false;
+    bool mVisualize = false; // if true,write out a Wavefront OBJ to visualize the event in 3D
     vector<TVector3> mFttHits;
     vector<TVector3> mFstHits;
     vector<TVector3> mFcsClusters;
@@ -168,10 +112,11 @@ class StFwdTrackMaker : public StMaker {
 
     std::vector< genfit::GFRaveVertex * > mRaveVertices;
     vector<float> mFttZFromGeom, mFstZFromGeom;
-    TVector3 GetEventPrimaryVertex();
+
     void ProcessFwdTracks();
     void FillEvent();
     void FillTrackDeltas();
+    bool SkipEvent();
 
     StFwdTrack * makeStFwdTrack( GenfitTrackResult &gtr, size_t indexTrack );
 
@@ -179,12 +124,14 @@ class StFwdTrackMaker : public StMaker {
     // I could not get the library generation to succeed with these.
     // so I have removed them
     #ifndef __CINT__
-        vector<FwdHit> mFwdHits;
+        enum FwdVertexSource { kFwdVertexSourceUnknown, kFwdVertexSourceNone, kFwdVertexSourceTpc, kFwdVertexSourceMc, kFwdVertexSourceVpd }; // unknown means we havent looked yet
+        FwdVertexSource mFwdVertexSource = StFwdTrackMaker::kFwdVertexSourceUnknown;
+        vector<FwdHit> mFwdHitsFtt;
+        vector<FwdHit> mFwdHitsFst;
         std::shared_ptr<SiRasterizer> mSiRasterizer;
         FwdTrackerConfig mFwdConfig;
         std::shared_ptr<ForwardTracker> mForwardTracker;
         std::shared_ptr<FwdDataSource> mForwardData;
-        
         size_t loadMcTracks( std::map<int, std::shared_ptr<McTrack>> &mcTrackMap );
         void loadFcs();
         void loadFttHits( std::map<int, std::shared_ptr<McTrack>> &mcTrackMap, std::map<int, std::vector<KiTrack::IHit *>> &hitMap, int count = 0 );
@@ -199,7 +146,8 @@ class StFwdTrackMaker : public StMaker {
         int loadFstHitsFromStEventFastSim( std::map<int, std::shared_ptr<McTrack>> &mcTrackMap, std::map<int, std::vector<KiTrack::IHit *>> &hitMap );
     #endif
 
-    void FillTTree(); // if debugging ttree is turned on (mGenTree)
+
+    /** @brief Fit the primary vertex using FWD tracks */
     void FitVertex();
 
     static std::string defaultConfigIdealSim;
@@ -213,14 +161,14 @@ class StFwdTrackMaker : public StMaker {
     // NOTE: to override configuration, call individual functions after setConfigForXXX
     public:
     /** @brief Setup the StFwdTrackMaker for running on Data
-     * Load the default configuration for Data. 
+     * Load the default configuration for Data.
      * Note: Apply any overrides after calling this
     */
     void setConfigForData() { defaultConfig = defaultConfigData; LoadConfiguration(); }
     /** @brief Setup the StFwdTrackMaker for running on Data
      * Load the default configuration for IDEAL simulation.
      * This runs with MC track finding and MC-seeded track fitting.
-     * - MC track finding uses the MCTrackId to collect stgc/fst hits into track seeds 
+     * - MC track finding uses the MCTrackId to collect stgc/fst hits into track seeds
      * - MC-seeded track fitting uses the MC particle momentum to seed the track fit
      * - Also uses the simulated MC primary vertex with smearing according to the simgaXY,Z
      * Note: Apply any overrides after calling this
@@ -232,9 +180,9 @@ class StFwdTrackMaker : public StMaker {
      * This runs tracking on simulation using the same parameters / approach as on data.
      * Note: Apply any overrides after calling this
     */
-    void setConfigForRealisticSim()  { 
-      defaultConfig = defaultConfigData; 
-      LoadConfiguration();  
+    void setConfigForRealisticSim()  {
+      defaultConfig = defaultConfigData;
+      LoadConfiguration();
       // Note: Once the slow sims work this override will not be needed
       // because the slow sims will put hits into StEvent just like (data) reco chain
       setFttHitSource( "GEANT" );
@@ -246,11 +194,11 @@ class StFwdTrackMaker : public StMaker {
     */
     void setOutputFilename( std::string fn ) { mFwdConfig.set( "Output:url", fn ); }
     /** @brief Set the data source for FTT hits
-     * 
+     *
      * @param source : {DATA, GEANT}, DATA means read from StEvent, GEANT means read directly from the GEANT hits
     */
     void setFttHitSource( std::string source ) { mFwdConfig.set( "Source:ftt", source ); }
-    
+
     /** @brief Enable or disable the Fst Rasterizer
      * @param use : if true, load FST hits from GEANT and raster them according to r, phi resolutions.
     */
@@ -267,12 +215,20 @@ class StFwdTrackMaker : public StMaker {
     void setFstRasterPhi( double phi = 0.00409 /*2*pi/(12*128)*/ ){ mFwdConfig.set<double>( "SiRasterizer:phi", phi ); }
 
     //Track Finding
+    /** @brief Use FST and Ftt hits (sequentially) in the Seed Finding - then merge tracks
+     *
+    */
+    void setSeedFindingWithFstFttSequential() { mFwdConfig.set( "TrackFinder:source", "seq" ); }
+    /** @brief Use FST and Ftt hits (simultaneously) in the Seed Finding
+     *
+    */
+    void setSeedFindingWithFstFttSimultaneous() { mFwdConfig.set( "TrackFinder:source", "sim" ); }
     /** @brief Use Ftt hits in the Seed Finding
-     * 
+     *
     */
     void setSeedFindingWithFtt() { mFwdConfig.set( "TrackFinder:source", "ftt" ); }
     /** @brief Use Fst hits in the Seed Finding
-     * 
+     *
     */
     void setSeedFindingWithFst() { mFwdConfig.set( "TrackFinder:source", "fst" ); }
     /** @brief Set the number of track finding iterations
@@ -308,7 +264,7 @@ class StFwdTrackMaker : public StMaker {
     void setUseTruthSeedFinding( bool use = true ) { mFwdConfig.set<bool>( "TrackFinder:active", !use ); }
 
     // Track Fitting
-    /** @brief Turn off track fitting 
+    /** @brief Turn off track fitting
      * Useful if you want to speed up the run but dont need fitting (testing seed finding)
     */
     void setTrackFittingOff() { mFwdConfig.set( "TrackFitter:active", "false" ); }
@@ -343,7 +299,7 @@ class StFwdTrackMaker : public StMaker {
     */
     void setUseMcSeedForFit( bool mcSeed = true ) { mFwdConfig.set<bool>( "TrackFitter:mcSeed", mcSeed ); }
 
-    /** @brief Sets the tracking to refit 
+    /** @brief Sets the tracking to refit
      * This adds compatible hits from whichever detector was NOT used in seed finding
      * if FTT seeding -> project to and add FST hits
      * if FST seeding -> project to and add FTT hits
@@ -369,19 +325,19 @@ class StFwdTrackMaker : public StMaker {
     void setFitMinIterations( int n = 1) {mFwdConfig.set<int>("TrackFitter.KalmanFitterRefTrack:MinIterations", n); }
 
     /** @brief Enables smearing of the MC Primary Vertex according to sigmaXY,Z
-     * @param pvs : if true, smear vertex 
+     * @param pvs : if true, smear vertex
     */
     void setSmearMcPrimaryVertex( bool pvs = true ) { mFwdConfig.set<bool>( "TrackFitter.Vertex:smearMcVertex", pvs ); }
-  
+
     /**
      * @brief Sets geometry cache filename
-     * 
+     *
      */
     void setGeoCache( TString gc ) { mGeoCache = gc; }
 
     /**
      * @brief Set a generic Key Value in the Config object
-     * 
+     *
      * @param k key: any string representing absolute path e.g. `the.path.to.node:attribute`
      * @param v value: value encoded as a string
      */
@@ -397,7 +353,6 @@ class StFwdTrackMaker : public StMaker {
     void setCrit2( std::string name, double min, double max ){
       for ( auto p : mFwdConfig.childrenOf( "TrackFinder.Iteration.SegmentBuilder" ) ){
         auto nName = mFwdConfig.get<std::string>( p + ":name", "DNE" );
-        
         if (nName == name) {
           LOG_DEBUG << "Setting Crit2=" << nName << " (min=" << min << ", max=" << max << ")" << endm;
           mFwdConfig.set<double>(p + ":min", min );

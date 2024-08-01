@@ -58,14 +58,12 @@ class TrackFitter {
 // Accessors and options
   public:
     std::shared_ptr<genfit::Track> getTrack() { return mFitTrack; }
-    void setGenerateHistograms( bool gen) { mGenHistograms = gen;}
-
 
   public:
-    
+
     /**
      * @brief Construct a new Track Fitter object
-     * 
+     *
      * @param _mConfig : Config object
      * @param geoCache : Geometry cache filename
      */
@@ -113,20 +111,20 @@ class TrackFitter {
 
         // Set Material Stepper debug level
         genfit::MaterialEffects::getInstance()->setDebugLvl( mConfig.get<int>("TrackFitter.MaterialEffects:DebugLvl", 0) );
-        
+
         genfit::MaterialEffects::getInstance()->setEnergyLossBetheBloch( mConfig.get<int>("TrackFitter.MaterialEffects.EnergyLossBetheBloch", true) );
         genfit::MaterialEffects::getInstance()->setNoiseBetheBloch( mConfig.get<int>("TrackFitter.MaterialEffects.NoiseBetheBloch", true) );
         genfit::MaterialEffects::getInstance()->setNoiseCoulomb( mConfig.get<int>("TrackFitter.MaterialEffects.NoiseCoulomb", true) );
         genfit::MaterialEffects::getInstance()->setEnergyLossBrems( mConfig.get<int>("TrackFitter.MaterialEffects.EnergyLossBrems", true) );
         genfit::MaterialEffects::getInstance()->setNoiseBrems( mConfig.get<int>("TrackFitter.MaterialEffects.NoiseBrems", true) );
         genfit::MaterialEffects::getInstance()->ignoreBoundariesBetweenEqualMaterials( mConfig.get<int>("TrackFitter.MaterialEffects.ignoreBoundariesBetweenEqualMaterials", true) );
-        
+
         // do this last to override
         genfit::MaterialEffects::getInstance()->setNoEffects( !mConfig.get<bool>("TrackFitter:MaterialEffects", false)); // negated, true means defaul is all effects on (noEffects off)
         if (!mConfig.get<bool>("TrackFitter:MaterialEffects", false)){
             LOG_INFO << "Turning OFF GenFit Material Effects in stepper" << endm;
         }
-    
+
         // Determine which Magnetic field to use
         // Either constant field or real field from StarFieldAdaptor
         if (mConfig.get<bool>("TrackFitter:constB", false)) {
@@ -141,17 +139,17 @@ class TrackFitter {
         }
         // we must have one of the two available fields at this point
         // note, the pointer is still bound to the lifetime of the TackFitter
-        genfit::FieldManager::getInstance()->init(mBField.get()); 
+        genfit::FieldManager::getInstance()->init(mBField.get());
 
         // initialize the main mFitter using a KalmanFitter with reference tracks
         mFitter = std::unique_ptr<genfit::AbsKalmanFitter>(new genfit::KalmanFitterRefTrack());
 
-        // Here we load several options from the config, 
+        // Here we load several options from the config,
         // to customize the mFitter behavior
         mFitter->setMaxFailedHits(mConfig.get<int>("TrackFitter.KalmanFitterRefTrack:MaxFailedHits", -1)); // default -1, no limit
         mFitter->setDebugLvl(mConfig.get<int>("TrackFitter.KalmanFitterRefTrack:DebugLvl", 0)); // default 0, no output
-        mFitter->setMaxIterations(mConfig.get<int>("TrackFitter.KalmanFitterRefTrack:MaxIterations", 4)); // default 4 iterations
-        mFitter->setMinIterations(mConfig.get<int>("TrackFitter.KalmanFitterRefTrack:MinIterations", 0)); // default 0 iterations
+        mFitter->setMaxIterations(mConfig.get<int>("TrackFitter.KalmanFitterRefTrack:MaxIterations", 40)); // default 4 iterations
+        mFitter->setMinIterations(mConfig.get<int>("TrackFitter.KalmanFitterRefTrack:MinIterations", 3)); // default 0 iterations
 
         if(mConfig.get<bool>("TrackFitter:refitGBL",false)) {
             mRefitGBL = true;
@@ -167,8 +165,8 @@ class TrackFitter {
         // FwdGeomUtils looks into the loaded geometry and gets detector z locations if present
         FwdGeomUtils fwdGeoUtils( gMan );
 
-        // these default values are the default if the detector is 
-        // a) not found in the geometry 
+        // these default values are the default if the detector is
+        // a) not found in the geometry
         // b) not provided in config
 
         // NOTE: these defaults are needed since the geometry file might not include FST (bug being worked on separately)
@@ -719,7 +717,6 @@ class TrackFitter {
         // get default vertex values used in simulation from the config
         mVertexSigmaXY = mConfig.get<double>("TrackFitter.Vertex:sigmaXY", 1.0);
         mVertexSigmaZ = mConfig.get<double>("TrackFitter.Vertex:sigmaZ", 30.0);
-        mVertexPos = mConfig.getVector<double>("TrackFitter.Vertex:pos", {0.0,0.0,0.0});
         mIncludeVertexInFit = mConfig.get<bool>("TrackFitter.Vertex:includeInFit", false);
         mSmearMcVertex = mConfig.get<bool>("TrackFitter.Vertex:smearMcVertex", false);
 
@@ -778,8 +775,7 @@ class TrackFitter {
         cm(0, 1) = r(0, 1);
         cm(1, 0) = r(1, 0);
     
-        TMatrixDSym tamvoc(3);
-        tamvoc( 0, 0 ) = cm(0, 0); tamvoc( 0, 1 ) = cm(0, 1); tamvoc( 0, 2 ) = 0.0;
+        return cm;
     }
    
     /**
@@ -874,7 +870,7 @@ class TrackFitter {
 
     /**
      * @brief Convert the 3x3 covmat to 2x2 by dropping z
-     * 
+     *
      * @param h : hit with cov matrix
      * @return TMatrixDSym : cov matrix 2x2
      */
@@ -883,6 +879,7 @@ class TrackFitter {
         cm(0, 0) = static_cast<FwdHit*>(h)->_covmat(0, 0);
         cm(1, 1) = static_cast<FwdHit*>(h)->_covmat(1, 1);
         cm(0, 1) = static_cast<FwdHit*>(h)->_covmat(0, 1);
+        //cm.Print();
         return cm;
     }
     TMatrixDSym CovMatPlaneFst(TMatrixDSym input){
@@ -896,7 +893,7 @@ class TrackFitter {
 
     /**
      * @brief Fit points to a simple circle
-     * 
+     *
      * @param trackSeed : seed points to fit
      * @param i0 : index of the first hit
      * @param i1 : index of the second hit
@@ -921,15 +918,15 @@ class TrackFitter {
 
         //  make sure the curv is valid
         if (isinf(curv)){
-            curv = 999999.9;
+            curv = 0.0;
         }
 
         return curv;
     } // fitSimpleCircle
-    
+
     /**
      * @brief Determines the seed state to start the fit
-     * 
+     *
      * @param trackSeed : seed points
      * @param seedPos : position seed (return)
      * @param seedMom : momenum seed (return)
@@ -949,7 +946,7 @@ class TrackFitter {
         FwdHit *hit_closest_to_IP = static_cast<FwdHit *>(trackSeed[0]);
 
         // maps from <key=vol_id> to <value=index in trackSeed>
-        std::map<size_t, int> vol_map; 
+        std::map<size_t, int> vol_map;
 
         // init the map
         for (size_t i = 0; i < 13; i++)
@@ -959,11 +956,11 @@ class TrackFitter {
         for (size_t i = 0; i < trackSeed.size(); i++) {
             auto fwdHit = static_cast<FwdHit *>(trackSeed[i]);
             if ( !fwdHit ) continue;
-            cout << "fwdHit->_vid  = " << fwdHit->_vid << endl;
+            //cout << "fwdHit->_vid  = " << fwdHit->_vid << endl;
             if (vol_map[ abs(fwdHit->_vid) ] == -1)
                 idx.push_back(fwdHit->_vid);
             vol_map[abs(fwdHit->_vid)] = (int)i;
-            
+
             // find the hit closest to IP for the initial position seed
             if (hit_closest_to_IP == nullptr || hit_closest_to_IP->getZ() > fwdHit->getZ())
                 hit_closest_to_IP = fwdHit;
@@ -987,7 +984,7 @@ class TrackFitter {
             curvs.push_back(fitSimpleCircle(trackSeed, vol_map[idx[0]], vol_map[idx[1]], vol_map[idx[2]]));
             curvs.push_back(fitSimpleCircle(trackSeed, vol_map[idx[0]], vol_map[idx[1]], vol_map[idx[3]]));
             curvs.push_back(fitSimpleCircle(trackSeed, vol_map[idx[0]], vol_map[idx[2]], vol_map[idx[3]]));
-            curvs.push_back(fitSimpleCircle(trackSeed, vol_map[idx[1]], vol_map[idx[2]], vol_map[idx[3]]));   
+            curvs.push_back(fitSimpleCircle(trackSeed, vol_map[idx[1]], vol_map[idx[2]], vol_map[idx[3]]));
         }
 
         // average them and exclude failed fits
@@ -995,8 +992,6 @@ class TrackFitter {
         float nmeas = 0;
 
         for (size_t i = 0; i < curvs.size(); i++) {
-            if (mGenHistograms)
-                mHist["seed_curv"]->Fill(curvs[i]);
             if (curvs[i] > 10) {
                 mcurv += curvs[i];
                 nmeas += 1.0;
@@ -1006,7 +1001,7 @@ class TrackFitter {
         if (nmeas >= 1)
             mcurv = mcurv / nmeas;
         else
-            mcurv = 100;
+            mcurv = 10000;
 
         // Now lets get eta information
         p0.SetXYZ(trackSeed[vol_map[idx[0]]]->getX(), trackSeed[vol_map[idx[0]]]->getY(), trackSeed[vol_map[idx[0]]]->getZ());
@@ -1030,7 +1025,7 @@ class TrackFitter {
         }
         Rxy = sqrt( p0.X()*p0.X() + p0.Y()*p0.Y() );
         theta = TMath::ATan2(Rxy, p0.Z());
-        
+
         LOG_DEBUG << TString::Format( "pt=%f, dx=%f, dy=%f, dz=%f, phi=%f, theta=%f", pt, dx, dy, dz, phi, theta ) << endm;
         // double eta = -log( tantheta / 2.0 );
         // these starting conditions can probably be improvd, good study for students
@@ -1038,14 +1033,8 @@ class TrackFitter {
         seedMom.SetPtThetaPhi(pt, theta, phi);
         seedPos.SetXYZ(hit_closest_to_IP->getX(), hit_closest_to_IP->getY(), hit_closest_to_IP->getZ());
 
-        if (mGenHistograms) {
-            this->mHist["seed_pT"]->Fill(seedMom.Pt());
-            this->mHist["seed_eta"]->Fill(seedMom.Eta());
-        }
-
         return mcurv;
     }//seedState
-
 
     /**
      * @brief Get track projection to given FST plane
@@ -1074,7 +1063,7 @@ class TrackFitter {
         double y = tst.getPos().Y();
         double z = tst.getPos().Z();
         // and the uncertainties
-        LOG_INFO << "Track Uncertainty at FST (plane=" << fstPlane << ") @ x= " << x << ", y= " << y << ", z= " << z << " : " << sqrt(TCM(0, 0)) << ", " << sqrt(TCM(1, 1)) << endm;
+        LOG_DEBUG << "Track Uncertainty at FST (plane=" << fstPlane << ") @ x= " << x << ", y= " << y << ", z= " << z << " : " << sqrt(TCM(0, 0)) << ", " << sqrt(TCM(1, 1)) << endm;
 
         return TVector2(x,y);
     }
@@ -1123,16 +1112,16 @@ class TrackFitter {
         double y = tst.getPos().Y();
         double z = tst.getPos().Z();
         // and the uncertainties
-        LOG_INFO << "Track Uncertainty at FTT (plane=" << ftt_plane << ") @ x= " << x << ", y= " << y << ", z= " << z << " : " << sqrt(TCM(0, 0)) << ", " << sqrt(TCM(1, 1)) << endm;
+        LOG_DEBUG << "Track Uncertainty at FTT (plane=" << ftt_plane << ") @ x= " << x << ", y= " << y << ", z= " << z << " : " << sqrt(TCM(0, 0)) << ", " << sqrt(TCM(1, 1)) << endm;
 
         return TVector2(x,y);
     }
 
     /**
      * @brief Get the Fst Plane object for a given hit
-     * 
+     *
      * @param h : hit
-     * @return genfit::SharedPlanePtr 
+     * @return genfit::SharedPlanePtr
      */
     genfit::SharedPlanePtr getFstPlane( FwdHit * h ){
 
@@ -1156,8 +1145,8 @@ class TrackFitter {
 
     /**
      * @brief Refit a track with additional FST hits
-     * 
-     * Takes a previously fit track re-fits it with the newly added silicon hits 
+     *
+     * Takes a previously fit track re-fits it with the newly added silicon hits
      * @param originalTrack : original fit track
      * @param fstHits : new FST hits to add
      * @return TVector3 : momentum
@@ -1166,7 +1155,7 @@ class TrackFitter {
         static const TVector3 pOrig = originalTrack->getCardinalRep()->getMom(originalTrack->getFittedState(1, originalTrack->getCardinalRep()));
 
         if (originalTrack->getFitStatus(originalTrack->getCardinalRep())->isFitConverged() == false) {
-            // in this case the original track did not converge so we should not refit. 
+            // in this case the original track did not converge so we should not refit.
             // probably never get here due to previous checks
             return pOrig;
         }
@@ -1177,7 +1166,7 @@ class TrackFitter {
 
         // get the space points on the original track
         auto trackPoints = originalTrack->getPointsWithMeasurement();
-        
+
         if ((trackPoints.size() < (mFTTZLocations.size() +1) && mIncludeVertexInFit) || trackPoints.size() < mFTTZLocations.size() ) {
             // we didnt get enough points for a refit
             return pOrig;
@@ -1350,7 +1339,7 @@ class TrackFitter {
             mFitTrack->checkConsistency();
 
             // this chooses the lowest chi2 fit result as cardinal
-            mFitTrack->determineCardinalRep(); 
+            mFitTrack->determineCardinalRep();
 
         } catch (genfit::Exception &e) {
             // will be caught below by converge check
@@ -1362,7 +1351,7 @@ class TrackFitter {
             cout << "Track fit did not converge" << endl;
             return pOrig;
         } else { // we did converge, return new momentum
-            
+
             try {
                 // causes seg fault
                 // auto cardinalRep = mFitTrack->getCardinalRep();
@@ -1865,16 +1854,16 @@ class TrackFitter {
 
             // this chooses the lowest chi2 fit result as cardinal
             originalTrack->determineCardinalRep();
-
-        } catch (genfit::Exception &e) {
-            // will be caught below by converge check
-            LOG_WARN << "Track fit exception : " << e.what() << endm;
-        }
-
-        if (originalTrack->getFitStatus(originalTrack->getCardinalRep())->isFitConverged() == false) {
-            LOG_WARN << "GBL fit did not converge" << endm;
-            return;//pOrig;
-        } else { // we did converge, return new momentum
+ 
+          } catch (genfit::Exception &e) {
+             // will be caught below by converge check
+             LOG_WARN << "Track fit exception : " << e.what() << endm;
+         }
+ 
+         if (originalTrack->getFitStatus(originalTrack->getCardinalRep())->isFitConverged() == false) {
+             LOG_WARN << "GBL fit did not converge" << endm;
+             return;//pOrig;
+         } else { // we did converge, return new momentum
 
             try {
                 // causes seg fault
@@ -1890,33 +1879,94 @@ class TrackFitter {
         return; //pOrig;
     } //refitwith GBL
 
+    void fitSpacePoints( Seed_t trackSeed, double *Vertex = 0, TVector3 *seedMomentum = 0 ){
+
+        auto seedPos = TVector3(0, 0, 0);
+        auto seedMom = TVector3(0, 0, 10);
+        auto theTrackRep = new genfit::RKTrackRep(mPdgMuon);
+        // setup track for fit with positive and negative reps
+        // mFitTrack = new genfit::Track(trackRepPos, seedPos, seedMom);
+        mFitTrack = std::make_shared<genfit::Track>(theTrackRep, seedPos, seedMom);
+
+        // Create Spaces points from each seed
+        vector<genfit::SpacepointMeasurement*> spoints;
+        for (size_t i = 0; i < trackSeed.size(); i++) {
+            auto seed = trackSeed[i];
+            TMatrixDSym cm(3);
+            cm(0, 0) = 0.01;
+            cm(1, 1) = 0.01;
+            cm(2, 2) = 0.01;
+            auto rhc = TVectorD( 3 );
+            rhc[0] = seed->getX();
+            rhc[1] = seed->getY();
+            rhc[2] = seed->getZ();
+            auto spoint = new genfit::SpacepointMeasurement(rhc, cm, 0, i, nullptr);
+            spoints.push_back(spoint);
+        }
+
+        LOG_INFO << "Fitting track with " << spoints.size() << " space points" << endm;
+        // try adding the points to track and fitting
+        try {
+            for ( size_t i = 0; i < spoints.size(); i++ ){
+                mFitTrack->insertPoint(new genfit::TrackPoint(spoints[i], mFitTrack.get()));
+            }
+
+            mFitter->processTrack(mFitTrack.get());
+            mFitTrack->determineCardinalRep();
+
+        } catch (genfit::Exception &e) {
+            LOG_ERROR << "GenFit failed to fit track with: " << e.what() << endm;
+        }
+
+        try {
+            mFitTrack->checkConsistency();
+
+            mFitTrack->determineCardinalRep();
+            auto cardinalRep = mFitTrack->getCardinalRep();
+            // static const TVector3 p = cardinalRep->getMom(mFitTrack->getFittedState(1, cardinalRep));
+            // sucess, return momentum
+            LOG_INFO << "Fit status: " << mFitTrack->getFitStatus(cardinalRep)->isFitConverged() << endm;
+            return;
+        } catch (genfit::Exception &e) {
+            LOG_ERROR << "GenFit failed to fit track consistency with: " << e.what() << endm;
+        }
+        return ;
+    }
 
     /**
      * @brief Generic method for fitting space points with GenFit
-     * 
+     *
      * @param spoints : spacepoints
      * @param seedPos : seed position
      * @param seedMom : seed momentum
      * @return TVector3 : momentum from fit
      */
     TVector3 fitSpacePoints( vector<genfit::SpacepointMeasurement*> spoints, TVector3 &seedPos, TVector3 &seedMom ){
-        
+
         // setup track reps
-        auto trackRepPos = new genfit::RKTrackRep(mPdgPositron);
-        auto trackRepNeg = new genfit::RKTrackRep(mPdgElectron);
+        // auto trackRepPos = new genfit::RKTrackRep(mPdgPositron);
+        // auto trackRepNeg = new genfit::RKTrackRep(mPdgElectron);
 
+
+        // return TVector3(0, 0, 0);
+        auto theTrackRep = new genfit::RKTrackRep(mPdgMuon);
         // setup track for fit with positive and negative reps
-        auto mFitTrack = new genfit::Track(trackRepPos, seedPos, seedMom);
-        mFitTrack->addTrackRep(trackRepNeg);
+        // mFitTrack = new genfit::Track(trackRepPos, seedPos, seedMom);
+        mFitTrack = std::make_shared<genfit::Track>(theTrackRep, seedPos, seedMom);
+        // mFitTrack->addTrackRep(trackRepNeg);
+        //
 
+        LOG_INFO << "Fitting track with " << spoints.size() << " space points" << endm;
         // try adding the points to track and fitting
         try {
             for ( size_t i = 0; i < spoints.size(); i++ ){
-                mFitTrack->insertPoint(new genfit::TrackPoint(spoints[i], mFitTrack));
+                mFitTrack->insertPoint(new genfit::TrackPoint(spoints[i], mFitTrack.get()));
             }
             // do the fit against the two possible fits
-            mFitter->processTrackWithRep(mFitTrack, trackRepPos);
-            mFitter->processTrackWithRep(mFitTrack, trackRepNeg);
+            // mFitter->processTrackWithRep(mFitTrack, trackRepPos);
+            // mFitter->processTrackWithRep(mFitTrack, trackRepNeg);
+            mFitter->processTrack(mFitTrack.get());
+            mFitTrack->determineCardinalRep();
 
         } catch (genfit::Exception &e) {
             LOG_ERROR << "GenFit failed to fit track with: " << e.what() << endm;
@@ -1936,76 +1986,38 @@ class TrackFitter {
         return TVector3(0, 0, 0);
     }
 
-    /**
-     * @brief Primary track fitting routine
-     * 
-     * @param trackSeed :
-     * @param Vertex : Primary Vertex
-     * @param seedMomentum : seed momentum (can be from MC)
-     * @return TVector3 : fit momentum
-     */
-    TVector3 fitTrack(Seed_t trackCand, double *Vertex = 0, TVector3 *McSeedMom = 0, bool gblRefit = false) {
-        long long itStart = FwdTrackerUtils::nowNanoSecond();
-        if (mGenHistograms) this->mHist["FitStatus"]->Fill("Total", 1);
-        TVector3 p(0, 0, 0);
-        // The PV information, if we want to use it
-        TVectorD pv(3);
 
-        StarRandom rand = StarRandom::Instance();
-        if (0 == Vertex) { // randomized from simulation
-            pv[0] = mVertexPos[0] + rand.gauss(mVertexSigmaXY);
-            pv[1] = mVertexPos[1] + rand.gauss(mVertexSigmaXY);
-            pv[2] = mVertexPos[2] + rand.gauss(mVertexSigmaZ);
-        } else {
+    /**
+     * @brief setup the track from the given seed and optional primary vertex
+     * @param trackSeed : seed points
+     * @param seedMom : seed momentum
+     * @param seedPos : seed position
+     * @param Vertex : primary vertex
+     */
+    void setupTrack(Seed_t trackSeed, TVector3 seedMom, TVector3 seedPos, double *Vertex = 0) {
+        // If we use the PV, use that as the start pos for the track
+        TVectorD pv(3);
+        if (Vertex != 0) {
+            seedPos.SetXYZ(Vertex[0], Vertex[1], Vertex[2]);
             pv[0] = Vertex[0];
             pv[1] = Vertex[1];
             pv[2] = Vertex[2];
         }
 
-
-
-        // get the seed info from our hits
-        static TVector3 seedMom, seedPos;
-        LOG_DEBUG << "Getting seed state" << endm;
-        // returns track curvature if needed
-        seedState(trackCand, seedPos, seedMom);
-        LOG_INFO << "Computed seedMom : (" << seedMom.Pt() << ", " << seedMom.Eta() << ", " << seedMom.Phi() << " )" << endm;
-
-        if (McSeedMom != nullptr) {
-            LOG_INFO << "Using MC seed Momentum" << endm;
-            seedMom = *McSeedMom;
-        }
-
-        // If we use the PV, use that as the start pos for the track
-        if (mIncludeVertexInFit) {
-            LOG_DEBUG << "Primary Vertex in fit (seed pos) @ " << TString::Format( "(%f, %f, %f)", pv[0], pv[1], pv[2] ).Data()  << endm;
-            seedPos.SetXYZ(pv[0], pv[1], pv[2]);
-        }
-
+        LOG_INFO << "Vertex position: " << endm;
+        pv.Print();
+        
         // create the track representations
         // Note that multiple track reps differing only by charge results in a silent failure of GenFit
         auto theTrackRep = new genfit::RKTrackRep(mPdgMuon);
-        
-        // Create the track    
-        mFitTrack = std::make_shared<genfit::Track>(theTrackRep, seedPos, seedMom);
-        // TODO: TVector3 can fault on Eta() if Pt=0... Find a better fallback in this case for the seed 
-        if ( fabs(seedMom.Z() / seedMom.Y()) > 1e10 ){
-            seedMom.SetXYZ( 0.1, 0.1, -1 );
-        }
-        LOG_DEBUG << "seedPos : (" << seedPos.X() << ", " << seedPos.Y() << ", " << seedPos.Z() << " )" << endm;
-        LOG_DEBUG << ", seedMom : (" << seedMom.X() << ", " << seedMom.Y() << ", " << seedMom.Z() << " )" << endm;
-        LOG_DEBUG << ", seedMom : (" << seedMom.Pt() << ", " << seedMom.Eta() << ", " << seedMom.Phi() << " )" << endm;
 
+        // Create the track
+        mFitTrack = std::make_shared<genfit::Track>(theTrackRep, seedPos, seedMom);
+        // now add the points to the track
 
         size_t planeId(0);     // detector plane ID
         size_t quadId(0);      // detector quad ID
         int hitId(0);       // hit ID
-
-        // initialize the hit coords on plane
-        TVectorD hitCoords(2);
-        hitCoords[0] = 0;
-        hitCoords[1] = 0;
-
         /******************************************************************************************************************
         * Include the Primary vertex if desired
         ******************************************************************************************************************/
@@ -2020,16 +2032,26 @@ class TrackFitter {
             mFitTrack->insertPoint(new genfit::TrackPoint(measurement, mFitTrack.get()));
             //LOG_INFO << "Added vertex to track" << endm;
         }
+
+
+        // initialize the hit coords on plane
+        TVectorD hitCoords(2);
+        hitCoords[0] = 0;
+        hitCoords[1] = 0;
+
         /******************************************************************************************************************
 	* sort hits to add by their z-location
  	******************************************************************************************************************/
         //LOG_INFO << "About to sort hits by their z-location" << endm;
         std::vector<double> hitZ;
-        for (auto h : trackCand) {
+        for (auto h : trackSeed) {
             if ( nullptr == h ) continue; // if no Si hit in this plane, skip
+            //cout << "static_cast<FwdHit*>(h)->_covmat(0, 0) = " <<  static_cast<FwdHit*>(h)->_covmat(0, 0) << endl;
+            //cout << "static_cast<FwdHit*>(h)->_covmat(0, 1) = " <<  static_cast<FwdHit*>(h)->_covmat(0, 1) << endl;
+            //cout << "static_cast<FwdHit*>(h)->_covmat(1, 1) = " <<  static_cast<FwdHit*>(h)->_covmat(1, 1) << endl;
 
             double z;
-           
+
             if(h->getZ() < 200.0)
             {
                 int is = static_cast<FwdHit*>(h)->getSensor();
@@ -2069,14 +2091,15 @@ class TrackFitter {
 	* loop over the hits, add them to the track
  	******************************************************************************************************************/
         //LOG_INFO << "Loop over the hits and add them to the track" << endm;
-        for ( int ih = 0; ih < trackCand.size(); ih++ ) {
-            auto h = trackCand[idx[ih]];
+        for ( int ih = 0; ih < trackSeed.size(); ih++ ) {
+            auto h = trackSeed[idx[ih]];
             size_t diskId = h->getSector();
 
             double z = h->getZ();
+            //cout << "Z = " << z << endl;
             bool isFst = z < 200;
 
-            TMatrixDSym covMatFst; 
+            TMatrixDSym covMatFst(2); 
             double hArr[4] = {h->getX(),h->getY(),h->getZ(),1.0};
             TMatrixD h4D(4,1,hArr);
             if(!isFst) {
@@ -2105,7 +2128,11 @@ class TrackFitter {
             if(isFst) {                
                 planeId = static_cast<FwdHit*>(h)->getSensor();
                 h4D = mInverseMFst[planeId]*h4D;
-                covMatFst = makeSiCovMat(TVector3(h4D(0,0),h4D(1,0),h4D(2,0)));
+                //cout << "x = " << h4D(0,0) << endl;
+                //cout << "y = " << h4D(1,0) << endl;
+                //cout << "z = " << h4D(2,0) << endl;
+                //covMatFst = makeSiCovMat(TVector3(h4D(0,0),h4D(1,0),h4D(2,0)));
+                //covMatFst.Print();
                 int s = planeId%3; 
                 if(s == 0) h4D(0,0) -= 10.75;
                 if(s != 0) h4D(0,0) -= 22.25;
@@ -2114,9 +2141,21 @@ class TrackFitter {
             hitCoords[0] = h4D(0,0);
             hitCoords[1] = h4D(1,0);
 
+            //cout << "static_cast<FwdHit*>(h)->_covmat(0, 0) = " <<  static_cast<FwdHit*>(h)->_covmat(0, 0) << endl;
+            //cout << "static_cast<FwdHit*>(h)->_covmat(0, 1) = " <<  static_cast<FwdHit*>(h)->_covmat(0, 1) << endl;
+            //cout << "static_cast<FwdHit*>(h)->_covmat(1, 1) = " <<  static_cast<FwdHit*>(h)->_covmat(1, 1) << endl;
+
+
             genfit::PlanarMeasurement *measurement;
-            if(!isFst) measurement = new genfit::PlanarMeasurement(hitCoords, CovMatPlane(h), planeId, ++hitId, nullptr);
-            if(isFst ) measurement = new genfit::PlanarMeasurement(hitCoords, CovMatPlaneFst(covMatFst), planeId+1000, ++hitId, nullptr);
+            if(!isFst)
+            {
+              //cout << "About to Create a planar measurement for FTT hit" << endl;
+              //CovMatPlane(h);
+              //cout << "Called CovMatPlane(h);" << endl;
+              measurement = new genfit::PlanarMeasurement(hitCoords, CovMatPlane(h), planeId, ++hitId, nullptr);
+              //cout << "Created a planar measurement for FTT hit!" << endl;
+            }
+            if(isFst ) measurement = new genfit::PlanarMeasurement(hitCoords, makeSiCovMat(TVector3(h4D(0,0),h4D(1,0),h4D(2,0)))/*covMatFst*//*CovMatPlaneFst(covMatFst)*/, planeId+1000, ++hitId, nullptr);
              
             //cout << "planeId = " << planeId << endl;
             //cout << "diskId = " << diskId << endl;
@@ -2135,74 +2174,76 @@ class TrackFitter {
                 LOG_WARN << "Z Mismatch h->z = " << h->getZ() << ", plane->z = "<< plane->getO().Z() <<", diff = " << h->getZ() - plane->getO().Z() << endm;
             }
         } // loop on trackSeed
+    } // setupTrack
 
-        LOG_DEBUG << "Ready to fit" << endm;
+    /** @brief performs the fit on a track
+     *  @param t : track to fit
+    */
+    void performFit( std::shared_ptr<genfit::Track> t ){
         /******************************************************************************************************************
 		 * Do the fit
 		 ******************************************************************************************************************/
         try {
             // do the fit
-            mFitter->processTrack(mFitTrack.get());
+            mFitter->processTrack(t.get());
             // find track rep with smallest chi2
-            mFitTrack->determineCardinalRep();
-
+            t->determineCardinalRep();
+            // update the seed
+            t->udpateSeed();
         } catch (genfit::Exception &e) {
-            LOG_ERROR << "Exception on fit" << e.what() << endm;
-            if (mGenHistograms) mHist["FitStatus"]->Fill("Exception", 1);
+            LOG_ERROR << "Exception on fit update" << e.what() << endm;
+        }
+        LOG_INFO << "Track fit update complete!" << endm;
+    }
+    /**
+     * @brief Primary track fitting routine
+     *
+     * @param trackSeed :
+     * @param Vertex : Primary Vertex
+     * @param seedMomentum : seed momentum (can be from MC)
+     * @return void : the results can be accessed via the getTrack() method
+     */
+    long long fitTrack(Seed_t trackSeed, double *Vertex = 0, TVector3 *seedMomentum = 0, bool gblRefit = false) {
+        long long itStart = FwdTrackerUtils::nowNanoSecond();
+        LOG_DEBUG << "Fitting track with " << trackSeed.size() << " seed points" << endm;
+        
+        // get the seed info from our hits
+        static TVector3 seedMom, seedPos;
+        LOG_DEBUG << "Getting seed state" << endm;
+        // returns track curvature if needed
+        seedState(trackSeed, seedPos, seedMom);
+
+        if (seedMomentum != nullptr) {
+            seedMom = *seedMomentum;
+            LOG_DEBUG << "Using provided seedMomentum: " << TString::Format( "(pt=%f, eta=%f, phi=%f)", seedMom.Pt(), seedMom.Eta(), seedMom.Phi() ) << endm;
         }
 
-        long long duration = (FwdTrackerUtils::nowNanoSecond() - itStart) * 1e-6; // milliseconds
+        setupTrack(trackSeed, seedMom, seedPos, Vertex);
+        LOG_INFO << "Ready to fit with " << mFitTrack->getNumPoints() << " track points" << endm;
+        //LOG_DEBUG << "Ready to fit with " << mFitTrack->getNumPoints() << " track points" << endm;
 
         /******************************************************************************************************************
-         * Now check the fit
-         ******************************************************************************************************************/
-        try {
-            // find track rep with smallest chi2
-            mFitTrack->determineCardinalRep();
-            auto cardinalRep = mFitTrack->getCardinalRep();
-            auto cardinalStatus = mFitTrack->getFitStatus(cardinalRep);
-            mFitStatus = *cardinalStatus; // save the status of last fit
-
-            // Delete any previous track rep
-            if (mTrackRep)
-                delete mTrackRep;
-
-            // Clone the cardinal rep for persistency
-            mTrackRep = cardinalRep->clone(); // save the result of the fit
-            if (mFitTrack->getFitStatus(cardinalRep)->isFitConverged() && mGenHistograms ) {
-                this->mHist["FitStatus"]->Fill("GoodCardinal", 1);
-            }
-            return p;
-        } catch (genfit::Exception &e) {
-            LOG_WARN << "Exception on track fit: " << e.what() << endm;
-            p.SetXYZ(0, 0, 0);
-
-            long long duration = (FwdTrackerUtils::nowNanoSecond() - itStart) * 1e-6; // milliseconds
-            if (mGenHistograms) {
-                this->mHist["FitStatus"]->Fill("Fail", 1);
-                this->mHist["FailedFitDuration"]->Fill(duration);
-            }
-        }
-
-        // Fill some histograms for successful fits
-        if (mGenHistograms) {
-            this->mHist["FitStatus"]->Fill("Pass", 1);
-            this->mHist["delta_fit_seed_pT"]->Fill(p.Pt() - seedMom.Pt());
-            this->mHist["delta_fit_seed_eta"]->Fill(p.Eta() - seedMom.Eta());
-            this->mHist["delta_fit_seed_phi"]->Fill(p.Phi() - seedMom.Phi());
-            this->mHist["FitDuration"]->Fill(duration);
-        }
+		 * Do the fit
+		 ******************************************************************************************************************/
+        performFit( mFitTrack );
 
         genfit::Track gblTrack(*mFitTrack); 
 
+        LOG_INFO << "About to check if we should refit with GBL " << endm;
+        //cout << "mRefitGBL = " << mRefitGBL << endl;
+        //cout << "gblRefit = " << gblRefit << endl;
         if(mRefitGBL && gblRefit)
         {
+          LOG_INFO << "We are going to attempt GBL refit" << endm;
           mGblFitter->setSuccessfulFitFlag(false);
-          refitTrackWithGBL(&gblTrack);
-
+          //refitTrackWithGBL(&gblTrack);
+          refitTrackWithGBL(&*mFitTrack);
+        
+          LOG_INFO << "refitTrackWithGBL() was processed " << endm;
+          //cout << "Tried to refit track with GBL " << endl;
           if(mGblFitter->getSuccessfulFitFlag())
           {
-            LOG_INFO << "Successful GBL refit" << endl;
+            LOG_INFO << "Successful GBL refit" << endm;
             int stateid = -1;
             for( int tp = 0; tp < gblTrack.getNumPointsWithMeasurement(); tp++)
             {
@@ -2261,123 +2302,123 @@ class TrackFitter {
               TVectorD mcCoords(2); 
               double mcZ = 0.0; 
 
-              if(mMcTracking)
-              {
-                auto h = trackCand[idx[0]];
-                
-                for (auto mch : static_cast<FwdHit*>(h)->_mcTrack->mFstHits)
-                {
-                  if(mch->getZ() < 200.0)
-                  { 
-                    if(static_cast<FwdHit*>(mch)->getSensor() != stateid-1000) continue;
-                    double arr[4] = {mch->getX(),mch->getY(),mch->getZ(),1.0};
-                    //cout << "x = " << mch->getX() << ", y = " << mch->getY() << ", z = " << mch->getZ() << endl;
-                    TMatrixD mc4D(4,1,arr);
-                    mc4D = mInverseMFst[stateid-1000] * mc4D; // This is the MC position in the local frame where origins coincide between local and lab
+              //if(mMcTracking)
+              //{
+              //  auto h = trackSeed[idx[0]];
+              //  
+              //  for (auto mch : static_cast<FwdHit*>(h)->_mcTrack->mFstHits)
+              //  {
+              //    if(mch->getZ() < 200.0)
+              //    { 
+              //      if(static_cast<FwdHit*>(mch)->getSensor() != stateid-1000) continue;
+              //      double arr[4] = {mch->getX(),mch->getY(),mch->getZ(),1.0};
+              //      //cout << "x = " << mch->getX() << ", y = " << mch->getY() << ", z = " << mch->getZ() << endl;
+              //      TMatrixD mc4D(4,1,arr);
+              //      mc4D = mInverseMFst[stateid-1000] * mc4D; // This is the MC position in the local frame where origins coincide between local and lab
 
-                    mcCoordsLab = TVector3(mch->getX(),mch->getY(),mch->getZ()); 
+              //      mcCoordsLab = TVector3(mch->getX(),mch->getY(),mch->getZ()); 
 
-                    if((stateid-1000)%3 == 0) mcCoords[0] = mc4D(0,0)-10.75; // we must shift the origin accoding to sensor
-                    if((stateid-1000)%3 != 0) mcCoords[0] = mc4D(0,0)-22.25;
-                    mcCoords[1] = mc4D(1,0);
-                    mcZ = mc4D(2,0);
-                  }
-                }
-                for (auto mch : static_cast<FwdHit*>(h)->_mcTrack->mFttHits)
-                {
-                  if(mch->getZ() > 200.0)
-                  {
-                    int sector = mch->getSector();
-                    //cout << "mch sector = " << sector << endl;
+              //      if((stateid-1000)%3 == 0) mcCoords[0] = mc4D(0,0)-10.75; // we must shift the origin accoding to sensor
+              //      if((stateid-1000)%3 != 0) mcCoords[0] = mc4D(0,0)-22.25;
+              //      mcCoords[1] = mc4D(1,0);
+              //      mcZ = mc4D(2,0);
+              //    }
+              //  }
+              //  for (auto mch : static_cast<FwdHit*>(h)->_mcTrack->mFttHits)
+              //  {
+              //    if(mch->getZ() > 200.0)
+              //    {
+              //      int sector = mch->getSector();
+              //      //cout << "mch sector = " << sector << endl;
 
-                    int quadId = static_cast<FwdHit*>(mch)->getSensor();
-                    //cout << "diskId = " << sector << ",    quadId = " << quadId << endl;
-                    int stgId = sector*4 + quadId;
-                    
-                    if(stgId != stateid) continue;
-                     
-                    mcCoordsLab = TVector3(mch->getX(),mch->getY(),mch->getZ());
+              //      int quadId = static_cast<FwdHit*>(mch)->getSensor();
+              //      //cout << "diskId = " << sector << ",    quadId = " << quadId << endl;
+              //      int stgId = sector*4 + quadId;
+              //      
+              //      if(stgId != stateid) continue;
+              //       
+              //      mcCoordsLab = TVector3(mch->getX(),mch->getY(),mch->getZ());
 
-                    double xshift = 0.0;
-                    double yshift = 0.0;
-                    switch(quadId) {
-                      case 0 : // +x,+y
-                        xshift -= mCenterPent;
-                        yshift -= (5.9+mCenterPent);
-                        break;
-                      case 1 : // -x,+y
-                        xshift -= -mCenterPent;
-                        yshift -= (5.9+mCenterPent);
-                        break;
-                      case 2 : // -x,-y
-                        xshift -= (-6.5-mCenterPent);
-                        yshift -= (5.9-mCenterPent);
-                        break;
-                      case 3 : // +x,-y
-                        xshift -= (6.5+mCenterPent);
-                        yshift -= (5.9-mCenterPent);
-                        break;
-                    }
-                    mcCoords[0] = mch->getX()+xshift;
-                    mcCoords[1] = mch->getY()+yshift;
-                    mcZ = mch->getZ();
-                  }
-                }
-              }
-              
-              if(mMcTracking)
-              {
-                float arr[15];
-                int idx = 0;
-                arr[idx++] = float(stateid);
-                //cout << "stateid = " << stateid << endl;
-                arr[idx++] = float(mcCoords[0]);
-                //cout << "mcx = " << mcCoords[0] << endl;
-                arr[idx++] = float(mcCoords[1]);
-                //cout << "mcy = " << mcCoords[1] << endl;
-                arr[idx++] = float(mcZ);
-                //cout << "mcz = " << mcZ << endl;
-                arr[idx++] = float(rcCoords[0]);
-                //cout << "rcx = " << rcCoords[0] << endl;
-                arr[idx++] = float(rcCoords[1]);
-                //cout << "rcy = " << rcCoords[1] << endl;
-                arr[idx++] = float(rcCoordsLab[2]);
-                //cout << "rcz = " << rcCoordsLab[2] << endl;
-                arr[idx++] = float(trackCoords[0]);
-                //cout << "trackx = " << trackCoords[0] << endl;
-                arr[idx++] = float(trackCoords[1]);
-                //cout << "tracky = " << trackCoords[1] << endl;
-                arr[idx++] = float(mcCoordsLab[0]);
-                //cout << "mcxlab = " << mcCoordsLab[0] << endl;
-                arr[idx++] = float(mcCoordsLab[1]);
-                //cout << "mcylab = " << mcCoordsLab[1] << endl;
-                arr[idx++] = float(rcCoordsLab[0]);
-                //cout << "rcxlab = " << rcCoordsLab[0] << endl;
-                arr[idx++] = float(rcCoordsLab[1]);
-                //cout << "rcylab = " << rcCoordsLab[1] << endl;
-                arr[idx++] = float(trackCoordsLab[0]);
-                //cout << "trackxlab = " << trackCoordsLab[0] << endl;
-                arr[idx++] = float(trackCoordsLab[1]);
-                //cout << "trackylab = " << trackCoordsLab[1] << endl;
+              //      double xshift = 0.0;
+              //      double yshift = 0.0;
+              //      switch(quadId) {
+              //        case 0 : // +x,+y
+              //          xshift -= mCenterPent;
+              //          yshift -= (5.9+mCenterPent);
+              //          break;
+              //        case 1 : // -x,+y
+              //          xshift -= -mCenterPent;
+              //          yshift -= (5.9+mCenterPent);
+              //          break;
+              //        case 2 : // -x,-y
+              //          xshift -= (-6.5-mCenterPent);
+              //          yshift -= (5.9-mCenterPent);
+              //          break;
+              //        case 3 : // +x,-y
+              //          xshift -= (6.5+mCenterPent);
+              //          yshift -= (5.9-mCenterPent);
+              //          break;
+              //      }
+              //      mcCoords[0] = mch->getX()+xshift;
+              //      mcCoords[1] = mch->getY()+yshift;
+              //      mcZ = mch->getZ();
+              //    }
+              //  }
+              //}
+              //
+              //if(mMcTracking)
+              //{
+              //  float arr[15];
+              //  int idx = 0;
+              //  arr[idx++] = float(stateid);
+              //  //cout << "stateid = " << stateid << endl;
+              //  arr[idx++] = float(mcCoords[0]);
+              //  //cout << "mcx = " << mcCoords[0] << endl;
+              //  arr[idx++] = float(mcCoords[1]);
+              //  //cout << "mcy = " << mcCoords[1] << endl;
+              //  arr[idx++] = float(mcZ);
+              //  //cout << "mcz = " << mcZ << endl;
+              //  arr[idx++] = float(rcCoords[0]);
+              //  //cout << "rcx = " << rcCoords[0] << endl;
+              //  arr[idx++] = float(rcCoords[1]);
+              //  //cout << "rcy = " << rcCoords[1] << endl;
+              //  arr[idx++] = float(rcCoordsLab[2]);
+              //  //cout << "rcz = " << rcCoordsLab[2] << endl;
+              //  arr[idx++] = float(trackCoords[0]);
+              //  //cout << "trackx = " << trackCoords[0] << endl;
+              //  arr[idx++] = float(trackCoords[1]);
+              //  //cout << "tracky = " << trackCoords[1] << endl;
+              //  arr[idx++] = float(mcCoordsLab[0]);
+              //  //cout << "mcxlab = " << mcCoordsLab[0] << endl;
+              //  arr[idx++] = float(mcCoordsLab[1]);
+              //  //cout << "mcylab = " << mcCoordsLab[1] << endl;
+              //  arr[idx++] = float(rcCoordsLab[0]);
+              //  //cout << "rcxlab = " << rcCoordsLab[0] << endl;
+              //  arr[idx++] = float(rcCoordsLab[1]);
+              //  //cout << "rcylab = " << rcCoordsLab[1] << endl;
+              //  arr[idx++] = float(trackCoordsLab[0]);
+              //  //cout << "trackxlab = " << trackCoordsLab[0] << endl;
+              //  arr[idx++] = float(trackCoordsLab[1]);
+              //  //cout << "trackylab = " << trackCoordsLab[1] << endl;
 
 
-                //cout << endl << "LOCAL RESIDUALS" << endl;
-                //cout << "MC-RC X = " << mcCoords[0]-rcCoords[0] << endl;
-                //cout << "MC-RC Y = " << mcCoords[1]-rcCoords[1] << endl;
-                //cout << "Track-RC X = " << trackCoords[0]-rcCoords[0] << endl;
-                //cout << "Track-RC Y = " << trackCoords[1]-rcCoords[1] << endl;
-                //cout << "Track-MC X = " << trackCoords[0]-mcCoords[0] << endl;
-                //cout << "Track-MC Y = " << trackCoords[1]-mcCoords[1] << endl << endl;
-                //cout << "LAB RESIDUALS" << endl;
-                //cout << "MC-RC X = " << mcCoordsLab[0]-rcCoordsLab[0] << endl;
-                //cout << "MC-RC Y = " << mcCoordsLab[1]-rcCoordsLab[1] << endl;
-                //cout << "Track-RC X = " << trackCoordsLab[0]-rcCoordsLab[0] << endl;
-                //cout << "Track-RC Y = " << trackCoordsLab[1]-rcCoordsLab[1] << endl;
-                //cout << "Track-MC X = " << trackCoordsLab[0]-mcCoordsLab[0] << endl;
-                //cout << "Track-MC Y = " << trackCoordsLab[1]-mcCoordsLab[1] << endl << endl;
+              //  //cout << endl << "LOCAL RESIDUALS" << endl;
+              //  //cout << "MC-RC X = " << mcCoords[0]-rcCoords[0] << endl;
+              //  //cout << "MC-RC Y = " << mcCoords[1]-rcCoords[1] << endl;
+              //  //cout << "Track-RC X = " << trackCoords[0]-rcCoords[0] << endl;
+              //  //cout << "Track-RC Y = " << trackCoords[1]-rcCoords[1] << endl;
+              //  //cout << "Track-MC X = " << trackCoords[0]-mcCoords[0] << endl;
+              //  //cout << "Track-MC Y = " << trackCoords[1]-mcCoords[1] << endl << endl;
+              //  //cout << "LAB RESIDUALS" << endl;
+              //  //cout << "MC-RC X = " << mcCoordsLab[0]-rcCoordsLab[0] << endl;
+              //  //cout << "MC-RC Y = " << mcCoordsLab[1]-rcCoordsLab[1] << endl;
+              //  //cout << "Track-RC X = " << trackCoordsLab[0]-rcCoordsLab[0] << endl;
+              //  //cout << "Track-RC Y = " << trackCoordsLab[1]-rcCoordsLab[1] << endl;
+              //  //cout << "Track-MC X = " << trackCoordsLab[0]-mcCoordsLab[0] << endl;
+              //  //cout << "Track-MC Y = " << trackCoordsLab[1]-mcCoordsLab[1] << endl << endl;
 
-                mAlignmentInfo->Fill(arr);
-              }
+              //  mAlignmentInfo->Fill(arr);
+              //}
               if(!mMcTracking)
               {
                 float arr[9];
@@ -2405,8 +2446,9 @@ class TrackFitter {
             }
           }
         }
-        return p;
-    }
+        long long duration = (FwdTrackerUtils::nowNanoSecond() - itStart) * 1e-6; // milliseconds
+        return duration;
+    } // fitTrack
 
     //TVector3 fitTrack(Seed_t trackSeed, double *Vertex = 0, TVector3 *seedMomentum = 0) {
     //    long long itStart = FwdTrackerUtils::nowNanoSecond();

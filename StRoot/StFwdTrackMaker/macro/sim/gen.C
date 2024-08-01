@@ -18,8 +18,8 @@ StarKinematics *kinematics = 0;
 
 
 TH1F* hNumHits = 0;
-TString nameParticle = "mu+";
-float numParticles = 200;
+TString nameParticle = "pi+";
+float numParticles = 5;
 
 // ----------------------------------------------------------------------------
 void geometry( TString tag, Bool_t agml=true )
@@ -39,14 +39,14 @@ void command( TString cmd )
 void trig( Int_t n=1 )
 {
 
-  
+
   for ( Int_t i=0; i<n; i++ ) {
 
     // Clear the chain from the previous event
     chain->Clear();
 
-    kinematics->Kine( numParticles, nameParticle.Data(), 0.2, 50.0, 2.5, 4.00  );
-		kinematics->Kine( numParticles, "mu-", 0.2, 50.0, 2.5, 4.00  );
+    kinematics->Kine( numParticles, nameParticle.Data(), 0.05, 5.0, 2.5, 4.00  );
+	// kinematics->Kine( numParticles, "pi-", 0.2, 50.0, 2.5, 4.00  );
 
     // Generate the event
     chain->Make();
@@ -68,18 +68,18 @@ void trig( Int_t n=1 )
 // ----------------------------------------------------------------------------
 void Kinematics()
 {
-  
+
   //  gSystem->Load( "libStarGeneratorPoolPythia6_4_23.so" );
   gSystem->Load( "libKinematics.so");
   kinematics = new StarKinematics();
-    
+
   _primary->AddGenerator(kinematics);
 }
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 void gen( Int_t nevents=100, Int_t rngSeed=12352342 )
-{ 
+{
 
     cout << "Generating: " << nevents << " events with seed: " << rngSeed << endl;
   gSystem->Load( "libStarRoot.so" );
@@ -97,7 +97,7 @@ void gen( Int_t nevents=100, Int_t rngSeed=12352342 )
   gSystem->Load( "StarGeneratorEvent.so" );
   gSystem->Load( "StarGeneratorBase.so" );
 
-  gSystem->Load( "libMathMore.so"   );  
+  gSystem->Load( "libMathMore.so"   );
   gSystem->Load( "xgeometry.so"     );
 
   // Setup RNG seed and map all ROOT TRandom here
@@ -151,7 +151,7 @@ void gen( Int_t nevents=100, Int_t rngSeed=12352342 )
   // command( "MULS 0" );
   // command( "STRA 0" );
   // command( "physi"  );
- 
+
   //
   // Trigger on nevents
   //
@@ -166,4 +166,3 @@ void gen( Int_t nevents=100, Int_t rngSeed=12352342 )
 
 }
 // ----------------------------------------------------------------------------
-

@@ -123,7 +123,7 @@ void loadLibsFwd()
   gSystem->Load("libStDetectorDbMaker.so");
   gSystem->Load("StEvent");
   gSystem->Load("StEventMaker");
-  
+
   // Fwd
   gSystem->Load("StFwdUtils");
   gSystem->Load("libStarGeneratorUtil.so");
@@ -150,7 +150,7 @@ void loadLibsFwd()
   gSystem->Load("StFcsClusterMaker");
   gSystem->Load("StFcsPointMaker");
   gSystem->Load("StFcsTrackMatchMaker");
-  
+
   // Fst
   gSystem->Load("StFstUtil");
   gSystem->Load("StFstDbMaker");
@@ -172,7 +172,7 @@ void procGeoTag(TObjArray* optionTokens)
       optionTokens->RemoveAt(tk);
       optionTokens->Compress();
       break;
-    }  
+    }
   }
 
   // Let agml know we want the ROOT geometry
@@ -314,7 +314,7 @@ void genDst(unsigned int First,
     // gROOT->LoadMacro("/star-sw/StarVMC/Geometry/macros/loadStarGeometry.C");
     // loadStarGeometry( "y2023" );
 
-    // This makes the Fcs and Ftt hits show up in StEvent, 
+    // This makes the Fcs and Ftt hits show up in StEvent,
     // and produces an StEvent for StFwdTracks to go into
     StMuDst2StEventMaker * mu2ev = new StMuDst2StEventMaker();
 
@@ -328,6 +328,7 @@ void genDst(unsigned int First,
     StFttDbMaker * fttDbMk = new StFttDbMaker();
     StFttHitCalibMaker * ftthcm = new StFttHitCalibMaker();
     StFttClusterMaker * fttclu = new StFttClusterMaker();
+    fttclu->SetTimeCut(1, -40, 40);
     StFttPointMaker * fttpoint = new StFttPointMaker();
 
 
@@ -335,9 +336,9 @@ void genDst(unsigned int First,
     fwdTrack->setConfigForData( );
     fwdTrack->setGeoCache( "fGeom.root" );
     fwdTrack->setSeedFindingWithFst();
-    fwdTrack->SetGenerateTree( false );
-    fwdTrack->SetGenerateHistograms( false );
-    fwdTrack->SetDebug(100);
+    fwdTrack->setIncludePrimaryVertexInFit(true);
+    fwdTrack->setMaxFailedHitsInFit(2);
+    fwdTrack->SetDebug(2);
 
     StFcsTrackMatchMaker *match = new StFcsTrackMatchMaker();
     match->setMaxDistance(6,10);
@@ -350,6 +351,10 @@ void genDst(unsigned int First,
 
     StFwdFitQAMaker *fwdFitQA = new StFwdFitQAMaker();
     fwdFitQA->SetDebug(100);
+
+    //StFwdQAMaker *fwdQAMk = new StFwdQAMaker();
+    //fwdQAMk->SetDebug(2);
+    //chain->AddAfter("fwdTrack", fwdQAMk);
 
     if (findAndRemoveOption("btofmatch",optionTokens)) {
 
@@ -395,6 +400,8 @@ void genDst(unsigned int First,
     }
 
     processMaker = (StMaker*) (new StPicoDstMaker(StPicoDstMaker::IoWrite, infile, "picoDst"));
+    StPicoDstMaker *picoMk = (StPicoDstMaker*) (processMaker);
+    picoMk->setVtxMode(StPicoDstMaker::Vpd);
     gMessMgr->Info() << "PicoSetup Complete" << endm;
   } else if (Options.Contains("fwd")) {
     // _________________________________________________________________
@@ -509,11 +516,15 @@ void genDst(unsigned int First,
   int eventCount = 0;
   // Skip, if any
   if (First > 1) fullChain.Skip(First - 1);
+  cout << "FIRST = " << First << endl;
   for (unsigned int iEvent = First; iEvent <= LastToRead; iEvent++)
   {
+      cout << "                                                                   EVENT #" << iEvent << endl;
       // make an StEvent so that Fwd can save tracks, etc.
       // StEvent * stEv = new StEvent();
       // fullChain.AddData( stEv );
+      //fullChain.SetDebug(2);
+      //fwdTrack->SetDebug(2);
 
      int iMake = fullChain.Make();
      if (iMake) {fullChain.FatalErr(iMake,"on make"); return;}
@@ -528,7 +539,7 @@ void genDst(unsigned int First,
 
   //
   // ATTENTION - please DO NOT change the format of the next 2 lines,
-  //   they are used by our DataManagement parsers to detect a generation 
+  //   they are used by our DataManagement parsers to detect a generation
   //   was succesful and thereafter Catalog the produced files.
   //   Thank you.
   //
@@ -557,7 +568,8 @@ void genDst(unsigned int Last,
 }
 
 void pico(){
-  genDst(5000, "y2023a picodst PicoVtxMode:PicoVtxDefault", "/gpfs01/star/pwg_tasks/FwdCalib//MuDst/Run22ppP23if/st_fwd_22356022_raw_2500032.MuDst.root", "PROD.root");
+  //genDst(100, "y2023a picodst PicoVtxMode:PicoVtxDefault", "/gpfs01/star/pwg_tasks/FwdCalib/MuDst/Run22ppP23if/st_fwd_22356022_raw_2500032.MuDst.root" , "PROD.root");
+  genDst(100, "y2023a picodst PicoVtxMode:PicoVtxDefault", "/gpfs01/star/pwg_tasks/FwdCalib/PROD/ZeroField-21-06-2024/st_physics_23072003_raw_7500013.MuDst.root" , "PROD.root");
 }
 
 void pico( TString f, int n = 500){
