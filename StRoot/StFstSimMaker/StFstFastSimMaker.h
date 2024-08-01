@@ -32,7 +32,7 @@ class StFstFastSimMaker : public StMaker {
 		void SetInEfficiency(float ineff = 0.1) { mInEff = ineff; }
 		void SetQAFileName(TString filename = 0.1) { mQAFileName = filename; }
 		void SetFillHist(const bool hist = false) { mHist = hist; }
-		
+		void setGEANTPassthrough(bool passthrough = false) { mGEANTPassthrough = passthrough; }
 
 	private:
 		void FillSilicon(StEvent *event);
@@ -49,6 +49,7 @@ class StFstFastSimMaker : public StMaker {
 		float mRaster;
 		float mInEff;
 		bool mHist;
+		bool mGEANTPassthrough;
 		TString mQAFileName;
                 TMatrixD mInverseM[108];
 

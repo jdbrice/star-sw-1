@@ -65,6 +65,9 @@ void sim( int n = 100, // nEvents to run
     gSystem->Load( "libMathMore.so" );
     gSystem->Load( "libStarGeneratorUtil" );
 
+    StFttFastSimMaker * fttSim = new StFttFastSimMaker();
+    fttSim->SetDebug();
+    chain->AddAfter("fcsSim", fttSim);
 
     // FCS setup, if included
     if (useFCS) {
@@ -109,7 +112,7 @@ void sim( int n = 100, // nEvents to run
         fstFastSim->SetQAFileName(qaoutname);
 
         cout << "Adding StFstFastSimMaker to chain" << endl;
-        chain->AddMaker(fstFastSim);
+        chain->AddAfter("fcsSim", fstFastSim);
 
 
     // Configure the Forward Tracker
@@ -132,7 +135,11 @@ void sim( int n = 100, // nEvents to run
             }
 
             // choose 
-                fwdTrack->setSeedFindingWithFst();
+                if (useFstForSeedFinding)
+                    fwdTrack->setSeedFindingWithFst();
+                else { // default for this true/false option
+                    fwdTrack->setSeedFindingWithFtt();
+                }
             // other options
                 // fwdTrack->setSeedFindingWithFtt();
                 // fwdTrack->setSeedFindingWithFstFttSequential();

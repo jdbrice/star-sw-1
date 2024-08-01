@@ -65,7 +65,6 @@ class StFwdTrackMaker : public StMaker {
         LoadConfiguration();
     }
     void LoadConfiguration();
-    void SetGenerateHistograms( bool _genHisto ){ mGenHistograms = _genHisto; }
     void SetVisualize( bool _viz ) { mVisualize = _viz; }
 
     vector<StFwdTrack*> mFwdTracks;
@@ -98,7 +97,6 @@ class StFwdTrackMaker : public StMaker {
     size_t mEventNum = 0; // global event num (index)
     TVector3 mEventVertex; // primary vertex used in fwd tracking this event
 
-    bool mGenHistograms = false;
     std::string mConfigFile;
 
     std::map<std::string, TH1 *> mHistograms;
@@ -143,7 +141,7 @@ class StFwdTrackMaker : public StMaker {
         int loadFstHitsFromMuDst( std::map<int, std::shared_ptr<McTrack>> &mcTrackMap, std::map<int, std::vector<KiTrack::IHit *>> &hitMap );
         int loadFstHitsFromGEANT( std::map<int, std::shared_ptr<McTrack>> &mcTrackMap, std::map<int, std::vector<KiTrack::IHit *>> &hitMap );
         int loadFstHitsFromStEvent( std::map<int, std::shared_ptr<McTrack>> &mcTrackMap, std::map<int, std::vector<KiTrack::IHit *>> &hitMap );
-        int loadFstHitsFromStEventFastSim( std::map<int, std::shared_ptr<McTrack>> &mcTrackMap, std::map<int, std::vector<KiTrack::IHit *>> &hitMap );
+        int loadFstHitsFromStRnDHits( std::map<int, std::shared_ptr<McTrack>> &mcTrackMap, std::map<int, std::vector<KiTrack::IHit *>> &hitMap );
     #endif
 
 
