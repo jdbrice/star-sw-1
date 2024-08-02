@@ -13,7 +13,7 @@ void analyze_picos(   int n = 10,//92,
                     bool realisticSim = false, // enables data-like mode, real track finding and fitting without MC seed
                     //std::string configFile = "StRoot/StFwdTrackMaker/macro/event/event_track.xml",
 			const char *geom = "y2023", TString outfile = "out/Jpsi_test_allcomponents.root") {
-
+  //test
   gROOT->LoadMacro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
   loadSharedLibraries();
   
