@@ -20,26 +20,36 @@
 ClassImp(StFttDb)
 
 
+TString StFttDb::Direction_name[] = {"kFttHorizontal","kFttVertical","kFttDiagonalH","kFttDiagonalV","kFttUnknownOrientation"};
+
 double StFttDb::stripPitch = 3.2; // mm
 double StFttDb::rowLength = 180; // mm
 double StFttDb::lowerQuadOffsetX = 101.6; // mm
 // double StFttDb::idealPlaneZLocations[] = { 281.082,304.062,325.058,348.068 };//ideal position
 double StFttDb::idealPlaneZLocations[] = { 312.342,329.953,347.637,365.422 };//suvery data, cm or mm? now just use quad A's data
 double StFttDb::LocalStripZLocations[] = { 1.1    ,1.53   ,2.18   ,2.61    };// from yingying's measurement, cm ,
+double StFttDb::idealPlaneZLocations_QuadA[] = {312.342,329.953,347.637,365.422};//cm
+double StFttDb::idealPlaneZLocations_QuadB[] = {312.165,330.094,347.543,365.409};//cm
+double StFttDb::idealPlaneZLocations_QuadC[] = {312.317,329.723,347.346,365.311};//cm
+double StFttDb::idealPlaneZLocations_QuadD[] = {312.098,329.731,347.444,365.455};//cm
+ 
 double StFttDb::HVStripShift = 15.95;//mm
-double StFttDb::DiagStripShift = 23.79;//mm
-double StFttDb::FirstStripEdge[] = {14.6, 23.79};
+double StFttDb::DiagStripShift = 19.42;//mm
+double StFttDb::FirstStripEdge[] = {14.6, 19.42};
 vector<string> StFttDb::orientationLabels = { "Horizontal", "Vertical", "DiagonalH", "DiagonalV", "Unknown" };
 double StFttDb::X_shift_QuadA[] = {8.09, 8.34, 6.62,7.54 };//mm 
 double StFttDb::X_shift_QuadB[] = {112.74, 112.14, 113.30, 113.49};//mm 
 double StFttDb::X_shift_QuadC[] = {-107.51, -108.22, -109.87, -108.91};//mm 
 double StFttDb::X_shift_QuadD[] = {-3.69, -4.96, -4.36, -3.75};//mm 
-double StFttDb::X_StripGroupEdge[] = {14.60, 172.29, 216.89,315.4, 360.09, 410.9, 504.2, 545.19};//mm 
 double StFttDb::Y_shift_QuadA[] = {95.34, 94.33, 96.03, 95.01};//mm 
 double StFttDb::Y_shift_QuadB[] = {84.24, 83.37, 83.61, 83.81};//mm
 double StFttDb::Y_shift_QuadC[] = {83.60, 83.42, 84.37, 82.81};//mm
 double StFttDb::Y_shift_QuadD[] = {95.70, 94.40, 95.55, 94.16};//mm
+double StFttDb::YX_StripGroupEdge[] = {11.49, 172.29, 360.09};//mm 
+double StFttDb::D_StripGroupEdge[] = {11.49};//mm 
+double StFttDb::X_StripGroupEdge[] = {14.60, 172.29, 216.89,315.4, 360.09, 410.9, 504.2, 545.19};//mm 
 double StFttDb::Y_StripGroupEdge[] = {11.49};//mm 
+
 
 StFttDb::StFttDb(const char *name) : TDataSet(name) {}; 
 
@@ -119,7 +129,7 @@ void StFttDb::loadDataWindowsFromDb( St_fttDataWindows * dataset ) {
 
         fttDataWindows_st *table = dataset->GetTable();
         for (Int_t i = 0; i < rows; i++) {
-            for ( int j = 0; j < (int)StFttDb::nVMM; j++ ) {
+            for ( int j = 0; j < StFttDb::nVMM; j++ ) {
                 // printf( "[feb=%d, vmm=%d, ch=%d] ==> [row=%d, strip%d]\n", table[i].feb[j], table[i].vmm[j], table[i].vmm_ch[j], table[i].row[j], table[i].strip[j] );
 
 
@@ -618,17 +628,13 @@ bool StFttDb::hardwareMap( StFttRawHit * hit ) const{
             }
             if ( slMapRow1.count( strip ) > 0 && row == 0)// for Strip Length infomation
                 stripLength = slMapRow1.at(strip);
-            else {
-                LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
-            }
-            if ( slMapRow2.count( strip ) > 0 && row == 1)// for Strip Length infomation
+            else if (slMapRow2.count( strip ) > 0 && row == 1)
+            {
                 stripLength = slMapRow2.at(strip);
-            else {
-                LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
-            }
-            if ( slMapRow3.count( strip ) > 0 && row == 2)// for Strip Length infomation
+            } else if (slMapRow3.count( strip ) > 0 && row == 2)
+            {
                 stripLength = slMapRow3.at(strip);
-            else {
+            } else {
                 LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
             }
         }
@@ -650,18 +656,33 @@ bool StFttDb::hardwareMap( StFttRawHit * hit ) const{
             }
             if (slMapRow4.count(strip) > 0 && row == 3)// for Strip Length infomation
                 stripLength = slMapRow4.at(strip);
-            else {
-                LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
-            }
-            if (slMapRow5.count(strip) > 0 && row == 4)// for Strip Length infomation
+            else if (slMapRow5.count(strip) > 0 && row == 4)
+            {
                 stripLength = slMapRow5.at(strip);
-            else {
+            } else
+            {
                 LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
             }
         }
         hit->setStripEdges( stripCenter, stripLeftEdge, stripRightEdge );
         hit->setStripLength(stripLength);
 
+        return true;
+    }
+    return false;
+}
+//used to reversve the map, from the hardware to electronic map
+// plane, quad, row and strip can be calculated from the simulation maker
+// the key issue if to figure out which feb, row, and strip is for the selected channel
+bool StFttDb::reverseHardwareMap( int &rob, int &feb, int &vmm, int &ch, int plane, int quad, int row, int strip, UChar_t &orientation ) const {
+    // uint16_t key = packKey( feb, vmm, ch );
+    uint16_t val = packVal( row, strip );
+    if ( rMap.count( val ) ){
+        uint16_t key = rMap.at( val );
+        unpackKey( key, feb, vmm, ch );//get the feb, vmm and channel information
+        rob = quad + ( plane *nQuadPerPlane ) + 1;// input plane and quad should start from 0;
+        
+        orientation = getOrientation( rob, feb, vmm, row );
         return true;
     }
     return false;
@@ -679,7 +700,6 @@ bool StFttDb::reverseHardwareMap( int &feb, int &vmm, int &ch, int row, int stri
     }
     return false;
 }
-
 
 UChar_t StFttDb::plane( StFttRawHit * hit ){
     if ( hit->plane() < nPlane )
@@ -731,17 +751,64 @@ void StFttDb::getGloablOffset( UChar_t plane, UChar_t quad,
     dz = 0.0;
 
     if ( plane < 4 )
+    {
+        // upper quadrants are not displace
+        // there have a issue, for the xy shift, the unit is mm, but for the z, the unit is cm 
+        // for Z location, suppose that z at the center of the chamber
+        if ( quad == 0 )
+        {dx = StFttDb::X_shift_QuadA[plane]; dy = StFttDb::Y_shift_QuadA[plane]; dz = StFttDb::idealPlaneZLocations_QuadA[plane]-(LocalStripZLocations[2]+LocalStripZLocations[3])/2.;} 
+        else if ( quad == 1 )
+        {dx = StFttDb::X_shift_QuadB[plane]; dy = StFttDb::Y_shift_QuadB[plane]; dz = StFttDb::idealPlaneZLocations_QuadB[plane]-(LocalStripZLocations[2]+LocalStripZLocations[3])/2.;} 
+        else if ( quad == 2 )
+        {dx = StFttDb::X_shift_QuadC[plane]; dy = StFttDb::Y_shift_QuadC[plane]; dz = StFttDb::idealPlaneZLocations_QuadC[plane]-(LocalStripZLocations[2]+LocalStripZLocations[3])/2.;} 
+        else if ( quad == 3 )
+        {dx = StFttDb::X_shift_QuadD[plane]; dy = StFttDb::Y_shift_QuadD[plane]; dz = StFttDb::idealPlaneZLocations_QuadD[plane]-(LocalStripZLocations[2]+LocalStripZLocations[3])/2.;} 
+    }
+        else dz = -999;
+
+
+    // these are the reflections of a pentagon into the symmetric shape for quadrants A, B, C, D
+    if ( quad == 1 )
+        sy = -1.0;
+    else if ( quad == 2 ){
+        sx = -1.0;
+        sy = -1.0;
+    } else if ( quad == 3 )
+        sx = -1.0;
+
+}
+
+void StFttDb::getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, 
+                                float &dx, float &sx,
+                                float &dy, float &sy, 
+                                float &dz, float &sz ){
+    // TODO: connect to DB for calibrated positions. 
+    // for now we use the ideal positions (from simulated geometry)
+    // calibration will come later
+
+    // scale factors
+    sx = 1.0;
+    sy = 1.0;
+    sz = 1.0;
+
+    // shifts
+    dx = 0.0;
+    dy = 6.0;
+    dz = 0.0;
+
+    if ( plane < 4 )
         dz = StFttDb::idealPlaneZLocations[plane];
 
-    // upper quadrants are not displacedi
+    // upper quadrants are not displace
+    // there have a issue, for the xy shift, the unit is mm, but for the z, the unit is cm 
     if ( quad == 0 )
-    {dx = StFttDb::X_shift_QuadA[plane]; dy = StFttDb::Y_shift_QuadA[plane];} 
+    {dx = StFttDb::X_shift_QuadA[plane]; dy = StFttDb::Y_shift_QuadA[plane]; dz = StFttDb::idealPlaneZLocations_QuadA[plane];} 
     else if ( quad == 1 )
-    {dx = StFttDb::X_shift_QuadB[plane]; dy = StFttDb::Y_shift_QuadB[plane];} 
+    {dx = StFttDb::X_shift_QuadB[plane]; dy = StFttDb::Y_shift_QuadB[plane]; dz = StFttDb::idealPlaneZLocations_QuadB[plane];} 
     else if ( quad == 2 )
-    {dx = StFttDb::X_shift_QuadC[plane]; dy = StFttDb::Y_shift_QuadC[plane];} 
+    {dx = StFttDb::X_shift_QuadC[plane]; dy = StFttDb::Y_shift_QuadC[plane]; dz = StFttDb::idealPlaneZLocations_QuadC[plane];} 
     else if ( quad == 3 )
-    {dx = StFttDb::X_shift_QuadD[plane]; dy = StFttDb::Y_shift_QuadD[plane];} 
+    {dx = StFttDb::X_shift_QuadD[plane]; dy = StFttDb::Y_shift_QuadD[plane]; dz = StFttDb::idealPlaneZLocations_QuadD[plane];} 
 
     // these are the reflections of a pentagon into the symmetric shape for quadrants A, B, C, D
     if ( quad == 1 )

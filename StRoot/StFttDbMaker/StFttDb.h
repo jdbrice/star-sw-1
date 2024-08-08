@@ -75,7 +75,6 @@ public:
     static double DiagStripShift; // mm
     static double lowerQuadOffsetX; //mm
     static double idealPlaneZLocations[4];
-    static double LocalStripZLocations[4];
 
     static const size_t nPlane        = 4;
     static const size_t nQuadPerPlane = 4;
@@ -84,16 +83,27 @@ public:
     static const size_t nChPerVMM     = 64;
     static const size_t nStripGroupEdge = 8;
 
+    //name for the cluster direction
+    static TString Direction_name[nQuadPerPlane+1];
     static double FirstStripEdge[2]; //mm
+
+    //for idealPlaneZLocations_QuadX, now using the cm as unit because that in the old version this using the cm as unit
+    static double LocalStripZLocations[nPlane];
+    static double idealPlaneZLocations_QuadA[nPlane];//cm
+    static double idealPlaneZLocations_QuadB[nPlane];
+    static double idealPlaneZLocations_QuadC[nPlane];
+    static double idealPlaneZLocations_QuadD[nPlane];
     static double X_shift_QuadA[nQuadPerPlane];//mm , x shift from pin hole to (0,0)
     static double X_shift_QuadB[nQuadPerPlane];//mm , x shift from pin hole to (0,0)
     static double X_shift_QuadC[nQuadPerPlane];//mm , x shift from pin hole to (0,0)
     static double X_shift_QuadD[nQuadPerPlane];//mm , x shift from pin hole to (0,0)
-    static double X_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/StFttPointMaker_ZhenWang_20221013_fwdsoftmeeting.pdf Slide 14
     static double Y_shift_QuadA[nQuadPerPlane];//mm , y shift from pin hole to (0,0)
     static double Y_shift_QuadB[nQuadPerPlane];//mm , y shift from pin hole to (0,0)
     static double Y_shift_QuadC[nQuadPerPlane];//mm , y shift from pin hole to (0,0)
     static double Y_shift_QuadD[nQuadPerPlane];//mm , y shift from pin hole to (0,0)
+    static double YX_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/StFttPointMaker_ZhenWang_20221013_fwdsoftmeeting.pdf Slide 14
+    static double D_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/StFttPointMaker_ZhenWang_20221013_fwdsoftmeeting.pdf Slide 14
+    static double X_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/
     static double Y_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/StFttPointMaker_ZhenWang_20221013_fwdsoftmeeting.pdf Slide 14
 
     static const size_t nQuad = nQuadPerPlane * nPlane; // 4 * 4 = 16 Total number of Quadrants
@@ -128,9 +138,11 @@ public:
     UChar_t getOrientation( int rob, int feb, int vmm, int row ) const;
     bool hardwareMap( int rob, int feb, int vmm, int ch, int &row, int &strip, UChar_t &orientation ) const;
     bool hardwareMap( StFttRawHit * rawHit ) const;
-    bool reverseHardwareMap( int &feb, int &vmm, int &ch, int row, int strip ) const;
 
     void getGloablOffset( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
+    void getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
+    bool reverseHardwareMap(int &rob, int &feb, int &vmm, int &ch, int plane, int quad, int row, int strip, UChar_t &orientation) const;
+    bool reverseHardwareMap( int &feb, int &vmm, int &ch, int row, int strip ) const;
 
     enum TimeCutMode {
       CalibratedBunchCrossingMode = 0,
@@ -165,6 +177,7 @@ public:
  private:
   int   mDbAccess=1;                     //! enable(1) or disabe(0) DB access
   int   mRun=0;                          //! run#
+  // int   mDebug=1;                        //! >0 dump tables to text files    
   int   mDebug=0;                        //! >0 dump tables to text files    
 
   bool mUserDefinedTimeCut = false;
