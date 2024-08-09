@@ -46,7 +46,6 @@ public:
   void setDbAccess(int v=1);  //! enable(1) or disable(0) offline DB access
   void setRun(int run);       //! set run# 
 
-
   static size_t uuid( StFttRawHit * h, bool includeStrip = false ) ;
   static size_t uuid( StFttCluster * c ) ;
 
@@ -56,6 +55,9 @@ public:
     uint16_t packVal( int row, int strip ) const;
     void unpackVal( int val, int &row, int &strip ) const;
     void loadHardwareMapFromFile( std::string fn );
+    bool loadStripCenterFromFile( std::string fn );
+    bool loadStripEdgeFromFile( std::string fn );
+    bool loadStripLengthFromFile( std::string fn );
     void loadHardwareMapFromDb( St_fttHardwareMap * );
     void loadDataWindowsFromFile( std::string fn );
     void loadDataWindowsFromDb( St_fttDataWindows * );
@@ -69,6 +71,8 @@ public:
 
     static double stripPitch; // mm
     static double rowLength; // mm
+    static double HVStripShift; // mm
+    static double DiagStripShift; // mm
     static double lowerQuadOffsetX; //mm
     static double idealPlaneZLocations[4];
 
@@ -77,6 +81,30 @@ public:
     static const size_t nFobPerQuad   = 6;
     static const size_t nVMMPerFob    = 4;
     static const size_t nChPerVMM     = 64;
+    static const size_t nStripGroupEdge = 8;
+
+    //name for the cluster direction
+    static TString Direction_name[nQuadPerPlane+1];
+    static double FirstStripEdge[2]; //mm
+
+    //for idealPlaneZLocations_QuadX, now using the cm as unit because that in the old version this using the cm as unit
+    static double LocalStripZLocations[nPlane];
+    static double idealPlaneZLocations_QuadA[nPlane];//cm
+    static double idealPlaneZLocations_QuadB[nPlane];
+    static double idealPlaneZLocations_QuadC[nPlane];
+    static double idealPlaneZLocations_QuadD[nPlane];
+    static double X_shift_QuadA[nQuadPerPlane];//mm , x shift from pin hole to (0,0)
+    static double X_shift_QuadB[nQuadPerPlane];//mm , x shift from pin hole to (0,0)
+    static double X_shift_QuadC[nQuadPerPlane];//mm , x shift from pin hole to (0,0)
+    static double X_shift_QuadD[nQuadPerPlane];//mm , x shift from pin hole to (0,0)
+    static double Y_shift_QuadA[nQuadPerPlane];//mm , y shift from pin hole to (0,0)
+    static double Y_shift_QuadB[nQuadPerPlane];//mm , y shift from pin hole to (0,0)
+    static double Y_shift_QuadC[nQuadPerPlane];//mm , y shift from pin hole to (0,0)
+    static double Y_shift_QuadD[nQuadPerPlane];//mm , y shift from pin hole to (0,0)
+    static double YX_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/StFttPointMaker_ZhenWang_20221013_fwdsoftmeeting.pdf Slide 14
+    static double D_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/StFttPointMaker_ZhenWang_20221013_fwdsoftmeeting.pdf Slide 14
+    static double X_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/
+    static double Y_StripGroupEdge[nStripGroupEdge]; // mm , from left to right, reference : https://drupal.star.bnl.gov/STAR/system/files/StFttPointMaker_ZhenWang_20221013_fwdsoftmeeting.pdf Slide 14
 
     static const size_t nQuad = nQuadPerPlane * nPlane; // 4 * 4 = 16 Total number of Quadrants
     static const size_t nRob = nQuad;
@@ -112,6 +140,9 @@ public:
     bool hardwareMap( StFttRawHit * rawHit ) const;
 
     void getGloablOffset( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
+    void getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
+    bool reverseHardwareMap(int &rob, int &feb, int &vmm, int &ch, int plane, int quad, int row, int strip, UChar_t &orientation) const;
+    bool reverseHardwareMap( int &feb, int &vmm, int &ch, int row, int strip ) const;
 
     enum TimeCutMode {
       CalibratedBunchCrossingMode = 0,
@@ -146,18 +177,28 @@ public:
  private:
   int   mDbAccess=1;                     //! enable(1) or disabe(0) DB access
   int   mRun=0;                          //! run#
+  // int   mDebug=1;                     //! >0 dump tables to text files    
   int   mDebug=0;                        //! >0 dump tables to text files    
 
   bool mUserDefinedTimeCut = false;
   TimeCutMode mTimeCutMode;
   int mTimeCutLow, mTimeCutHigh;
 
-    std :: map< uint16_t , uint16_t > mMap;
-    std :: map< uint16_t , uint16_t > rMap; // reverse map 
+  std :: map< uint16_t , uint16_t > mMap;
+  std :: map< uint16_t , uint16_t > rMap; // reverse map 
+  //  data windows map
+  std :: map< uint16_t , FttDataWindow > dwMap;
+  std :: map< int , Float_t > scMapXY; // strip center map 
+  std :: map< int , Float_t > scMapDiag; // strip center map 
+  std :: map< int , Float_t > slMapRow1; // strip length map Row1
+  std :: map< int , Float_t > slMapRow2; // strip length map Row2
+  std :: map< int , Float_t > slMapRow3; // strip length map Row3
+  std :: map< int , Float_t > slMapRow4; // strip length map Row4
+  std :: map< int , Float_t > slMapRow5; // strip length map Row5
+  std :: map< int , Float_t > seMapDiagLeft; // strip left edge map, just for the diagonal strips 
+  std :: map< int , Float_t > seMapDiagRight; // strip right edge map, just for the diagonal strips
 
-    std :: map< uint16_t , FttDataWindow > dwMap;
-
-  ClassDef(StFttDb,1)   //StAF chain virtual base class for Makers        
+  ClassDef(StFttDb,0)   //StAF chain virtual base class for Makers        
 };
 
 #endif

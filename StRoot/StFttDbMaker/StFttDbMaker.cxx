@@ -38,8 +38,18 @@ int StFttDbMaker::Make(){
 int StFttDbMaker::InitRun(int runNumber) {
   LOG_INFO << "StFttDbMaker::InitRun - run = " << runNumber << endm;
 
+    mFttDb->loadHardwareMapFromFile( "/star/u/wangzhen/sTGC/Commissioning/ClusterFinder/PointMaker_building_test_0616/star-sw-1/StRoot/StFwdTrackMaker/macro/vmm_map.dat" );
+    mFttDb->loadStripCenterFromFile( "/star/u/wangzhen/sTGC/Commissioning/ClusterFinder/PointMaker_building_test_0616/star-sw-1/StRoot/StFwdTrackMaker/macro/Row1.txt" );
+    mFttDb->loadStripEdgeFromFile(   "/star/u/wangzhen/sTGC/Commissioning/ClusterFinder/PointMaker_building_test_0616/star-sw-1/StRoot/StFwdTrackMaker/macro/Row4_edge.txt" );
+    mFttDb->loadStripCenterFromFile( "/star/u/wangzhen/sTGC/Commissioning/ClusterFinder/PointMaker_building_test_0616/star-sw-1/StRoot/StFwdTrackMaker/macro/Row4.txt" );
+    mFttDb->loadStripLengthFromFile( "StRoot/StFttDbMaker/Row1_StripLength.txt" );
+    mFttDb->loadStripLengthFromFile( "StRoot/StFttDbMaker/Row2_StripLength.txt" );
+    mFttDb->loadStripLengthFromFile( "StRoot/StFttDbMaker/Row3_StripLength.txt" );
+    mFttDb->loadStripLengthFromFile( "StRoot/StFttDbMaker/Row4_StripLength.txt" );
+    mFttDb->loadStripLengthFromFile( "StRoot/StFttDbMaker/Row5_StripLength.txt" );
 
-    std::ifstream file("vmm_map.dat");
+    std::ifstream file("/star/u/wangzhen/sTGC/Commissioning/ClusterFinder/PointMaker_building_test_0616/star-sw-1/StRoot/StFwdTrackMaker/macro/vmm_map.dat");
+    // std::ifstream file("vmm_map.dat");
     if(file.is_open()){ // debugging / calibration only
         file.close();
         std::cout << "Loading Hardware Map from FILE!!" << std::endl;
@@ -48,12 +58,8 @@ int StFttDbMaker::InitRun(int runNumber) {
     } else { // default
 
         TDataSet *mDbDataSet = GetDataBase("Geometry/ftt/fttHardwareMap");
-        if (mDbDataSet){
-          St_fttHardwareMap *dataset = (St_fttHardwareMap*) mDbDataSet->Find("fttHardwareMap");
-          mFttDb->loadHardwareMapFromDb( dataset );
-        } else {
-          LOG_WARN << "Cannot access `Geometry/ftt/fttHardwareMap` and no local `vmm_map.dat` file provided. Cannot load ftt hardware mapping" << endm;
-        }
+        St_fttHardwareMap *dataset = (St_fttHardwareMap*) mDbDataSet->Find("fttHardwareMap");
+        mFttDb->loadHardwareMapFromDb( dataset );
     }
 
 
@@ -62,8 +68,6 @@ int StFttDbMaker::InitRun(int runNumber) {
     if ( mDbDataSetDW ) {
         St_fttDataWindows *dataset = (St_fttDataWindows*) mDbDataSetDW->Find("fttDataWindows");
         mFttDb->loadDataWindowsFromDb( dataset );
-    } else {
-      LOG_WARN << "Cannot access `Calibrations/ftt/fttDataWindows`" << endm;
     }
 
   

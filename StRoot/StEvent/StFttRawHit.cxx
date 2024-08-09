@@ -27,7 +27,10 @@ mPlane(255),
 mQuadrant(kFttUnknownQuadrant),
 mRow(255),
 mStrip(255),
-mOrientation(kFttUnknownOrientation)
+mOrientation(kFttUnknownOrientation),
+mStripCenter(-999),
+mStripLeftEdge(-999),
+mStripRightEdge(-999)
 { /*noop*/ }
 
 StFttRawHit::StFttRawHit(   UChar_t mSector, UChar_t mRDO, UChar_t mFEB, 
@@ -59,7 +62,15 @@ void StFttRawHit::setMapping(   UChar_t mPlane, UChar_t mQuadrant,
     this->mOrientation = mOrientation;
 }
 
+void StFttRawHit::setStripEdges( Float_t mStripCenter, Float_t mStripLeftEdge, Float_t mStripRightEdge ) {
+    this->mStripCenter      = mStripCenter;
+    this->mStripLeftEdge    = mStripLeftEdge;
+    this->mStripRightEdge   = mStripRightEdge;
+}
 
+void StFttRawHit::setStripLength( Float_t mStripLength ) {
+    this->mStripLength = mStripLength;
+}
 
 ostream&
 operator<<( ostream &os, const StFttRawHit& rh )
@@ -79,8 +90,11 @@ operator<<( ostream &os, const StFttRawHit& rh )
     os << "\tmQuadrant = "    << (int)rh.quadrant()    << endl;
     os << "\tmRow = "         << (int)rh.row()         << endl;
     os << "\tmStrip = "       << (int)rh.strip()       << endl;
-    os << "\tmOrientation = " << (int)rh.orientation() << " ) " << endl;
-
-
+    os << "\tmOrientation = " << (int)rh.orientation() << endl;
+    os << "\tmStripCenter = " << rh.stripCenter()      << endl;
+    os << "\tmStripLength = " << rh.stripLength()      << endl;
+    os << "\tmStripLeftEdge = " << rh.stripLeftEdge()  << endl;
+    os << "\tmStripRightEdge = " << rh.stripRightEdge()<< endl;
+    os << " ) " << endl;
     return os;
 }
