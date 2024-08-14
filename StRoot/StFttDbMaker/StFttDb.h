@@ -70,6 +70,8 @@ public:
     UChar_t rob( StFttCluster * clu );
 
     static double stripPitch; // mm
+    static double gapPitch; // mm
+    static double stripWidth; // mm
     static double rowLength; // mm
     static double HVStripShift; // mm
     static double DiagStripShift; // mm

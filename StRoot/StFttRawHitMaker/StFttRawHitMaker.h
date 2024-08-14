@@ -48,7 +48,7 @@ private:
     StEvent*             mEvent;
     StFttCollection*     mFttCollection;
     Int_t                mRunYear;
-    Bool_t               mDebug;
+    Bool_t               Debug_flag;
     Int_t                mReadMuDst;
 
 	int readMuDst();

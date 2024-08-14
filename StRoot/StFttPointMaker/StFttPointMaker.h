@@ -47,7 +47,7 @@ private:
     
     StEvent*             mEvent;
     StFttCollection*     mFttCollection;
-    Bool_t               mDebug;
+    Bool_t               Debug_flag;
     Bool_t               mUseTestData;
     StFttDb*             mFttDb;
     std::vector<StFttPoint*> mFttPoint;
@@ -55,20 +55,20 @@ private:
     // why can not using some thing like this:
     std::vector<StFttCluster *> clustersPerRob[StFttDb::nRob][StFttDb::nStripOrientations];//save the cluster for per quadrant
     
-    inline bool is_Group1(int row_x, int row_y, double x, double y) const { return ( (14.60 <= x && x <= 172.29) && (14.60 <= y && y <= 172.29) && (row_x == 0) && (row_y == 0) ); }
-    inline bool is_Group2(int row_x, int row_y, double x, double y) const { return ( (172.29 <= x && x <= 360.09) && (14.60 <= y && y <= 172.29) && (row_x == 0) && (row_y == 1)); }
+    inline bool is_Group1(int row_x, int row_y, double x, double y) const { return ( (StFttDb::X_StripGroupEdge[0] <= x && x <= StFttDb::X_StripGroupEdge[1]) && (StFttDb::Y_StripGroupEdge[0] <= y && y <= StFttDb::Y_StripGroupEdge[1]) && (row_x == 0) && (row_y == 0) ); }
+    inline bool is_Group2(int row_x, int row_y, double x, double y) const { return ( (StFttDb::X_StripGroupEdge[1] <= x && x <= StFttDb::X_StripGroupEdge[4]) && (StFttDb::Y_StripGroupEdge[0] <= y && y <= StFttDb::Y_StripGroupEdge[1]) && (row_x == 0) && (row_y == 1)); }
     inline bool is_Group3(int row_x, int row_y, double x, double y) const { 
-        return ( ( ( (360.09 <= x && x <= 504.2) && (14.60 <= y && y <= 172.29) ) || ( (504.2<= x && x <= 548.3) && (14.60 <= y && y <= 216.89) ) ) && (row_x == 0) && (row_y == 2) );
+        return ( ( ( (StFttDb::X_StripGroupEdge[4] <= x && x <= StFttDb::X_StripGroupEdge[6]) && (StFttDb::Y_StripGroupEdge[0] <= y && y <= StFttDb::Y_StripGroupEdge[1]) ) || ( (StFttDb::X_StripGroupEdge[6]<= x && x <= StFttDb::X_StripGroupEdge[7]) && (StFttDb::Y_StripGroupEdge[0] <= y && y <= StFttDb::Y_StripGroupEdge[2]) ) ) && (row_x == 0) && (row_y == 2) );
     }
-    inline bool is_Group4(int row_x, int row_y, double x, double y) const { return ( (14.60 <= x && x <= 172.29) && (172.29 <= y && y <= 360.09) && (row_x == 1) && (row_y == 0) ); }
+    inline bool is_Group4(int row_x, int row_y, double x, double y) const { return ( (StFttDb::X_StripGroupEdge[0] <= x && x <= StFttDb::X_StripGroupEdge[1]) && (StFttDb::Y_StripGroupEdge[1] <= y && y <= StFttDb::Y_StripGroupEdge[4]) && (row_x == 1) && (row_y == 0) ); }
     inline bool is_Group5(int row_x, int row_y, double x, double y) const {
-        return ( ( ((172.29 <= x && x <= 315.4) && (172.29 <= y && y <= 360.09)) || ((315.4 <= x && x <= 360.09) && (172.29 <= y && y <= 410.9)) || ((360.09 <= x && x <= 410.9) && (315.4 <= y && y <= 410.9)) ) && (row_x == 1) && (row_y == 1) );
+        return ( ( ((StFttDb::X_StripGroupEdge[1] <= x && x <= StFttDb::X_StripGroupEdge[3]) && (StFttDb::Y_StripGroupEdge[1] <= y && y <= StFttDb::Y_StripGroupEdge[4])) || ((StFttDb::X_StripGroupEdge[3] <= x && x <= StFttDb::X_StripGroupEdge[4]) && (StFttDb::Y_StripGroupEdge[1] <= y && y <= StFttDb::Y_StripGroupEdge[5])) || ((StFttDb::Y_StripGroupEdge[4] <= x && x <= StFttDb::X_StripGroupEdge[5]) && (StFttDb::Y_StripGroupEdge[3] <= y && y <= StFttDb::Y_StripGroupEdge[5])) ) && (row_x == 1) && (row_y == 1) );
     }
-    inline bool is_Group6(int row_x, int row_y, double x, double y) const { return ((360.09 <= x && x <= 504.2) && (172.29 <= y && y <= 315.4)) && (row_x == 1) && (row_y == 2); }
+    inline bool is_Group6(int row_x, int row_y, double x, double y) const { return ((StFttDb::X_StripGroupEdge[4] <= x && x <= StFttDb::X_StripGroupEdge[6]) && (StFttDb::Y_StripGroupEdge[1] <= y && y <= StFttDb::Y_StripGroupEdge[3])) && (row_x == 1) && (row_y == 2); }
     inline bool is_Group7(int row_x, int row_y, double x, double y) const { 
-        return ( ( ( (360.09 <= y && y <= 504.2) && (14.60 <= x && x <= 172.29) ) || ( (504.2<= y && y <= 548.3) && (14.60 <= x && x <= 216.89) ) ) && (row_x == 2) && (row_y == 0));
+        return ( ( ( (StFttDb::Y_StripGroupEdge[4] <= y && y <= StFttDb::Y_StripGroupEdge[6]) && (StFttDb::X_StripGroupEdge[0] <= x && x <= StFttDb::X_StripGroupEdge[1]) ) || ( (StFttDb::Y_StripGroupEdge[6]<= y && y <= StFttDb::Y_StripGroupEdge[7]) && (StFttDb::X_StripGroupEdge[0] <= x && x <= StFttDb::X_StripGroupEdge[2]) ) ) && (row_x == 2) && (row_y == 0));
     }
-    inline bool is_Group8(int row_x, int row_y, double x, double y) const { return ( ((360.09 <= y && y <= 504.2) && (172.29 <= x && x <= 315.4)) && (row_x == 2) && (row_y == 1)); }
+    inline bool is_Group8(int row_x, int row_y, double x, double y) const { return ( ((StFttDb::Y_StripGroupEdge[4] <= y && y <= StFttDb::Y_StripGroupEdge[6]) && (StFttDb::X_StripGroupEdge[1] <= x && x <= StFttDb::X_StripGroupEdge[3])) && (row_x == 2) && (row_y == 1)); }
 
     ClassDef( StFttPointMaker, 0 )
 };

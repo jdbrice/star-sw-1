@@ -1,6 +1,6 @@
 /***************************************************************************
  * StFttDb.cxx
- * jdb Feb, 2022
+ * jdb & Zhen Feb, 2022
  ***************************************************************************
  * Description: This interface between FTT and the STAR database
  ***************************************************************************/
@@ -23,6 +23,8 @@ ClassImp(StFttDb)
 TString StFttDb::Direction_name[] = {"kFttHorizontal","kFttVertical","kFttDiagonalH","kFttDiagonalV","kFttUnknownOrientation"};
 
 double StFttDb::stripPitch = 3.2; // mm
+double StFttDb::gapPitch = 0.5; // mm
+double StFttDb::stripWidth = 2.7; // mm
 double StFttDb::rowLength = 180; // mm
 double StFttDb::lowerQuadOffsetX = 101.6; // mm
 // double StFttDb::idealPlaneZLocations[] = { 281.082,304.062,325.058,348.068 };//ideal position
@@ -47,8 +49,8 @@ double StFttDb::Y_shift_QuadC[] = {83.60, 83.42, 84.37, 82.81};//mm
 double StFttDb::Y_shift_QuadD[] = {95.70, 94.40, 95.55, 94.16};//mm
 double StFttDb::YX_StripGroupEdge[] = {11.49, 172.29, 360.09};//mm 
 double StFttDb::D_StripGroupEdge[] = {11.49};//mm 
-double StFttDb::X_StripGroupEdge[] = {14.60, 172.29, 216.89,315.4, 360.09, 410.9, 504.2, 545.19};//mm 
-double StFttDb::Y_StripGroupEdge[] = {11.49};//mm 
+double StFttDb::X_StripGroupEdge[] = {14.60, 172.29, 216.89, 315.4, 360.09, 410.9, 504.2, 548.7};//mm 
+double StFttDb::Y_StripGroupEdge[] = {14.60, 172.29, 216.89, 315.4, 360.09, 410.9, 504.2, 548.7};//mm 
 
 
 StFttDb::StFttDb(const char *name) : TDataSet(name) {}; 
@@ -572,6 +574,9 @@ UChar_t StFttDb::getOrientation( int rob, int feb, int vmm, int row ) const {
         return kFttHorizontal;
     }
     // should never get here!
+    if ( mDebug ) {
+        LOG_DEBUG << "kFttUnknownOrientation = " << kFttUnknownOrientation << endm;
+    }
     return kFttUnknownOrientation;
 }
 
@@ -645,12 +650,12 @@ bool StFttDb::hardwareMap( StFttRawHit * hit ) const{
                 LOG_ERROR << "Cannot find StripCenter for Diag " << strip << endm;
             }
             if (seMapDiagLeft.count(strip) > 0)
-                stripLeftEdge  = seMapDiagLeft.at(strip);
+                stripLeftEdge  = seMapDiagLeft.at(strip)-gapPitch/2.;
             else {
                 LOG_ERROR << "Cannot find StripLeftEdge for Diag " << strip << endm;
             }
             if (seMapDiagRight.count(strip) > 0)
-                stripRightEdge = seMapDiagRight.at(strip);
+                stripRightEdge = seMapDiagRight.at(strip)+gapPitch/2.;
             else {
                 LOG_ERROR << "Cannot find StripRightEdge for " << strip << endm;
             }

@@ -89,7 +89,7 @@ protected:
     // StFttCluster *mCluster;
     // StFttPoint   *mPoint;
 
-    ClassDef( StFttRawHit, 4 );
+    ClassDef( StFttRawHit, 5 );
 };
 
 ostream& operator << ( ostream&, const StFttRawHit& digi ); // Printing operator

@@ -2,7 +2,7 @@
  *
  * $Id: StFttClusterMaker.cxx,v 1.4 2019/03/08 18:45:40 fseck Exp $
  *
- * Author: Florian Seck, April 2018
+ * Author: jdb & Zhen, April 2024
  ***************************************************************************
  *
  * Description: StFttClusterMaker - class to fill the StEvent from DAQ reader:
@@ -35,7 +35,8 @@ StFttClusterMaker::StFttClusterMaker( const char* name )
 : StMaker( name ),
   mEvent( 0 ),          /// pointer to StEvent
   mRunYear( 0 ),        /// year in which the data was taken (switch at 1st Oct)
-  mDebug( false ),       /// print out of all full messages for debugging
+//   Debug_flag( true ),       /// print out of all full messages for debugging
+  Debug_flag( false ),       /// print out of all full messages for debugging
   mFttDb( nullptr )
 {
     LOG_DEBUG << "StFttClusterMaker::ctor"  << endm;
@@ -102,6 +103,7 @@ StFttClusterMaker::Make()
     assert( mFttDb );
 
     LOG_DEBUG << "Found " << mFttCollection->rawHits().size() << " Ftt Hits" << endm;
+    LOG_INFO << "Found " << mFttCollection->rawHits().size() << " Ftt Hits" << endm;
     ApplyHardwareMap();
 
     
@@ -119,12 +121,16 @@ StFttClusterMaker::Make()
     std::map< UChar_t, std::vector<StFttRawHit *> > dvStripsPerRob; // Diagonal on Vertical
 
     size_t nStripsHit = 0;
+    LOG_DEBUG << "StFttClusterMaker::Reading " << mFttCollection->rawHits().size() << " Hits from the mFttCollection" << endm;
     for ( StFttRawHit* hit : mFttCollection->rawHits() ) {
         UChar_t rob = mFttDb->rob( hit );
         UChar_t so = mFttDb->orientation( hit );
 
         // Apply the time cut
         if ( !PassTimeCut( hit ) ) continue;
+        LOG_DEBUG << "RawHits info: Rdo = " << (int)rob << " Direction = " << (int)so << endm;
+        LOG_DEBUG << "Direction From RawHit isself = " << (int)hit->orientation() << endm; 
+        
 
         if ( kFttHorizontal == so ){
             hStripsPerRob[ rob ].push_back(hit);
@@ -234,7 +240,8 @@ bool StFttClusterMaker::PassTimeCut( StFttRawHit * hit ){
         int hitTimeMode = (int)kHitCalibratedTime;
 
         mFttDb->getTimeCut(hit, hitTimeMode, timeCutMin, timeCutMax);
-        LOG_DEBUG << TString::Format( "StFttClusterMaker::PassTimeCut - DB gave hit time mode: %d, time cut min: %d, time cut max: %d", hitTimeMode, timeCutMin, timeCutMax ) << endm;
+        cout << TString::Format( "StFttClusterMaker::PassTimeCut - DB gave hit time mode: %d, time cut min: %d, time cut max: %d", hitTimeMode, timeCutMin, timeCutMax ) << endl;
+        // LOG_DEBUG << TString::Format( "StFttClusterMaker::PassTimeCut - DB gave hit time mode: %d, time cut min: %d, time cut max: %d", hitTimeMode, timeCutMin, timeCutMax ) << endm;
         if (hitTimeMode == kHitCalibratedTime) {
             return (hit->time() >= timeCutMin && hit->time() <= timeCutMax);
         } else if ( hitTimeMode == kHitTimebin ) {
@@ -247,7 +254,8 @@ bool StFttClusterMaker::PassTimeCut( StFttRawHit * hit ){
     } else if (mTimeCutMode == kTimeCutModeCalibratedTime) {
         return (hit->time() >= mTimeCutMin && hit->time() <= mTimeCutMax);
     } else if (mTimeCutMode == kTimeCutModeTimebin) {
-        return (hit->tb() >= mTimeCutMin && hit->tb() <= mTimeCutMax);
+        return (hit->tb() >= -50 && hit->tb() <= 50);
+        // return (hit->tb() >= mTimeCutMin && hit->tb() <= mTimeCutMax);
     } else {
         LOG_WARN << "StFttClusterMaker::PassTimeCut - Unknown time cut mode: " << mTimeCutMode << endm;
         LOG_WARN << "Accepting all hits" << endm;
@@ -337,14 +345,14 @@ void StFttClusterMaker::CalculateClusterInfo( StFttCluster * clu ){
     float m2Sum = 0;
 
     std::for_each (clu->rawHits().begin(), clu->rawHits().end(), [&](const StFttRawHit *h) {
-        float x = ( h->strip() * 3.2 - 1.6 ); // replace with CONST
+        float x = h->stripCenter(); // replace with CONST
         
         m0Sum += h->adc();
         m1Sum += (h->adc() * x); 
         m2Sum += ( h->adc() * x * x );
     });
 
-    if ( mDebug ) {
+    if ( Debug_flag ) {
         LOG_INFO << "m0Sum = " << m0Sum << endm; 
         LOG_INFO << "m1Sum = " << m1Sum << endm;
         LOG_INFO << "m2Sum = " << m2Sum << endm;
@@ -396,7 +404,7 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
             return indexA < indexB; 
         });
 
-    if ( mDebug ) {
+    if ( Debug_flag ) {
         LOG_INFO << "We have " << hits.size() << " hits after removing duplicates" << endm;
     }
 
@@ -423,6 +431,11 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
         clu->setQuadrant    ( maxAdcHit->quadrant    ( ) );
         clu->setRow         ( maxAdcHit->row         ( ) );
         clu->setOrientation ( maxAdcHit->orientation ( ) );
+        clu->setIndexMaxStrip( maxAdcHit->strip());
+        clu->setMaxStripLength( maxAdcHit->stripLength());
+        clu->setMaxStripCenter( maxAdcHit->stripCenter());
+        clu->setMaxStripLeftEdge( maxAdcHit->stripLeftEdge() );                                                                                              
+        clu->setMaxStripRightEdge( maxAdcHit->stripRightEdge() );
 
         // Now find the cluster edges
         size_t left = anchor, right = anchor;
@@ -439,9 +452,10 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
         // Compute cluster information from the added hits
         CalculateClusterInfo( clu );
 
-        if (mDebug){
+        if (Debug_flag){
             LOG_INFO << *clu << endm;;
         }
+        // if(clu->nStrips() >=2) clusters.push_back( clu );
         clusters.push_back( clu );
 
         // Now erase all hits from this cluster so that we can move on to find the next one
@@ -456,6 +470,7 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
 void StFttClusterMaker::ApplyHardwareMap(){
     for ( StFttRawHit* rawHit : mFttCollection->rawHits() ) {
         mFttDb->hardwareMap( rawHit );
+        // cout << *rawHit << endl;
     }
 
 }

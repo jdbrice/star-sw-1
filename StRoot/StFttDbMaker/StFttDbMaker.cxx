@@ -1,6 +1,6 @@
 /***************************************************************************
  * StFttDbMaker.cxx
- * jdb
+ * jdb & Zhen
  ***************************************************************************
  * Description: This maker is the interface between FTT and the STAR database
  ***************************************************************************/
@@ -48,13 +48,14 @@ int StFttDbMaker::InitRun(int runNumber) {
     mFttDb->loadStripLengthFromFile( "StRoot/StFttDbMaker/Row4_StripLength.txt" );
     mFttDb->loadStripLengthFromFile( "StRoot/StFttDbMaker/Row5_StripLength.txt" );
 
-    std::ifstream file("/star/u/wangzhen/sTGC/Commissioning/ClusterFinder/PointMaker_building_test_0616/star-sw-1/StRoot/StFwdTrackMaker/macro/vmm_map.dat");
-    // std::ifstream file("vmm_map.dat");
+    // std::ifstream file("/star/u/wangzhen/sTGC/Commissioning/ClusterFinder/PointMaker_building_test_0616/star-sw-1/StRoot/StFwdTrackMaker/macro/vmm_map.dat");
+    std::ifstream file("vmm_map.dat");
     if(file.is_open()){ // debugging / calibration only
         file.close();
         std::cout << "Loading Hardware Map from FILE!!" << std::endl;
         std::cout << "Remove / rename file to load from DB" << std::endl;
-        mFttDb->loadHardwareMapFromFile( "vmm_map.dat" );
+        // mFttDb->loadHardwareMapFromFile( "vmm_map.dat" );
+        mFttDb->loadHardwareMapFromFile( "/star/u/wangzhen/sTGC/Commissioning/ClusterFinder/PointMaker_building_test_0616/star-sw-1/StRoot/StFwdTrackMaker/macro/vmm_map.dat" );
     } else { // default
 
         TDataSet *mDbDataSet = GetDataBase("Geometry/ftt/fttHardwareMap");

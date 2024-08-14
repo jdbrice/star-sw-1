@@ -2,7 +2,7 @@
  *
  * StFttRawHitMaker.cxx
  *
- * Author: jdb 2021
+ * Author: jdb & Zhen 2021
  ***************************************************************************
  *
  * Description: StFttRawHitMaker - class to fill the StEvent from DAQ reader
@@ -36,7 +36,7 @@ StFttRawHitMaker::StFttRawHitMaker( const char* name )
   mEvent( 0 ),          /// pointer to StEvent
   mFttCollection( 0 ),  // StFttCollection
   mRunYear( 0 ),        /// year in which the data was taken (switch at 1st Oct)
-  mDebug( false ),      /// print out of all full messages for debugging
+  Debug_flag( false ),      /// print out of all full messages for debugging
   mReadMuDst(0)         /// read from MuDst->StEvent
 { /* no op */ }
 
@@ -115,7 +115,7 @@ StFttRawHitMaker::Make()
         int rdo = daqdta->Rdo();
         int sec = daqdta->Sector();
 
-        if( mDebug ) {
+        if( Debug_flag ) {
             LOG_INFO << "InputSize (bytes): " << inputSizeBytes << endm;
             LOG_INFO << "Sector: " << daqdta->Sector() << endm;
             LOG_INFO << "Pad: " << daqdta->Pad() << endm;
@@ -135,9 +135,10 @@ StFttRawHitMaker::Make()
             StFttRawHit *hit = new StFttRawHit( sec, rdo, feb, vm, vmm[0].ch, vmm[0].adc, vmm[0].bcid, vmm[0].tb, vmm[0].bcid_delta );
             // add it to the collection in StEvent
             mFttCollection->addRawHit( hit );
-            if ( mDebug ){
+            if ( Debug_flag ){
                 PrintTheVMM( vmm );
             }
+            // LOG_DEBUG << *hit << endm;
         } // loop it
     } // while daqdta
 
@@ -152,4 +153,5 @@ int StFttRawHitMaker::readMuDst() {
     StMuFttUtil util;    
     mFttCollection = util.getFtt(mufttColl);
     mEvent->setFttCollection(mFttCollection);
+    return 1;
 }

@@ -2,12 +2,12 @@
  *
  * StFttPointMaker.cxx
  *
- * Author: jdb 2021
+ * Author: jdb & Zhen 2024
  ***************************************************************************
  *
  * Description: StFttPointMaker - class to fill the StFttPoint in StEvent
- * 
- *
+ * Note: in the cluster and point local position, the unit is mm, for the 
+ *       global position, unit is cm
  ***************************************************************************/
 #include <vector>
 #include <map>
@@ -34,8 +34,8 @@
 StFttPointMaker::StFttPointMaker( const char* name )
 : StMaker( name ),
   mEvent( 0 ),          /// pointer to StEvent
-  mDebug( false ),       /// print out of all full messages for debugging
-//   mDebug( true ),       /// print out of all full messages for debugging
+  Debug_flag( false ),       /// print out of all full messages for debugging
+//   Debug_flag( true ),       /// print out of all full messages for debugging
   mUseTestData( false ),
   mFttDb( nullptr )
 {
@@ -118,7 +118,7 @@ StFttPointMaker::Make()
 
         UChar_t rob = mFttDb->rob( clu );
         if ( clu->nStrips() < 2 ) continue;// add cluster width limit
-         if(mDebug)
+        if(Debug_flag)
         {
             LOG_INFO << "rob = " << (int)rob << endm;
             LOG_INFO << "direction = " << (int)clu->orientation() << endm;
@@ -130,7 +130,7 @@ StFttPointMaker::Make()
 
     for (int i = 0; i < 16; i++) 
     {
-        if (mDebug) 
+        if (Debug_flag) 
         {
             LOG_INFO << "nCluster kFttVertical = " << clustersPerRob[ i ][ kFttVertical ].size() << endm;
             LOG_INFO << "nCluster kFttHorizontal = " << clustersPerRob[ i ][ kFttHorizontal ].size() << endm;
@@ -138,10 +138,10 @@ StFttPointMaker::Make()
             LOG_INFO << "nCluster kFttDiagonalH = " << clustersPerRob[ i ][ kFttDiagonalH ].size() << endm;
         }
 
-        MakeLocalPoints((UChar_t)i); // make local points for each Quadrand
+        MakeLocalPoints((UChar_t)i); // make local points for each Quad
     }
     MakeGlobalPoints();
-    if(mDebug) LOG_INFO << "StFttPointMaker made " << mFttCollection->numberOfPoints() << " points this event" << endm;
+    if(Debug_flag) LOG_INFO << "StFttPointMaker made " << mFttCollection->numberOfPoints() << " points this event" << endm;
 
     return kStOk;
 }
@@ -169,7 +169,8 @@ void StFttPointMaker::MakeGlobalPoints() {
         mFttDb->getGloablOffset( p->plane(), p->quadrant(), dx, sx, dy, sy, dz, sz );
         global.set( (x) * sx +dx, (y) * sy +dy, (z + dz) * sz );
         //convert from mm to the cm, just divided by 10, 24.08.07
-        global.set((global.x()/10.),(global.y()/10.),(global.z()/10.)); 
+        // global.set((global.x()),(global.y()),(global.z())); 
+        global.set((global.x()/10.),(global.y()/10.),(global.z())); 
         p->setXYZ( global );
     }
 }
@@ -202,6 +203,7 @@ bool StFttPointMaker::GhostHitRejection_DiagH(double x, double y, int Rob, int &
     //loop the diagonal cluster find a cluster can include this cluster
     // for (StFttCluster* clu_dx : *clustersPerRob[(UChar_t)Rob][kFttDiagonalH])
     size_t nclusters = clustersPerRob[(UChar_t)Rob][kFttDiagonalH].size();
+    if(Debug_flag) LOG_INFO << "nDV clusters = " << nclusters << endm;
     double distance = -99.;
     double distance_prev = 999.;
     for (size_t iClu_DH = 0; iClu_DH<nclusters; iClu_DH++)
@@ -217,8 +219,11 @@ bool StFttPointMaker::GhostHitRejection_DiagH(double x, double y, int Rob, int &
         // LEdge = LEdge-1.6*sqrt(2);
         // REdge = REdge+1.6*sqrt(2);
 
-        // LOG_INFO << "intercept = " << intercept << " LEdge = " << LEdge << " REdge = " << REdge << endm;
-        // LOG_INFO << "cluster x = " << clu_dx->x()*sqrt(2) << endm;
+        if(Debug_flag)
+        {
+            LOG_INFO << "intercept = " << intercept << " LEdge = " << LEdge << " REdge = " << REdge << endm;
+            LOG_INFO << "cluster x = " << clu_dx->x()*sqrt(2) << endm;
+        }
 
         if(intercept >= LEdge && intercept <= REdge) 
         {
@@ -250,7 +255,7 @@ bool StFttPointMaker::GhostHitRejection_DiagH(double x, double y, int Rob, int &
 //using diagnoal vertical strip to reject method, 
 bool StFttPointMaker::GhostHitRejection_DiagV(double x, double y, int Rob, int &i_cluster)
 {
-    // LOG_INFO << "starting do GhostHitRejection_DiagV " << endm;
+    if(Debug_flag) LOG_INFO << "starting do GhostHitRejection_DiagV " << endm;
     // TODO: how to confirm i_cluster
     bool is_pair = kFALSE;
     i_cluster = -999;
@@ -272,8 +277,11 @@ bool StFttPointMaker::GhostHitRejection_DiagV(double x, double y, int Rob, int &
                 //  REdge = REdge+1.6*sqrt(2);
           
 
-        // LOG_INFO << "intercept = " << intercept << " LEdge = " << LEdge << " REdge = " << REdge << endm;
-        // LOG_INFO << "cluster x = " << clu_dx->x()*sqrt(2) << endm;
+        if(Debug_flag)
+        {
+            LOG_INFO << "intercept = " << intercept << " LEdge = " << LEdge << " REdge = " << REdge << endm;
+            LOG_INFO << "cluster x = " << clu_dx->x()*sqrt(2) << endm;
+        }
 
         //Method 1
         if(intercept >= LEdge && intercept <= REdge) 
@@ -317,7 +325,7 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
     nClusters_X = clustersPerRob[(UChar_t)Rob][kFttVertical].size();
     nClusters_Y = clustersPerRob[(UChar_t)Rob][kFttHorizontal].size();
 
-    if(mDebug)
+    if(Debug_flag)
     {
         LOG_INFO << "rob = " << (int)Rob << endm;
         LOG_INFO << "nClusterX = " << nClusters_X << " nClusterY = " << nClusters_Y << endm;
@@ -333,7 +341,7 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
         x = clu_x->x();
         int Row_x = clu_x->row();
 
-        if(mDebug)
+        if(Debug_flag)
         {
             LOG_INFO << "x cluster plane = " << (int)clu_x->plane() << " quad = " << (int)clu_x->quadrant() << endm;
             LOG_INFO << "start x loop, x = " << x << endm;
@@ -345,14 +353,14 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
             auto clu_y = clustersPerRob[(UChar_t)Rob][kFttHorizontal][iClu_Y];
             y = clu_y->x();
             int Row_y = clu_y->row();
-            if(mDebug)
+            if(Debug_flag)
             {
                 if (iClu_Y == 0) LOG_INFO << "y cluster plane = " << (int)clu_y->plane() << " quad = " << (int)clu_y->quadrant() << endm;
                 LOG_INFO << "start y loop, y = " << y << endm;
             }
 
             // get the x-y pair and check the region
-            //using strip group to rejeck ghost hit
+            //using strip group to reject ghost hit
             if ( !GhostHitRejection_StripGroup(Row_x,Row_y,x,y))
                 continue;
             
@@ -363,20 +371,20 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
             {
                 bool is_pair = kFALSE;
                 int i_cluster = -1;//the the index of d_V cluster
-                if(mDebug)
+                if(Debug_flag)
                 {
                     LOG_INFO << "x>y" << endm;
                 }
                 if( GhostHitRejection_DiagV(x,y,Rob,i_cluster) ) 
                 {
                     // LOG_INFO << "debug Diag V1" << endm;
-                    point->setX(x/10.);// cm unit. 24.08.07
-                    // point->setX(x);
+                    // point->setX(x/10.);// cm unit. 24.08.07
+                    point->setX(x);
                     point->setSigmaX(clu_x->sigma());
-                    point->setY(y/10.);// cm unit. 24.08.07
-                    // point->setY(y);
+                    // point->setY(y/10.);// cm unit. 24.08.07
+                    point->setY(y);
                     point->setSigmaY(clu_y->sigma());
-                    if(mDebug) LOG_INFO << "Point (X,Y) = " << x << ", " << y << endm;
+                    if(Debug_flag) LOG_INFO << "Point (X,Y) = " << x << ", " << y << endm;
                     point->setPlane(clu_x->plane());
                     point->setQuadrant(clu_x->quadrant());
                     point->addCluster(clu_x,kFttVertical);
@@ -389,15 +397,15 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
                     // LOG_INFO << "match diagonal cluster is " << i_cluster << " DV cluster" << endm;
                     clu_dv->print();
                     point->addCluster(clu_dv,kFttDiagonalV);
-                    point->setD1(clu_dv->x()/10.); // cm unit. 24.08.07
-                    // point->setD1(clu_dv->x());
+                    // point->setD1(clu_dv->x()/10.); // cm unit. 24.08.07
+                    point->setD1(clu_dv->x());
                     is_pair = kTRUE;
                     // LOG_INFO << "debug Diag V2" << endm;
                     if ( GhostHitRejection_DiagH(x,y,Rob,i_cluster) )
                     {
                         auto clu_dh =  clustersPerRob[(UChar_t)Rob][kFttDiagonalH][i_cluster];
-                        point->setD2(clu_dh->x()/10.); // cm unit. 24.08.07
-                        // point->setD2(clu_dh->x());
+                        // point->setD2(clu_dh->x()/10.); // cm unit. 24.08.07
+                        point->setD2(clu_dh->x());
                         // LOG_INFO << "debug Diag H1" << endm;
                         point->addCluster(clu_dh,kFttDiagonalH);
                     }
@@ -407,11 +415,11 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
 
                     // LOG_INFO << "debug Diag H2" << endm;
                     is_pair = kTRUE;
-                    if(mDebug) LOG_INFO << "Point (X,Y) = " << x << ", " << y << endm;
-                    point->setX(x/10.);// cm unit. 24.08.07
-                    point->setY(y/10.);
-                    // point->setX(x);
-                    // point->setY(y);
+                    if(Debug_flag) LOG_INFO << "Point (X,Y) = " << x << ", " << y << endm;
+                    // point->setX(x/10.);// cm unit. 24.08.07
+                    // point->setY(y/10.);
+                    point->setX(x);
+                    point->setY(y);
                     point->setSigmaX(clu_x->sigma());
                     point->setSigmaY(clu_y->sigma());
                     point->setPlane(clu_x->plane());
@@ -420,11 +428,11 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
                     point->addCluster(clu_x,kFttVertical);
                     // LOG_INFO << "debug Diag H4" << endm;
                     point->addCluster(clu_y,kFttHorizontal);
-                    if(mDebug) LOG_INFO << "match diagonal cluster is " << i_cluster << " DH cluster" << endm;
+                    if(Debug_flag) LOG_INFO << "match diagonal cluster is " << i_cluster << " DH cluster" << endm;
                     auto clu_dh =  clustersPerRob[(UChar_t)Rob][kFttDiagonalH][i_cluster];
                     clu_dh->print();
-                    point->setD1(clu_dh->x()/10.);// cm unit. 24.08.07
-                    // point->setD1(clu_dh->x());
+                    // point->setD1(clu_dh->x()/10.);// cm unit. 24.08.07
+                    point->setD1(clu_dh->x());
                     point->addCluster(clu_dh,kFttDiagonalH);
                 }
                 else 
@@ -441,7 +449,7 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
             }
             if (x<y)//for the diagonal_H is fully cover the higher half 
             {
-                if(mDebug)
+                if(Debug_flag)
                 {
                     LOG_INFO << "x<y" << endm;
                 }
@@ -450,10 +458,10 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
                 if( GhostHitRejection_DiagH(x,y,Rob,i_cluster) ) 
                 {
                     is_pair = kTRUE;
-                    point->setX(x/10.);
-                    point->setY(y/10.);// cm unit. 24.08.07
-                    // point->setX(x);
-                    // point->setY(y);
+                    // point->setX(x/10.);
+                    // point->setY(y/10.);// cm unit. 24.08.07
+                    point->setX(x);
+                    point->setY(y);
                     point->setSigmaX(clu_x->sigma());
                     point->setSigmaY(clu_y->sigma());
                     point->setPlane(clu_x->plane());
@@ -467,30 +475,30 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
                     // }
                     // LOG_INFO << "match diagonal cluster is " << i_cluster << " DH cluster" << endm;
                     clu_dh->print();
-                    point->setD1(clu_dh->x()/10.);// cm unit. 24.08.07
-                    // point->setD1(clu_dh->x());
+                    // point->setD1(clu_dh->x()/10.);// cm unit. 24.08.07
+                    point->setD1(clu_dh->x());
                     point->addCluster(clu_dh,kFttDiagonalH);
                     if (GhostHitRejection_DiagV(x,y,Rob,i_cluster))
                     {
                         auto clu_dv =  clustersPerRob[(UChar_t)Rob][kFttDiagonalV][i_cluster];
-                        point->setD2(clu_dv->x()/10.);// cm unit. 24.08.07
-                        // point->setD2(clu_dv->x());
+                        // point->setD2(clu_dv->x()/10.);// cm unit. 24.08.07
+                        point->setD2(clu_dv->x());
                         point->addCluster(clu_dv,kFttDiagonalV);
                     }
                 } else if ( GhostHitRejection_DiagV(x,y,Rob,i_cluster) )
                 {
                     is_pair = kTRUE;
-                    point->setX(x/10.);// cm unit. 24.08.07
-                    point->setY(y/10.);
-                    // point->setX(x);
-                    // point->setY(y);
+                    // point->setX(x/10.);// cm unit. 24.08.07
+                    // point->setY(y/10.);
+                    point->setX(x);
+                    point->setY(y);
                     point->setSigmaX(clu_x->sigma());
                     point->setSigmaY(clu_y->sigma());
                     point->setPlane(clu_x->plane());
                     point->setQuadrant(clu_x->quadrant());
                     point->addCluster(clu_x,kFttVertical);
                     point->addCluster(clu_y,kFttHorizontal);
-                    if(mDebug) LOG_INFO << "match diagonal cluster is " << i_cluster << " DV cluster" << endm;
+                    if(Debug_flag) LOG_INFO << "match diagonal cluster is " << i_cluster << " DV cluster" << endm;
                     auto clu_dv =  clustersPerRob[(UChar_t)Rob][kFttDiagonalV][i_cluster];
                     clu_dv->print();
                     point->setD1(clu_dv->x()/10.);
@@ -501,15 +509,15 @@ void StFttPointMaker::MakeLocalPoints(UChar_t Rob)
                 // LOG_INFO << "is pair = " << is_pair << endm;nn
                 if(is_pair)
                 {
-                    if(mDebug) LOG_INFO << "PAIR Point (X,Y) = " << point->x() << ", " << point->y() << endm;
-                    point->print();
+                    if(Debug_flag) LOG_INFO << "PAIR Point (X,Y) = " << point->x() << ", " << point->y() << endm;
+                    // point->print();
                     mFttPoint.push_back(point);
                     mFttCollection->addPoint(point);
                 }
             }
             if (!point)
             {
-                if(mDebug) LOG_INFO << "empty point !!!!!!" << endm;
+                if(Debug_flag) LOG_INFO << "empty point !!!!!!" << endm;
                 continue;
             }
             // point->print();

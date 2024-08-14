@@ -54,7 +54,7 @@ private:
     StEvent*             mEvent;
     StFttCollection*     mFttCollection;
     int                  mRunYear;
-    bool                 mDebug;
+    bool                 Debug_flag;
     StFttDb*             mFttDb;
 
     enum HitTimeModes {
@@ -69,7 +69,9 @@ private:
     };
     int mTimeCutMin  = -40; // value from Run22 - Run24 online QA approximately 1 bx
     int mTimeCutMax  =  100; // value from Run22 - Run24 online QA approximately 1 bx
-    int mTimeCutMode = 0; //default - kTimeCutModeDB, CINT cant use the enum directly
+    // int mTimeCutMode = 1; //Zhen change it - Try to include all the clusters
+    int mTimeCutMode = 3; //Zhen change it - Try to reproduce the result in /star/u/wangzhen/sTGC/Tracker/TrackMaker/fwd-dev2_zhen
+    // int mTimeCutMode = 0; //default - kTimeCutModeDB, CINT cant use the enum directly
 
 
     ClassDef( StFttClusterMaker, 0 )

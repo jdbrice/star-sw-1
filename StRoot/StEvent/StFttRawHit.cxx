@@ -2,7 +2,7 @@
  *
  * $Id: StFttRawHit.cxx,v 2.1 2021/11/18 14:53:48 jdb Exp $
  *
- * Author: jdb, Nov 2021
+ * Author: jdb & Zhen, Nov 2021
  ***************************************************************************
  *
  * Description: 
