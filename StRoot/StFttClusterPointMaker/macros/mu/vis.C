@@ -124,9 +124,6 @@ void plot_with_ellipse(vector<double> xs, vector<double> ys, vector<double> sigm
         // Rotation angle (angle of the eigenvector corresponding to the largest eigenvalue)
         double angle = TMath::ATan2(eigVectors(1,0), eigVectors(0,0));
 
-        // Debugging prints
-        std::cout << "hit number: " << i << " Ellipse at (" << xs[i] << ", " << ys[i] << ") with axes a=" << a << ", b=" << b << " and angle=" << angle << std::endl;
-
         if (isnan(angle) && !isnan(a) && !isnan(b) ) { continue; }
 
         // Create the ellipse
@@ -137,7 +134,6 @@ void plot_with_ellipse(vector<double> xs, vector<double> ys, vector<double> sigm
         ellipse->Draw("same");
     }
 
-    // Ensure the canvas is updated
     gPad->Update();
 }
 
@@ -161,20 +157,16 @@ void vis() {
     sigmaX.resize(n);
     sigmaY.resize(n);
 
-    // Copy data from ROOT's internal buffers to your vectors
     std::copy(t->GetV2(), t->GetV2() + n, x.begin());
     std::copy(t->GetV1(), t->GetV1() + n, y.begin());
     std::copy(t->GetV4(), t->GetV4() + n, sigmaX.begin());
     std::copy(t->GetV3(), t->GetV3() + n, sigmaY.begin());
 
-    // Second Draw call
     t->Draw("FttPoint.msigma_XY:FttPoint.mOrientation", "FttPoint.mPlane == 0", "goff", nEvents, iEvent);
 
-    // Resize vectors for the second draw (if only 1 row is selected, adjust as needed)
     sigmaXY.resize(n);
     orientation.resize(n);
 
-    // Copy data from ROOT's internal buffers to your vectors
     std::copy(t->GetV1(), t->GetV1() + n, sigmaXY.begin());
     std::copy(t->GetV2(), t->GetV2() + n, orientation.begin());
 
