@@ -11,6 +11,7 @@
 #include "StMuFttPoint.h"
 #include "St_base/StMessMgr.h"
 #include "StEvent/StFttPoint.h"
+#include "StEvent/StFttCluster.h"
 
 ClassImp(StMuFttPoint)
 
@@ -24,7 +25,13 @@ void StMuFttPoint::print(int opt) {
 void StMuFttPoint::set( StFttPoint *point ){
     mPlane = point->plane();
     mQuadrant = point->quadrant();
+    for (int i=0;i<4;i++){
+        if (point->cluster(i) != NULL) { mOrientation=(point->cluster(i))->orientation(); break; }
+    }
     mX = point->x();
     mY = point->y();
+    msigma_X = point->sigmaX();
+    msigma_Y = point->sigmaY();
+    msigma_XY = point->sigmaXY();
     mXYZ = TVector3( point->xyz().x(), point->xyz().y(), point->xyz().z() );
 } // set from StEvent

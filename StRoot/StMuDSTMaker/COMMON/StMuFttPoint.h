@@ -27,8 +27,12 @@ public:
 
     UChar_t plane()   const; // Detector plane.
     UChar_t quadrant()   const; // detector quadrant.
+    UChar_t orientation() const; // StClusterPointMaker ONLY: set orientation of cluster of origin
     float x() const;  // x position in cell unit at which point intersects the sub-detector in local coordinate
     float y() const;  // y position in cell unit at which point intersects the sub-detector in local coordinate
+    float sigma_x() const;  // x position error (sqrt(variance))
+    float sigma_y() const;  // y position error (sqrt(variance))
+    float sigma_xy() const;  // off-diagonal covariance matrix element (sigma_xy = cov(x,y) = cov(y,x), no sqrt)
     int nParentClusters()   const; // Number of points in the parent cluster.
     // StMuFttCluster* cluster( size_t i); //  Parent cluster of the photon.
     const TVector3& xyz()   const; // XYZ position in global STAR coordinate
@@ -40,7 +44,7 @@ public:
     // void addCluster(StMuFttCluster* cluster);
     void setXYZ(const TVector3& p3);
 
-    
+
     void print(int option=0);
 
     void set( StFttPoint * point );
@@ -48,8 +52,12 @@ public:
 private:
     UChar_t mPlane;
     UChar_t mQuadrant;
+    UChar_t mOrientation;
     Float_t mX=0.0;         // x-position in local coordinate
     Float_t mY=0.0;         // y-position in local coordinate
+    Float_t msigma_X=0.0;     // x-position error
+    Float_t msigma_Y=0.0;     // y-position error
+    Float_t msigma_XY=0.0;    // off-diagonal covariance matrix element
     TRefArray mClusters=0; // parent clusters (could be up to 3?)
     TVector3  mXYZ;    // Photon position in STAR coordinate
 
@@ -58,8 +66,12 @@ private:
 
 inline UChar_t StMuFttPoint::plane() const { return mPlane; }
 inline UChar_t StMuFttPoint::quadrant() const { return mQuadrant; }
+inline UChar_t StMuFttPoint::orientation() const { return mOrientation; }
 inline float StMuFttPoint::x() const { return mX; } // x position (cm) in local coords.
 inline float StMuFttPoint::y() const { return mY; } // y position (cm) in local coords.
+inline float StMuFttPoint::sigma_x() const { return msigma_X; } // x position error
+inline float StMuFttPoint::sigma_y() const { return msigma_Y; } // y position error
+inline float StMuFttPoint::sigma_xy() const { return msigma_XY; } // off-diagonal covariance matrix element
 inline int StMuFttPoint::nParentClusters() const { return mClusters.GetSize(); } // Number of points in parent cluster
 // inline StMuFttCluster* StMuFttPoint::cluster( size_t i ) { return mClusters.At(i); } //  Parent cluster of the photon.
 inline const TVector3& StMuFttPoint::xyz() const { return mXYZ; }
@@ -71,4 +83,3 @@ inline void StMuFttPoint::setY(float ypos) { mY = ypos; }
 inline void StMuFttPoint::setXYZ(const TVector3& p3) { mXYZ = p3; }
 
 #endif  // StMuFttPoint_h
-
