@@ -2,7 +2,7 @@
 // that is a valid shebang to run script as executable
 
 void daq_track(    int n = 2000,
-                    const char *inFile = "input.daq",
+                    const char *inFile = "/star-sw/FwdWork/star-sw-fwd/st_fwd_25127021_raw_0100003.daq",
                     // const char *inFile = "/gpfs01/star/pwg_tasks/FwdCalib/wangzhen/daq/run23/MultCheck/st_physics_24157073_raw_0500028.daq",
                     std::string configFile = "daq/daq_track.xml",
                     // std::string configFile = "daq/ftt_track.xml",

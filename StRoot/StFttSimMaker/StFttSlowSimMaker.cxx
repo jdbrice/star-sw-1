@@ -49,7 +49,8 @@ int StFttSlowSimMaker::Init() {
     fClusterProfile->SetNpx(1.e6);
 
     fClusterWidth = new TF1("fClusterWidth", "gausn");//width 
-    fClusterWidth->SetParameters(1.0, 1.6, 1.4);
+    fClusterWidth->SetParameters(1.0, 3.2, 1.4); //with neighbor on
+    // fClusterWidth->SetParameters(1.0, 1.6, 1.4); // with out neighbor on
     fClusterWidth->SetRange(1, 10);
     fClusterWidth->SetNpx(1.e6);
 

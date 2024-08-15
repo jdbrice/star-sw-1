@@ -232,15 +232,20 @@ void StFttDb::loadHardwareMapFromFile( std::string fn ){
         }
     }
     inf.close();
+    LOG_INFO << "sTGC Hardware map loaded from File: " << fn << endm;
 }
 
 //read the strip center file to get the position information
 //for the local coordinate, zero point will be the pin hole, that may changed depends on survey result
 bool StFttDb::loadStripCenterFromFile( std::string fn ){
     std::ifstream inf;
+    if (mDebug)
+        {
+            printf( "Opening file: %s \n", fn.c_str());
+        }
     inf.open( fn.c_str() );
     if ( !inf ) {
-        LOG_WARN << "sTGC Hardware map file not found" << endm;
+        LOG_WARN << "Strip center file not found" << endm;
         return kFALSE;
     }
     std::string st1 = "Row1";
@@ -313,9 +318,13 @@ bool StFttDb::loadStripCenterFromFile( std::string fn ){
 //for the local coordinate, zero point will be the pin hole, that may changed depends on survey result
 bool StFttDb::loadStripEdgeFromFile( std::string fn ){
     std::ifstream inf;
+    if (mDebug)
+        {
+            printf( "Opening file: %s \n", fn.c_str());
+        }
     inf.open( fn.c_str() );
     if ( !inf ) {
-        LOG_WARN << "sTGC Hardware map file not found" << endm;
+        LOG_WARN << "sTGC Strip edge file not found" << endm;
         return kFALSE;
     }
     std::string st1 = "Row4_edge";
@@ -364,6 +373,10 @@ bool StFttDb::loadStripEdgeFromFile( std::string fn ){
 //load the strip length information from the files. this will be used to set as the sigma along the strip direction 
 bool StFttDb::loadStripLengthFromFile( std::string fn ){
     std::ifstream inf;
+    if (mDebug)
+        {
+            printf( "Opening file: %s \n", fn.c_str());
+        }
     inf.open( fn.c_str() );
     if ( !inf ) {
         LOG_WARN << "sTGC Stirp length file not found" << endm;

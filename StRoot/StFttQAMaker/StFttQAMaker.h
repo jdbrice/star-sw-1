@@ -142,7 +142,7 @@ public:
     static const size_t maxClusterViz = 1000;
     TString mClusterPdfName;
 
-    ClassDef(StFttQAMaker, 1)
+    ClassDef(StFttQAMaker, 0)
 
 };
 
