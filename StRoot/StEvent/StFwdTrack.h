@@ -136,7 +136,7 @@ public:
     UShort_t idTruth() const { return mIdTruth; }
     UShort_t qaTruth() const { return mQATruth; }
     StThreeVectorD dca() const { return StThreeVectorD( mDCA[0], mDCA[1], mDCA[2] ); }
-    StFwdTrackSeedPoint vertex() const { return mVertex; }
+    UChar_t vertexIndex() const { return mVtxIndex; }
 
     void setPrimaryMomentum( StThreeVectorD mom ) { mPrimaryMomentum = mom; }
     void setDidFitConverge( bool lDidFitConverge ) { mDidFitConverge = lDidFitConverge; }
@@ -151,7 +151,7 @@ public:
     void setMc( UShort_t idt, UShort_t qual ) { mIdTruth = idt; mQATruth = qual; }
     void setDCA( StThreeVectorD dca ) { mDCA[0] = dca.x(); mDCA[1] = dca.y(); mDCA[2] = dca.z(); }
     void setDCA( float dcaX, float dcaY, float dcaZ ) { mDCA[0] = dcaX; mDCA[1] = dcaY; mDCA[2] = dcaZ; }
-    void setVertex( StFwdTrackSeedPoint vtx ) { mVertex = vtx; }
+    void setVtxIndex( UChar_t vtxIndex ) { mVtxIndex = vtxIndex; }
 
     // ECAL clusters
     StPtrVecFcsCluster& ecalClusters();
@@ -188,7 +188,7 @@ protected:
     UShort_t mQATruth;
 
     float mDCA[3]; // DCA to the primary vertex
-    StFwdTrackSeedPoint mVertex;
+    UChar_t mVtxIndex;
     
 
     ClassDef(StFwdTrack,4)

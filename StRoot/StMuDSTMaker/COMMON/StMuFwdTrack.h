@@ -142,7 +142,7 @@ public:
     short   numberOfSeedPoints() const;
     UShort_t idTruth() const { return mIdTruth; }
     UShort_t qaTruth() const { return mQATruth; }
-    TVector3 dca() const { return TVector3( mDCA[0], mDCA[1], mDCA[2] ); }
+    TVector3 dca() const { return TVector3( mDCAXY, mDCAXY, mDCAZ ); }
 
 
     void setPrimaryMomentum( TVector3 mom ) { mPrimaryMomentum = mom; }
@@ -156,8 +156,8 @@ public:
     void setPval( float lPval ) { mPval = lPval;}
     void setCharge( short  lCharge ) { mCharge = lCharge;}
     void setMc( UShort_t idt, UShort_t qual ) { mIdTruth = idt; mQATruth = qual; }
-    void setDCA( float dca[3] ) { mDCA[0] = dca[0]; mDCA[1] = dca[1]; mDCA[2] = dca[2]; }
-    void setDCA( TVector3 dca ) { mDCA[0] = dca.X(); mDCA[1] = dca.Y(); mDCA[2] = dca.Z(); }
+    void setDCA( float dca[3] ) { mDCAXY = sqrt(dca[0]*dca[0]+dca[1]*dca[1]); mDCAZ = dca[2]; }
+    void setDCA( TVector3 dca ) { mDCAXY = sqrt(dca.X()*dca.X() + dca.Y()*dca.Y()); mDCAZ = dca.Z(); }
 
     void addEcalCluster( StMuFcsCluster* clu);
     void addHcalCluster( StMuFcsCluster* clu);
@@ -185,8 +185,9 @@ protected:
     /// MC track quality (percentage of hits coming from corresponding MC track)
     UShort_t mQATruth;
 
-    float mDCA[3]; // DCA to the primary vertex
-    StMuFwdTrackSeedPoint mVertexSeedPoint;
+    float mDCAXY; // DCA XY to the primary vertex
+    float mDCAZ; // DCA Z to the primary vertex
+    UChar_t mVtxIndex; // Index of the vertex in the event
 
     ClassDef(StMuFwdTrack,3)
 };

@@ -3,13 +3,13 @@
 
 
 void daq_track(    int n = 50,
-                    const char *inFile = "st_physics_23072023_raw_7500001.daq",
+                    const char *inFile = "st_fwd_23074018_raw_1000013.daq",
                     const char *geom = "y2023") {
     TString _chain;
     gSystem->Load( "libStarRoot.so" );
 
     // Simplest chain with fst, fcs, ftt and fwdTracker
-    _chain = Form("in, %s, db, StEvent, trgd, btof, fcs, fst, ftt, fwdTrack, fstMuRawHit, CMuDst, evout, tree", geom);
+    _chain = Form("in, %s, db, StEvent, trgd, btof, fcs, fst, ftt, fwdTrack, fstMuRawHit, EventQA, CMuDst, evout, tree", geom);
     // _chain = Form("in, %s, StEvent, fcs, fst, ftt, fwdTrack, evout, tree", geom);
 
     // needed in this wonky spack environment / docker container
@@ -42,13 +42,24 @@ void daq_track(    int n = 50,
             fwdTrack->setGeoCache( "fGeom.root" );
             // fwdTrack->setDebug();
 
-            // Generate FWD QA
-            StFwdQAMaker *fwdQAMk = new StFwdQAMaker();
-            fwdQAMk->SetDebug(2);
-            chain->AddAfter("fwdTrack", fwdQAMk);
+            
         }
     }
 
+      // The PicoDst
+    gSystem->Load("libStPicoEvent");
+    gSystem->Load("libStPicoDstMaker");
+    StPicoDstMaker *picoMk = new StPicoDstMaker(StPicoDstMaker::IoWrite);
+    cout << "picoMk = " << picoMk << endl;
+    picoMk->setVtxMode(StPicoDstMaker::Default);
+
+        // Generate FWD QA
+    StFwdQAMaker *fwdQAMk = new StFwdQAMaker();
+    fwdQAMk->SetDebug(2);
+    chain->AddAfter("fwdTrack", fwdQAMk);
+
+
+    
     chain->Print();
     // Initialize the chain
     chain->Init();

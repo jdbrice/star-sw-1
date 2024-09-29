@@ -52,7 +52,7 @@ class McTrack {
         mStartVertex = start_vertex;
     }
 
-    void addHit(KiTrack::IHit *hit) { mFttHits.push_back(hit); }
+    void addFttHit(KiTrack::IHit *hit) { mFttHits.push_back(hit); }
     void addFstHit(KiTrack::IHit *hit) { mFstHits.push_back(hit); }
 
     double mPt, mEta, mPhi;
@@ -69,6 +69,20 @@ class McTrack {
  */
 class FwdHit : public KiTrack::IHit {
   public:
+  // Default ctor
+    FwdHit() : KiTrack::IHit() {
+        _id = 0;
+        _x = 0;
+        _y = 0;
+        _z = 0;
+        _detid = 0;
+        _tid = 0;
+        _vid = 0;
+        _sector = 0;
+        _mcTrack = nullptr;
+        _hit = 0;
+        _covmat.ResizeTo( 3, 3 );
+    };
     FwdHit(unsigned int id, float x, float y, float z, int vid, int detid, int tid,
            TMatrixDSym covmat, std::shared_ptr<McTrack> mcTrack )
         : KiTrack::IHit() {
@@ -96,6 +110,14 @@ class FwdHit : public KiTrack::IHit {
                                  // cleaner in future.
         }
     };
+
+    // Set basic props for e.g. Primary Vertex type hits
+    void setXYZDetId( float x, float y, float z, int detid ){
+        _x = x;
+        _y = y;
+        _z = z;
+        _detid = detid;
+    }
 
     bool isFst() const { return _detid == kFstId; } 
     bool isFtt() const { return _detid == kFttId; } 
