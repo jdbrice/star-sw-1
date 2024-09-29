@@ -666,7 +666,7 @@ class ForwardTrackMaker {
      * @param includeVertex : include the primary vertex in the fit or not
      * @return GenfitTrackResult : result of the fit
      */
-    GenfitTrackResult fitTrack(Seed_t &seed, TVector3 *momentumSeedState = nullptr) {
+    GenfitTrackResult fitTrack(Seed_t &seed, TVector3 *momentumSeedState = nullptr, bool refitGbl = false) {
         LOG_DEBUG << "FwdTracker::fitTrack->" << endm;
         mEventStats.mAttemptedFits++;
         // We will build this up as we go
@@ -679,7 +679,7 @@ class ForwardTrackMaker {
         // If we are using a provided momentum state
         if ( momentumSeedState ){
             LOG_DEBUG << "--FitTrack with provided momentum seed state" << endm;
-            mTrackFitter->fitTrack( seed, momentumSeedState );
+            mTrackFitter->fitTrack( seed, momentumSeedState, refitGbl );
         } else {
             LOG_DEBUG << "--FitTrack without provided momentum seed state" << endm;
             mTrackFitter->fitTrack( seed );
@@ -877,7 +877,7 @@ class ForwardTrackMaker {
             // just use the global track to build the track that will use the PV also
             Seed_t seedWithPV = gtr.mSeed;
             seedWithPV.push_back( &mEventVertexHit );
-            GenfitTrackResult gtrPV = fitTrack(seedWithPV, &gtr.mMomentum);
+            GenfitTrackResult gtrPV = fitTrack(seedWithPV, &gtr.mMomentum, true); // True flag indicates a GBL refit for alingment
             if ( gtrPV.mIsFitConvergedFully ){
                 mEventStats.mGoodPrimaryFits++;
             } else {
