@@ -1,4 +1,4 @@
-//usr/bin/env root4star -l -b -q $0'('$1')'; exit $?
+//usr/bin/env root4star -l -b -q $0'("'${1:-sim.fzd}'",'${2:-200}')'; exit $?
 // that is a valid shebang to run script as executable, but with only one arg
 
 
@@ -7,31 +7,20 @@
 
 TFile *output = 0;
 
-void reportMem(){
-    struct sysinfo memInfo;
-
-    sysinfo (&memInfo);
-    long long totalVirtualMem = memInfo.totalram;
-    //Add other values in next statement to avoid int overflow on right hand side...
-    totalVirtualMem += memInfo.totalswap;
-    totalVirtualMem *= memInfo.mem_unit;
-
-    long long virtualMemUsed = memInfo.totalram - memInfo.freeram;
-    //Add other values in next statement to avoid int overflow on right hand side...
-    virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
-    virtualMemUsed *= memInfo.mem_unit;
-
-    LOG_INFO << "MEM USED % = " << ( (double)virtualMemUsed / (double)totalVirtualMem ) << endm;
-}
-
-void sim( int n = 100, // nEvents to run
-                string outputName = "stFwdTrackMaker_ideal_sim.root",
+void sim(       char *inFile =  "sim.fzd",
+                int n = 100, // nEvents to run
                 bool useFstForSeedFinding = false, // use FTT (default) or FST for track finding
                 bool enableTrackRefit = true, // Enable track refit (default off)
                 bool realisticSim = false, // enables data-like mode, real track finding and fitting without MC seed
-                char *inFile =  "sim.fzd"
+                bool useZeroB = false
             ) {
-    cout << "Running " << n << " events from " << inFile << endl;
+    // report all of the parameters passed in
+    cout << "inFile = " << inFile << endl;
+    cout << "n = " << n << endl;
+    cout << "useFstForSeedFinding = " << useFstForSeedFinding << endl;
+    cout << "enableTrackRefit = " << enableTrackRefit << endl;
+    cout << "realisticSim = " << realisticSim << endl;
+    cout << "useZeroB = " << useZeroB << endl;
     const char *geom = "y2023 agml usexgeom";
     TString _geom = geom;
 
@@ -119,6 +108,7 @@ void sim( int n = 100, // nEvents to run
         StFwdTrackMaker * fwdTrack = (StFwdTrackMaker*) chain->GetMaker( "fwdTrack" );
 
         if ( fwdTrack ){
+            fwdTrack->SetDebug(1);
             // config file set here for ideal simulation
             if (!realisticSim){
                 cout << "Configured for ideal simulation (MC finding + MC mom seed)" << endl;
@@ -146,16 +136,18 @@ void sim( int n = 100, // nEvents to run
                 // fwdTrack->setSeedFindingWithFstFttSimultaneous();
 
             fwdTrack->setTrackRefit( false );
-            fwdTrack->setOutputFilename( outputName );
-            // fwdTrack->SetGenerateTree( false );
-            fwdTrack->SetGenerateHistograms( false );
+            fwdTrack->setOutputFilename( TString::Format( "%s.output.root", inFile ).Data() );
             fwdTrack->SetVisualize( false );
             fwdTrack->SetDebug();
-            // fwdTrack->setTrackFittingOff();
             fwdTrack->setIncludePrimaryVertexInFit( false );
-            fwdTrack->setUseMcSeedForFit(true);
+            
+            // fwdTrack->setTrackFittingOff();
+            // fwdTrack->setUseMcSeedForFit(true);
             // fwdTrack->setConfigKeyValue("")
-            // fwdTrack->setZeroB( true );
+            if ( useZeroB ){
+                cout << "Setting B = 0" << endl;
+                fwdTrack->setZeroB( true );
+            }
             bool doFitQA = true;
             if ( doFitQA ){
                 StFwdFitQAMaker *fwdFitQA = new StFwdFitQAMaker();
@@ -235,7 +227,6 @@ chain_loop:
         //     cout << "muFwdTrack->mPt = " << muFwdTrack->momentum().Pt() << endl;
 
         // }
-        // reportMem();
         cout << "<---------- END EVENT" << endl;
     } // event loop
 }

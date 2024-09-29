@@ -8,11 +8,10 @@
 
 #include "KiTrack/IHit.h"
 #include "GenFit/Track.h"
-#include "GenFit/GFRaveVertexFactory.h"
 
 #include "TMath.h"
 
-#include <limits>
+#include <climits>
 #include <map>
 #include <string>
 #include <string>
@@ -667,11 +666,24 @@ void StFwdTrackMaker::loadFttHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTra
             float xcm = point->xyz().x()*mm_to_cm;
             float ycm = point->xyz().y()*mm_to_cm;
             float zcm = point->xyz().z();
-            //cout << "z = " << zcm << endl;
-            //hitCov3.Print();
-            mFwdHitsFtt.push_back(FwdHit(count++, xcm, ycm, zcm, -point->plane(), kFttId, 0, hitCov3, nullptr));
+
+            // get the track id
+            int track_id = point->idTruth();
+            shared_ptr<McTrack> mcTrack = nullptr;
+            if ( mcTrackMap.count(track_id) ) {
+                mcTrack = mcTrackMap[track_id];
+                LOG_DEBUG << "Adding McTrack to FTT hit: " << track_id << endm;
+            }
+
+            mFwdHitsFtt.push_back(FwdHit(count++, // id
+                xcm, ycm, zcm, 
+                -point->plane(), // volume id 
+                kFttId, // detid
+                track_id, // track id
+                hitCov3, // covariance matrix
+                mcTrack) // mcTrack
+                );
             auto hit = &(mFwdHitsFtt.back());
-            //cout << "Ftt hit->getLayer() = " << hit->getLayer() << endl;
             hit->setSensor(point->quadrant());
             mFttHits.push_back( TVector3( xcm, ycm, zcm)  );
             //hitMap[hit->getSector()].push_back(hit);
@@ -761,7 +773,7 @@ void StFwdTrackMaker::loadFttHitsFromFastSim( FwdDataSource::McTrackMap_t &mcTra
 
         // Add hit pointer to the track
         if (mcTrackMap[track_id])
-            mcTrackMap[track_id]->addHit(hit);
+            mcTrackMap[track_id]->addFttHit(hit);
     } // loop on hits
 
     LOG_INFO << "Loading FTT Hits from FastSim" << endm;
@@ -805,6 +817,10 @@ void StFwdTrackMaker::loadFttHitsFromFastSim( FwdDataSource::McTrackMap_t &mcTra
         // Add the hit to the hit map
         if ( hit->getLayer() >= 0 )
             hitMap[hit->getSector()].push_back(hit);
+        // add to MC track map
+        if ( hit->getMcTrack() ){
+            hit->getMcTrack()->addFttHit(hit);
+        }
     }
 
     if ( numFwdHitsPost != numFwdHitsPrior ){
@@ -878,7 +894,7 @@ void StFwdTrackMaker::loadFttHitsFromGEANT( FwdDataSource::McTrackMap_t &mcTrack
             hitMap[hit->getSector()].push_back(hit);
         
         if ( dynamic_cast<FwdHit*>(hit)->_mcTrack ){
-            dynamic_cast<FwdHit*>(hit)->_mcTrack->addHit(hit);
+            dynamic_cast<FwdHit*>(hit)->_mcTrack->addFttHit(hit);
         }
     }
 
@@ -1106,13 +1122,21 @@ int StFwdTrackMaker::loadFstHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTrac
                     }
 
                     // we use d+4 so that both FTT and FST start at 4
-                    mFwdHitsFst.push_back(FwdHit(count++, x0, y0, vZ, d+4, kFstId, track_id, hitCov3, nullptr));
+                    mFwdHitsFst.push_back(
+                        FwdHit(
+                            count++, // id 
+                            x0, y0, vZ, // position
+                            d+4, // volume id
+                            kFstId, // detid
+                            track_id, // mc track id
+                            hitCov3, // covariance matrix
+                            mcTrack // mcTrack
+                        )
+                    );
+                    // store a pointer to the original StFstHit
                     auto hit = &(mFwdHitsFst.back());
                     hit->setSensor(sensorIdx);
-                    // Add the hit to the hit map
-                    //cout << "Layer = " << hit->getLayer() << endl;
-
-                    count++;
+                    mFwdHitsFst.back()._hit = fsthits[ih];
                 }
             } // loop is
         } // loop iw
@@ -1561,7 +1585,7 @@ int StFwdTrackMaker::Make() {
         LOG_WARN << "Skipping event with more than " << maxForwardTracks << " forward tracks" << endm;
         return kStOk;
     }
-    LOG_DEBUG << "We have " << nForwardTracks << " forward MC tracks" << endm;
+    LOG_DEBUG << "We have " << nForwardTracks << " forward MC tracks" << endm;    
     
     /**********************************************************************/
     // Load sTGC
@@ -1583,6 +1607,13 @@ int StFwdTrackMaker::Make() {
     LOG_DEBUG << ">>StFwdTrackMaker::loadFcsHits" << endm;
     if ( IAttr("useFcs") ) {
         loadFcs();
+    }
+
+    /**********************************************************************/
+    // Print out the MC tracks and their hit counts
+    for ( auto kv : mcTrackMap ){
+        if ( kv.second == nullptr ) continue;
+        LOG_DEBUG << "MC Track: id=" << kv.first << ", nFTT=" << kv.second->mFttHits.size() << ", nFST=" << kv.second->mFstHits.size() << endm;
     }
 
     /**********************************************************************/
@@ -1669,9 +1700,7 @@ StFwdTrack * StFwdTrackMaker::makeStFwdTrack( GenfitTrackResult &gtr, size_t ind
             fh->getTrackId(), 
             cov 
         );
-        if ( fh->isPV() )
-            fwdTrack->setVertex( p );
-        else if ( fh->isFst() )
+        if ( fh->isFst() )
             fwdTrack->mFSTPoints.push_back( p );
         else if ( fh->isFtt() )
             fwdTrack->mFTTPoints.push_back( p );
@@ -1710,6 +1739,12 @@ StFwdTrack * StFwdTrackMaker::makeStFwdTrack( GenfitTrackResult &gtr, size_t ind
 
     TVector3 p = gtr.mMomentum;//cr->getMom( gtr.mTrack->getFittedState( 0, cr ));
     fwdTrack->setPrimaryMomentum( StThreeVectorD( gtr.mMomentum.X(), gtr.mMomentum.Y(), gtr.mMomentum.Z() ) );
+
+    if ( gtr.isPrimary ){
+        fwdTrack->setVtxIndex( 0 );
+    } else {
+        fwdTrack->setVtxIndex( UCHAR_MAX );
+    }
 
     /*******************************************************************************/
     // if the track is not (at least partially) converged, do not try to project it
@@ -1801,9 +1836,6 @@ void StFwdTrackMaker::FitVertex(){
     vector<genfit::Track *> genfitTracks;
 
     const auto &trackResults = mForwardTracker -> getTrackResults();
-    // for ( auto gtr : trackResults ){
-    //     // genfitTracks.push_back( gtr.mTrack );
-    // }
     if ( genfitTracks.size() >= 2 ){
         genfit::GFRaveVertexFactory gfrvf;
 

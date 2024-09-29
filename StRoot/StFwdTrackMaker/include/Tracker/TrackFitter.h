@@ -1016,6 +1016,11 @@ class TrackFitter {
         double pt = mcurv * K * 5; // pT from average measured curv
         double dx = (p1.X() - p0.X());
         double dy = (p1.Y() - p0.Y());
+        // help prevent seed from having zero pT - exception on TVector3 when calling Eta()
+        if ( abs(dx) < 1e-6 || abs(dy) < 1e-6){
+            dx = 1e-1;
+            dy = 1e-1;
+        }
         double dz = (p1.Z() - p0.Z());
         double phi = TMath::ATan2(dy, dx);
         double Rxy = sqrt(dx * dx + dy * dy);
@@ -1025,9 +1030,9 @@ class TrackFitter {
         }
         Rxy = sqrt( p0.X()*p0.X() + p0.Y()*p0.Y() );
         theta = TMath::ATan2(Rxy, p0.Z());
-
-        LOG_DEBUG << TString::Format( "pt=%f, dx=%f, dy=%f, dz=%f, phi=%f, theta=%f", pt, dx, dy, dz, phi, theta ) << endm;
-        // double eta = -log( tantheta / 2.0 );
+        double eta = -log( TMath::Tan(theta) / 2.0 );
+        LOG_DEBUG << TString::Format( "pt=%f, dx=%f, dy=%f, dz=%f, phi=%f, theta=%f, eta=%f", pt, dx, dy, dz, phi, theta, eta ) << endm;
+        
         // these starting conditions can probably be improvd, good study for students
 
         seedMom.SetPtThetaPhi(pt, theta, phi);
@@ -2198,12 +2203,13 @@ class TrackFitter {
         // get the seed info from our hits
         static TVector3 seedMom, seedPos;
         LOG_DEBUG << "Getting seed state" << endm;
-        // returns track curvature if needed
         seedState(trackSeed, seedPos, seedMom);
-
-        if (seedMomentum != nullptr) {
+        // Note: the check on pT/Mag is bc TVector3 throws an exception when trying to get Eta() when pT=0 and pZ!=0
+        if (seedMomentum != nullptr && seedMomentum->Pt() / seedMomentum->Mag() > 1e-3) {
             seedMom = *seedMomentum;
-            LOG_DEBUG << "Using provided seedMomentum: " << TString::Format( "(pt=%f, eta=%f, phi=%f)", seedMom.Pt(), seedMom.Eta(), seedMom.Phi() ) << endm;
+            LOG_DEBUG << "Using provided seedMomentum: pT=" << seedMomentum->Pt() << endm;
+            LOG_DEBUG << TString::Format( "(px=%f, py=%f, pz=%f)", seedMom.Px(), seedMom.Py(), seedMom.Pz() ) << endm;
+            LOG_DEBUG << TString::Format( "(pt=%f, eta=%f, phi=%f)", seedMom.Pt(), seedMom.Eta(), seedMom.Phi() ) << endm;
         }
 
         setupTrack(trackSeed, seedMom, seedPos);

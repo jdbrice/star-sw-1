@@ -2528,14 +2528,16 @@ void StPicoDstMaker::fillFwdTracks() {
       return;
     }
     const StSPtrVecFwdTrack& evTracks = evc->tracks();
-    LOG_INFO << "Adding " << evc->numberOfTracks() << " StMuFwdTracks to MuDSt" << endm; 
+    LOG_INFO << "Adding " << evc->numberOfTracks() << " StFwdTracks from StEvent to PicoDst" << endm; 
     for ( size_t i = 0; i < evc->numberOfTracks(); i++ ){
       StFwdTrack * evTrack = evTracks[i];
       StPicoFwdTrack picoFwdTrack;
+      // Set the PicoDst attributes
       picoFwdTrack.setMomentum( evTrack->momentum().x(), evTrack->momentum().y(), evTrack->momentum().z() );
       picoFwdTrack.setNumberOfFitPoints( evTrack->numberOfFitPoints() * evTrack->charge() );
       picoFwdTrack.setNumberOfSeedPoints( evTrack->numberOfSeedPoints() );
       picoFwdTrack.setChi2( evTrack->chi2() );
+      // Add the PicoDst object to the PicoArray
       int counter = mPicoArrays[StPicoArrays::FwdTrack]->GetEntries();
       picoFwdTrack.setId( counter );
       new((*(mPicoArrays[StPicoArrays::FwdTrack]))[counter]) StPicoFwdTrack(picoFwdTrack);

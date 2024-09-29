@@ -2,7 +2,7 @@
 // that is a valid shebang to run script as executable, but with only one arg
 
 void loadLibs();
-void mudst( const Char_t * fileList = "mudst.lis", int nEvents = 5000, int nFiles = 100 ){
+void mudst( const Char_t * fileList = "mudst.lis", int nEvents = 5000, int nFiles = 1 ){
 	cout << "FileList: " << fileList << endl;
 	cout << "nFiles: " << nFiles << endl;
 	cout << "nEvents: " << nEvents << endl;
