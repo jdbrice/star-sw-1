@@ -1533,163 +1533,94 @@ class ForwardTrackMaker {
      * @param disk : The FST disk number
      */
     void addFstHits( GenfitTrackResult &gtr, size_t disk ) {
-        //FwdDataSource::HitMap_t hitmap = mDataSource->getFstHits();
-        //if (gtr.mIsFitConverged == false) {
-        //    // Original Track fit did not converge, skipping
-        //    return;
-        //}
-        //if ( disk > 2 ){
-        //    LOG_ERROR << "Invalid FST disk number: " << disk << endm;
-        //    return;
-        //}
-        //mEventStats.mPossibleReFit++;
+        FwdDataSource::HitMap_t hitmap = mDataSource->getFstHits();
+        if (gtr.mIsFitConverged == false) {
+            // Original Track fit did not converge, skipping
+            return;
+        }
+        if ( disk > 2 ){
+            LOG_ERROR << "Invalid FST disk number: " << disk << endm;
+            return;
+        }
+        mEventStats.mPossibleReFit++;
 
-//<<<<<<//< HEAD
-        //// loop on global tracks
-        //for (size_t i = 0; i < mTrackResults.size(); i++) {
-        //    GenfitTrackResult &gtr = mTrackResults[i];
+        Seed_t hits_near_disk;
+        std::vector<double> distanceProjHit;
+        std::vector<int> fstHitIdx;
+        std::vector<int> matchedMc;
 
-        //    if (gtr.isFitConverged == false) {
-        //        // Original Track fit did not converge, skipping
-        //        return;
-        //    }
-  
-        //    Seed_t hits_near_disk[3];
-        //    std::vector<double> distanceProjHit[3];
-        //    std::vector<int> fstHitIdx[3];
-        //    std::vector<int> matchedMc[3];
-        //    mEventStats.mPossibleReFit++;
+        try {
+            std::map<int,TVector2> sensorProjections; // maps sensorId to 2D sensor frame location of projected track
 
-        //    try {
-        //        //loop over each plane
-        //        for(int p = 0; p < 3; p++) {
-        //            std::map<int,TVector2> sensorProjections; // maps sensorId to 2D sensor frame location of projected track
+            // Loop over hits and find unique sensors
+            for(auto h : hitmap[disk]) {
+                LOG_INFO << "HIT POSITION " << h->getX() << " " << h->getY() << " " << h->getZ() << endl;
+                int s = static_cast<FwdHit*>(h)->getSensor(); // unique sensor value
+                LOG_INFO << "LOOKING AT HIT ON SI = " << s << endm;
+                if(sensorProjections.count(s) == 0) sensorProjections[s] = mTrackFitter->projectToFst(s, gtr.mTrack);
+                double distance;
 
-        //            // Loop over hits and find unique sensors
-        //            for(auto h : hitmap[p]) {
-        //                LOG_INFO << "HIT POSITION " << h->getX() << " " << h->getY() << " " << h->getZ() << endl;
-        //                int s = static_cast<FwdHit*>(h)->getSensor(); // unique sensor value
-        //                LOG_INFO << "LOOKING AT HIT ON SI = " << s << endm;
-        //                if(sensorProjections.count(s) == 0) sensorProjections[s] = mTrackFitter->projectToFst(s, gtr.track);
-        //                double distance;
+                if(isFstHitNearProjectedState(h,sensorProjections[s],distance)) {
+                    hits_near_disk.push_back(h);
+                    distanceProjHit.push_back(distance);
+                    fstHitIdx.push_back(s);
+                    LOG_INFO << "FOUND A MATCHING SILICON HIT" << endm;
+                }
+            }
+        } catch (genfit::Exception &e) {
+            LOG_WARN << "Unable to get FST projections: " << e.what() << endm;
+        }   
 
-        //                if(isFstHitNearProjectedState(h,sensorProjections[s],distance)) {
-        //                    hits_near_disk[p].push_back(h);
-        //                    distanceProjHit[p].push_back(distance);
-        //                    fstHitIdx[p].push_back(s);
-        //                    LOG_INFO << "FOUND A MATCHING SILICON HIT" << endm;
-        //                }
+        vector<KiTrack::IHit *> hits_to_add;
+        Seed_t fst_hits_for_this_track_nnull;
 
-        //                //if (dynamic_cast<FwdHit *>(h)->_tid == mGlobalTracks[i]->getMcTrackId()) {
-        //                //    LOG_INFO << "FOUND AN MC MATCH!!!!!!!!!!!!" << endm;
-        //                //    matchedMc[p].push_back(1);
-        //                //} else {
-        //                //    matchedMc[p].push_back(0);
-        //                //}
-        //            }
-        //        }
-        //    } catch (genfit::Exception &e) {
-        //        LOG_WARN << "Unable to get FST projections: " << e.what() << endm;
-        //    }   
+        size_t nFstHitsFound = 0; // this is really # of disks on which a hit is found
 
-        //    vector<KiTrack::IHit *> hits_to_add;
-        //    Seed_t fst_hits_for_this_track_nnull;
+        if ( hits_near_disk.size() == 1 ) {
+            hits_to_add.push_back( hits_near_disk[0] );
+            nFstHitsFound++;
+        } else if( hits_near_disk.size() > 1 ) {
+            size_t numHits = hits_near_disk.size();
+            vector<KiTrack::IHit *> remaininghits;
+            vector<int> originalidx;
+            for(int ihit = 0; ihit < numHits; ihit++) {
+                bool alone = true;
+                for(int jhit = 0; jhit < numHits; jhit++) {
+                    if(ihit == jhit) continue;
+                    if(fstHitIdx[ihit] == fstHitIdx[jhit]) alone = false;
+                }
+                if(alone) {
+                    hits_to_add.push_back( hits_near_disk[ihit] );
+                    LOG_INFO << "HIT ON SENSOR " << fstHitIdx[ihit] << " IS ALONE" << endm;
+                    nFstHitsFound++;
+                }
+                else {
+                    remaininghits.push_back( hits_near_disk[ihit] );
+                    originalidx.push_back( ihit );
+                }       
+            }
+            if( remaininghits.size() != 0 )
+            {
+                double minimum = 100000000.0;
+                int min_idx = -999;
+                for(int irem = 0; irem < remaininghits.size(); irem++) {
+                    if(distanceProjHit[originalidx[irem]] < minimum) {
+                        minimum = distanceProjHit[originalidx[irem]];
+                        min_idx = irem;
+                    }
+                }
+                LOG_INFO << "DISK " << disk << ", MINIMUM IDX = " << min_idx << ", MINIMUM = " << minimum << endm;
+                hits_to_add.push_back( remaininghits[min_idx] );
+                nFstHitsFound++;
+            }
+        }
 
-        //    size_t nFstHitsFound = 0; // this is really # of disks on which a hit is found
+        if (nFstHitsFound >= 1) {
+            mEventStats.mAttemptedReFits++;
 
-        //    for(int idisk = 0; idisk < 3; idisk++) {
-        //        if ( hits_near_disk[idisk].size() == 1 ) {
-        //            hits_to_add.push_back( hits_near_disk[idisk][0] );
-        //            nFstHitsFound++;
-        //        } else if( hits_near_disk[idisk].size() > 1 ) {
-        //            size_t numHits = hits_near_disk[idisk].size();
-        //            vector<KiTrack::IHit *> remaininghits;
-        //            vector<int> originalidx;
-        //            for(int ihit = 0; ihit < numHits; ihit++) {
-        //                bool alone = true;
-        //                for(int jhit = 0; jhit < numHits; jhit++) {
-        //                    if(ihit == jhit) continue;
-        //                    if(fstHitIdx[idisk][ihit] == fstHitIdx[idisk][jhit]) alone = false;
-        //                }
-        //                if(alone) {
-        //                    hits_to_add.push_back( hits_near_disk[idisk][ihit] );
-        //                    LOG_INFO << "HIT ON SENSOR " << fstHitIdx[idisk][ihit] << " IS ALONE" << endm;
-        //                    nFstHitsFound++;
-        //                }
-        //                else {
-        //                    remaininghits.push_back( hits_near_disk[idisk][ihit] );
-        //                    originalidx.push_back( ihit );
-        //                }       
-        //            }
-        //            if( remaininghits.size() != 0 )
-        //            {
-        //                double minimum = 100000000.0;
-        //                int min_idx = -999;
-        //                for(int irem = 0; irem < remaininghits.size(); irem++) {
-        //                    if(distanceProjHit[idisk][originalidx[irem]] < minimum) {
-        //                        minimum = distanceProjHit[idisk][originalidx[irem]];
-        //                        min_idx = irem;
-        //                    }
-        //                }
-        //                LOG_INFO << "DISK " << idisk << ", MINIMUM IDX = " << min_idx << ", MINIMUM = " << minimum << endm;
-        //                hits_to_add.push_back( remaininghits[min_idx] );
-        //                nFstHitsFound++;
-        //            }
-        //        }
-        //    }
-
-        //    if (nFstHitsFound >= 1) {
-        //        mEventStats.mAttemptedReFits++;
-
-        //        Seed_t combinedSeed;
-        //        LOG_DEBUG << "Found " << gtr.fttSeed.size() << " existing FTT seed points" << endm;
-        //        LOG_DEBUG << "Adding " << hits_to_add.size() << " new FST seed points" << endm;
-        //        combinedSeed.insert( combinedSeed.begin(), hits_to_add.begin(), hits_to_add.end() );
-        //        combinedSeed.insert( combinedSeed.end(), gtr.fttSeed.begin(), gtr.fttSeed.end() ); 
-        //        
-        //        double vertex[3] = { mEventVertex.X(), mEventVertex.Y(), mEventVertex.Z() };
-
-        //        if ( fabs(gtr.momentum.Z()) > 10000 ){
-        //            // this seems to help some fits perform better
-        //            gtr.momentum.SetXYZ( gtr.momentum.X(), gtr.momentum.Y(), 1000 );
-        //        }
-        //        LOG_DEBUG << "Using previous fit momentum as the seed: " << TString::Format( "(pX=%f, pY=%f, pZ=%f)", gtr.momentum.X(), gtr.momentum.Y(), gtr.momentum.Z() ) << endm;
-
-        //        mTrackFitter->fitTrack(combinedSeed, vertex, &(gtr.momentum), true );
-
-        //        
-        //        if (mTrackFitter->getTrack()->getFitStatus()->isFitConvergedFully() == false) {
-        //            mEventStats.mFailedReFits++;
-        //            LOG_DEBUG << "refitTrackWithFstHits failed refit" << endm;
-        //        } else {
-        //            LOG_DEBUG << "refitTrackWithFstHits successful refit" << endm;
-        //            mEventStats.mGoodReFits++;
-        //            gtr.set( hits_to_add, mTrackFitter->getTrack() );
-        //        }
-        //        
-        //    } else {
-        //        // unable to refit
-        //    }
-        //} // loop on globals
-//=======
-        //Seed_t nearby_hits;
-        //try {
-        //    // get measured state on plane at specified disk
-        //    TVector2 sensorProjection = mTrackFitter->projectToFst(s, gtr.track);
-        //    // now look for Si hits near this state
-        //    nearby_hits = findFstHitsNearProjectedState(hitmap[disk], msp);
-        //} catch (genfit::Exception &e) {
-        //    LOG_WARN << "Unable to get projections: " << e.what() << endm;
-        //}
-        //LOG_DEBUG << "Track already has " << gtr.mSeed.size() << " existing seed points" << endm;
-        //
-        //if ( nearby_hits.size() > 0 ){
-        //    mEventStats.mAttemptedReFits++;
-        //    LOG_DEBUG << "Adding " << nearby_hits.size() << " new FST seed points from disk " << disk << endm;
-        //    gtr.mSeed.insert( gtr.mSeed.end(), nearby_hits.begin(), nearby_hits.end() );
-        //}
-        //return;
-//>>>>>>> dev
+            LOG_DEBUG << "Adding " << hits_to_add.size() << " new FST seed points" << endm;
+            gtr.mSeed.insert( gtr.mSeed.end(), hits_to_add.begin(), hits_to_add.end() );
+        }
     } // addFstHits
 
     /**
