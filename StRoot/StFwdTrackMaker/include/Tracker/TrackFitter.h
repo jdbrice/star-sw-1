@@ -2038,16 +2038,13 @@ class TrackFitter {
                 pv[2] = h->getZ();
                 genfit::SpacepointMeasurement *measurement = new genfit::SpacepointMeasurement(pv, fh->_covmat, fh->_detid, ++hitId, nullptr);
                 mFitTrack->insertPoint(new genfit::TrackPoint(measurement, mFitTrack.get()));
+                hitZ.push_back(pv[2]);
                 continue;
             }
-            if ( nullptr == h ) continue; // if no Si hit in this plane, skip
-    
 
-            double z;
-
-            if(h->getZ() < 200.0)
+            if( !fh->isFtt() )
             {
-                int is = static_cast<FwdHit*>(h)->getSensor();
+                int is = fh->getSensor();
                 //LOG_INFO << "is = " << is << endm;
                 // FST disk (integer division rounds down)
                 int d = is / 36; // 0-2
@@ -2064,14 +2061,15 @@ class TrackFitter {
 
                 int defaultZidx = d * 4 + 2 * (w % 2) + ds;
                 //LOG_INFO << "defaultZidx = " << defaultZidx << endm;
-                z = fstDefaultZ[defaultZidx];
+                double z = fstDefaultZ[defaultZidx];
+                hitZ.push_back(z);
             }
             else
             {
-                size_t diskId = h->getSector();
-                z = stgcDefaultZ[diskId];
+                size_t diskId = fh->_vid - 9;
+                double z = stgcDefaultZ[diskId];
+                hitZ.push_back(z);
             }
-            hitZ.push_back(z);
         }
 
         std::vector<size_t> idx(hitZ.size());
@@ -2086,17 +2084,17 @@ class TrackFitter {
         //LOG_INFO << "Loop over the hits and add them to the track" << endm;
         for ( int ih = 0; ih < trackSeed.size(); ih++ ) {
             auto h = trackSeed[idx[ih]];
+            auto fh = dynamic_cast<FwdHit*>(h);
+ 
+            if( fh->isPV() ) continue;
+           
             size_t diskId = h->getSector();
-
-            double z = h->getZ();
-            //cout << "Z = " << z << endl;
-            bool isFst = z < 200;
 
             TMatrixDSym covMatFst(2); 
             double hArr[4] = {h->getX(),h->getY(),h->getZ(),1.0};
             TMatrixD h4D(4,1,hArr);
-            if(!isFst) {
-                quadId = static_cast<FwdHit*>(h)->getSensor();
+            if( fh->isFtt() ) {
+                quadId = fh->getSensor();
                 planeId = diskId*4 + quadId;
                 h4D = mInverseMStgc[planeId]*h4D;
                 switch(quadId) {
@@ -2118,14 +2116,9 @@ class TrackFitter {
                     break;
                 }
             }
-            if(isFst) {                
-                planeId = static_cast<FwdHit*>(h)->getSensor();
+            else {                
+                planeId = fh->getSensor();
                 h4D = mInverseMFst[planeId]*h4D;
-                //cout << "x = " << h4D(0,0) << endl;
-                //cout << "y = " << h4D(1,0) << endl;
-                //cout << "z = " << h4D(2,0) << endl;
-                //covMatFst = makeSiCovMat(TVector3(h4D(0,0),h4D(1,0),h4D(2,0)));
-                //covMatFst.Print();
                 int s = planeId%3; 
                 if(s == 0) h4D(0,0) -= 10.75;
                 if(s != 0) h4D(0,0) -= 22.25;
@@ -2134,29 +2127,19 @@ class TrackFitter {
             hitCoords[0] = h4D(0,0);
             hitCoords[1] = h4D(1,0);
 
-            //cout << "static_cast<FwdHit*>(h)->_covmat(0, 0) = " <<  static_cast<FwdHit*>(h)->_covmat(0, 0) << endl;
-            //cout << "static_cast<FwdHit*>(h)->_covmat(0, 1) = " <<  static_cast<FwdHit*>(h)->_covmat(0, 1) << endl;
-            //cout << "static_cast<FwdHit*>(h)->_covmat(1, 1) = " <<  static_cast<FwdHit*>(h)->_covmat(1, 1) << endl;
-
-
             genfit::PlanarMeasurement *measurement;
-            if(!isFst)
+            if( fh->isFtt() )
             {
-              //cout << "About to Create a planar measurement for FTT hit" << endl;
-              //CovMatPlane(h);
-              //cout << "Called CovMatPlane(h);" << endl;
               measurement = new genfit::PlanarMeasurement(hitCoords, CovMatPlane(h), planeId, ++hitId, nullptr);
-              //cout << "Created a planar measurement for FTT hit!" << endl;
             }
-            if(isFst ) measurement = new genfit::PlanarMeasurement(hitCoords, makeSiCovMat(TVector3(h4D(0,0),h4D(1,0),h4D(2,0)))/*covMatFst*//*CovMatPlaneFst(covMatFst)*/, planeId+1000, ++hitId, nullptr);
-             
-            //cout << "planeId = " << planeId << endl;
-            //cout << "diskId = " << diskId << endl;
+            else
+            {
+              measurement = new genfit::PlanarMeasurement(hitCoords, makeSiCovMat(TVector3(h4D(0,0),h4D(1,0),h4D(2,0)))/*covMatFst*//*CovMatPlaneFst(covMatFst)*/, planeId+1000, ++hitId, nullptr);
+            }
 
-            //cout << "Before selecting plane" << endl;
             genfit::SharedPlanePtr plane;
-            if(!isFst) plane = mFTTPlanes[planeId];
-            if(isFst ) {
+            if( fh->isFtt() ) plane = mFTTPlanes[planeId];
+            else {
                 plane = mFSTSensorPlanes[planeId];
                 planeId += 1000; // offset for FST plane ID for alignment parameter ID
             }
@@ -2223,8 +2206,8 @@ class TrackFitter {
         genfit::Track gblTrack(*mFitTrack); 
 
         LOG_INFO << "About to check if we should refit with GBL " << endm;
-        //cout << "mRefitGBL = " << mRefitGBL << endl;
-        //cout << "gblRefit = " << gblRefit << endl;
+        LOG_INFO << "mRefitGBL = " << mRefitGBL << endm;
+        LOG_INFO << "gblRefit = " << gblRefit << endm;
         if(mRefitGBL && gblRefit)
         {
           LOG_INFO << "We are going to attempt GBL refit" << endm;
@@ -2440,6 +2423,7 @@ class TrackFitter {
           }
         }
         long long duration = (FwdTrackerUtils::nowNanoSecond() - itStart) * 1e-6; // milliseconds
+        LOG_INFO << "We are all done in fitTrack()" << endm;
         return duration;
     } // fitTrack
 
