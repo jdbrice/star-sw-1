@@ -801,7 +801,7 @@ class ForwardTrackMaker {
                 // If we are not using MC track finding, 
                 // then we will look for additional hits via projections
                 if (mSeedSource != kFttSeed){ // Look for FTT hits if it was not the original seed source
-                    for ( int i = 0; i < FwdSystem::sNFttLayers; i++ ){
+                    for ( int i = 0; i < FwdSystem::sNFttPentagons; i++ ){
                         addFttHits( gtrGlobal, i );
                     }
                 }
@@ -1257,71 +1257,6 @@ class ForwardTrackMaker {
      * @brief Adds compatible FST hits to tracks seeded with FTT
      *
      */
-//<<<<<<< HEAD
-//    void addFstHitsMc() {
-        //FwdDataSource::HitMap_t hitmap = mDataSource->getFstHits();
-
-        //for (size_t i = 0; i < mTrackResults.size(); i++) {
-        //    GenfitTrackResult &gtr = mTrackResults[i];
-
-        //    if ( gtr.mStatus->isFitConverged() == false || gtr.mMomentum.Perp() < 1e-3) {
-        //        LOG_DEBUG << "Skipping addFstHitsMc, fit failed" << endm;
-        //        return;
-        //    }
-
-        //    //Seed_t fst_hits_for_this_track(3, nullptr);
-        //    //Seed_t fst_hits_for_this_track_nnull;
-        //    Seed_t fst_hits_for_this_track[3];
-        //    mEventStats.mPossibleReFit++;
-        //    
-        //    for (size_t j = 0; j < 3; j++) {
-        //        for (auto h0 : hitmap[j]) {
-        //            if (dynamic_cast<FwdHit *>(h0)->_tid == gtr.track->getMcTrackId()) {
-        //                //fst_hits_for_this_track[j] = h0;
-        //                fst_hits_for_this_track[j].push_back(h0);
-        //                //break;
-        //            }
-        //        } // loop on hits in this layer of hitmap
-        //    }     // loop on hitmap layers
-
-        //    size_t nFstHitsFound = 0;
-        //    Seed_t fst_hits_to_add;            
-
-        //    for(int idisk = 0; idisk < 3; idisk++) {
-        //      if ( fst_hits_for_this_track[idisk].size() >= 1 ) {
-        //          for(int ihit = 0; ihit < fst_hits_for_this_track[idisk].size(); ihit++) {
-        //            fst_hits_to_add.push_back( fst_hits_for_this_track[idisk][ihit] );  
-        //            nFstHitsFound++;
-        //          }
-        //      }
-        //    }
-  
-        //    //if ( fst_hits_for_this_track[0] != nullptr ) nFstHitsFound++;
-        //    //if ( fst_hits_for_this_track[1] != nullptr ) nFstHitsFound++;
-        //    //if ( fst_hits_for_this_track[2] != nullptr ) nFstHitsFound++;
-        //    LOG_DEBUG << "Found " << nFstHitsFound << " FST Hits on this track (MC lookup)" << endm;
-
-        //    if (nFstHitsFound >= 1) {
-        //        mEventStats.mAttemptedReFits++;
-
-        //        Seed_t combinedSeed;
-        //        LOG_DEBUG << "Found " << gtr.fttSeed.size() << " existing FTT seed points" << endm;
-        //        LOG_DEBUG << "Adding " << fst_hits_to_add.size() << " new FST seed points" << endm;
-        //        combinedSeed.insert( combinedSeed.begin(), fst_hits_to_add.begin(), fst_hits_to_add.end() );
-        //        combinedSeed.insert( combinedSeed.end(), gtr.fttSeed.begin(), gtr.fttSeed.end() ); 
-        //        
-        //        double vertex[3] = { mEventVertex.X(), mEventVertex.Y(), mEventVertex.Z() };
-
-        //        if ( fabs(gtr.mMomentum.Z()) > 10000 ){
-        //            // this seems to help some fits perform better
-        //            gtr.mMomentum.SetXYZ( gtr.mMomentum.X(), gtr.mMomentum.Y(), 1000 );
-        //        }
-        //        LOG_DEBUG << "Using previous fit momentum as the seed: " << TString::Format( "(pX=%f, pY=%f, pZ=%f)", gtr.mMomentum.X(), gtr.mMomentum.Y(), gtr.mMomentum.Z() ) << endm;
-
-        //        mTrackFitter->fitTrack(combinedSeed, &(gtr.momentum), true );
-        //    } // we have 3 Si hits to refit with
-        //} // loop on the tracks
-//=======
     void addFstHitsMc( GenfitTrackResult &gtr ) {
         FwdDataSource::HitMap_t hitmap = mDataSource->getFstHits();
         if ( gtr.mStatus->isFitConverged() == false || gtr.mMomentum.Perp() < 1e-3) {
@@ -1347,35 +1282,32 @@ class ForwardTrackMaker {
             mEventStats.mAttemptedReFits++;
             gtr.mSeed.insert( gtr.mSeed.end(), fstHitsThisTrack.begin(), fstHitsThisTrack.end() );
         } // we have 3 Si hits to refit with
-//>>>>>>> dev
     } // addFstHitsMc
 
     /**
      * @brief Adds compatible FTT hits to tracks seeded with FST
      * 
      * @param gtr : The GenfitTrackResult to add FTT hits to
-     * @param disk : The FTT disk number
+     * @param pent : The FTT pent number 0 - 15
      * @return Seed_t : The combined seed points
      */
-    void addFttHits( GenfitTrackResult &gtr, size_t disk ) { // I will use disk as pent for now
+    void addFttHits( GenfitTrackResult &gtr, size_t pent ) { 
         FwdDataSource::HitMap_t hitmap = mDataSource->getFttHits();
-        //if ( disk > 3 ) {
-        if ( disk > 15 ) {
-            LOG_WARN << "Invalid FTT disk pent: " << disk << ", cannot add Ftt points to track" << endm;
-            //LOG_WARN << "Invalid FTT disk number: " << disk << ", cannot add Ftt points to track" << endm;
+        if ( pent > 15 ) {
+            LOG_WARN << "Invalid FTT pent number: " << pent << ", cannot add Ftt points to track" << endm;
             return;
         }
         if (gtr.mIsFitConverged != true) 
             return;
         mEventStats.mPossibleReFit++;
-        int fttPlane = disk/4;
+        int fttPlane = pent/4;
 
         Seed_t hits_near_plane;
         try {
-            TVector2 projectedXY = mTrackFitter->projectToFtt(disk, gtr.mTrack);                
-            hits_near_plane = findFttHitsNearProjectedState(hitmap[fttPlane], disk, projectedXY);
+            TVector2 projectedXY = mTrackFitter->projectToFtt(pent, gtr.mTrack);                
+            hits_near_plane = findFttHitsNearProjectedState(hitmap[fttPlane], pent, projectedXY);
 
-            LOG_DEBUG << " Found #FTT hits on plane #" << disk << TString::Format( " = [%ld]", hits_near_plane.size() ) << endm;
+            LOG_DEBUG << " Found #FTT hits on plane #" << pent << TString::Format( " = [%ld]", hits_near_plane.size() ) << endm;
         } catch (genfit::Exception &e) {
             // Failed to project
             LOG_WARN << "Unable to get Ftt projections: " << e.what() << endm;
@@ -1395,107 +1327,6 @@ class ForwardTrackMaker {
      * @brief Adds compatible FTT hits using MC info
      *
      */
-//<<<<<<< HEAD
-//    void addFttHitsMc() {
-//        FwdDataSource::HitMap_t hitmap = mDataSource->getFttHits();
-//
-//
-//        for (size_t i = 0; i < mTrackResults.size(); i++) {
-//            GenfitTrackResult &gtr = mTrackResults[i];
-//
-//            if ( gtr.mStatus->isFitConverged() == false || gtr.mMomentum.Perp() < 1e-6) {
-//                LOG_DEBUG << "Skipping addFttHitsMc on this track, fit failed" << endm;
-//                return;
-//            }
-//
-//            mEventStats.mPossibleReFit++;
-//            
-//
-//            Seed_t fttHitsForThisTrack[4];
-//            Seed_t ftt_hits_to_add;
-//
-//            size_t nFttHitsFound = 0;
-//            for (size_t j = 0; j < 4; j++) {
-//                for (auto h0 : hitmap[j]) {
-//<<<<<<< HEAD
-//                    if (dynamic_cast<FwdHit *>(h0)->_tid == gtr.track->getMcTrackId()) {
-//                        // fttHitsForThisTrack[j] = h0;
-//                        fttHitsForThisTrack[j].push_back( h0 );
-//                        ftt_hits_to_add.push_back( h0 );
-//=======
-//                    if (dynamic_cast<FwdHit *>(h0)->_tid == gtr.mTrack->getMcTrackId()) {
-//                        fttHitsForThisTrack.push_back( h0 );
-//>>>>>>> dev
-//                        nFttHitsFound++;
-//                        //break;
-//                    }
-//                } // loop on hits in this layer of hitmap
-//            } // loop on hitmap layers
-//
-//            LOG_DEBUG << "Found " << nFttHitsFound << " FTT Hits on this track (MC lookup)" << endm;
-//
-//            if (nFttHitsFound >= 1) {
-//                mEventStats.mAttemptedReFits++;
-//
-//<<<<<<< HEAD
-//                Seed_t combinedSeed;
-//                LOG_DEBUG << "Found " << gtr.fstSeed.size() << " existing FST seed points" << endm;
-//                combinedSeed.insert( combinedSeed.begin(), gtr.fstSeed.begin(), gtr.fstSeed.end() ); // this is goofed but will fix
-//                LOG_DEBUG << "Adding " << ftt_hits_to_add.size() << " new FTT seed points" << endm;
-//                combinedSeed.insert( combinedSeed.end(), ftt_hits_to_add.begin(), ftt_hits_to_add.end() );
-//
-//                double vertex[3] = { mEventVertex.X(), mEventVertex.Y(), mEventVertex.Z() };
-//                LOG_DEBUG << "Using previous fit momentum as the seed: " << endm;
-//                LOG_DEBUG << TString::Format( "(px=%f, py=%f, pz=%f)", gtr.momentum.Px(), gtr.momentum.Py(), gtr.momentum.Pz() ) << endm;
-//                // this prevents an exception when momentum is outrageous
-//                if ( fabs(gtr.momentum.Pz()) > 100000 )
-//                    gtr.momentum.SetZ( 10000 );
-//                LOG_DEBUG << TString::Format( "(pt=%f, eta=%f, phi=%f)", gtr.momentum.Pt(), gtr.momentum.Eta(), gtr.momentum.Phi() ) << endm;
-//
-//                mTrackFitter->fitTrack(combinedSeed, vertex, &(gtr.momentum), true );
-//
-//                auto status = mTrackFitter->getTrack()->getFitStatus();
-//                if ( status && status->isFitConvergedFully() ){
-//                    LOG_DEBUG << "Track Refit with FTT points converged" << endm;
-//                    gtr.set( ftt_hits_to_add, mTrackFitter->getTrack() );
-//                    LOG_DEBUG << "Track Refit with " << gtr.track->getNumPoints() << " points" << endm;
-//                    mEventStats.mGoodReFits++;
-//                } else {
-//                    mEventStats.mFailedReFits++;
-//                    LOG_DEBUG << "Track Refit with FTT points FAILED" << endm;
-//                }
-//=======
-//                // Seed_t combinedSeed;
-//                // LOG_DEBUG << "Found " << gtr.fstSeed.size() << " existing FST seed points" << endm;
-//                // combinedSeed.insert( combinedSeed.begin(), gtr.fstSeed.begin(), gtr.fstSeed.end() ); // this is goofed but will fix
-//                // LOG_DEBUG << "Adding " << fttHitsForThisTrack.size() << " new FTT seed points" << endm;
-//                // combinedSeed.insert( combinedSeed.end(), fttHitsForThisTrack.begin(), fttHitsForThisTrack.end() );
-//
-//                // double vertex[3] = { mEventVertex.X(), mEventVertex.Y(), mEventVertex.Z() };
-//                // LOG_DEBUG << "Using previous fit momentum as the seed: " << endm;
-//                // LOG_DEBUG << TString::Format( "(px=%f, py=%f, pz=%f)", gtr.mMomentum.Px(), gtr.mMomentum.Py(), gtr.mMomentum.Pz() ) << endm;
-//                // // this prevents an exception when momentum is outrageous
-//                // if ( fabs(gtr.mMomentum.Pz()) > 100000 )
-//                //     gtr.mMomentum.SetZ( 10000 );
-//                // LOG_DEBUG << TString::Format( "(pt=%f, eta=%f, phi=%f)", gtr.mMomentum.Pt(), gtr.mMomentum.Eta(), gtr.mMomentum.Phi() ) << endm;
-//
-//                // mTrackFitter->fitTrack(combinedSeed, vertex, &(gtr.mMomentum) );
-//
-//                // auto status = mTrackFitter->getTrack()->getFitStatus();
-//                // if ( status && status->isFitConvergedFully() ){
-//                //     LOG_DEBUG << "Track Refit with FTT points converged" << endm;
-//                //     gtr.set( fttHitsForThisTrack, mTrackFitter->getTrack() );
-//                //     LOG_DEBUG << "Track Refit with " << gtr.mTrack->getNumPoints() << " points" << endm;
-//                //     mEventStats.mGoodReFits++;
-//                // } else {
-//                //     mEventStats.mFailedReFits++;
-//                //     LOG_DEBUG << "Track Refit with FTT points FAILED" << endm;
-//                // }
-//
-//>>>>>>> dev
-            //} // we have at least one Fst hit to refit with
-        //} // loop on the global tracks
-//=======
     void addFttHitsMc( GenfitTrackResult &gtr ) {
         LOG_DEBUG << "Looking for FTT hits on this track (MC lookup)" << endm;
         LOG_DEBUG << "Track TruthId = " << gtr.mIdTruth << " vs. " << gtr.mTrack->getMcTrackId() << endm;
@@ -1523,7 +1354,6 @@ class ForwardTrackMaker {
             mEventStats.mAttemptedReFits++;
             gtr.mSeed.insert( gtr.mSeed.end(), fttHitsForThisTrack.begin(), fttHitsForThisTrack.end() );
         } // we have at least one Fst hit to refit with
-//>>>>>>> dev
     } // add Ftt hits via MC associations
 
     /**

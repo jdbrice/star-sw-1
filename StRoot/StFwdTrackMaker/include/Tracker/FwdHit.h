@@ -19,6 +19,7 @@ class FwdSystem : public KiTrack::ISectorSystem {
   public:
     static const int sNFwdLayers = 7;
     static const int sNFttLayers = 4;
+    static const int sNFttPentagons = 16;
     static const int sNFstLayers = 3;
     FwdSystem(const int ndisks = FwdSystem::sNFwdLayers) : KiTrack::ISectorSystem(), mNDisks(ndisks){};
     ~FwdSystem(){/* */};
