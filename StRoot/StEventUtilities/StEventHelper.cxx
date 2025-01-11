@@ -25,7 +25,7 @@
 #include "TPad.h"
 #include "TView.h"
 
-#include "StEvent.h"
+#include "StEvent/StEvent.h"
 #include "StObject.h"
 #include "StHit.h"
 #include "StTrack.h"
