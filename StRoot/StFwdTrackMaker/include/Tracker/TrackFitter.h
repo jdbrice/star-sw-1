@@ -474,14 +474,14 @@ class TrackFitter {
      */
     std::vector<genfit::SharedPlanePtr> getAllFstPlanes()
     {
-        std::vecttor<genfit::SharedPlanePtr> fstSensorPlanes;
+        std::vector<genfit::SharedPlanePtr> fstSensorPlanes;
         // create FWD GeomUtils to get the plane locations
         FwdGeomUtils fwdGeoUtils(gGeoManager);
         for (int globalSensorIndex = 1; globalSensorIndex <= 108; globalSensorIndex++)
         {
             TVector3 o = fwdGeoUtils.getFstSensorOrigin(globalSensorIndex);
-            TVector3 u = (1, 0, 0);
-            TVector3 v = (0, 1, 0);
+            TVector3 u(1.0, 0.0, 0.0);
+            TVector3 v(0.0, 1.0, 0.0);
             fstSensorPlanes.push_back(
                 genfit::SharedPlanePtr(
                     new genfit::DetPlane(o, u, v)));
