@@ -107,6 +107,23 @@ class FwdGeomUtils {
             std ::cerr << "Failed to get FST sensor origin for index " << index << std::endl;
             return TVector3(0,0,0);
         }
+
+        TVector3 getFttSensorOrigin (int index, TVector3 &u, TVector3&v){
+            stringstream spath;
+            spath << "/HALL_1/CAVE_1/STGM_1/STFM_"<< index; // 1-16
+            LOG_INFO << "FTT Quadrant Index: " << index;
+            bool can = cd ( spath.str().c_str() );
+            if ( can && _matrix != nullptr ){
+                double x = _matrix->GetTranslation()[0];
+                double y = _matrix->GetTranslation()[1];
+                double z = _matrix->GetTranslation()[2];
+                u.SetXYZ(_matrix->GetRotationMatrix()[0], _matrix->GetRotationMatrix()[1], _matrix->GetRotationMatrix()[2]);
+                v.SetXYZ(_matrix->GetRotationMatrix()[3], _matrix->GetRotationMatrix()[4], _matrix->GetRotationMatrix()[5]);
+                return TVector3(x, y, z);
+            }
+            std::cerr << "Failed to get FTT quadrant origin for index " << index << std::endl;
+            return TVector3(0,0,0);
+        }
     protected:
     TGeoVolume    *_volume    = nullptr;
     TGeoNode      *_node      = nullptr;
