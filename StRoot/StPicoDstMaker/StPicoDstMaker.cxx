@@ -1918,7 +1918,7 @@ void StPicoDstMaker::fillEvent() {
   } //for(UInt_t iPMT=0; iPMT<bbc.numberOfPMTs(); ++iPMT)
 
     // Set bunch crossing ID
-  picoEvent->setBunchId( ev->l0Trigger().bunchCrossingId() );
+  picoEvent->setBunchId( ev->l0Trigger().bunchCrossingId7bit(ev->runNumber()) );
 }
 
 //_________________
