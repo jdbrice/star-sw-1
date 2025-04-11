@@ -303,7 +303,7 @@ void StFcsDb::setFcsPresThreshold(fcsPresThreshold_st* t){
 }
 
 int StFcsDb::InitRun(int runNumber) {
-    LOG_INFO << "StFcsDb::InitRun - run = " << runNumber << endm;
+    LOG_INFO << "StFcsDb::InitRun - run = " << runNumber << " with mDbAccess=" << mDbAccess << endm;
     mRun=runNumber;
     if(mEtGainMode==0){
 	if(20000000<mRun && mRun<23027048) mEtGainMode=1;
