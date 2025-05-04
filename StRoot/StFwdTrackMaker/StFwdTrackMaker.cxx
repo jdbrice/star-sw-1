@@ -357,26 +357,15 @@ void StFwdTrackMaker::loadFttHits( FwdDataSource::McTrackMap_t &mcTrackMap, FwdD
     LOG_DEBUG << "Loading FTT Hits" << endm;
     // Get the StEvent handle to see if the rndCollection is available
     StEvent *event = (StEvent *)GetDataSet("StEvent");
-    string fttFromSource = mFwdConfig.get<string>( "Source:ftt", "DATA" );
 
     if (!event){
         LOG_ERROR << "No StEvent, cannot load Ftt Data" << endm;
         return;
     }
 
-    StFttCollection *col = event->fttCollection();
-    // From Data
-    if ( col || "DATA" == fttFromSource ) {
-        loadFttHitsFromStEvent( mcTrackMap, hitMap, count );
-        return;
-    }
+    loadFttHitsFromStEvent( mcTrackMap, hitMap, count );
 
-    // Load GEANT hits directly if requested
-    if ( true ) {
-        LOG_DEBUG << "Try loading sTGC hits directly from GEANT hits" << endm;
-        loadFttHitsFromGEANT( mcTrackMap, hitMap, count );
-        return;
-    }
+    loadFttHitsFromGEANT( mcTrackMap, hitMap, count );
 } // loadFttHits
 
 void StFwdTrackMaker::loadFttHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTrackMap, FwdDataSource::HitMap_t &hitMap, int count ){
