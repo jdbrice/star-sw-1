@@ -50,7 +50,7 @@ this section is a WIP
     git checkout fwd-tracking
     ```
 
-2. initialize the environment:
+2. (There is no env.sh, and We don't need this anymore? if so delete?) initialize the environment:
 
     ```bash
     source StRoot/StFwdTrackMaker/macro/env.sh
