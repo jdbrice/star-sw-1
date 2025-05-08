@@ -26,7 +26,11 @@ public:
     int Finish();
 
     void setFileName(char* file){mFilename=file;} 
+
+    void selectDistanceOrRPhi(int select) {mDistanceOrRPhi=select;}
     void setMaxDistance(float ecal, float hcal) {mMaxDistance[0]=ecal; mMaxDistance[1]=hcal;}
+    void setMaxDistanceR(float ecal, float hcal) {mMaxDistanceR[0]=ecal; mMaxDistanceR[1]=hcal;}
+    void setMaxDistancePhi(float ecal, float hcal) {mMaxDistancePhi[0]=ecal; mMaxDistancePhi[1]=hcal;}
     void setMinEnergy(float ecal, float hcal) {mMinEnergy[0]=ecal; mMinEnergy[1]=hcal;}
 
 private:
@@ -38,7 +42,10 @@ private:
     TFile* mFile=0;
     char* mFilename=0;
 
+    int mDistanceOrRPhi=1; // distance=sqrt(dx^2+dy^2) or dR and rdPhi
     float mMaxDistance[2];
+    float mMaxDistanceR[2];
+    float mMaxDistancePhi[2];
     float mMinEnergy[2];
     
     TH1F* mNtrk[4];

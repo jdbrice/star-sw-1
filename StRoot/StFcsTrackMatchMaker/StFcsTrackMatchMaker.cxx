@@ -23,12 +23,34 @@
 
 ClassImp(StFcsTrackMatchMaker)
 
+double PI=TMath::Pi();
+double TWOPI=2.0*PI;
+double PIO2=PI/2.0;
+double THREEPIO2=PI/2.0;
+double ANG(double phi){
+  while(phi < -PIO2) phi+=TWOPI;
+  while(phi >= THREEPIO2) phi-=TWOPI;
+  return phi;
+}
+double DANG(double phi){
+  while(phi < -PI) phi+=TWOPI;
+  while(phi >= PI) phi-=TWOPI;
+  return phi;
+}
+double R(double x, double y){return sqrt(x*x + y*y);}
+double PHI(double x, double y){return ANG(atan2(y,x));}
+double DPHI(double phi1, double phi2){return DANG(phi1-phi2);}
+
 StFcsTrackMatchMaker::StFcsTrackMatchMaker(const char *name) : StMaker(name)
 {
   mMinEnergy[0] = 0.1; // ~1/3 MIP
   mMinEnergy[1] = 0.5; // ~1/3 MIP
-  mMaxDistance[0] = 6.0;
-  mMaxDistance[1] = 10.0;
+  mMaxDistance[0]    = 15.0; //ecal dx,dy,dr
+  mMaxDistanceR[0]   = 15.0; //ecal dR
+  mMaxDistancePhi[0] = 10.0; //ecal RdPhi
+  mMaxDistance[1]    = 15.0; //hcal dx,dy,dr
+  mMaxDistanceR[1]   = 20.0; //hcal dR
+  mMaxDistancePhi[1] = 25.0; //hcal rdPhi
 }
 
 StFcsTrackMatchMaker::~StFcsTrackMatchMaker() {
@@ -168,8 +190,7 @@ int StFcsTrackMatchMaker::Make()
     projEPD  = trk->getProjectionFor( kFcsPresId );
 
     if (Debug())
-    {
-      
+    {      
       LOG_INFO << Form("Proj0: %6.2f %6.2f %6.2f", projECAL.mXYZ.x(), projECAL.mXYZ.y(), projECAL.mXYZ.z()) << endm;
       LOG_INFO << Form("Proj1: %6.2f %6.2f %6.2f", projHCAL.mXYZ.x(), projHCAL.mXYZ.y(), projHCAL.mXYZ.z()) << endm;
       LOG_INFO << Form("Proj2: %6.2f %6.2f %6.2f", projEPD. mXYZ.x(), projEPD. mXYZ.y(), projEPD. mXYZ.z()) << endm;
@@ -186,6 +207,11 @@ int StFcsTrackMatchMaker::Make()
       if ( ehp == 1 )
         proj = projHCAL.mXYZ;
 
+      double trkx=proj.x();
+      double trky=proj.y();
+      double trkr=R(trkx,trky);
+      double trkp=PHI(trkx,trky);
+
       int det = ehp * 2 + ns;
       int nclu = mFcsColl->numberOfClusters(det);
       for (int iclu = 0; iclu < nclu; iclu++)
@@ -195,9 +221,17 @@ int StFcsTrackMatchMaker::Make()
         if (energy > mMinEnergy[ehp])
         {
           StThreeVectorD xyz = mFcsDb->getStarXYZfromColumnRow(det, clu->x(), clu->y());
-          double dx = xyz.x() - proj.x();
-          double dy = xyz.y() - proj.y();
-          double dr = sqrt(dx * dx + dy * dy);
+	  double x=xyz.x();
+	  double y=xyz.y();
+	  double r=R(x,y);
+	  double p=PHI(x,y);
+	  
+          double dx = x - trkx;
+          double dy = y - trky;
+	  double distance = sqrt(dx * dx + dy * dy);
+          double dr = r - trkr;
+	  double rdp= r*DPHI(p,trkp);
+
           if (Debug())
             LOG_INFO << Form("EHP=%1d dx = %6.2f - %6.2f  = %6.2f dy = %6.2f - %6.2f  = %6.2f dr=%6.2f",
                              ehp, xyz.x(), proj.x(), dx, xyz.y(), proj.y(), dy, dr)
@@ -210,8 +244,9 @@ int StFcsTrackMatchMaker::Make()
               mHdy[ehp]->Fill(dy);
             mHdr[ehp]->Fill(dr);
           }
-          if (dr < mMaxDistance[ehp])
-          {
+          if ((mDistanceOrRPhi==0 && distance < mMaxDistance[ehp]) ||
+	      (mDistanceOrRPhi==1 && fabs(dr) < mMaxDistanceR[ehp] && fabs(rdp) < mMaxDistancePhi[ehp]) )
+	    {
             if (ehp == 0)
             {
               trk->addEcalCluster(clu);
@@ -238,7 +273,7 @@ int StFcsTrackMatchMaker::Make()
     trk->sortHcalClusterByET();
     if (Debug())
     {
-      LOG_INFO << Form("TRK pT=%6.2f Cg=%1d NEcal=%lu NHcal=%lu",
+      LOG_INFO << Form("TRK pT=%6.2f Cg=%1d NEcal=%u NHcal=%u",
                        trk->momentum().perp(), trk->charge(),
                        trk->ecalClusters().size(),
                        trk->hcalClusters().size())
@@ -257,7 +292,7 @@ int StFcsTrackMatchMaker::Make()
       {
         if (clu->energy() > mMinEnergy[ehp])
         {
-          LOG_INFO << Form("FCS DET=%d ET=%6.2f NTrk=%ld",
+          LOG_INFO << Form("FCS DET=%d ET=%6.2f NTrk=%u",
                            clu->detectorId(), clu->fourMomentum().perp(), clu->tracks().size())
                    << endm;
         }
