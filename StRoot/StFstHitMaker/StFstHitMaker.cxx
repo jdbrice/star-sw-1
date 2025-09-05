@@ -167,8 +167,14 @@ Int_t StFstHitMaker::Make()
 				if(disk == 1) local[2] = 151.750; //unit: cm
 				else if(disk == 2) local[2] = 165.248; //unit: cm
 				else if(disk == 3) local[2] = 178.781; //unit: cm
-				newHit->setLocalPosition(local[0], local[1], local[2]); //set local position on sensor
-
+				Double_t g[3], l[3];
+				g[0] = local[0] * cos(local[1]);
+				g[1] = local[0] * sin(local[1]);
+				g[2] = local[2];
+				int sensorId = 1000 + ((int)newHit->getWedge() - 1) * kFstNumSensorsPerWedge + (int)newHit->getSensor();
+				TGeoHMatrix *geoMSensor = (TGeoHMatrix *) mSensorTransforms->FindObject(Form("R%04i", sensorId));
+				geoMSensor->MasterToLocal(g,l);
+				newHit->setLocalPosition(l[0], l[1], l[2]); //set local position on sensor
 				fstHitCollection->addHit(newHit);
 			} //cluster loop over
 		}//end clusterCollectionPtr
