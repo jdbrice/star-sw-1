@@ -63,15 +63,18 @@ int StFttDbMaker::InitRun(int runNumber) {
         mFttDb->loadHardwareMapFromDb( dataset );
     }
 
-
-    TDataSet *mDbDataSetDW = GetDataBase("Calibrations/ftt/fttDataWindows");
-    
-    if ( mDbDataSetDW ) {
-        St_fttDataWindows *dataset = (St_fttDataWindows*) mDbDataSetDW->Find("fttDataWindows");
-        mFttDb->loadDataWindowsFromDb( dataset );
-    }
-
-  
+    loadDataWindows();
 
   return kStOK;
+}
+
+void StFttDbMaker::loadDataWindows(){
+  TDataSet *mDbDataSetDW = GetDataBase("Calibrations/ftt/fttDataWindowsB");
+    
+    if ( mDbDataSetDW ) {
+        St_fttDataWindows *dataset = (St_fttDataWindows*) mDbDataSetDW->Find("fttDataWindowsB");
+        mFttDb->loadDataWindowsFromDb( dataset );
+    } else {
+      LOG_WARN << "Cannot access Calibrations/ftt/fttDataWindowsB" << endm;
+    }
 }

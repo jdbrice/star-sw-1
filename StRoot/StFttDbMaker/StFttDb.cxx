@@ -147,13 +147,12 @@ void StFttDb::loadDataWindowsFromDb( St_fttDataWindows * dataset ) {
                 fdw.anchor = table[i].anchor[j];
                 dwMap[ fdw.uuid ] = fdw;
 
-
                 // std::cout << (int)table[i].feb[j] << std::endl;
             }
             // sample output of first member variable
         }
     } else {
-        std::cout << "ERROR: dataset does not contain requested table" << std::endl;
+        LOG_ERROR << "dataset does not contain requested table" << endm;
     }
 }
 
