@@ -26,12 +26,27 @@ void readFttDataWindows(){
   Int_t rows = dataset->GetNRows();
   printf( "rows = %d\n", rows);
 
-  fttDataWindowsB_st *st = static_cast<fttDataWindowsB_st*>(dataset);
-  printf("st = %p\n", st);
+  // Get pointer to the raw table data
+  auto table = dataset->GetTable();
+  printf("table = %p\n", table);
 
+  // Access as fttDataWindowsB_st pointer
+  fttDataWindowsB_st *st = reinterpret_cast<fttDataWindowsB_st*>(table);
+
+  cout << setw(6) << "UUID"
+       << setw(6) << "Mode"
+       << setw(8) << "Anchor"
+       << setw(8) << "Min"
+       << setw(8) << "Max"
+       << endl;
+  cout << "==============================================" << endl;
   for (int i = 0; i < 384; i++){
-    // printf( "uuid[%d] = %d\n", i, (int)st[0].anchor[i] );
-    cout << setw(6) << (int)(st[0].uuid[i]) << setw(6) << (int)st[0].mode[i] << endl;
+    cout << setw(6) << (int)(st[0].uuid[i])
+         << setw(6) << (int)st[0].mode[i]
+         << setw(8) << (int)st[0].anchor[i]
+         << setw(8) << (int)st[0].min[i]
+         << setw(8) << (int)st[0].max[i]
+         << endl;
   }
 
 

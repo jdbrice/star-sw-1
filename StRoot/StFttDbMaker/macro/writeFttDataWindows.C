@@ -1,7 +1,7 @@
 // timestamps:
 // before sTGC installed: 2021-10-01 00:00:00
 
-void writeFttDataWindows( bool debug = true, TString storeTime = "2021-10-01 00:00:00" ) {
+void writeFttDataWindows( bool debug = true, TString storeTime = "2021-10-01 00:00:01" ) {
 
     // if you want to use root.exe instead of root4star, uncomment block below:
 
@@ -37,7 +37,7 @@ void writeFttDataWindows( bool debug = true, TString storeTime = "2021-10-01 00:
     fttDataWindowsB_st table;
 
     /* fob(1-96) x vmm(1-4) = index 1 - 384 */
-    for ( int i = 1; i < 385; i++ ){
+    for ( int i = 0; i < 385; i++ ){
         table.uuid[i] = i; /* fob(1-96) x vmm(1-4) = index 1 - 384 */
         table.mode[i] = 0; /* 0 = timebin, 1 = bcid */
         table.anchor[i] = 0; /* calibrated time anchor for BCID */
@@ -45,10 +45,13 @@ void writeFttDataWindows( bool debug = true, TString storeTime = "2021-10-01 00:
         table.max[i] = 100; /* time window max < 32768 */
     }
 
-    
+
     printf( "TABLE Content:\n\n" );
+    printf( "%-8s  %-6s  %-6s  %-8s  %-8s  %-8s\n", "Index", "UUID", "Mode", "Anchor", "Min", "Max" );
+    printf( "================================================================\n" );
     for ( int i = 0; i < 385; i++ ){
-        printf( "(uuid=%d, mode=%d, anchor=%d, min=%d, max=%d)\n", i, table.mode[i], table.anchor[i], table.min[i], table.max[i] );
+        printf( "[ %3d ]   %3d     %1d      %5d    %5d    %5d\n",
+                i, table.uuid[i], table.mode[i], table.anchor[i], table.min[i], table.max[i] );
     }
     if ( debug ){
         printf( "NOT WRITING, set debug to false to save\n\n" );
