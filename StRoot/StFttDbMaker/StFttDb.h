@@ -48,6 +48,7 @@ public:
 
   static size_t uuid( StFttRawHit * h, bool includeStrip = false ) ;
   static size_t uuid( StFttCluster * c ) ;
+  static size_t vmmId( StFttRawHit * h ) ;
 
   // HARDWARE Mapping StFttRawHits
     uint16_t packKey( int feb, int vmm, int ch ) const;
@@ -166,14 +167,27 @@ public:
         if (mUserDefinedTimeCut)
             return;
 
-        // load calibrated data windows from DB 
-        size_t hit_uuid = uuid( hit );
-        if ( dwMap.count( hit_uuid ) ){
-            mode = dwMap[ hit_uuid ].mode;
-            l = dwMap[ hit_uuid ].min;
-            h = dwMap[ hit_uuid ].max;
+        // load calibrated data windows from DB
+        // NOTE: dwMap is indexed by VMM hardware ID, not geometric UUID
+        size_t hit_vmmid = vmmId( hit );
+
+        // Validate VMM ID is in expected range
+        if ( hit_vmmid >= nVMM ) {
+            LOG_WARN << "StFttDb::getTimeCut - VMM ID out of range: " << hit_vmmid
+                     << " (max=" << (nVMM-1) << ")" << endm;
+            LOG_WARN << "  Hit: plane=" << (int)plane(hit)
+                     << " quad=" << (int)quadrant(hit)
+                     << " feb=" << (int)hit->feb()
+                     << " vmm=" << (int)hit->vmm() << endm;
+            return;
         }
-    
+
+        if ( dwMap.count( hit_vmmid ) ){
+            mode = dwMap[ hit_vmmid ].mode;
+            l = dwMap[ hit_vmmid ].min;
+            h = dwMap[ hit_vmmid ].max;
+        }
+
     }
 
  private:

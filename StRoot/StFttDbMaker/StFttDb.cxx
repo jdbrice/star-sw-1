@@ -91,10 +91,26 @@ size_t StFttDb::uuid( StFttRawHit * h, bool includeStrip ) {
 
 size_t StFttDb::uuid( StFttCluster * c ) {
     // this UUID is not really universally unique
-    // it is unique up to the hardware location 
+    // it is unique up to the hardware location
 
     size_t _uuid = (size_t)c->orientation() + (nStripOrientations) * ( c->row() + nRowsPerQuad * ( c->quadrant() + nQuadPerPlane * c->plane() ) );
     return _uuid;
+}
+
+size_t StFttDb::vmmId( StFttRawHit * h ) {
+    // Calculate VMM hardware ID based on electronic readout structure
+    // VMM_ID = vmm + nVMMPerFob * (feb + nFobPerQuad * (quadrant + nQuadPerPlane * plane))
+    // Where: plane [0-3], quadrant [0-3], feb [0-5], vmm [0-3]
+    // Valid range: 0-383 (total of 384 VMMs)
+
+    u_char iPlane = h->sector() - 1;     // sector is 1-based
+    u_char iQuad  = h->rdo() - 1;        // rdo is 1-based
+    u_char iFeb   = h->feb();            // feb is 0-based
+    u_char iVmm   = h->vmm();            // vmm is 0-based
+
+    size_t vmm_id = iVmm + nVMMPerFob * ( iFeb + nFobPerQuad * ( iQuad + nQuadPerPlane * iPlane ) );
+
+    return vmm_id;
 }
 
 
