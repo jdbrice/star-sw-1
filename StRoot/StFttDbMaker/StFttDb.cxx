@@ -114,6 +114,37 @@ size_t StFttDb::vmmId( StFttRawHit * h ) {
 }
 
 
+void StFttDb::getTimeCut( StFttRawHit * hit, int &mode, int &l, int &h ){
+        mode = mTimeCutMode;
+        l = mTimeCutLow;
+        h = mTimeCutHigh;
+        if (mUserDefinedTimeCut)
+            return;
+
+        // load calibrated data windows from DB
+        // NOTE: dwMap is indexed by VMM hardware ID, not geometric UUID
+        size_t hit_vmmid = vmmId( hit );
+
+        // Validate VMM ID is in expected range
+        if ( hit_vmmid >= nVMM ) {
+            LOG_WARN << "StFttDb::getTimeCut - VMM ID out of range: " << hit_vmmid
+                     << " (max=" << (nVMM-1) << ")" << endm;
+            LOG_WARN << "  Hit: plane=" << (int)plane(hit)
+                     << " quad=" << (int)quadrant(hit)
+                     << " feb=" << (int)hit->feb()
+                     << " vmm=" << (int)hit->vmm() << endm;
+            return;
+        }
+
+        if ( dwMap.count( hit_vmmid ) ){
+            mode = dwMap[ hit_vmmid ].mode;
+            l = dwMap[ hit_vmmid ].min;
+            h = dwMap[ hit_vmmid ].max;
+        }
+
+    }
+
+
 uint16_t StFttDb::packKey( int feb, int vmm, int ch ) const{
     // feb = [1 - 6] = 3 bits
     // vmm = [1 - 4] = 3 bits
@@ -173,8 +204,6 @@ void StFttDb::loadDataWindowsFromDb( St_fttDataWindowsB * dataset ) {
 }
 
 void StFttDb::loadDataWindowsFromFile( std::string fn ) {
-
-
 }
 
 
