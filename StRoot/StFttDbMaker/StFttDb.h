@@ -22,7 +22,7 @@ class StFttCluster;
 class StFttPoint;
 
 struct FttDataWindow {
-    UChar_t uuid;
+    Short_t uuid;
     UChar_t mode;
     Short_t min;
     Short_t max;
