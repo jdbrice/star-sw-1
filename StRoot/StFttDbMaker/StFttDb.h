@@ -31,7 +31,7 @@ struct FttDataWindow {
 
 
 class St_fttHardwareMap;
-class St_fttDataWindows;
+class St_fttDataWindowsB;
 
 class StFttDb : public TDataSet {
 
@@ -60,7 +60,7 @@ public:
     bool loadStripLengthFromFile( std::string fn );
     void loadHardwareMapFromDb( St_fttHardwareMap * );
     void loadDataWindowsFromFile( std::string fn );
-    void loadDataWindowsFromDb( St_fttDataWindows * );
+    void loadDataWindowsFromDb( St_fttDataWindowsB * );
 
 
     UChar_t plane( StFttRawHit * hit );

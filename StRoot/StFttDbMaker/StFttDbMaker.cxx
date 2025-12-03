@@ -70,9 +70,9 @@ int StFttDbMaker::InitRun(int runNumber) {
 
 void StFttDbMaker::loadDataWindows(){
   TDataSet *mDbDataSetDW = GetDataBase("Calibrations/ftt/fttDataWindowsB");
-    
+
     if ( mDbDataSetDW ) {
-        St_fttDataWindows *dataset = (St_fttDataWindows*) mDbDataSetDW->Find("fttDataWindowsB");
+        St_fttDataWindowsB *dataset = (St_fttDataWindowsB*) mDbDataSetDW->Find("fttDataWindowsB");
         mFttDb->loadDataWindowsFromDb( dataset );
     } else {
       LOG_WARN << "Cannot access Calibrations/ftt/fttDataWindowsB" << endm;

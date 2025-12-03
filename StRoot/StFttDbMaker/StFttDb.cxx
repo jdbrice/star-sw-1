@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "tables/St_fttHardwareMap_Table.h"
-#include "tables/St_fttDataWindows_Table.h"
+#include "tables/St_fttDataWindowsB_Table.h"
 
 
 ClassImp(StFttDb)
@@ -121,7 +121,7 @@ void StFttDb::unpackVal( int val, int &row, int &strip ) const{
     return;
 }
 
-void StFttDb::loadDataWindowsFromDb( St_fttDataWindows * dataset ) {
+void StFttDb::loadDataWindowsFromDb( St_fttDataWindowsB * dataset ) {
     if (dataset) {
         Int_t rows = dataset->GetNRows();
 
@@ -129,7 +129,7 @@ void StFttDb::loadDataWindowsFromDb( St_fttDataWindows * dataset ) {
 
         dwMap.clear();
 
-        fttDataWindows_st *table = dataset->GetTable();
+        fttDataWindowsB_st *table = dataset->GetTable();
         for (Int_t i = 0; i < rows; i++) {
             for ( int j = 0; j < StFttDb::nVMM; j++ ) {
                 // printf( "[feb=%d, vmm=%d, ch=%d] ==> [row=%d, strip%d]\n", table[i].feb[j], table[i].vmm[j], table[i].vmm_ch[j], table[i].row[j], table[i].strip[j] );
