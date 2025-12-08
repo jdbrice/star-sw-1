@@ -505,7 +505,7 @@ class ForwardTrackMaker {
 
         LOG_DEBUG << "--Setting seed on GenfitTrackResult, seed has " << seed.size() << " hits" << endm;
         // First, set the seed information
-        gtr.setSeed( seed ); // tODO: ADD momentum and charge
+        gtr.setSeed( seed ); // TODO: ADD momentum and charge
 
         // If we are using a provided momentum state
         if ( momentumSeedState ){
@@ -536,7 +536,7 @@ class ForwardTrackMaker {
             }
         } else { // set the track as a failed fit, but keep the seed info
             LOG_ERROR << "--FitTrack is nullptr or fit did not converge, setting seed only" << endm;
-            gtr.setSeed( seed, mTrackFitter->getCurrentSeedMomentum(), mTrackFitter->getCurrentSeedCharge() ); // tODO: ADD momentum and charge
+            gtr.setSeed( seed, mTrackFitter->getCurrentSeedMomentum(), mTrackFitter->getCurrentSeedCharge() ); // TODO: ADD momentum and charge
             if (kProfile) mEventStats.mFailedFits++;
         }
         LOG_DEBUG << "<-FwdTracker::fitTrack complete" << endm;

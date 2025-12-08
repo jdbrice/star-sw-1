@@ -4,6 +4,7 @@
 
 // C++ headers
 #include <algorithm>
+#include <cstddef>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -1038,11 +1039,12 @@ void StPicoDstMaker::fillTracks() {
   // all vertices
   std::unordered_map<unsigned int, unsigned int> index2Primary;
   
-  if (mMuDst->primaryTracks() == nullptr) {
-    return;
-  }
+  
   // Retrieve number of primary tracks
-  Int_t nPrimarys = mMuDst->numberOfPrimaryTracks();
+  Int_t nPrimarys = 0;
+  if (mMuDst->primaryTracks() != nullptr) {
+    nPrimarys = mMuDst->numberOfPrimaryTracks();
+  }
 
   // Loop over primary trakcs
   for (int i = 0; i < nPrimarys; ++i) {
@@ -1856,7 +1858,7 @@ void StPicoDstMaker::fillEvent() {
 
   picoEvent->setGRefMult( ev->grefmult() );
   picoEvent->setNumberOfGlobalTracks( mMuDst->numberOfGlobalTracks() );
-  if (mMuDst->numberOfPrimaryVertices() > 0 && mMuDst->primaryTracks() ){ //calling mMudst->numberOfPrimaryTracks() will crash if there are no primary vertices
+  if (mMuDst->primaryTracks() ){ //calling mMudst->numberOfPrimaryTracks() will crash if there are no primary vertices
     picoEvent->setNumberOfPrimaryTracks( mMuDst->numberOfPrimaryTracks() );
   } else {
     picoEvent->setNumberOfPrimaryTracks( 0 );
@@ -2540,10 +2542,7 @@ void StPicoDstMaker::fillFwdTracks() {
   StEvent *evt = (StEvent *)GetDataSet("StEvent");
   if ( evt ){
     StFwdTrackCollection * evc = evt->fwdTrackCollection();
-    if ( !evc ){
-      LOG_ERROR << "null FwdTrackCollection" << endm;
-      return;
-    }
+    if ( !evc ) return;
 
     // fill a map of picodst FCS clusters between index and the cluster pointer
     map<UShort_t, StPicoFcsCluster*> fcsClusterMap;
@@ -2553,7 +2552,7 @@ void StPicoDstMaker::fillFwdTracks() {
     }
 
     const StSPtrVecFwdTrack& evTracks = evc->tracks();
-    LOG_INFO << "Adding " << evc->numberOfTracks() << " StFwdTracks from StEvent to PicoDst" << endm; 
+    LOG_DEBUG << "Adding " << evc->numberOfTracks() << " StFwdTracks from StEvent to PicoDst" << endm; 
     for ( size_t i = 0; i < evc->numberOfTracks(); i++ ){
       StFwdTrack * evTrack = evTracks[i];
       StPicoFwdTrack picoFwdTrack;
@@ -2577,22 +2576,30 @@ void StPicoDstMaker::fillFwdTracks() {
 
       // fill matched ecal and hcal clusters for the track
       // ecal
+      size_t nUnmatchedEcal = 0;
       for ( auto & cluster : evTrack->ecalClusters() ){
         if ( mMapFcsIdPairIndex.count( make_pair( cluster->detectorId(), cluster->id() ) ) == 0 ){
-          LOG_WARN << "No FCS cluster found for ecal cluster with id " << cluster->id() << " and detectorId " << cluster->detectorId() << endm;
+          nUnmatchedEcal++;
           continue;
         }
         int index = mMapFcsIdPairIndex[ make_pair( cluster->detectorId(), cluster->id() ) ];
         picoFwdTrack.addEcalCluster( index );
       }
+      if ( nUnmatchedEcal > 0 ){
+        LOG_ERROR << "No FCS cluster found for " << nUnmatchedEcal << " ecal clusters" << endm;
+      }
       // hcal
+      size_t nUnmatchedHcal = 0;
       for ( auto & cluster : evTrack->hcalClusters() ){
         if ( mMapFcsIdPairIndex.count( make_pair( cluster->detectorId(), cluster->id() ) ) == 0 ){
-          LOG_WARN << "No FCS cluster found for hcal cluster with id " << cluster->id() << " and detectorId " << cluster->detectorId() << endm;
+          nUnmatchedHcal++;
           continue;
         }
         int index = mMapFcsIdPairIndex[ make_pair( cluster->detectorId(), cluster->id() ) ];
         picoFwdTrack.addHcalCluster( index );
+      }
+      if ( nUnmatchedHcal > 0 ){
+        LOG_ERROR << "No FCS cluster found for " << nUnmatchedHcal << " hcal clusters" << endm;
       }
 
       // Now set the projections for ECal and HCal
@@ -2612,7 +2619,7 @@ void StPicoDstMaker::fillFwdTracks() {
       new((*(mPicoArrays[StPicoArrays::FwdTrack]))[counter]) StPicoFwdTrack(picoFwdTrack);
     }
   } else {
-    LOG_WARN << "Cannot get Fwd Tracks from StEvent" << endm;
+    LOG_DEBUG << "Cannot get Fwd Tracks from StEvent" << endm;
   }
 
   // Fill FwdVertex also
@@ -2624,7 +2631,7 @@ void StPicoDstMaker::fillFwdTracks() {
     StPicoFwdVertex picoFwdVertex;
     // Set the PicoDst attributes
     picoFwdVertex.setPosition( evVertex->position().x(), evVertex->position().y(), evVertex->position().z() );
-    LOG_INFO << "Adding StPicoFwdVertex from StPrimaryVertex" << endm;
+    LOG_DEBUG << "Adding StPicoFwdVertex from StPrimaryVertex" << endm;
     picoFwdVertex.setChi2( evVertex->chiSquared() );
     picoFwdVertex.setNumberOfTracks( evVertex->numTracksUsedInFinder() );
     int counter = mPicoArrays[StPicoArrays::FwdVertex]->GetEntries();
@@ -2635,15 +2642,12 @@ void StPicoDstMaker::fillFwdTracks() {
 
 //_________________
 void StPicoDstMaker::fillFcsClusters() {
+  StMuFcsCollection * muFcs = mMuDst->muFcsCollection();
+  if ( !muFcs ) return;
   StFcsDb* fcsDb = static_cast<StFcsDb*>(GetDataSet("fcsDb"));
   if( !fcsDb ) {
       LOG_ERROR << "Cannot get StFcsDb object" << endm;
       return;
-  }
-  StMuFcsCollection * muFcs = mMuDst->muFcsCollection();
-  if ( !muFcs ) {
-    LOG_ERROR << "Cannot get Fcs Collection from MuDst" << endm;
-    return;
   }
   TIter next(muFcs->getClusterArray());
   StMuFcsCluster* muCluster(NULL);
@@ -2675,15 +2679,12 @@ void StPicoDstMaker::fillFcsClusters() {
 
 //_________________
 void StPicoDstMaker::fillFcsHits() {
+  StMuFcsCollection * muFcs = mMuDst->muFcsCollection();
+  if ( !muFcs ) return;
   StFcsDb* fcsDb = static_cast<StFcsDb*>(GetDataSet("fcsDb"));
   if( !fcsDb ) {
       LOG_ERROR << "Cannot get StFcsDb object" << endm;
       return;
-  }
-  StMuFcsCollection * muFcs = mMuDst->muFcsCollection();
-  if ( !muFcs ) {
-    LOG_ERROR << "Cannot get Fcs Collection from MuDst" << endm;
-    return;
   }
   TIter next(muFcs->getHitArray());
   StMuFcsHit* muHit(NULL);

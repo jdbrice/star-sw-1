@@ -578,7 +578,10 @@ class TrackFitter {
      *  @param t : track to fit
     */
     void performFit( genfit::Track* trackPointer ){
-        assert( trackPointer != nullptr && "Track pointer is null, cannot perform fit" );
+        if (trackPointer == nullptr) {
+            LOG_ERROR << "Track pointer is null, cannot perform fit" << endm;
+            return;
+        }
         /******************************************************************************************************************
 		 * Do the fit
 		 ******************************************************************************************************************/

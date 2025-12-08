@@ -37,7 +37,6 @@ int StFttDbMaker::Make(){
 
 int StFttDbMaker::InitRun(int runNumber) {
   LOG_INFO << "StFttDbMaker::InitRun - run = " << runNumber << endm;
-
     mFttDb->loadHardwareMapFromFile( "StRoot/StFttDbMaker/vmm_map.dat" );
     mFttDb->loadStripCenterFromFile( "StRoot/StFttDbMaker/Row1.txt" );
     mFttDb->loadStripEdgeFromFile(   "StRoot/StFttDbMaker/Row4_edge.txt" );
