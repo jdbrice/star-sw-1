@@ -1,0 +1,71 @@
+Executable   = /bin/env
+Universe     = vanilla
+notification = never
+getenv       = True
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081004 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081004.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081004.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081004.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081008 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081008.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081008.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081008.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081015 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081015.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081015.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081015.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081019 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081019.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081019.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081019.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081023 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081023.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081023.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081023.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081027 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081027.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081027.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081027.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081031 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081031.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081031.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081031.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081045 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081045.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081045.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081045.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081049 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081049.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081049.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081049.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081053 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081053.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081053.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081053.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif runpico 23081063 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/202604"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081063.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081063.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/202604/log/23081063.log
+Queue
+

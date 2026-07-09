@@ -1,0 +1,128 @@
+#!/bin/csh
+# Particle gun simulation: GEANT generation + BFC reconstruction.
+# Called by condor jobs inside the singularity container.
+#
+# Usage: runsim NEV RUN PID SPEC VZ OUTDIR WORKDIR
+#   NEV     number of events
+#   RUN     run number (1-based, used as random seed)
+#   PID     particle ID string (ele, pos, pion, kaon, proton, ...)
+#   SPEC    pt{PT} or e{ENERGY}  (e.g. pt1.5, e5)
+#   VZ      z-vertex in cm (integer or signed, e.g. 0, 10, -10)
+#   OUTDIR  full path to output directory (files moved here after job)
+#   WORKDIR full path to STAR macro working directory
+
+set nev=$1
+set run=$2
+set pid=$3
+set spec=$4
+set vz=$5
+set outdir=$6
+set workdir=$7
+
+echo "runsim: nev=$nev run=$run pid=$pid spec=$spec vz=$vz"
+echo "runsim: outdir=$outdir"
+echo "runsim: workdir=$workdir"
+
+# === Parse spec: pt1.5 -> pt=1.5 e=0;  e5 -> e=5 pt=0 ===
+set pt=0
+set e=0
+if ( `echo $spec | grep -c "^pt"` ) then
+    set pt=`echo $spec | sed 's/^pt//'`
+else if ( `echo $spec | grep -c "^e"` ) then
+    set e=`echo $spec | sed 's/^e//'`
+else
+    echo "ERROR: SPEC must start with 'pt' or 'e', got: $spec"
+    exit 1
+endif
+
+# === Derived names ===
+set setname=${pid}.${spec}.vz${vz}
+set fzdname=${setname}.run${run}.fzd
+set mudstname=${setname}.run${run}.MuDst.root
+set piconame=${setname}.run${run}.picoDst.root
+
+echo "runsim: setname=$setname fzdname=$fzdname"
+
+# === Set up scratch working directory ===
+set tmpdir=${SCRATCH}/sim.${setname}.run${run}
+if ( ! -e $tmpdir ) mkdir -p $tmpdir
+cd $tmpdir
+echo "runsim: tmpdir=$tmpdir"
+
+# === Symlink needed resources ===
+foreach f (fGeom.root runSimFlat.C sim.C bfc.C)
+    if ( ! -e $f && -e $workdir/$f ) ln -sf $workdir/$f
+end
+if ( ! -e StRoot   && -e $workdir/StRoot   ) ln -sf $workdir/StRoot
+if ( ! -e .${STAR_HOST_SYS} && -e $workdir/.${STAR_HOST_SYS} ) then
+    ln -sf $workdir/.${STAR_HOST_SYS}
+endif
+
+mkdir -p $outdir
+
+pwd
+ls -la
+
+# === Build quoted pid string without using \" inside double-quotes ===
+# '"'${pid}'"' concatenates: single-quoted " + variable + single-quoted "
+# so $pidq contains the literal string  "ele"  (with the quote chars)
+set pidq = '"'${pid}'"'
+set pidspecq = '"'${pid}.${spec}'"'
+
+# === Step 1: GEANT particle gun (runSimFlat.C) ===
+echo "runsim: running GEANT particle gun..."
+if ( $pt != 0 ) then
+    root4star -b -q "runSimFlat.C($nev,$run,$pidq,0,$pt,$vz)"
+else
+    root4star -b -q "runSimFlat.C($nev,$run,$pidq,$e,0,$vz)"
+endif
+set geant_status=$status
+echo "runsim: GEANT exit status=$geant_status"
+
+if ( -e $fzdname ) then
+    echo "runsim: copying $fzdname -> $outdir/"
+    /bin/cp $fzdname $outdir/
+else
+    echo "ERROR: FZD not found: $fzdname"
+    ls *.fzd
+    exit 1
+endif
+
+# === Step 2: BFC reconstruction (sim.C) ===
+echo "runsim: running BFC reconstruction..."
+root4star -b -q "sim.C($nev,$run,$pidspecq,$vz)"
+set bfc_status=$status
+echo "runsim: BFC exit status=$bfc_status"
+
+pwd
+ls -la
+
+# === Move outputs to destination ===
+if ( -e $mudstname ) then
+    echo "runsim: moving $mudstname -> $outdir/"
+    /bin/mv $mudstname $outdir/
+else
+    set mudst_found=`ls *.MuDst.root 2>/dev/null | head -1`
+    if ( "$mudst_found" != "" ) then
+        echo "runsim: moving $mudst_found -> $outdir/$mudstname"
+        /bin/mv $mudst_found $outdir/$mudstname
+    else
+        echo "WARNING: no MuDst.root found"
+    endif
+endif
+
+if ( -e $piconame ) then
+    echo "runsim: moving $piconame -> $outdir/"
+    /bin/mv $piconame $outdir/
+else
+    set pico_found=`ls *.picoDst.root 2>/dev/null | head -1`
+    if ( "$pico_found" != "" ) then
+        echo "runsim: moving $pico_found -> $outdir/$piconame"
+        /bin/mv $pico_found $outdir/$piconame
+    else
+        echo "WARNING: no picoDst.root found"
+    endif
+endif
+
+echo "runsim: done. Output directory:"
+ls $outdir/

@@ -1,0 +1,43 @@
+# run_jpsi_howto.txt
+# Re-run Pythia JPsi sample: BFC only on existing fzd files, then pico analysis + plots.
+# All commands from: /star/u/akio/fcstrk11/star-sw-fwd/
+# Old MuDst/picoDst already backed up to DataDisk/pythia/pythia.JPsi.vz0/20260609/
+
+# ── INTERACTIVE TEST (verify BFC works, run 1, 10 events) ────────────────────
+cd script_test
+ln -sf ../DataDisk/pythia/pythia.JPsi.vz0/pythia.JPsi.vz0.run1.fzd .
+root4star -b -q 'sim.C(10,1,"JPsi",0)'
+mv pythia.MuDst.root                   ../DataDisk/pythia/pythia.JPsi.vz0/pythia.JPsi.vz0.run1.MuDst.root
+mv pythia.JPsi.vz0.run1.picoDst.root   ../DataDisk/pythia/pythia.JPsi.vz0/
+cd ..
+
+# ── GENERATE CONDOR FILE (all 100 runs, BFC only) ────────────────────────────
+# submit_sim.pl generates runpythia calls with absolute DATADIR paths;
+# sed converts to relative DataDisk/ path so runpythia can find the fzd,
+# and changes rungeant=1 runbfc=1 → rungeant=0 runbfc=1.
+./script/submit_sim.pl type=pythia.JPsi.vz0 nev=200 r1=1 r2=100
+sed -i 's|/gpfs01/star/pwg_tasks/FwdCalib/akio/|DataDisk/|g; s| 1 1"| 0 1"|g' \
+    condor/submit_sim_pythia.JPsi.vz0.txt
+
+# ── SUBMIT BFC JOBS  *** OUTSIDE SINGULARITY *** ─────────────────────────────
+condor_submit condor/submit_sim_pythia.JPsi.vz0.txt
+
+# ── MONITOR ──────────────────────────────────────────────────────────────────
+condor_q $USER
+./running200.pl
+
+# ── PICO ANALYSIS (after all 100 BFC jobs complete) ──────────────────────────
+./script/find_pico.pl type=pythia.JPsi.vz0
+./script/submit_ana.pl type=pythia.JPsi.vz0 outdir=pythia.JPsi.vz0 submit
+
+# ── SUBMIT PICO JOBS  *** OUTSIDE SINGULARITY *** (called by submit_ana.pl) ──
+# submit_ana.pl with 'submit' calls condor_submit internally.
+# If running inside singularity use 'run' instead:
+# ./script/submit_ana.pl type=pythia.JPsi.vz0 outdir=pythia.JPsi.vz0 run
+
+# ── MERGE (after all pico jobs complete) ─────────────────────────────────────
+./script/merge_ana.pl outdir=pythia.JPsi.vz0
+
+# ── PLOT ─────────────────────────────────────────────────────────────────────
+root -b -q 'plotMatch.C("DataDisk/pythia.JPsi.vz0")'
+root -b -q 'plotDilep.C(-1,6,"DataDisk/pythia.JPsi.vz0",-1,1)'

@@ -1,0 +1,23 @@
+  Step 1 — BFC reconstruction (regenerate picoDsts with BBB-fixed library):
+  ./script/submit_sim.pl type=pythia.JPsi.vz0 nev=200 r1=1 r2=100
+  sed -i 's|/gpfs01/star/pwg_tasks/FwdCalib/akio/|DataDisk/|g; s| 1 1"| 0 1"|g' \
+      condor/submit_sim_pythia.JPsi.vz0.txt
+  condor_submit condor/submit_sim_pythia.JPsi.vz0.txt
+  (100 condor jobs; each copies the FZD from DataDisk/pythia/pythia.JPsi.vz0/ → runs sim.C → writes new picoDst back to gpfs. doBLCVertexFitting=true by
+  default, blcVtxMaxDcaXY=10 cm sentinel fix included.)
+
+  Step 2 — Update picolist (after BFC jobs done):
+  ./script/find_pico.pl type=pythia.JPsi.vz0
+
+  Step 3 — Pico analysis:
+  ./script/submit_ana.pl type=pythia.JPsi.vz0 outdir=pythia.JPsi.vz0 submit
+  (1 condor job per list shard; runpico_uni copies the BBB picoMatch.C from repo root, reads the new picoDsts, writes hist_match/1.0.match.root to gpfs.)
+
+  Step 4 — Merge + plot:
+  ./script/merge_ana.pl outdir=pythia.JPsi.vz0
+  cd script_test
+  root4star -b -l -q 'plotMatch.C("DataDisk/pythia.JPsi.vz0",0,0)'
+
+  The one fix I made: repo-root picoMatch.C (and script/picoMatch.C) were the pre-BBB 4-type version — they're now synced with the BBB version from
+  script_test/. All other scripts (submit_sim.pl, find_pico.pl, submit_ana.pl, merge_ana.pl, runpico_uni, runpythia) were already correct.
+  

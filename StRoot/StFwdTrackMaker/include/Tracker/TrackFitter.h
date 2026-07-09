@@ -6,6 +6,7 @@
 #include "GenFit/Exception.h"
 #include "GenFit/FieldManager.h"
 #include "GenFit/KalmanFitStatus.h"
+#include "GenFit/KalmanFitter.h"
 #include "GenFit/GblFitter.h"
 #include "GenFit/ProlateSpacepointMeasurement.h"
 
@@ -185,7 +186,16 @@ class TrackFitter {
 
         // Report all the parameters
         if (kVerbose > 0) {
-            LOG_INFO << "TrackFitter::setupGenfitKalmanFitter() called" << endm;
+            // Warm-start KalmanFitter: simple forward/backward Kalman, small blowUpFactor.
+        // Used to refine an already-converged track with tight FST r+phi sigma (pitch/sqrt12)
+        // without the instability caused by blowing up the covariance 1e9x each iteration.
+        mWarmFitter = std::unique_ptr<genfit::KalmanFitter>(
+            new genfit::KalmanFitter(20, 1e-3, 1e3, true /*sqrt formalism*/)
+        );
+        mWarmFitter->setBlowUpFactor( 1e6 ); // large enough to reset, small enough vs RefTrack 1e9
+        mWarmFitter->setMaxFailedHits(-1);
+
+        LOG_INFO << "TrackFitter::setupGenfitKalmanFitter() called" << endm;
             LOG_INFO << "\tMaxFailedHits: " << mFitter->getMaxFailedHits() << endm;
             LOG_INFO << "\tMaxIterations: " << mFitter->getMaxIterations() << endm;
             LOG_INFO << "\tMinIterations: " << mFitter->getMinIterations() << endm;
@@ -603,16 +613,16 @@ class TrackFitter {
      * @param seedPos : seed position
      * @param Vertex : primary vertex
      */
-    bool setupTrack(Seed_t trackSeed, TVector3 *externalSeedMom = nullptr ) {
-        
+    bool setupTrack(Seed_t trackSeed, TVector3 *externalSeedMom = nullptr, int externalCharge = 0 ) {
+
         mCurrentTrackSeed = trackSeed;
         // setup the track fit seed parameters
         GenericFitSeeder gfs;
         mCurrentSeedCharge = 0; // explicitly reset because a zero charge indicates a failed seed
-        gfs.makeSeed(   trackSeed, 
-                        mCurrentSeedPosition, 
-                        mCurrentSeedMomentum, 
-                        mCurrentSeedCharge 
+        gfs.makeSeed(   trackSeed,
+                        mCurrentSeedPosition,
+                        mCurrentSeedMomentum,
+                        mCurrentSeedCharge
                     );
         if ( mCurrentSeedMomentum.Perp() > 1000 ) {
             LOG_WARN << "Seed momentum is too high, setting to (0,0,1)" << endm;
@@ -622,8 +632,15 @@ class TrackFitter {
         if ( externalSeedMom != nullptr ) {
             LOG_INFO << "Note: Using externally provided seed momentum" << endm;
             mCurrentSeedMomentum = *externalSeedMom;
-        } else {
-            // mCurrentSeedMomentum.SetXYZ(0, 0, 10);
+        }
+
+        //AAA fix: when the global fit has a reliable charge, propagate it directly instead of
+        //         re-deriving from GenericFitSeeder::averageCurvature.  For near-straight
+        //         forward tracks (curvature ≈ 0) the signed curvature is numerically unstable
+        //         and flips the charge sign ~20% of the time.
+        if ( externalCharge != 0 ) {
+            LOG_INFO << "Note: Using externally provided seed charge = " << externalCharge << endm;
+            mCurrentSeedCharge = externalCharge;
         }
 
         LOG_DEBUG << "Setting track fit seed position = " << TString::Format( "(px=%f, py=%f, pz=%f)", mCurrentSeedPosition.X(), mCurrentSeedPosition.Y(), mCurrentSeedPosition.Z() )  << endm; 
@@ -816,7 +833,7 @@ class TrackFitter {
      * @param seedMomentum : seed momentum (can be from MC)
      * @return void : the results can be accessed via the getTrack() method
      */
-    long long fitTrack(Seed_t trackSeed, TVector3 *seedMomentum = 0) {
+    long long fitTrack(Seed_t trackSeed, TVector3 *seedMomentum = 0, int seedCharge = 0) {
         long long itStart = FwdTrackerUtils::nowNanoSecond();
         LOG_DEBUG << "Fitting track with " << trackSeed.size() << " FWD Measurements" << endm;
 
@@ -831,7 +848,7 @@ class TrackFitter {
         /******************************************************************************************************************
 		 * Setup the track fit seed parameters and objects
 		 ******************************************************************************************************************/
-        bool valid = setupTrack(trackSeed, seedMomentum);
+        bool valid = setupTrack(trackSeed, seedMomentum, seedCharge);
         if ( !valid ){
             LOG_ERROR << "Failed to setup track for fit" << endm;
             return -1;
@@ -846,6 +863,88 @@ class TrackFitter {
         long long duration = (FwdTrackerUtils::nowNanoSecond() - itStart) * 1e-6; // milliseconds
         return duration;
     } // fitTrack
+
+    /**
+     * @brief Warm-start refinement of mFitTrack using tight FST sigma (pitch/sqrt12 for both r and phi).
+     *  Steps:
+     *   1. Re-seed mFitTrack with current fitted momentum (warm start).
+     *   2. Tighten FST U (radial) and V (phi) covariance in-place by factor 12.
+     *   3. Run mWarmFitter (KalmanFitter, blowUpFactor=1e6) on mFitTrack.
+     *  mFitTrack is left in the tight-sigma fitted state on success; caller calls
+     *  gtr.refreshFromTrack() to propagate updated momentum, charge, and covariance.
+     *  No restore: every subsequent fitTrack() creates a new shared_ptr<genfit::Track>.
+     *  @return true if warm fit converged
+     */
+    bool warmFitFstTightSigma( Seed_t &seed ) {
+        if ( !mFitTrack || !mWarmFitter ) return false;
+
+        // Step 1: re-seed from fitted state
+        try {
+            auto cr  = mFitTrack->getCardinalRep();
+            auto msp = mFitTrack->getFittedState(0, cr);
+            if ( msp.getMom().Mag() < 0.05 ) return false;
+            // set seed state = fitted pos+mom so warm fitter starts from good estimate
+            mFitTrack->setStateSeed( msp.getPos(), msp.getMom() );
+            TMatrixDSym warmCov(6); warmCov.Zero();
+            double p2 = msp.getMom().Mag2();
+            for(int i=0;i<3;i++) warmCov(i,i) = 0.01;       // 1mm pos uncertainty
+            for(int i=3;i<6;i++) warmCov(i,i) = 0.01 * p2;  // 10% mom uncertainty
+            mFitTrack->setCovSeed(warmCov);
+        } catch (...) { return false; }
+
+        // Step 2: tighten FST U (radial) and V (phi) covariance in-place.
+        // The 2×2 local plane covariance is stored as rawHitCov_ in each PlanarMeasurement.
+        // U = radial direction, V = azimuthal direction.
+        // Both start from full pitch in the initial fit (to keep the Kalman search window wide).
+        // Here, post-convergence, hits are already associated — safe to tighten both to pitch/sqrt12.
+        // We divide all 4 elements by scale = 12 = (pitch_full/pitch_sqrt12)^2.
+        const float scale = 12.f;  // (full_pitch / (pitch/sqrt12))^2
+        std::vector<std::pair<genfit::AbsMeasurement*,TMatrixDSym>> savedMeas;
+        for (int ip = 0; ip < (int)mFitTrack->getNumPoints(); ip++) {
+            auto tp = mFitTrack->getPointWithMeasurement(ip);
+            if (!tp) continue;
+            for (int im = 0; im < (int)tp->getNumRawMeasurements(); im++) {
+                auto meas = tp->getRawMeasurement(im);
+                if (!meas) continue;
+                // Identify FST hits by their detId (kFstId) stored in AbsMeasurement.
+                // For PlanarMeasurements: detId = fh->_detid = kFstId or kFttId.
+                // For spacepoints (BLC): detId may be kTpcId (beamline/PV) or kFcsPresId.
+                // Only tighten phi on FST PlanarMeasurements.
+                if ( meas->getDetId() != kFstId ) continue; // skip non-FST (FTT, beamline, EPD)
+                TMatrixDSym origCov = meas->getRawHitCov(); // save
+                savedMeas.push_back({meas, origCov});
+                // Tighten both C_UU (radial) and C_VV (phi) — and cross-terms — by scale=12.
+                // This brings full-pitch sigma down to pitch/sqrt12 for both directions.
+                TMatrixDSym tightCov = origCov;
+                tightCov(0,0) /= scale;
+                tightCov(1,1) /= scale;
+                tightCov(0,1) /= scale;
+                tightCov(1,0) /= scale;
+                meas->setRawHitCov(tightCov);
+            }
+        }
+
+        // Step 3: run KalmanFitter on mFitTrack IN-PLACE with tight phi.
+        // mFitTrack is left in the tight-phi fitted state — the caller (refitTrack)
+        // calls gtr.refreshFromTrack() to pick up the updated momentum, charge,
+        // covariance, and convergence flags.  No restore is needed because every
+        // subsequent fitTrack() call creates a brand-new shared_ptr<genfit::Track>.
+        bool converged = false;
+        try {
+            mWarmFitter->processTrack(mFitTrack.get());
+            mFitTrack->checkConsistency();
+            mFitTrack->determineCardinalRep();
+            auto status = mFitTrack->getFitStatus();
+            converged = status && status->isFitConverged();
+        } catch (genfit::Exception &e) {
+            LOG_WARN << "warmFitFstTightSigma exception: " << e.what() << endm;
+            // Restore measurement covariances so mFitTrack is at least self-consistent
+            for (auto &sv : savedMeas) sv.first->setRawHitCov(sv.second);
+        } catch (...) {
+            for (auto &sv : savedMeas) sv.first->setRawHitCov(sv.second);
+        }
+        return converged;
+    }
 
     genfit::SharedPlanePtr getPlaneFor( FwdHit * fh ){
         
@@ -877,6 +976,7 @@ class TrackFitter {
     genfit::SharedPlanePtr mEpdPlane; // EPD plane
 
   protected:
+
     std::unique_ptr<genfit::AbsBField> mBField;
 
     FwdTrackerConfig mConfig; // main config object
@@ -884,6 +984,9 @@ class TrackFitter {
 
     // Main GenFit fitter instance
     std::unique_ptr<genfit::AbsKalmanFitter> mFitter = nullptr;
+    // Warm-start fitter: simple KalmanFitter (no reference-track blow-up)
+    // used after normal fit to refine with tight FST phi sigma
+    std::unique_ptr<genfit::KalmanFitter> mWarmFitter = nullptr;
 
     // PDG codes for the default plc type for fits
     static const int mPdgPiPlus = 211;

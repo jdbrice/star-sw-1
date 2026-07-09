@@ -198,9 +198,28 @@ Int_t StFstHitMaker::Make()
 				TGeoHMatrix *geoMSensorOnGlobal = (TGeoHMatrix *) mSensorTransforms->FindObject(Form("R%04i", sensorId));
 				geoMSensorOnGlobal->LocalToMaster(local, global);
 
+				// TEMPORARY DEBUG (remove after wedge-step diagnosis): compare the
+				// correct DB/alignment-based global position (global[], just computed
+				// above by LocalToMaster) against the bogus overwrite below, per hit.
+				double correctPhiDeg = atan2(global[1], global[0]) * 180.0 / TMath::Pi();
+				LOG_INFO << "FSTDEBUG wedge=" << (int)newHit->getWedge()
+				         << " disk=" << (int)newHit->getDisk()
+				         << " sensor=" << (int)newHit->getSensor()
+				         << " local0=" << local[0] << " local1=" << local[1]
+				         << " correctGlobalX=" << global[0] << " correctGlobalY=" << global[1]
+				         << " correctPhiDeg=" << correctPhiDeg << endm;
+
                                 global[0] = local[0]*cos(local[1]);
                                 global[1] = local[0]*sin(local[1]);
                                 global[2] = local[2];
+
+				// TEMPORARY DEBUG (remove after wedge-step diagnosis)
+				double buggyPhiDeg = atan2(global[1], global[0]) * 180.0 / TMath::Pi();
+				LOG_INFO << "FSTDEBUG wedge=" << (int)newHit->getWedge()
+				         << " disk=" << (int)newHit->getDisk()
+				         << " sensor=" << (int)newHit->getSensor()
+				         << " buggyGlobalX=" << global[0] << " buggyGlobalY=" << global[1]
+				         << " buggyPhiDeg=" << buggyPhiDeg << endm;
 
 				StThreeVectorF vecGlobal(global);
 				newHit->setPosition(vecGlobal); //set global position

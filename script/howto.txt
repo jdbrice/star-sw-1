@@ -1,0 +1,191 @@
+================================================================================
+FCS Forward Tracking Calibration — Workflow Quick Reference
+Author: Akio Ogawa (akio@bnl.gov)   Updated: 2026-06-08
+See index.html for a browsable version with script links.
+================================================================================
+
+SETUP
+-----
+  Create a symlink so example commands work as written:
+    ln -s /gpfs01/star/pwg_tasks/FwdCalib/akio DataDisk
+
+OVERVIEW — Three passes, one analysis chain
+--------------------------------------------
+  Pass 1  Single Particle Gun  → particle/{SET}/  (e.g. ele.pt1.5.vz0/)
+  Pass 2  Pythia MC            → pythia/{SET}/    (e.g. pythia.JPsi.vz0/)
+  Pass 3  Real Data afterburner→ pico/
+  All     Pico Analysis        → {OUTDIR}/hist_match/, {OUTDIR}/hist_dilep/
+
+  Base data dir: DataDisk/  (→ /gpfs01/star/pwg_tasks/FwdCalib/akio)
+  Working dir:   /star/u/akio/fcstrk11/star-sw-fwd/
+
+FILE NAMING
+-----------
+  Particle:  {pid}.{spec}.vz{vz}.run{N}.{fzd|MuDst.root|picoDst.root}
+             spec = pt{PT} or e{E}   e.g. ele.pt1.5.vz0.run1.picoDst.root
+  Pythia:    pythia.{proc}.vz{vz}.run{N}.{fzd|MuDst.root|picoDst.root}
+             e.g. pythia.JPsi.vz0.run42.picoDst.root
+  Data:      st_fwd_{RUNNUMBER}_raw_{SEQ}.picoDst.root  (STAR production)
+  Histograms:{run}.{set}.match.root  /  {run}.{set}.dilep.root
+             (for particle/Pythia run=1; use SET name as OUTDIR to separate)
+
+readpico3.C DISPATCH (used internally by runpico_uni)
+------------------------------------------------------
+  run == 0        → picolist_flat.lis         (flat single list)
+  1 ≤ run < 10^7  → picolist_pythia/{set}.list (particle / Pythia)
+  run ≥ 10^7      → picolist/{run}.{set}.lis   (real data)
+
+================================================================================
+PASS 1 — PARTICLE GUN
+================================================================================
+
+  # 1. Submit GEANT+BFC jobs (dry run first, then add "submit"):
+  ./script/submit_sim.pl type=ele.pt1.5.vz0 nev=1000 r1=1 r2=100
+  ./script/submit_sim.pl type=ele.pt1.5.vz0 nev=1000 r1=1 r2=100 submit
+
+  # TYPE format: {pid}.pt{PT}.vz{VZ}  or  {pid}.e{E}.vz{VZ}
+  # Other examples:
+  ./script/submit_sim.pl type=ele.e5.vz0     nev=1000 r1=1 r2=100 submit
+  ./script/submit_sim.pl type=pos.pt2.0.vz10 nev=500  r1=1 r2=50  submit
+
+  # Output: DataDisk/particle/ele.pt1.5.vz0/*.{fzd,MuDst.root,picoDst.root}
+  # Condor: condor/submit_sim_ele.pt1.5.vz0.txt
+  # Logs:   DataDisk/particle/ele.pt1.5.vz0/log/
+
+  # 2. Run pico analysis (see PICO ANALYSIS section, use TYPE as OUTDIR)
+  ./script/find_pico.pl type=ele.pt1.5.vz0
+  ./script/submit_ana.pl type=ele.pt1.5.vz0 outdir=ele.pt1.5.vz0 submit
+
+================================================================================
+PASS 2 — PYTHIA MC
+================================================================================
+
+  # 1. Submit Pythia6+BFC jobs:
+  ./script/submit_sim.pl type=pythia.JPsi.vz0 nev=200 r1=1 r2=100 submit
+
+  # TYPE format: pythia.{PROC}.vz{VZ}
+  # PROC = JPsi | dy | mb | jet | dybg | dybgSingle
+  ./script/submit_sim.pl type=pythia.dy.vz0  nev=200 r1=1 r2=100 submit
+  ./script/submit_sim.pl type=pythia.mb.vz0  nev=200 r1=1 r2=100 submit
+
+  # Output: DataDisk/pythia/pythia.JPsi.vz0/*.{fzd,MuDst.root,picoDst.root}
+  # Condor: condor/submit_sim_pythia.JPsi.vz0.txt
+
+  # 2. Run pico analysis:
+  ./script/find_pico.pl type=pythia.JPsi.vz0
+  ./script/submit_ana.pl type=pythia.JPsi.vz0 outdir=pythia.JPsi.vz0 submit
+
+================================================================================
+PASS 3 — REAL DATA AFTERBURNER
+================================================================================
+
+  # 1. Create MuDst file list — one absolute MuDst path per line:
+  ln -sf /star/data14/GRID/NFS_FileList/{your_file_list} prod_mudst.txt
+
+  # 2. Submit afterburner (runab → fwd_afterburner_db.C → picoDst):
+  ./script/submit_check.pl          # dry run: reports jobs queued/skipped
+  ./script/submit_check.pl submit   # submit to condor (skips files where pico already exists)
+
+  # Output: DataDisk/pico/st_fwd_*.picoDst.root
+  # Condor: condor/submit.txt
+
+  # 3. Run pico analysis:
+  ./script/find_pico.pl type=data
+  ./script/submit_ana.pl type=data outdir=202606 submit
+
+================================================================================
+PICO ANALYSIS — common to all passes
+================================================================================
+
+  Step A: Catalog pico files (creates picolist* directories)
+  ----------------------------------------------------------
+  ./script/find_pico.pl type=ele.pt1.5.vz0   [maxfile=100]
+  ./script/find_pico.pl type=pythia.JPsi.vz0 [maxfile=100]
+  ./script/find_pico.pl type=data             [maxfile=100]
+  # NOTE: picolist_pythia/ is shared; run find_pico + submit_ana as a pair.
+
+  Step B: Submit analysis jobs
+  ----------------------------
+  # option=11: bit0=picoMatch, bit1=picoDilepton (both)
+  ./script/submit_ana.pl type=ele.pt1.5.vz0   outdir=ele.pt1.5.vz0   submit
+  ./script/submit_ana.pl type=pythia.JPsi.vz0 outdir=pythia.JPsi.vz0 submit
+  ./script/submit_ana.pl type=data             outdir=202606          submit
+  # Output: DataDisk/{OUTDIR}/hist_match/*.match.root
+  #         DataDisk/{OUTDIR}/hist_dilep/*.dilep.root
+
+  # Add 'merge' to submit+merge in one command:
+  ./script/submit_ana.pl type=data outdir=202606 submit merge
+
+  Step C: Merge histograms
+  ------------------------
+  ./script/merge_ana.pl outdir=202606
+  # → all.match.root and all.dilep.root in hist_match/ and hist_dilep/
+
+  Step D: Plot results
+  --------------------
+  # After merge (run=-1 reads all.*.root):
+  root -b -q 'plotMatch.C("DataDisk/202606")'
+  root -b -q 'plotDilep.C(-1,6,"DataDisk/202606",-1,1)'
+
+  # Single file (data):
+  root -b -q 'plotMatch.C("DataDisk/202606",23081004,0)'
+  # Single file (particle/Pythia, run=1):
+  root -b -q 'plotMatch.C("DataDisk/ele.pt1.5.vz0",1,0)'
+
+================================================================================
+INTERACTIVE QUICK TEST (no condor)
+================================================================================
+
+  root4star -b -q 'runSimFlat.C(10,1,"ele",0,1.5,0)'    # particle gun GEANT
+  root4star -b -q 'sim.C(10,1,"ele.pt1.5",0)'           # particle gun BFC
+  root4star -b -q 'runPythia.C(10,1,"JPsi",0)'           # Pythia generation
+  root4star -b -q 'sim.C(10,1,"JPsi",0)'                 # Pythia BFC
+  root4star -b -q 'fwd_afterburner_db.C("file.MuDst.root",1000)'
+  root  -b -q 'pico3.C(1000,11,23081004,0)'              # data pico analysis
+  root  -b -q 'pico3.C(1000,11,1,0)'                     # Pythia/particle pico
+
+  root -l 'plotMatch.C()'       # plots from current dir
+  root -l 'plotDilep.C()'       # plots from current dir
+
+================================================================================
+SCRIPT REFERENCE
+================================================================================
+
+  NEW SCRIPTS (script/)
+  submit_sim.pl   Submit simulation jobs       type=  [nev=]  [r1=]  [r2=]  [submit]
+  find_pico.pl    Catalog pico files           type=  [maxfile=]
+  submit_ana.pl   Submit pico analysis         type=  outdir=  [option=]  [maxjob=]  [submit|run|merge]
+  submit_check.pl Submit real-data afterburner [submit|submitmerge]
+  merge_ana.pl    Merge histograms             outdir=  [types=match,dilep]
+  runsim          csh: particle gun gen+reco   (called by submit_sim.pl)
+  runpico_uni     csh: pico analysis wrapper   (called by submit_ana.pl)
+
+  EXISTING EXECUTABLES (do not modify)
+  runpythia       csh: Pythia gen+BFC reco     (called by submit_sim.pl)
+  runab           csh: real data afterburner   (called by submit_check.pl)
+  runpico3        csh: data pico analysis      (superseded by runpico_uni)
+
+  ANALYSIS MACROS (do not modify)
+  runSimFlat.C    GEANT particle gun starsim
+  runPythia.C     Pythia6 generator starsim
+  sim.C           BFC reconstruction (particle: pid="ele.pt1.5", Pythia: pid="JPsi")
+  fwd_afterburner_db.C  FTT+FCS+FWD afterburner on MuDst (DB-driven); called by runab
+  picoMatch.C     FCS cluster ↔ track matching kernel
+  picoDilepton.C  Dilepton candidate selection kernel
+  readpico3.C     Unified pico reader (dispatch by run number)
+  pico3.C         Driver: loads libs, calls readpico3.C
+  plotMatch.C     Plot matching histograms
+  plotDilep.C     Plot dilepton histograms
+
+================================================================================
+NOTES
+================================================================================
+
+  - All new scripts have a === CONFIGURATION === block at top (WORKDIR, DATADIR,
+    CONTAINER) — edit once when setting up for a different user or cluster.
+  - picolist_pythia/ is overwritten by find_pico.pl for each particle/Pythia SET.
+    Always run find_pico → submit_ana as a pair without mixing SETs.
+  - Use SET as OUTDIR for particle/Pythia so run=1 output files don't collide:
+      outdir=ele.pt1.5.vz0  vs  outdir=pythia.JPsi.vz0  vs  outdir=202606
+  - fGeom.root geometry cache must be present in WORKDIR for afterburner jobs.
+================================================================================

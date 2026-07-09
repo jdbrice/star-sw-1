@@ -1,0 +1,76 @@
+#!/bin/csh 
+set nev=$1
+set run=$2
+set particle=$3
+set vz=$4
+set outdir=$5
+set rungeant=$6
+set runbfc=$7
+
+echo  nev=$nev run=$run particle=$particle outdir=$outdir geant=$rungeant bfc=$runbfc
+ 
+stardev
+set dir=$cwd
+set sys=$STAR_HOST_SYS
+set tmpdir=/tmp/$USER/p$run
+
+if ( ! -e $tmpdir ) then
+  mkdir -p $tmpdir
+endif
+cd $tmpdir
+
+if ( ! -e $dir/$outdir ) then
+    mkdir $dir/$outdir
+endif
+
+if ( ! -e .$sys ) then
+  ln -s $dir/.$sys 
+endif
+
+if ( ! -e StRoot ) then
+  ln -s $dir/StRoot
+endif
+
+if ( ! -e runPythia.C ) then
+  ln -s $dir/runPythia.C
+endif
+
+if ( ! -e sim.C ) then
+  ln -s $dir/sim.C
+endif
+
+if ( ! -e fGeom.root ) then
+  ln -s $dir/fGeom.root 
+endif
+
+#if( ! -e mask ) then
+#  ln -s $dir/mask
+#endif
+
+pwd
+ls -ltra
+
+set name=pythia.$particle.vz$vz.run$run
+echo name=$name 
+
+if ( $rungeant == 1 ) then 
+    echo root4star -b -q 'runPythia.C('$nev','$run',"'$particle'",'$vz')' 
+    root4star -b -q 'runPythia.C('$nev','$run',"'$particle'",'$vz')' 
+    /bin/cp $name.fzd $dir/$outdir/
+else
+    echo /bin/cp $dir/$outdir/$name.fzd $tmpdir/
+    /bin/cp $dir/$outdir/$name.fzd $tmpdir/
+endif
+
+if ( $runbfc == 1 ) then
+    echo root4star -b -q 'sim.C('$nev','$run',"'$particle'",'$vz')'
+    root4star -b -q 'sim.C('$nev','$run',"'$particle'",'$vz')'
+endif
+
+echo moving $tmpdir/ to $dir/$outdir/
+ls -ltra  *.root
+/bin/mv pythia.MuDst.root $dir/$outdir/$name.MuDst.root
+/bin/mv $name.picoDst.root $dir/$outdir/
+
+#/bin/rm {$name}.*
+

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fwd PicoDst Analysis Examples</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; font-size: 14px; color: #222; background: #fff; }
+#wrap { max-width: 1050px; margin: 0 auto; padding: 10px 20px 40px; }
+
+/* Title: dark blue */
+h1 { background: #003366; color: #fff; padding: 12px 16px; margin-bottom: 16px; font-size: 1.4em; }
+h1 span { font-size: 0.75em; font-weight: normal; color: #aac4e8; margin-left: 12px; }
+
+/* Section headings: orange-ish */
+h2 { background: #fff3e0; border-left: 4px solid #cc6600; padding: 6px 10px;
+     margin: 22px 0 8px; font-size: 1.1em; color: #7a3a00; }
+h3 { color: #cc6600; margin: 14px 0 4px; font-size: 1.0em;
+     border-bottom: 1px solid #f0c080; padding-bottom: 2px; }
+p  { margin: 5px 0 8px; line-height: 1.5; }
+
+/* TOC box */
+#toc { float: right; background: #f4f8ff; border: 1px solid #aac; padding: 10px 14px;
+       margin: 0 0 14px 20px; min-width: 200px; }
+#toc h4 { color: #003366; margin-bottom: 6px; }
+#toc a  { display: block; color: #0055aa; text-decoration: none; padding: 2px 0; font-size: 0.9em; }
+#toc a:hover { text-decoration: underline; }
+
+/* code / pre */
+code { background: #f0f4f8; padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+pre  { background: #f0f4f8; border: 1px solid #ccd; padding: 10px 14px; margin: 6px 0 12px;
+       overflow-x: auto; font-family: monospace; font-size: 0.88em; line-height: 1.5; }
+pre .c { color: #777; }
+pre .k { color: #003388; }
+
+/* overview boxes */
+.passes { display: flex; gap: 10px; margin: 10px 0 16px; flex-wrap: wrap; }
+.pass        { flex: 1;   min-width: 180px; border: 1px solid #aac; border-radius: 4px;
+               padding: 8px 12px; background: #f9fbff; }
+.pass.wide   { flex: 1.8; min-width: 260px; }
+.pass h4 { color: #003366; font-size: 0.9em; margin-bottom: 4px; }
+.pass p  { font-size: 0.85em; margin: 0; color: #444; }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 0.88em; }
+th    { background: #003366; color: #fff; padding: 5px 10px; text-align: left; }
+td    { border: 1px solid #ccd; padding: 4px 10px; vertical-align: top; }
+tr:nth-child(even) td { background: #f6f8fc; }
+a     { color: #0055aa; }
+
+/* note/setup box: green-ish */
+.note { background: #e8f5ee; border-left: 4px solid #2a7a3a; color: #1a3a22;
+        padding: 7px 12px; margin: 8px 0; font-size: 0.88em; }
+.note code { background: #c8e8d0; }
+.note pre  { background: #c8e8d0; border-color: #8abf98; margin: 4px 0 0; }
+
+.clear { clear: both; }
+</style>
+</head>
+<body>
+<div id="wrap">
+
+<h1>Fwd PicoDst Analysis Examples <span>akio@bnl.gov</span></h1>
+
+<!-- TOC -->
+<div id="toc">
+  <h4>Contents</h4>
+  <a href="#overview">Overview</a>
+  <a href="#pass1">Particle Gun</a>
+  <a href="#pass2">Pythia MC</a>
+  <a href="#pass3">Real Data</a>
+  <a href="#ana">Pico Analysis</a>
+  <a href="#interactive">Interactive Quick Test</a>
+  <a href="#naming">File Naming</a>
+  <a href="#scripts">Script Reference</a>
+  <a href="#notes">Notes</a>
+  <a href="howto.txt" style="margin-top:8px;color:#667;">&#128196; howto.txt (plain text)</a>
+</div>
+
+<!-- OVERVIEW -->
+<h2 id="overview">Overview</h2>
+<p>Three simulation/data passes all feed into one pico analysis chain.<br>
+   Akio's working directory: <code>/star/u/akio/fcstrk11/star-sw-fwd/</code></p>
+   Base data directory: <code>DataDisk/ -> /gpfs01/star/pwg_tasks/FwdCalib/akio</code><br>
+<div class="note"><strong>Setup:</strong> Create a symlink so all example commands work as written:
+<pre>ln -s /gpfs01/star/pwg_tasks/FwdCalib/[your user name] DataDisk</pre>
+</div>
+
+<div class="passes">
+  <div class="pass">
+    <h4>Particle Gun</h4>
+    <p>GEANT single-particle events + BFC reconstruction.<br>
+       Output: <code>DataDisk/particle/{TYPE}/</code></p>
+  </div>
+  <div class="pass">
+    <h4>Pythia MC</h4>
+    <p>Pythia6 pp events + GEANT + BFC reconstruction.<br>
+       Output: <code>DataDisk/pythia/{TYPE}/</code></p>
+  </div>
+  <div class="pass">
+    <h4>Real Data</h4>
+    <p>FwdTracking+FCS afterburner on production MuDst files.<br>
+       Output: <code>DataDisk/pico/</code></p>
+  </div>
+  <div class="pass wide">
+    <h4>Pico Analysis</h4>
+    <p>Track–cluster matching + dilepton analysis on picoDst.<br>
+       Output: <code>DataDisk/{OUTDIR}/hist_match/</code>, <code>DataDisk/{OUTDIR}/hist_dilep/</code></p>
+  </div>
+</div>
+<p>Scripts detect the sample type from the <code>type=</code> value:
+   <code>type=data</code> → real data &nbsp;|&nbsp;
+   <code>type=pythia.*</code> → Pythia MC &nbsp;|&nbsp;
+   anything else → particle gun.</p>
+
+<!-- PARTICLE GUN -->
+<h2 id="pass1">Single Particle Gun</h2>
+
+<h3>Step 1 — Submit simulation (GEANT + BFC)</h3>
+<pre>
+<span class="c"># Dry run (shows condor file only):</span>
+./script/submit_sim.pl type=ele.pt1.5.vz0 nev=1000 r1=1 r2=100
+
+<span class="c"># Submit to condor:</span>
+./script/submit_sim.pl type=ele.pt1.5.vz0 nev=1000 r1=1 r2=100 submit
+
+<span class="c"># Other examples:</span>
+./script/submit_sim.pl type=ele.e5.vz0     nev=1000 r1=1 r2=100 submit
+./script/submit_sim.pl type=pos.pt2.0.vz10 nev=500  r1=1 r2=50  submit
+./script/submit_sim.pl type=pion.pt1.0.vz0 nev=1000 r1=1 r2=100 submit
+</pre>
+<p>TYPE format: <code>{pid}.pt{PT}.vz{VZ}</code> or <code>{pid}.e{E}.vz{VZ}</code><br>
+   Output: <code>DataDisk/particle/{TYPE}/*.{fzd,MuDst.root,picoDst.root}</code><br>
+   Condor file: <code>condor/submit_sim_{TYPE}.txt</code></p>
+
+<h3>Step 2 — Pico analysis</h3>
+<pre>
+./script/find_pico.pl  type=ele.pt1.5.vz0
+./script/submit_ana.pl type=ele.pt1.5.vz0 outdir=ele.pt1.5.vz0 submit
+./script/merge_ana.pl  outdir=ele.pt1.5.vz0
+root -b -q 'plotMatch.C("DataDisk/ele.pt1.5.vz0")'
+</pre>
+
+<!-- PYTHIA MC -->
+<h2 id="pass2">Pythia MC</h2>
+
+<h3>Step 1 — Submit simulation (Pythia6 + BFC)</h3>
+<pre>
+./script/submit_sim.pl type=pythia.JPsi.vz0 nev=200 r1=1 r2=100 submit
+./script/submit_sim.pl type=pythia.dy.vz0   nev=200 r1=1 r2=100 submit
+./script/submit_sim.pl type=pythia.mb.vz0   nev=200 r1=1 r2=100 submit
+./script/submit_sim.pl type=pythia.jet.vz0  nev=200 r1=1 r2=100 submit
+</pre>
+<p>TYPE format: <code>pythia.{PROC}.vz{VZ}</code> &nbsp;—&nbsp;
+   PROC: <code>JPsi dy mb jet dybg dybgSingle</code><br>
+   Output: <code>DataDisk/pythia/{TYPE}/</code></p>
+
+<h3>Step 2 — Pico analysis</h3>
+<pre>
+./script/find_pico.pl  type=pythia.JPsi.vz0
+./script/submit_ana.pl type=pythia.JPsi.vz0 outdir=pythia.JPsi.vz0 submit
+./script/merge_ana.pl  outdir=pythia.JPsi.vz0
+root -b -q 'plotDilep.C(-1,6,"DataDisk/pythia.JPsi.vz0",-1,1)'
+</pre>
+
+<!-- REAL DATA -->
+<h2 id="pass3">Real Data Afterburner</h2>
+
+<h3>Step 1 — Build MuDst file list</h3>
+<pre>
+<span class="c"># prod_mudst.txt: one MuDst path per line (e.g. point at a GRID NFS file list,</span>
+<span class="c"># or generate manually)</span>
+ln -sf /star/data14/GRID/NFS_FileList/{your_file_list} prod_mudst.txt
+</pre>
+
+<h3>Step 2 — Submit afterburner (MuDst → picoDst)</h3>
+<pre>
+./script/submit_check.pl         <span class="c"># dry run: reports jobs queued/skipped</span>
+./script/submit_check.pl submit <span class="c"># submit to condor</span>
+<span class="c"># Output: DataDisk/pico/st_fwd_*.picoDst.root (skips files whose picoDst already exists)</span>
+</pre>
+
+<h3>Step 3 — Pico analysis</h3>
+<pre>
+./script/find_pico.pl  type=data
+./script/submit_ana.pl type=data outdir=202606 submit merge
+root -b -q 'plotMatch.C("DataDisk/202606")'
+root -b -q 'plotDilep.C(-1,6,"DataDisk/202606",-1,1)'
+</pre>
+
+<!-- PICO ANALYSIS -->
+<h2 id="ana">Pico Analysis — All Steps</h2>
+
+<h3>Step A — Catalog pico files</h3>
+<pre>
+./script/find_pico.pl type=ele.pt1.5.vz0   <span class="c"># → picolist/ele.pt1.5.vz0.{N}.list</span>
+./script/find_pico.pl type=pythia.JPsi.vz0 <span class="c"># → picolist/pythia.JPsi.vz0.{N}.list</span>
+./script/find_pico.pl type=data            <span class="c"># → picolist/{RUN}.{N}.lis + runs2.txt</span>
+<span class="c"># Option: maxfile=N  (default 100 pico files per job)</span>
+</pre>
+
+<h3>Step B — Submit analysis</h3>
+<pre>
+<span class="c"># option=11: bit0=picoMatch  bit1=picoDilepton  (both enabled)</span>
+./script/submit_ana.pl type=ele.pt1.5.vz0   outdir=ele.pt1.5.vz0   submit
+./script/submit_ana.pl type=pythia.JPsi.vz0 outdir=pythia.JPsi.vz0 submit
+./script/submit_ana.pl type=data             outdir=202606           submit
+<span class="c"># Append 'merge' to also run merge_ana.pl when jobs finish</span>
+./script/submit_ana.pl type=data outdir=202606 submit merge
+</pre>
+<p>Outputs: <code>DataDisk/{OUTDIR}/hist_match/{run}.{N}.match.root</code> and
+<code>DataDisk/{OUTDIR}/hist_dilep/{run}.{N}.dilep.root</code></p>
+
+<h3>Step C — Merge</h3>
+<pre>
+./script/merge_ana.pl outdir=202606
+<span class="c"># → DataDisk/{OUTDIR}/hist_match/all.match.root  +  hist_dilep/all.dilep.root</span>
+</pre>
+
+<h3>Step D — Plot</h3>
+<pre>
+<span class="c"># Merged (all files):</span>
+root -b -q 'plotMatch.C("DataDisk/202606")'
+root -b -q 'plotDilep.C(-1,6,"DataDisk/202606",-1,1)'
+
+<span class="c"># Single shard — data (run=23081004, shard=0):</span>
+root -b -q 'plotMatch.C("DataDisk/202606",23081004,0)'
+
+<span class="c"># Single shard — particle/Pythia (run=1, shard=0):</span>
+root -b -q 'plotMatch.C("DataDisk/ele.pt1.5.vz0",1,0)'
+</pre>
+
+<!-- INTERACTIVE -->
+<h2 id="interactive">Interactive Quick Test (no condor)</h2>
+<pre>
+<span class="c"># Particle gun: GEANT then BFC</span>
+root4star -b -q 'runSimFlat.C(10,1,"ele",0,1.5,0)'
+root4star -b -q 'sim.C(10,1,"ele.pt1.5",0)'
+
+<span class="c"># Pythia: generate then BFC</span>
+root4star -b -q 'runPythia.C(10,1,"JPsi",0)'
+root4star -b -q 'sim.C(10,1,"JPsi",0)'
+
+<span class="c"># Real data afterburner (DB-driven: reads run#/timestamp from 1st event, sets DB time)</span>
+root4star -b -q 'fwd_afterburner_db.C("st_fwd_23081004_raw_1000002.MuDst.root",1000)'
+
+<span class="c"># Pico analysis (data: run≥10^7; particle/Pythia: run=1)</span>
+root -b -q 'pico3.C(1000,11,23081004,0)'
+root -b -q 'pico3.C(1000,11,1,0)'
+
+<span class="c"># Plotting</span>
+root -l 'plotMatch.C()'
+root -l 'plotDilep.C()'
+</pre>
+
+<!-- FILE NAMING -->
+<h2 id="naming">File Naming Conventions</h2>
+<table>
+  <tr><th>Type</th><th>Pattern</th><th>Example</th></tr>
+  <tr><td>Particle gun</td>
+      <td><code>{pid}.pt{PT}.vz{VZ}.run{N}.{ext}</code><br>
+          <code>{pid}.e{E}.vz{VZ}.run{N}.{ext}</code></td>
+      <td><code>ele.pt1.5.vz0.run1.picoDst.root</code></td></tr>
+  <tr><td>Pythia MC</td>
+      <td><code>pythia.{proc}.vz{VZ}.run{N}.{ext}</code></td>
+      <td><code>pythia.JPsi.vz0.run42.picoDst.root</code></td></tr>
+  <tr><td>Real data</td>
+      <td><code>st_fwd_{RUNNUMBER}_raw_{SEQ}.{ext}</code></td>
+      <td><code>st_fwd_23081004_raw_1000002.picoDst.root</code></td></tr>
+  <tr><td>Pico list (sim)</td>
+      <td><code>picolist/{TYPE}.{N}.list</code></td>
+      <td><code>picolist/pythia.JPsi.vz0.0.list</code></td></tr>
+  <tr><td>Pico list (data)</td>
+      <td><code>picolist/{RUN}.{N}.lis</code></td>
+      <td><code>picolist/23081004.0.lis</code></td></tr>
+  <tr><td>Match histo</td>
+      <td><code>{run}.{N}.match.root</code></td>
+      <td><code>23081004.0.match.root</code> &nbsp;/&nbsp; <code>1.0.match.root</code></td></tr>
+  <tr><td>Dilep histo</td>
+      <td><code>{run}.{N}.dilep.root</code></td>
+      <td><code>23081004.0.dilep.root</code> &nbsp;/&nbsp; <code>1.0.dilep.root</code></td></tr>
+</table>
+<p><em>ext</em> = <code>fzd</code>, <code>MuDst.root</code>, or <code>picoDst.root</code>.
+   For particle/Pythia, run=1 in analysis; use TYPE as OUTDIR to keep outputs separate.</p>
+
+<!-- SCRIPT REFERENCE -->
+<h2 id="scripts">Script Reference</h2>
+
+<h3>New scripts (script/)</h3>
+<table>
+  <tr><th>Script</th><th>Purpose</th><th>Key arguments</th><th>Source</th></tr>
+  <tr><td><code>submit_sim.pl</code></td>
+      <td>Submit simulation jobs (particle or Pythia)</td>
+      <td><code>type= nev= r1= r2= [submit]</code></td>
+      <td><a href="submit_sim.pl.txt">view</a></td></tr>
+  <tr><td><code>find_pico.pl</code></td>
+      <td>Catalog picoDst files into list shards</td>
+      <td><code>type= [maxfile=]</code></td>
+      <td><a href="find_pico.pl.txt">view</a></td></tr>
+  <tr><td><code>submit_ana.pl</code></td>
+      <td>Submit pico analysis for all types</td>
+      <td><code>type= outdir= [option=] [submit|run|merge]</code></td>
+      <td><a href="submit_ana.pl.txt">view</a></td></tr>
+  <tr><td><code>submit_check.pl</code></td>
+      <td>Submit real-data afterburner (MuDst → picoDst), skipping runs whose picoDst already exists</td>
+      <td><code>[submit|submitmerge]</code></td>
+      <td><a href="submit_check.pl.txt">view</a></td></tr>
+  <tr><td><code>merge_ana.pl</code></td>
+      <td>Merge histograms with hadd</td>
+      <td><code>outdir= [types=match,dilep]</code></td>
+      <td><a href="merge_ana.pl.txt">view</a></td></tr>
+  <tr><td><code>runsim</code></td>
+      <td>csh: particle gun GEANT (runSimFlat.C) + BFC (sim.C) — called by submit_sim.pl</td>
+      <td><code>NEV RUN PID SPEC VZ OUTDIR WORKDIR</code></td>
+      <td><a href="runsim">view</a></td></tr>
+  <tr><td><code>runpico_uni</code></td>
+      <td>csh: pico analysis wrapper, all types (called by submit_ana.pl)</td>
+      <td><code>TYPE RUN ISET OPTION WORKDIR OUTDIR</code></td>
+      <td><a href="runpico_uni">view</a></td></tr>
+</table>
+
+<h3>Existing executables</h3>
+<table>
+  <tr><th>Script</th><th>Purpose</th><th>Source</th></tr>
+  <tr><td><code>runpythia</code></td>
+      <td>csh: Pythia generation + BFC reconstruction</td>
+      <td><a href="runpythia">view</a></td></tr>
+  <tr><td><code>runab</code></td>
+      <td>csh: real-data afterburner (MuDst → picoDst)</td>
+      <td><a href="runab">view</a></td></tr>
+  <tr><td><code>runpico3</code></td>
+      <td>csh: pico analysis for data (superseded by runpico_uni)</td>
+      <td><a href="runpico3">view</a></td></tr>
+</table>
+
+<h3>Analysis macros</h3>
+<table>
+  <tr><th>Macro</th><th>Purpose</th><th>Source</th></tr>
+  <tr><td><code>runSimFlat.C</code></td>
+      <td>GEANT starsim particle gun — generates FZD</td>
+      <td><a href="runSimFlat.C">view</a></td></tr>
+  <tr><td><code>runPythia.C</code></td>
+      <td>Pythia6 event generator — generates FZD</td>
+      <td><a href="runPythia.C">view</a></td></tr>
+  <tr><td><code>sim.C</code></td>
+      <td>BFC reconstruction chain (FZD → MuDst + picoDst) — particle: pid="ele.pt1.5", Pythia: pid="JPsi"</td>
+      <td><a href="sim.C">view</a></td></tr>
+  <tr><td><code>fwd_afterburner_db.C</code></td>
+      <td>FTT+FCS+FWD afterburner on production MuDst (DB-driven: run#/timestamp from 1st event); called by runab</td>
+      <td><a href="../StRoot/StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C">view</a></td></tr>
+  <tr><td><code>picoMatch.C</code></td>
+      <td>FCS cluster ↔ forward-track matching histograms</td>
+      <td><a href="picoMatch.C">view</a></td></tr>
+  <tr><td><code>picoDilepton.C</code></td>
+      <td>Dilepton candidate selection and histograms</td>
+      <td><a href="picoDilepton.C">view</a></td></tr>
+  <tr><td><code>readpico3.C</code></td>
+      <td>Unified pico reader (dispatches on run number)</td>
+      <td><a href="readpico3.C">view</a></td></tr>
+  <tr><td><code>pico3.C</code></td>
+      <td>Driver: loads libs, calls readpico3.C + picoMatch + picoDilepton</td>
+      <td><a href="pico3.C">view</a></td></tr>
+  <tr><td><code>plotMatch.C</code></td>
+      <td>Plot track–FCS matching histograms from .match.root</td>
+      <td><a href="plotMatch.C">view</a></td></tr>
+  <tr><td><code>plotDilep.C</code></td>
+      <td>Plot dilepton histograms from .dilep.root</td>
+      <td><a href="plotDilep.C">view</a></td></tr>
+</table>
+
+<!-- NOTES -->
+<h2 id="notes">Notes</h2>
+<div class="note">
+<strong>Configuration:</strong> All new scripts have a <code>=== CONFIGURATION ===</code> block
+at the top (WORKDIR, DATADIR, CONTAINER path). Edit once when setting up for a different user or cluster.
+</div>
+<ul style="margin: 8px 0 0 18px; line-height: 1.8; font-size: 0.9em;">
+  <li>Use the TYPE name as OUTDIR for particle/Pythia to keep <code>1.N.match.root</code> outputs in separate directories.</li>
+  <li><code>fGeom.root</code> geometry cache must be present in WORKDIR for afterburner jobs.
+      Build with: <code>root4star -b -q -l StRoot/StFwdTrackMaker/macro/build_geom.C</code></li>
+  <li>Monitor condor jobs: <code>condor_q $USER</code></li>
+</ul>
+
+<div class="clear"></div>
+<p style="margin-top:24px; color:#999; font-size:0.82em; text-align:right;">
+  /star/u/akio/fcstrk11/star-sw-fwd/script/
+</p>
+</div><!-- wrap -->
+</body>
+</html>

@@ -148,7 +148,6 @@ public:
     double tintersection =
       (planenorm_xyz[0]*(xyzf[0]-tv3A[0])+planenorm_xyz[1]*(xyzf[1]-tv3A[1])+planenorm_xyz[2]*(xyzf[2]-tv3A[2])) /
       (planenorm_xyz[0]*projlinedir[0]+planenorm_xyz[1]*projlinedir[1]+planenorm_xyz[2]*projlinedir[2]);
-  
     return TVector3( projlinedir[0]*tintersection+tv3A[0], projlinedir[1]*tintersection+tv3A[1], projlinedir[2]*tintersection+tv3A[2] );
     /*
         double dxdz = ( tv3B.X() - tv3A.X() ) / ( tv3B.Z() - tv3A.Z() );

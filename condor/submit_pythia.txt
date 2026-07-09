@@ -1,0 +1,605 @@
+Executable   = /bin/env
+Universe     = vanilla
+notification = never
+getenv       = True
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 1 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run1.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run1.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run1.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 2 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run2.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run2.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run2.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 3 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run3.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run3.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run3.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 4 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run4.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run4.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run4.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 5 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run5.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run5.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run5.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 6 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run6.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run6.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run6.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 7 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run7.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run7.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run7.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 8 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run8.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run8.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run8.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 9 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run9.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run9.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run9.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 10 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run10.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run10.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run10.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 11 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run11.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run11.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run11.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 12 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run12.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run12.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run12.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 13 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run13.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run13.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run13.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 14 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run14.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run14.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run14.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 15 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run15.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run15.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run15.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 16 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run16.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run16.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run16.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 17 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run17.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run17.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run17.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 18 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run18.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run18.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run18.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 19 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run19.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run19.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run19.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 20 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run20.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run20.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run20.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 21 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run21.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run21.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run21.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 22 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run22.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run22.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run22.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 23 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run23.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run23.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run23.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 24 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run24.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run24.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run24.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 25 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run25.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run25.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run25.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 26 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run26.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run26.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run26.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 27 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run27.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run27.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run27.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 28 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run28.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run28.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run28.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 29 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run29.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run29.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run29.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 30 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run30.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run30.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run30.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 31 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run31.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run31.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run31.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 32 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run32.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run32.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run32.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 33 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run33.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run33.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run33.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 34 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run34.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run34.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run34.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 35 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run35.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run35.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run35.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 36 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run36.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run36.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run36.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 37 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run37.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run37.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run37.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 38 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run38.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run38.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run38.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 39 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run39.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run39.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run39.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 40 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run40.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run40.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run40.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 41 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run41.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run41.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run41.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 42 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run42.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run42.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run42.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 43 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run43.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run43.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run43.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 44 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run44.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run44.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run44.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 45 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run45.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run45.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run45.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 46 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run46.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run46.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run46.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 47 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run47.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run47.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run47.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 48 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run48.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run48.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run48.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 49 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run49.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run49.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run49.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 50 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run50.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run50.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run50.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 51 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run51.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run51.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run51.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 52 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run52.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run52.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run52.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 53 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run53.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run53.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run53.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 54 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run54.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run54.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run54.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 55 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run55.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run55.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run55.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 56 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run56.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run56.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run56.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 57 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run57.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run57.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run57.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 58 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run58.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run58.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run58.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 59 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run59.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run59.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run59.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 60 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run60.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run60.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run60.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 61 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run61.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run61.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run61.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 62 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run62.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run62.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run62.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 63 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run63.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run63.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run63.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 64 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run64.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run64.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run64.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 65 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run65.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run65.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run65.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 66 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run66.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run66.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run66.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 67 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run67.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run67.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run67.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 68 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run68.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run68.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run68.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 69 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run69.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run69.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run69.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 70 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run70.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run70.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run70.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 71 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run71.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run71.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run71.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 72 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run72.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run72.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run72.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 73 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run73.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run73.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run73.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 74 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run74.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run74.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run74.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 75 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run75.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run75.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run75.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 76 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run76.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run76.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run76.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 77 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run77.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run77.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run77.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 78 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run78.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run78.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run78.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 79 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run79.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run79.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run79.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 80 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run80.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run80.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run80.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 81 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run81.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run81.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run81.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 82 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run82.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run82.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run82.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 83 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run83.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run83.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run83.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 84 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run84.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run84.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run84.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 85 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run85.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run85.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run85.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 86 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run86.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run86.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run86.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 87 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run87.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run87.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run87.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 88 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run88.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run88.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run88.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 89 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run89.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run89.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run89.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 90 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run90.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run90.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run90.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 91 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run91.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run91.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run91.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 92 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run92.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run92.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run92.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 93 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run93.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run93.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run93.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 94 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run94.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run94.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run94.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 95 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run95.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run95.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run95.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 96 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run96.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run96.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run96.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 97 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run97.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run97.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run97.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 98 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run98.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run98.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run98.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 99 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run99.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run99.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run99.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/runpythia 200 100 JPsi 0 FwdCalib/akio/pythia/pythia.JPsi.vz0 0 1"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run100.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run100.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/FwdCalib/akio/pythia/pythia.JPsi.vz0/log/pythia.JPsi.vz0.run100.log
+Queue
+

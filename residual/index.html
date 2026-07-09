@@ -1,0 +1,86 @@
+
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; Linux 2.0.32 i686) [Netscape]">
+   <TITLE> OGAWA Akio Home page </TITLE>
+<header>
+  <!-- Changed by: Akio Ogawa, 07-Jul-2026 -->
+</header>
+
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+<BODY>
+
+  <tr>
+    <td colspan=2 align=right> <font size="-1">
+            <script language="JavaScript">
+            <!-- Hide script from old browsers
+             document.write("Last modified "+ document.lastModified)
+             // end of script --></script></font></td>
+  </tr>
+
+<H1>FST/FTT Unbiased (Hit-Removed) Residuals &mdash; StFwdAlignmentMaker</H1>
+<HR>
+
+<ul>
+  <li>Code: StRoot/StFwdAlignmentMaker (<a href="code/StFwdAlignmentMaker.h">StFwdAlignmentMaker.h</a>, <a href="code/StFwdAlignmentMaker.cxx">.cxx</a>)
+  <li>Method: refits each track with one FST/FTT hit removed at a time (leave-one-out). Unlike the biased StFwdResidualMaker (see <a href="biased/index.html">biased/index.html</a>), the residual is <b>NOT pulled toward the hit</b> by the fit that produced it.
+  <li>Ntuple output (TTree <code>"alignTree"</code>), one row per removed hit:
+    <ul>
+      <li><code>run, event, trackId</code> &mdash; event/track identifiers
+      <li><code>trackType</code> &mdash; 0=Global,1=Beamline,2=Primary,3=FwdVtx,4=BLCVtx
+      <li><code>detType</code> &mdash; 0=FST, 1=FTT
+      <li><code>genfitPlaneIndex</code> &mdash; not reliably preserved into the leave-one-out seed (see code comment); planes are identified by <code>hitZ</code> clustering in the plotting scripts instead
+      <li><code>stripDir</code> &mdash; FTT only: 0=undetermined,1=V-strip (measures x),2=H-strip (measures y)
+      <li><code>hitX, hitY, hitZ</code> &mdash; the removed hit's position [cm]
+      <li><code>projX, projY, projZ</code> &mdash; the leave-one-out refit's projection to the removed hit's z [cm]
+      <li><code>chi2ndf, nPointsUsed, converged</code> &mdash; refit quality
+    </ul>
+  <li>Data source: <code>DataDisk/pico/alignment/*.FwdAlignment_BLCVtx.root</code> (track type: BLCVtx), 150 files, ~117M rows
+</ul>
+
+<hr>
+<h3>Result pages</h3>
+<ul>
+  <li><a href="data/alignment/distributions.html"><b>Residual vs x, y, r, r&phi;, &phi;</b></a> &mdash; full FST/FTT 1D+2D distributions
+  <li><a href="data/alignment/wedgecorrection/index.html"><b>Per-wedge phi correction &mdash; validation</b></a> &mdash; the correction table applied and a 15-file before/after check
+  <li><a href="data/alignment/translation/index.html"><b>More detailed look at r&middot;&Delta;&phi; vs &phi;</b></a> &mdash; root-cause discussion, open caveats, and a sine fit (not yet useful until the wedge steps are better understood)
+</ul>
+
+<hr>
+<H3>Main result: 12-fold per-wedge step pattern in FST r&middot;&Delta;&phi;</H3>
+<p>For scale: FST strip pitch in &phi; is 4.09&nbsp;mrad (inner sensor, 128 phi segments/wedge) or 8.18&nbsp;mrad (outer sensors, 64 phi segments/wedge). In arc length r&middot;&Delta;&phi;, that's 0.021&nbsp;cm at r<sub>min</sub>=5&nbsp;cm (inner) up to 0.229&nbsp;cm at r<sub>max</sub>=28&nbsp;cm (outer).</p>
+<table border=1 cellpadding=4>
+<tr><th></th><th>FST0</th><th>FST1</th><th>FST2</th></tr>
+<tr>
+  <th>Uncorrected</th>
+  <td align=center><a href="data/alignment/fst0UnbiasedRdphi_vsPhi_bare.png"><img src="data/alignment/fst0UnbiasedRdphi_vsPhi_bare.png" height=220></a></td>
+  <td align=center><a href="data/alignment/fst1UnbiasedRdphi_vsPhi_bare.png"><img src="data/alignment/fst1UnbiasedRdphi_vsPhi_bare.png" height=220></a></td>
+  <td align=center><a href="data/alignment/fst2UnbiasedRdphi_vsPhi_bare.png"><img src="data/alignment/fst2UnbiasedRdphi_vsPhi_bare.png" height=220></a></td>
+</tr>
+<tr>
+  <th>Corrected</th>
+  <td align=center><a href="data/alignment/wedgecorrection/after/fst0UnbiasedRdphi_vsPhi_bare.png"><img src="data/alignment/wedgecorrection/after/fst0UnbiasedRdphi_vsPhi_bare.png" height=220></a></td>
+  <td align=center><a href="data/alignment/wedgecorrection/after/fst1UnbiasedRdphi_vsPhi_bare.png"><img src="data/alignment/wedgecorrection/after/fst1UnbiasedRdphi_vsPhi_bare.png" height=220></a></td>
+  <td align=center><a href="data/alignment/wedgecorrection/after/fst2UnbiasedRdphi_vsPhi_bare.png"><img src="data/alignment/wedgecorrection/after/fst2UnbiasedRdphi_vsPhi_bare.png" height=220></a></td>
+</tr>
+</table>
+<p>r&middot;&Delta;&phi; vs &phi;, raw (no fit/profile overlay). Top row: a clean, reproducible 12-fold (30&deg;) step pattern, one level per FST wedge, present on all 3 disks. Candidate explanation (not yet confirmed): <code>StFstHitMaker::Make()</code> computes a DB/survey-based per-sensor alignment correction but doesn't apply it &mdash; though we don't yet know whether that discarded correction would even be correct (real survey data vs. unpopulated/identity DB entries), or whether this is intentional pending real alignment data. Bottom row: same 15 files (subset) with the per-wedge phi correction applied &mdash; steps are visibly smaller but not gone. See the <a href="data/alignment/wedgecorrection/index.html">per-wedge correction page</a> for the full validation and the translation-test page for the root-cause discussion.</p>
+
+<hr>
+<H3>To do</H3>
+<ul>
+  <li>Independent cross-check of the translation-test result with a B=0, low-luminosity run and a real TPC-reconstructed vertex (BLCVtx's own vertex is built from FST/FTT hits, so it can't fully rule out a fit-anchoring effect)
+  <li>Check whether FST's <code>Survey_st</code> DB entries actually hold validated survey offsets before concluding anything about <code>StFstHitMaker::Make()</code>
+</ul>
+
+<hr>
+<p>Earlier, preliminary study using the biased StFwdResidualMaker (residual pulled toward the hit, superseded by the analysis above): <a href="biased/index.html">biased/index.html</a></p>
+
+<HR>OGAWA, Akio
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODYBG>
+</HTML>

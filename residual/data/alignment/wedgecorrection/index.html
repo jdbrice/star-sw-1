@@ -1,0 +1,73 @@
+<HTML><HEAD><TITLE>FST Per-Wedge Phi Correction &mdash; Validation</TITLE></HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+<p><a href="../../../index.html">&larr; back to residual index</a> | <a href="../distributions.html">distributions.html</a> | <a href="../translation/index.html">translation test</a></p>
+<H1>FST Per-Wedge Phi Correction &mdash; Validation</H1><HR>
+
+<ul>
+  <li>What: a per-(disk, wedge) empirical phi offset, applied to FST hits at MuDst-load time, to absorb the 12-fold (30&deg;) step pattern (candidate explanation: <code>StFstHitMaker::Make()</code> not applying a DB/survey alignment correction it computes &mdash; see <a href="../translation/index.html">translation test page</a> for that discussion and its open caveats). Not a fix at the source &mdash; a downstream correction that absorbs the step pattern regardless of its actual cause.
+  <li>Source data (correction derivation): <code>DataDisk/pico/alignment/*.FwdAlignment_BLCVtx.root</code> (track type: BLCVtx), 150 files, ~117M rows &mdash; same dataset as <a href="../distributions.html">distributions.html</a>.
+  <li>Source data (validation, before/after): uncorrected from the same 150-file set above (15-file subset); corrected from <code>DataDisk/wedgecorr_condor/*.FwdAlignment_BLCVtx.root</code> (15 files, run 23081015, all reprocessed via condor with the phase-fixed correction, see <a href="#code">code</a> below).
+  <li>Code: <code>FstWedgeAligner</code> in <code>StRoot/StFwdTrackMaker/StFwdHitLoader.h</code>/<code>.cxx</code>, applied in <code>StFwdHitLoader::loadFstHitsFromMuDst()</code>. Opt-in only (<code>setApplyFstWedgeAlignment(true)</code> on <code>StFwdTrackMaker</code>, wired through <code>fwd_afterburner_db.C</code>'s <code>applyFstWedgeAlignment</code> argument) &mdash; off by default, not yet in routine production.
+  <li>Derivation: mean r&middot;&Delta;&phi; per (disk, wedge) measured from the full 150-file BLCVtx alignment campaign (core cut |r&middot;&Delta;&phi;|&lt;0.3&nbsp;cm), converted to a phi offset. Script: <code>script/computeWedgeCorrection.C</code>.
+  <li>Wedge binning: 12 wedges of 30&deg; each, phase-aligned to the same boundary found empirically in the step pattern. Same wedge# covers the same &phi; range on all 3 disks &mdash; <code>StFstConsts.h</code>'s <code>kFstphiStart</code>/<code>kFstphiStop</code> (the hardware wedge-to-phi mapping) are single 12-entry arrays with no per-disk variant, so this is true by construction of the detector, not just of our phi-binning choice. See the phi-range column in the table below.
+</ul>
+
+<H3>Correction table (mrad, subtracted from hit &phi; per disk/wedge)</H3>
+<table border=1 cellpadding=4>
+<tr><th>Disk</th><th>W0</th><th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th><th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th><th>W11</th></tr>
+<tr><td>FST0</td><td>-7.271</td><td>+1.096</td><td>-1.476</td><td>+2.857</td><td>-1.234</td><td>+6.262</td><td>-5.856</td><td>+1.923</td><td>-4.920</td><td>+0.666</td><td>-4.712</td><td>+2.365</td></tr>
+<tr><td>FST1</td><td>+2.934</td><td>-5.147</td><td>+4.865</td><td>-2.575</td><td>+3.776</td><td>-2.012</td><td>+2.006</td><td>-2.858</td><td>+1.207</td><td>-1.799</td><td>+1.198</td><td>-3.505</td></tr>
+<tr><td>FST2</td><td>+1.411</td><td>+4.961</td><td>-3.647</td><td>+2.564</td><td>-3.000</td><td>-1.889</td><td>+1.911</td><td>+4.294</td><td>+1.591</td><td>+1.295</td><td>+0.639</td><td>+2.373</td></tr>
+<tr><td>&phi; range [deg]</td><td>[-180,-150)</td><td>[-150,-120)</td><td>[-120,-90)</td><td>[-90,-60)</td><td>[-60,-30)</td><td>[-30,0)</td><td>[0,30)</td><td>[30,60)</td><td>[60,90)</td><td>[90,120)</td><td>[120,150)</td><td>[150,180)</td></tr>
+</table>
+<p>Same &phi; range for all 3 disks (per the hardware-mapping argument above). Cross-checked against <code>kFstphiStart</code>/<code>kFstphiStop</code>: wedge boundaries at 0,&plusmn;30,&plusmn;60,&plusmn;90,&plusmn;120,&plusmn;150,&plusmn;180&deg; match exactly.</p>
+
+<H3>Validation: before/after, full 15-file check</H3>
+<ul>
+  <li>Same run (23081015), same 15 files reprocessed with the correction enabled (all via condor), compared against the pre-existing uncorrected baseline for the identical files.
+  <li>Metric: per-(disk, wedge) mean r&middot;&Delta;&phi; (core cut |r&middot;&Delta;&phi;|&lt;0.3&nbsp;cm); "mean|level|" = average |mean| across the 12 wedges, "peak-to-peak" = max&minus;min across the 12 wedges &mdash; both should shrink toward zero if the correction is working.
+  <li>Script: <code>script/compareCorrection15.C</code>.
+</ul>
+<table border=1 cellpadding=4>
+<tr><th>Disk</th><th>mean|level| uncorrected</th><th>mean|level| corrected</th><th>reduction</th><th>peak-to-peak uncorrected</th><th>peak-to-peak corrected</th><th>reduction</th></tr>
+<tr><td>FST0</td><td>0.0251 cm</td><td>0.0103 cm</td><td>59%</td><td>0.1074 cm</td><td>0.0432 cm</td><td>60%</td></tr>
+<tr><td>FST1</td><td>0.0246 cm</td><td>0.0092 cm</td><td>63%</td><td>0.0842 cm</td><td>0.0343 cm</td><td>59%</td></tr>
+<tr><td>FST2</td><td>0.0214 cm</td><td>0.0090 cm</td><td>58%</td><td>0.0721 cm</td><td>0.0421 cm</td><td>42%</td></tr>
+</table>
+<p>8.3M corrected rows / 8.7M uncorrected rows (core cut). A solid 42-63% reduction across all 3 disks and both metrics. Not a complete elimination &mdash; the steps are visibly still there after correction, see below.</p>
+
+<H3>Why the steps aren't fully eliminated</H3>
+<ul>
+  <li>Checked whether the correction table itself shows cross-disk structure: disk0/disk2 correlation is essentially zero (Pearson r=+0.03) across the 12 wedges. disk0/disk1 and disk1/disk2 show moderate anti-correlation instead (r=-0.68, r=-0.72) &mdash; a real but less clean pattern than a single obvious systematic, not yet interpreted.
+  <li>Most likely explanation for the residual (not fully understood yet): the correction is a single mean offset per (disk,wedge) derived from 150-file-averaged stats, applied uniformly across all events/tracks in a 15-file subset with its own statistical noise and possibly its own sub-wedge structure (see the straight-line segments noted on the <a href="../translation/index.html">translation test page</a>) &mdash; a single flat per-wedge number can't capture structure finer than one wedge.
+  <li>Not yet done: fitting a joint/coherent model across disks, iterating the correction, or a finer-than-per-wedge correction. See To do.
+</ul>
+<p><a href="fst0_wedge_means_bare.png"><img src="fst0_wedge_means_bare.png" height=260></a><br>FST0 mean r&middot;&Delta;&phi; per wedge (15-file, uncorrected, core cut, corrected wedge binning) &mdash; no fit of any kind. Compare to a smooth sin(&phi;-&phi;<sub>0</sub>): this is a step pattern, not a sinusoid.</p>
+
+<H3>Full plot pages, before vs after (same 15 files)</H3>
+<table border=1 cellpadding=4>
+<tr><th></th><th>Before (uncorrected)</th><th>After (corrected)</th></tr>
+<tr><td>Residual vs x, y, r, r&phi;, &phi;</td><td><a href="../distributions.html">../distributions.html</a></td><td><a href="after/distributions.html">after/distributions.html</a></td></tr>
+<tr><td>More detailed look at r&middot;&Delta;&phi; vs &phi; (sine fit)</td><td><a href="../translation/index.html">../translation/index.html</a></td><td><a href="after/translation/index.html">after/translation/index.html</a></td></tr>
+</table>
+
+<a name="code">
+<hr>
+<H3>Code (snapshot at time of this analysis)</H3>
+<ul>
+  <li><a href="code/StFwdHitLoader.h">StFwdHitLoader.h</a>, <a href="code/StFwdHitLoader.cxx">StFwdHitLoader.cxx</a> &mdash; <code>FstWedgeAligner</code> class and its use in <code>loadFstHitsFromMuDst()</code>
+  <li><a href="code/computeWedgeCorrection.C">computeWedgeCorrection.C</a> &mdash; derives the correction table from the 150-file baseline
+  <li><a href="code/compareCorrection15.C">compareCorrection15.C</a> &mdash; the before/after validation numbers above
+  <li><a href="code/plotFwdAlignmentResidual.C">plotFwdAlignmentResidual.C</a> &mdash; generates <a href="../distributions.html">distributions.html</a>/<a href="after/distributions.html">after/distributions.html</a> and the translation-test pages
+</ul>
+
+<hr>
+<H3>To do</H3>
+<ul>
+  <li>Fit a joint/coherent model across the 3 disks, iterate the correction, or go finer than per-wedge, to address the residual structure discussed above
+  <li>Decide whether/when to turn this on by default in production (currently opt-in only)
+  <li>Check whether FST's <code>Survey_st</code> DB entries actually hold validated survey offsets (vs. unpopulated/identity placeholders) before concluding <code>StFstHitMaker::Make()</code>'s discarded correction was meaningful; then decide whether to raise <code>bugreport_StFstHitMaker.txt</code> upstream
+</ul>
+
+<HR>OGAWA, Akio<ADDRESS><A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+</BODY></HTML>

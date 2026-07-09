@@ -18,13 +18,15 @@ using namespace std;
 #endif
 
 
+#ifndef __CINT__
 #if defined(ST_NO_TEMPLATE_DEF_ARGS)
 typedef list<unsigned short, allocator<unsigned short> >            UnsignedShortCollection;
 typedef list<unsigned short, allocator<unsigned short> >::iterator  UnsignedShortIterator;
-#else 
+#else
 typedef list<unsigned short>            UnsignedShortCollection;
 typedef list<unsigned short>::iterator  UnsignedShortIterator;
 #endif
+#endif // __CINT__
 
 
 class StMuFilter : public StMuCut {
@@ -33,7 +35,9 @@ class StMuFilter : public StMuCut {
     void addEncodedMethod(unsigned short method) { mEncodedMethods.push_back(method); }
     void addEncodedMethod(StTrackFinderMethod find, StTrackFittingMethod fit) { mEncodedMethods.push_back( fit + (1<<find)); }
  protected:
-    UnsignedShortCollection mEncodedMethods;  
+#ifndef __CINT__
+    UnsignedShortCollection mEncodedMethods;
+#endif
     
     virtual bool accept( const StEvent*);
     virtual bool accept( const StTrack*);

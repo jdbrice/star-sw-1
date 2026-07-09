@@ -6,6 +6,7 @@
 #include "GenFit/FitStatus.h"
 #include <map>
 #include <unordered_map>
+#include "StEvent/StFwdTrack.h"
 
 // Utility class for evaluating ID and QA truth
 struct MCTruthUtils {
@@ -28,10 +29,20 @@ struct MCTruthUtils {
         using P = decltype(truth)::value_type;
         auto dom = max_element(begin(truth), end(truth), [](P a, P b){ return a.second < b.second; });
 
-        // QA represents the percentage of hits which
-        // vote the same way on the track
-        if ( hits.size() > 0 )
-            qa = double(dom->second) / double(hits.size()) ;
+        // QA represents the percentage of hits which vote the same way on the track.
+        //AAA fix: original used hits.size() as denominator, which includes PV/beamline hits
+        //         that are skipped (isPV) in the numerator — making qa < 1 even for a pure
+        //         single-track seed, and making qa=1.0 impossible when a vertex constraint
+        //         is in the seed.  Use the count of non-PV hits for the denominator.
+        int nonPVHits = 0;
+        for ( auto hit : hits ) {
+            FwdHit* fh = dynamic_cast<FwdHit*>(hit);
+            if ( fh && !fh->isPV() ) nonPVHits++;
+        }
+        //if ( hits.size() > 0 )
+        //    qa = double(dom->second) / double(hits.size()) ;
+        if ( nonPVHits > 0 )
+            qa = double(dom->second) / double(nonPVHits);
         else
             qa = 0;
 
@@ -77,10 +88,18 @@ class EventStats {
         mFailedSecondaryRefits = 0;
         mGoodSecondaryRefits = 0;
 
+        // BBB: BLCVertex counters
+        mAttemptedBLCVtxFits = 0;
+        mGoodBLCVtxFits = 0;
+        mFailedBLCVtxFits = 0;
+        mGoodBLCVtxRefits = 0;
+        mFailedBLCVtxRefits = 0;
+
         numGlobalFoundHits.clear();
         numBeamlineFoundHits.clear();
         numPrimaryFoundHits.clear();
         numSecondaryFoundHits.clear();
+        numBLCVtxFoundHits.clear(); // BBB
 
         mGlobalNumEpdFoundHits.clear();
         mBeamlineNumEpdFoundHits.clear();
@@ -96,6 +115,7 @@ class EventStats {
         mBeamlineFitDuration.clear();
         mPrimaryFitDuration.clear();
         mSecondaryFitDuration.clear();
+        mBLCVtxFitDuration.clear(); // BBB
     }
     int mNumSeeds = 0;
     int mNumEpdHits = 0; // across all track types, did we find an EPD hit?
@@ -130,10 +150,18 @@ class EventStats {
     int mFailedSecondaryRefits = 0;
     int mGoodSecondaryRefits = 0;
 
+    // BBB: BLCVertex fit counters
+    int mAttemptedBLCVtxFits = 0;
+    int mGoodBLCVtxFits = 0;
+    int mFailedBLCVtxFits = 0;
+    int mGoodBLCVtxRefits = 0;
+    int mFailedBLCVtxRefits = 0;
+
     vector<int> numGlobalFoundHits;
     vector<int> numBeamlineFoundHits;
     vector<int> numPrimaryFoundHits;
     vector<int> numSecondaryFoundHits;
+    vector<int> numBLCVtxFoundHits; // BBB
 
     vector<int> mGlobalNumEpdFoundHits;
     vector<int> mBeamlineNumEpdFoundHits;
@@ -149,6 +177,7 @@ class EventStats {
     vector<float> mBeamlineFitDuration;
     vector<float> mPrimaryFitDuration;
     vector<float> mSecondaryFitDuration;
+    vector<float> mBLCVtxFitDuration; // BBB
 };
 
 class GenfitTrackResult {
@@ -242,14 +271,46 @@ public:
     /** @brief Set the DCA and primary vertex for the event
      *
      */
+    // BBB: Re-read scalar fields (momentum, charge, convergence, chi2) from the current
+    // mTrack fitted state.  Call after in-place modification of mTrack (e.g. tight-phi
+    // warm fit) to propagate the updated state without replacing the shared_ptr.
+    void refreshFromTrack() {
+        if ( !mTrack ) return;
+        try {
+            auto cr = mTrack->getCardinalRep();
+            auto fs = mTrack->getFitStatus(cr);
+            if ( !fs ) return;
+            mIsFitConverged          = fs->isFitConverged();
+            mIsFitConvergedFully     = fs->isFitConvergedFully();
+            mIsFitConvergedPartially = fs->isFitConvergedPartially();
+            mNFailedPoints           = fs->getNFailedPoints();
+            mCharge                  = fs->getCharge();
+            mChi2                    = fs->getChi2();
+            if ( mIsFitConverged )
+                mMomentum = cr->getMom( mTrack->getFittedState(0, cr) );
+        } catch ( genfit::Exception &e ) {
+            LOG_WARN << "refreshFromTrack: " << e.what() << endm;
+        } catch (...) {}
+    }
+
     void setDCA( TVector3 pv ){
         mPV = pv;
         if ( mTrack ){
             try {
                 auto dcaState = mTrack->getFittedState( 0 );
-                // this->mTrackRep->extrapolateToPoint( dcaState, mPV );
+                //AAA fix: kPrimaryVertexConstrained uses 3D DCA
+                // BBB: kBLCVertexConstrained also uses 3D DCA (extrapolateToPoint) since it is constrained to a point
+                // CCC: kForwardVertexConstrained (RAVE vertex) and kFCSConstrained (BLC vertex) are
+                // likewise fit through a literal 3D point, not a line -- same reasoning as BBB.
                 TVector3 beamDirection = TVector3(0,0,1);
-                mTrack->getCardinalRep()->extrapolateToLine( dcaState, mPV, beamDirection );
+                if ( mTrackType == StFwdTrack::kPrimaryVertexConstrained ||
+                     mTrackType == StFwdTrack::kBLCVertexConstrained ||
+                     mTrackType == StFwdTrack::kForwardVertexConstrained ||
+                     mTrackType == StFwdTrack::kFCSConstrained ) {
+                    mTrack->getCardinalRep()->extrapolateToPoint( dcaState, mPV );
+                } else {
+                    mTrack->getCardinalRep()->extrapolateToLine( dcaState, mPV, beamDirection );
+                }
                 this->mDCA = dcaState.getPos();
             } catch ( genfit::Exception &e ) {
                 LOG_ERROR << "CANNOT GET DCA : GenfitException: " << e.what() << endm;

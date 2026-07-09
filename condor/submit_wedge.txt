@@ -1,0 +1,28 @@
+Executable   = /bin/env
+Universe     = vanilla
+notification = never
+getenv       = True
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab_wedge /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_5000049.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/wedgecorr_condor"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_5000049.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_5000049.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_5000049.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab_wedge /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_2000046.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/wedgecorr_condor"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_2000046.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_2000046.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_2000046.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab_wedge /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_4500029.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/wedgecorr_condor"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_4500029.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_4500029.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_4500029.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab_wedge /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_7500026.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/wedgecorr_condor"
+Log    = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_7500026.log
+Output = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_7500026.log
+Error  = /star/u/akio/fcstrk11/star-sw-fwd/condor/log_wedge/st_fwd_23081015_raw_7500026.log
+Queue

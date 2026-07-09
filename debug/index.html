@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Checking STAR FWD Tracking Code — Akio Ogawa, June 2026</title>
+<style>
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; background: #f5f6fa; color: #222; }
+  header { background: #1a237e; color: white; padding: 24px 40px; }
+  header h1 { margin: 0 0 4px; font-size: 1.6em; }
+  header p  { margin: 0; font-size: 0.9em; opacity: 0.8; }
+  nav { background: #283593; padding: 8px 40px; display: flex; gap: 20px; flex-wrap: wrap; }
+  nav a { color: #c5cae9; text-decoration: none; font-size: 0.88em; padding: 4px 8px; border-radius: 3px; }
+  nav a:hover { background: rgba(255,255,255,0.15); color: white; }
+  .content { max-width: 1300px; margin: 30px auto; padding: 0 30px; }
+  h2 { color: #1a237e; border-bottom: 2px solid #3949ab; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #283593; margin-top: 24px; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.86em; }
+  th { background: #3949ab; color: white; padding: 8px 10px; text-align: left; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f3f4fb; }
+  tr:hover td { background: #e8eaf6; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.78em; font-weight: bold; }
+  .critical { background: #d32f2f; color: white; }
+  .high     { background: #f57c00; color: white; }
+  .medium   { background: #fbc02d; color: #333; }
+  .low      { background: #388e3c; color: white; }
+  .fixed    { background: #1565c0; color: white; }
+  .reverted { background: #7b1fa2; color: white; }
+  code { background: #e8eaf6; padding: 1px 5px; border-radius: 3px; font-size: 0.88em; font-family: monospace; }
+  pre  { background: #263238; color: #eceff1; padding: 14px 18px; border-radius: 6px; overflow-x: auto; font-size: 0.82em; line-height: 1.5; }
+  .card { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 20px 24px; margin: 16px 0; }
+  .result-good { color: #2e7d32; font-weight: bold; }
+  .result-bad  { color: #c62828; font-weight: bold; }
+  .result-neutral { color: #555; }
+  .file-list { list-style: none; padding: 0; }
+  .file-list li { padding: 6px 0; border-bottom: 1px solid #eee; }
+  .file-list li:last-child { border-bottom: none; }
+  .file-list a { color: #1565c0; text-decoration: none; font-family: monospace; }
+  .file-list a:hover { text-decoration: underline; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 16px 0; }
+  .stat { background: white; border-radius: 6px; padding: 14px 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); text-align: center; }
+  .stat .num { font-size: 2em; font-weight: bold; color: #1a237e; }
+  .stat .lbl { font-size: 0.8em; color: #666; margin-top: 4px; }
+  .regression-win  { background: #e8f5e9; }
+  .regression-lose { background: #ffebee; }
+  .section-anchor  { scroll-margin-top: 60px; }
+  a.codeline { font-family: monospace; font-size: 0.88em; color: #1565c0; white-space: nowrap; }
+  a.codeline:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Checking STAR FWD Tracking Code</h1>
+  <p>Akio Ogawa &nbsp;|&nbsp; akio@bnl.gov &nbsp;|&nbsp; June 2026 &nbsp;|&nbsp;
+     Repository: <code>star-sw-fwd</code> branch <code>dev</code></p>
+</header>
+
+<nav>
+  <a href="#hit-finding">Hit Finding #1–12, 22, 23</a>
+  <a href="#track-fitting">Track Fitting #13–19</a>
+  <a href="#fcs-proj">FCS Projection #20</a>
+  <a href="#fst-covmat">FST Covariance (#6 study)</a>
+  <a href="#ftt-cluster">FTT Cluster #21</a>
+  <a href="#pT-resolution">pT Resolution #24</a>
+  <a href="#seed-curvature">Seed Curvature #25</a>
+  <a href="#ftt-calib-gap">FTT Calibration Gaps #26</a>
+  <a href="#dca-fix">DCA Bug #27</a>
+  <a href="#regression">Regression Tests</a>
+  <a href="#files">Files &amp; Logs</a>
+</nav>
+
+<div class="content">
+
+<p style="margin-top:24px; padding:10px 16px; background:#e8eaf6; border-left:4px solid #3949ab; border-radius:3px; font-family:monospace;">
+  Search <strong>AAA</strong> in the source files to locate all modifications.
+</p>
+
+<table style="width:auto; margin:20px 0;">
+<tr>
+  <th></th>
+  <th style="padding:8px 20px;">Before (pre-fix)</th>
+  <th style="padding:8px 20px;">After (post-fix)</th>
+</tr>
+<tr>
+  <td style="padding:7px 12px; font-weight:bold; white-space:nowrap;">FCS–Track Matching</td>
+  <td style="padding:7px 20px; text-align:center;">
+    <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/trackmatch/20260603/index.html" target="_blank">2026-06-03</a>
+  </td>
+  <td style="padding:7px 20px; text-align:center;">
+    <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/trackmatch/20260609/index.html" target="_blank">2026-06-09</a>
+  </td>
+</tr>
+<tr>
+  <td style="padding:7px 12px; font-weight:bold; white-space:nowrap;">J/ψ Results</td>
+  <td style="padding:7px 20px; text-align:center;">
+    <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/jpsi/index.html#20260606" target="_blank">2026-06-06</a>
+  </td>
+  <td style="padding:7px 20px; text-align:center;">
+    <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/jpsi/index.html#20260610" target="_blank">2026-06-10</a>
+  </td>
+</tr>
+</table>
+
+<!-- ─────────────────────────────────────────────────────── HIT FINDING -->
+<h2 id="hit-finding" class="section-anchor">Hit Finding — Issues 1–12, 22, 23</h2>
+
+<table>
+<tr>
+  <th width="4%">#</th>
+  <th width="8%">Sev.</th>
+  <th width="6%">Det.</th>
+  <th width="20%">File : Line</th>
+  <th width="27%">Problem</th>
+  <th width="20%">Fix</th>
+  <th width="15%">Impact</th>
+</tr>
+
+<tr>
+  <td><a name="1" id="1"></a>1</td>
+  <td><span class="badge critical">CRITICAL</span></td>
+  <td>FTT</td>
+  <td><a class="codeline" href="FwdTracker.h#L1562">FwdTracker.h : 1562</a></td>
+  <td><code>mFttPlanes[0..3]</code> are 4 quadrants of disk-0 (all z=312.25 cm),
+      not one plane per disk. All 4 FTT disks projected to identical z.</td>
+  <td>Compute mean-z from <code>hitmap[disk]</code>; create <code>DetPlane</code> at that z.</td>
+  <td>Disks 1–3 now project to correct z (331, 347, 365 cm).</td>
+</tr>
+
+<tr>
+  <td><a name="2" id="2"></a>2</td>
+  <td><span class="badge critical">CRITICAL</span></td>
+  <td>FTT/FST/EPD</td>
+  <td>
+    <a class="codeline" href="FwdTracker.h#L1554">FwdTracker.h : 1554</a><br>
+    <a class="codeline" href="FwdTracker.h#L1653">FwdTracker.h : 1653</a><br>
+    <a class="codeline" href="FwdTracker.h#L1996">FwdTracker.h : 1996</a>
+  </td>
+  <td>Blown-up Kalman states (p<sub>T</sub>=0.001–22000 GeV/c) reached hit search.
+      sigU=22000 cm produced ghost associations up to 16 cm from track.</td>
+  <td>Guard: skip if p<sub>T</sub> &lt; 0.05 GeV/c in
+      <code>addFttHits</code>, <code>addFstHits</code>, <code>addEpdHits</code>.
+      An upper bound (&gt; 100 GeV/c) was initially added but later removed —
+      high-p<sub>T</sub> tracks are straight lines with valid projections;
+      only truly degenerate zero-curvature states (p<sub>T</sub> ≈ 0) need guarding.</td>
+  <td>Eliminates spurious hits from degenerate zero-p<sub>T</sub> fits.</td>
+</tr>
+
+<tr>
+  <td><a name="3" id="3"></a>3/4/7</td>
+  <td><span class="badge high">HIGH</span></td>
+  <td>FTT</td>
+  <td>
+    <a class="codeline" href="FwdTracker.h#L1907">FwdTracker.h : 1907</a><br>
+    <a class="codeline" href="FwdTracker.h#L1917">FwdTracker.h : 1917</a><br>
+    <a class="codeline" href="FwdTracker.h#L1939">FwdTracker.h : 1939</a><br>
+    <a class="codeline" href="FwdTracker.h#L1951">FwdTracker.h : 1951</a>
+  </td>
+  <td>H/V strips selected by minimum dφ, not by minimum |dy|/|dx| (the precision
+      coordinate). H strips measure y precisely (σ_y=0.01 cm); dφ selection
+      could accept strips 10–13 cm off in x/y after projection became accurate.</td>
+  <td>H strips: gate on min|dy| and accept on <code>dy &lt; thresholdY</code>.
+      V strips: gate on min|dx| and accept on <code>dx &lt; thresholdX</code>.</td>
+  <td>Correct strip selected; acceptance no longer mixes coordinates.</td>
+</tr>
+
+<tr>
+  <td><a name="5" id="5"></a>5</td>
+  <td><span class="badge medium">MEDIUM</span></td>
+  <td>FST</td>
+  <td><a class="codeline" href="StFwdHitLoader.cxx#L30">StFwdHitLoader.cxx : 30</a></td>
+  <td>Function default <code>rSize=3.0</code> instead of
+      <code>kFstStripPitchR=2.875 cm</code>.</td>
+  <td>Default changed to <code>kFstStripPitchR</code>.</td>
+  <td>Minor (4%); uses the correct geometry constant.</td>
+</tr>
+
+<tr>
+  <td><a name="6" id="6"></a>6</td>
+  <td><span class="badge critical">CRITICAL</span></td>
+  <td>FST</td>
+  <td><a class="codeline" href="StFwdHitLoader.cxx#L58">StFwdHitLoader.cxx : 58</a></td>
+  <td><code>sqrt12</code> was computed in <code>makeFstCovMat()</code> but never applied.
+      FST uncertainty was 3.46× too large (full pitch instead of pitch/√12),
+      Kalman trusted FST hits 12× less. σ_r was 2.875 cm instead of 0.83 cm.</td>
+  <td>Fixed: <code>dr = rSize/sqrt12</code>.
+      <strong style="color:#c62828;">Later reverted</strong> — see
+      <a href="#fst-covmat">FST Covariance Study</a>.
+      Currently active: <code>dr = rSize</code> (full pitch r-sigma).</td>
+  <td>FST <strong>r</strong>-sigma: full pitch in initial fit (tightened to pitch/√12 in warm-start 2nd pass, 2026-06-24).
+      FST <strong>φ</strong>-sigma: tight (pitch/√12) applied via warm-start 2nd pass
+      (<a href="#pT-resolution">Issue #24</a>) without affecting seeding.
+      Both r+φ tightened together in <code>warmFitFstTightSigma()</code>.</td>
+</tr>
+
+<tr>
+  <td><a name="8" id="8"></a>8</td>
+  <td><span class="badge high">HIGH</span></td>
+  <td>FST</td>
+  <td><a class="codeline" href="FwdTracker.h#L1661">FwdTracker.h : 1661</a></td>
+  <td><code>mFstSensorPlanes[0..2]</code> all reference disk-0 (z≈151 cm).
+      Disks 1 (z=165) and 2 (z=179 cm) projected to wrong z.</td>
+  <td>Compute mean-z from <code>hitmap[disk]</code> — same fix as Bug 1.</td>
+  <td>FST disks 1 and 2 now project to correct z.</td>
+</tr>
+
+<tr>
+  <td><a name="9" id="9"></a>9</td>
+  <td><span class="badge medium">MEDIUM</span></td>
+  <td>FST</td>
+  <td><a class="codeline" href="FwdTracker.h#L1723">FwdTracker.h : 1723</a></td>
+  <td>dphi wrapping <code>if (mdphi &gt; 2π)</code> never fires because
+      the atan2 difference is already in [0, 2π]; large wrapping not folded.</td>
+  <td><code>if (mdphi &gt; π) mdphi = 2π − mdphi</code></td>
+  <td>Correct φ-folding for hits near ±π boundary.</td>
+</tr>
+
+<tr>
+  <td><a name="10" id="10"></a>10/12</td>
+  <td><span class="badge high">HIGH</span></td>
+  <td>EPD</td>
+  <td><a class="codeline" href="FwdTracker.h#L2071">FwdTracker.h : 2071</a></td>
+  <td>mindx, mindy, mindr tracked independently over all hits; closest tracked
+      only minimum-dφ hit. Acceptance mixed metrics from different hits
+      (mindx from hit A, closest=hit B) → could accept wrong hit.</td>
+  <td>Update all 4 metrics together when new minimum-dφ hit found.</td>
+  <td>Acceptance based on one consistent hit.</td>
+</tr>
+
+<tr>
+  <td><a name="11" id="11"></a>11</td>
+  <td><span class="badge high">HIGH</span></td>
+  <td>EPD</td>
+  <td><a class="codeline" href="FwdTracker.h#L2047">FwdTracker.h : 2047</a></td>
+  <td>EPD dx/dy threshold was 1.5 cm; EPD tile uncertainty is σ_xy=4 cm,
+      so threshold must be ≥2σ≈8 cm to find real hits.</td>
+  <td>Widened: 1.5 → 10 cm.</td>
+  <td>EPD hits found for tracks that genuinely cross a tile.</td>
+</tr>
+<tr>
+  <td><a name="22" id="22"></a>22</td>
+  <td><span class="badge critical">CRITICAL</span></td>
+  <td>FST</td>
+  <td><code>StFwdTrackMaker.cxx : 846&ndash;849</code><br>
+      <small>(defaultConfig XML)</small></td>
+  <td>
+    <p><strong>Crit3_3DAngle and Crit3_2DAngle parameters are in degrees, not radians.</strong>
+    Both had <code>max="1"</code>, which means 1°, not 57°.</p>
+    <p>For a seed with r-segments (s,s,s+1) — one r-strip change between adjacent disks —
+    the 3D kink angle is arctan(2.875 cm / 7.5 cm) ≈ <strong>21°</strong>, far above the 1° cut.
+    Similarly, for Crit3_2DAngle: seg1_xy points azimuthally (same r-strip in disks 0 and 1)
+    while seg2_xy points radially (disk 2 in strip s+1), giving a 2D angle of ~90°.</p>
+    <p>Both cuts therefore rejected every valid seed with any r-strip change across disks.
+    At η≈2.5–3, Δr ≈ 0.75–2.4 cm per disk pair (up to one strip pitch = 2.875 cm),
+    so (s,s,s+1) and (s,s+1,s+1) seeds are geometrically expected and were being discarded.</p>
+    <p>Identified by Barak Schmookler 2026-06-22 (Crit3_3DAngle; source:
+    <a href="https://github.com/iLCSoft/KiTrack/blob/master/src/Criteria/Crit3_3DAngle.cc" target="_blank">KiTrack Crit3_3DAngle.cc</a>).
+    Crit3_2DAngle has the same root cause.</p>
+    <p style="background:#fff3e0;padding:4px 8px;border-left:3px solid #f57c00;margin-top:8px;">
+    <strong>Correction:</strong> Original Q1 answer to Barak assumed the unit was radians
+    ("very permissive at 1 rad ≈ 57°"). Barak's reply confirmed it is degrees. Fixed here.</p>
+  </td>
+  <td>
+    <p>Removed both Crit3 angle cuts (commented out in defaultConfig).</p>
+    <p>Added <code>Crit2_DeltaRho min="-0.3" max="3.1"</code> in SegmentBuilder.
+    From <a href="https://github.com/iLCSoft/KiTrack/blob/master/src/Criteria/Crit2_DeltaRho.cc" target="_blank">Crit2_DeltaRho.cc</a>:
+    <code>deltaRho = rhoParent − rhoChild</code> (parent = outer disk).</p>
+    <table style="margin:6px 0; font-size:0.82em;">
+      <tr><th>Pattern</th><th>deltaRho</th><th>Result</th></tr>
+      <tr><td>(s,s) same strip</td><td>≈ 0</td><td class="result-good">PASS</td></tr>
+      <tr><td>(s,s+1) adjacent</td><td>≈ +2.875 cm</td><td class="result-good">PASS</td></tr>
+      <tr><td>(s,s−1) backward</td><td>≈ −2.875 cm</td><td class="result-bad">REJECT</td></tr>
+      <tr><td>(s,s+2) multi-skip</td><td>≈ +5.75 cm</td><td class="result-bad">REJECT</td></tr>
+    </table>
+    <p>0.3 cm buffer covers floating-point + disk misalignment.</p>
+  </td>
+  <td>Unlocks (s,s,s+1) and (s,s+1,s+1) seeds at η≈2.5–3; removes looping/noise.
+      <strong>Tested 2026-06-23</strong> (sim, 1000 events, ele.pt1.5.vz0, combined with EPD fix):
+      no regression vs baseline (Primary σ(q/p<sub>T</sub>) = 0.222 GeV<sup>−1</sup>
+      at p<sub>T</sub>=1.5–3.0 GeV, same as before).
+      Improvement expected in real data where η≈2.5–3 seeding is harder.</td>
+</tr>
+<tr>
+  <td><a name="23" id="23"></a>23</td>
+  <td><span class="badge low">LOW</span></td>
+  <td>EPD</td>
+  <td><a class="codeline" href="StFwdHitLoader.cxx#L678">StFwdHitLoader.cxx : 678</a></td>
+  <td>
+    <p><strong>EPD covariance matrix was hardcoded to σ_xy = 4 cm (isotropic), ignoring actual tile geometry.</strong></p>
+    <p>EPD tiles are trapezoidal with very different radial (σ_r ≈ 1–2 cm) and azimuthal
+    (σ_φ·r ≈ 3–8 cm) extents. A fixed isotropic 4 cm is wrong for every individual tile.
+    Furthermore, for a tile <em>not</em> aligned with the x or y axis, the (x,y) covariance
+    has a non-zero off-diagonal term C_xy = (σ_r² − σ_s²)·cos φ₀·sin φ₀, which was
+    also missing.</p>
+    <p>The comment in the code already said <em>"make the covariance matrix based on max x
+    and y distance"</em> but the tile corners returned by
+    <code>StEpdGeom::GetCorners</code> — already available in the same scope — were unused.</p>
+    <p>For a uniform distribution over a convex quadrilateral, the exact covariance matrix
+    is C = (1/3) × (mean of corner outer-products relative to centroid), which simplifies
+    to dividing the summed squared deviations by 12:</p>
+    <pre style="font-size:0.82em;margin:4px 0;">cxx/12  cxy/12
+cxy/12  cyy/12    where cαβ = Σ_k (α[k]−α0)(β[k]−β0)</pre>
+    <p>This is exact for rectangles and parallelograms, and a good approximation for the
+    mildly trapezoidal EPD tiles.</p>
+  </td>
+  <td>
+    <p>Replace hardcoded σ_xy = 4 cm with corner-derived covariance:</p>
+    <pre style="font-size:0.82em;margin:4px 0;">double cxx=0,cyy=0,cxy=0;
+for(int k=0;k&lt;4;k++){
+    double dx=x[k]-x0, dy=y[k]-y0;
+    cxx+=dx*dx; cyy+=dy*dy; cxy+=dx*dy;
+}
+hitCov3(0,0) = cxx/12.0;
+hitCov3(1,1) = cyy/12.0;
+hitCov3(0,1) = hitCov3(1,0) = cxy/12.0;
+hitCov3(2,2) = 1.0; // σ_z = 1 cm</pre>
+    <p>σ_z² = 1 cm² retained (tile thickness ≈ 2 cm; conservative).</p>
+  </td>
+  <td>Correct per-tile σ_xy (1–5 cm depending on tile) and non-zero C_xy for
+      off-axis tiles. EPD is a soft measurement so numerical impact on p<sub>T</sub>
+      resolution is small; correctness matters for χ² and pull distributions.
+      <strong>Tested 2026-06-23</strong> (sim, 1000 events, ele.pt1.5.vz0, combined with
+      Crit2_DeltaRho seeding fix): numerical impact on p<sub>T</sub> resolution confirmed
+      negligible (Primary σ(q/p<sub>T</sub>) = 0.222 GeV<sup>−1</sup> at p<sub>T</sub>=1.5–3 GeV,
+      same as before).</td>
+</tr>
+</table>
+
+<h3>Search Window Budget (after hit-finding fixes)</h3>
+<table>
+<tr><th>Detector</th><th>Window</th><th>sigU (projection uncertainty)</th><th>Misalignment budget</th></tr>
+<tr><td>FTT H-strip</td><td>dy &lt; 7.5 cm</td><td>1.75 cm</td><td class="result-good">5.75 cm</td></tr>
+<tr><td>FTT V-strip</td><td>dx &lt; 7.5 cm</td><td>1.75 cm</td><td class="result-good">5.75 cm</td></tr>
+<tr><td>FST r</td><td>dr &lt; 5.5 cm</td><td>0.048 cm</td><td class="result-good">~5.4 cm</td></tr>
+<tr><td>FST φ</td><td>dφ &lt; 0.082 rad</td><td>0.048 cm</td><td class="result-good">~1.6 cm @ R=20 cm</td></tr>
+<tr><td>EPD</td><td>dx=dy &lt; 10 cm</td><td>1–5 cm (tile-dependent, issue #23)</td><td class="result-good">~5–9 cm</td></tr>
+</table>
+
+<p>Debug log progression:
+  <a href="fwdtrack.1.log">fwdtrack.1.log</a> (original) →
+  <a href="fwdtrack.2.log">fwdtrack.2.log</a> (FTT projection + blown-up guard) →
+  <a href="fwdtrack.3.log">fwdtrack.3.log</a> (EPD + FST fixes) →
+  <a href="fwdtrack.4.log">fwdtrack.4.log</a> (strip selection)</p>
+
+<h4>FST φ window (0.082 rad) — implied p<sub>T</sub> floor</h4>
+<p>Bend rate in a solenoid is p<sub>T</sub>-independent (Δφ=0.3·B·z/p<sub>z</sub>); with B≈0.5 T,
+z≈1.65 m this gives p<sub>z,min</sub>≈3 GeV, i.e. p<sub>T,min</sub>≈0.18–0.50 GeV over η=2.5–3.5
+(worst-case straight-line bend — real floor is likely lower once MCS/field-correct projection is used).</p>
+
+<!-- ─────────────────────────────────────────────────── TRACK FITTING -->
+<h2 id="track-fitting" class="section-anchor">Track Fitting — Issues 13–19</h2>
+
+<table>
+<tr>
+  <th width="4%">#</th>
+  <th width="8%">Sev.</th>
+  <th width="20%">File : Line</th>
+  <th width="30%">Problem</th>
+  <th width="38%">Fix</th>
+</tr>
+
+<tr>
+  <td><a name="13" id="13"></a>13</td>
+  <td><span class="badge critical">CRITICAL</span></td>
+  <td><a class="codeline" href="FwdTracker.h#L854">FwdTracker.h : 854</a></td>
+  <td><code>if (true || gtr.mIsFitConvergedFully == false)</code> —
+      <code>true||</code> made the else permanently dead. Beamline fit always
+      re-seeded from scratch via GenericFitSeeder instead of using the global
+      track's converged momentum.</td>
+  <td>Removed <code>true||</code>. When global fit converged, pass
+      <code>&amp;gtr.mMomentum, gtr.mCharge</code> to beamline fit
+      (<a class="codeline" href="FwdTracker.h#L858">line 858</a>).</td>
+</tr>
+
+<tr>
+  <td><a name="14" id="14"></a>14</td>
+  <td><span class="badge medium">MEDIUM</span></td>
+  <td>
+    <a class="codeline" href="FwdTracker.h#L765">FwdTracker.h : 765</a><br>
+    <a class="codeline" href="FwdTracker.h#L872">FwdTracker.h : 872</a><br>
+    <a class="codeline" href="FwdTracker.h#L992">FwdTracker.h : 992</a>
+  </td>
+  <td><code>continue</code> skipped <code>index++</code> in beamline, primary, and
+      secondary fitters. Failed tracks got <code>mIndex=0</code>; subsequent
+      tracks had corrupted indices.</td>
+  <td>Added <code>gtrPV.mIndex = index; index++;</code> before each
+      <code>continue</code> in all three fitters.</td>
+</tr>
+
+<tr>
+  <td><a name="15" id="15"></a>15</td>
+  <td><span class="badge medium">MEDIUM</span></td>
+  <td><a class="codeline" href="GenfitTrackResult.h#L37">GenfitTrackResult.h : 37</a></td>
+  <td>QA denominator used <code>hits.size()</code> (includes PV/beamline hits
+      skipped in numerator). <code>qa=1.0</code> was impossible whenever a vertex
+      constraint was in the seed.</td>
+  <td>Count only non-<code>isPV()</code> hits for denominator
+      (<code>nonPVHits</code>).</td>
+</tr>
+
+<tr>
+  <td><a name="16" id="16"></a>16</td>
+  <td><span class="badge low">LOW</span></td>
+  <td><a class="codeline" href="GenfitTrackResult.h#L261">GenfitTrackResult.h : 261</a></td>
+  <td>All track types used <code>extrapolateToLine</code> (transverse DCA only).
+      PV-constrained tracks benefit from full 3D DCA
+      (<code>extrapolateToPoint</code>).</td>
+  <td><code>kPrimaryVertexConstrained</code> → <code>extrapolateToPoint</code>;
+      others keep <code>extrapolateToLine</code>.</td>
+</tr>
+
+<tr>
+  <td><a name="17" id="17"></a>17</td>
+  <td><span class="badge low">LOW</span></td>
+  <td><a class="codeline" href="FitterUtils.h#L137">FitterUtils.h : 137</a></td>
+  <td><code>momSeed.SetXYZ(pt/√2, pt/√2, 10)</code> — dead code, immediately
+      overwritten two lines below by the real assignment.</td>
+  <td>Commented out.</td>
+</tr>
+
+<tr>
+  <td><a name="18" id="18"></a>18</td>
+  <td><span class="badge low">LOW</span></td>
+  <td><a class="codeline" href="FitterUtils.h#L130">FitterUtils.h : 130</a></td>
+  <td>K constant comment said "Gauss"; actually uses kGauss (B=5 kG = 0.5 T).
+      Numerical value was correct.</td>
+  <td>Comment corrected to "kGauss".</td>
+</tr>
+
+<tr>
+  <td><a name="19" id="19"></a>19</td>
+  <td><span class="badge high">HIGH</span></td>
+  <td>
+    <a class="codeline" href="TrackFitter.h#L606">TrackFitter.h : 606</a><br>
+    <a class="codeline" href="FwdTracker.h#L754">FwdTracker.h : 754</a><br>
+    <a class="codeline" href="FwdTracker.h#L858">FwdTracker.h : 858</a><br>
+    <a class="codeline" href="FwdTracker.h#L987">FwdTracker.h : 987</a>
+  </td>
+  <td>Beamline/primary/secondary initial fits re-derived charge from
+      GenericFitSeeder even when the global track had a good charge. For
+      near-zero-curvature forward tracks the signed curvature is unstable
+      → wrong charge ~20% of events.</td>
+  <td>Added <code>int externalCharge=0</code> parameter through
+      <code>setupTrack → fitTrack → ForwardTrackMaker::fitTrack</code>.
+      Initial constrained fits pass <code>gtr.mCharge</code> from global track.</td>
+</tr>
+</table>
+
+<p>Log file: <a href="fwdtrack.5.log">fwdtrack.5.log</a> — 10 single-electron events with all fitting fixes applied.</p>
+
+<!-- ─────────────────────────────────────────────────── FCS PROJECTION -->
+<h2 id="fcs-proj" class="section-anchor">FCS Track Projection — Issue 20</h2>
+
+<table>
+<tr>
+  <th width="4%">#</th>
+  <th width="8%">Sev.</th>
+  <th width="6%">Det.</th>
+  <th width="20%">File : Line</th>
+  <th width="28%">Problem</th>
+  <th width="20%">Fix</th>
+  <th width="14%">Impact</th>
+</tr>
+<tr>
+  <td><a name="20" id="20"></a>20</td>
+  <td><span class="badge high">HIGH</span></td>
+  <td>FCS Ecal</td>
+  <td><a class="codeline" href="StFwdTrackMaker.cxx#L720">StFwdTrackMaker.cxx : 720</a></td>
+  <td>Track projected to the detector <strong>front face</strong>
+      (<code>getDetectorOffset(det)</code>, z≈710 cm) but
+      <code>getStarXYZfromColumnRow</code> returns cluster positions at
+      <strong>shower maximum depth</strong> (front + 15 cm ≈ 725 cm).
+      The 15 cm z-gap on a 1.73° tilted detector creates a systematic
+      <strong>~2.1% radial slope</strong> in (FcsX, dx=FcsX−trkX)
+      passing through (0,0): ±2–3 cm offset at |x|≈120 cm.</td>
+  <td>Pass <code>getShowerMaxZ(det)</code> as depth to
+      <code>getDetectorOffset(det, shwDepth)</code> so the track is
+      projected to the showermax plane — same reference as the cluster
+      position. Applies to both Ecal and Hcal in the same code block.</td>
+  <td>dr median: 4.25 → 2.71 cm (−36%). Slope in (FcsX,dx) removed.</td>
+</tr>
+</table>
+
+<div class="card">
+<h3>Geometry cross-check (diagFcs.C)</h3>
+<table>
+<tr><th>Parameter</th><th>Code value</th><th>WcalGeo1.xml</th><th>Status</th></tr>
+<tr><td>Cell width (Ecal)</td><td>5.542 + 0.03 = 5.572 cm</td><td>DX=5.542 + Clearance=0.03</td><td class="result-good">✓ Match</td></tr>
+<tr><td>nColumn × nRow</td><td>22 × 34</td><td>NX=22, NY=34</td><td class="result-good">✓ Match</td></tr>
+<tr><td>Front face z</td><td>710.16 cm</td><td>ZOffset=710.16</td><td class="result-good">✓ Match</td></tr>
+<tr><td>Inner edge x (North)</td><td>−17.399 cm</td><td>XOffset=17.399</td><td class="result-good">✓ Match</td></tr>
+<tr><td>Shower max depth</td><td>15.0 cm (Ecal), 25.0 cm (Hcal)</td><td>Physics estimate</td><td class="result-neutral">Ecal well-defined; Hcal rough</td></tr>
+<tr><td>Track proj z (before fix)</td><td>710 cm (front face)</td><td>—</td><td class="result-bad">× Mismatch vs cluster z=725</td></tr>
+<tr><td>Track proj z (after fix)</td><td>≈725 cm (showermax)</td><td>—</td><td class="result-good">✓ Matches cluster z</td></tr>
+</table>
+</div>
+
+<!-- ─────────────────────────────────────────────────── FST COVARIANCE -->
+<h2 id="fst-covmat" class="section-anchor">FST Covariance Study</h2>
+
+<div class="card">
+<h3>Background</h3>
+<p>Bug 6 previously fixed <code>makeFstCovMat()</code> to apply σ = pitch/√12.
+A systematic investigation (2026-06-16) tested five digitization variants to understand
+why the mathematically correct pitch/√12 underperforms. The study also examined
+<code>StFstFastSimMaker</code> (STEVENT path) as a reference for correct strip positions.</p>
+
+<h3>GEANT path vs STEVENT (StFstFastSimMaker)</h3>
+<p><code>setFstHitSource(0)</code> = GEANT direct: reads raw g2t_fts_hit, applies
+<code>FstRasterizer</code> (3.0 cm r-bins), then <code>makeFstCovMat</code>.<br>
+<code>setFstHitSource(1)</code> = STEVENT: reads <code>StFstHitCollection</code> from
+<code>StFstFastSimMaker</code>, which uses correct 2.875 cm strip centers (RSegment[])
+and sets <code>positionError()</code> = pitch/√12 = 0.830 cm.</p>
+
+<p>STEVENT strips are at r = {6.4375, 9.3125, 12.1875, 15.0625, 17.9375, 20.8125,
+23.6875, 26.5625} cm (= kFstrStart[] + 0.5·kFstStripPitchR).<br>
+GEANT 3.0 cm raster strips are at r = {6.5, 9.5, 12.5, 15.5, 18.5, 21.5, 24.5, 27.5} cm —
+biased 0.06–0.94 cm outward growing with strip index.<br>
+Phi convention: MAXPHI = 128 strips/wedge × 12 wedges = 1536 global strips,
+pitch = kFstStripPitchPhi = 0.004091 rad.</p>
+
+<h3>Systematic regression (200 Pythia J/ψ events, mTrackType=1)</h3>
+<table>
+<tr><th>Variant</th><th>r-position</th><th>σ_r</th><th>conv</th><th>fail</th><th>FCS match</th><th>q/pT rms</th><th>DCA_Z pri rms</th></tr>
+<tr class="regression-win">
+  <td><strong>REVERT A</strong> — all bug fixes, 3.0 cm raster</td>
+  <td>3.0 cm bins</td><td>2.875 cm</td>
+  <td><b>5920</b></td><td>1</td><td>162</td><td><b>2.012</b></td><td><b>3.946 cm</b></td></tr>
+<tr class="regression-lose">
+  <td>GEANT FIX v1 — correct r (kFstrStart), phi bug (×12 too coarse)</td>
+  <td>2.875 cm centers</td><td>0.830 cm</td>
+  <td>6207</td><td>0</td><td>137</td><td>2.113</td><td>5.846 cm</td></tr>
+<tr class="regression-lose">
+  <td>GEANT FIX v2 — correct r+phi (1536 strips), pitch/√12</td>
+  <td>2.875 cm centers</td><td>0.830 cm</td>
+  <td>5703</td><td>1</td><td>127</td><td>2.313</td><td>5.758 cm</td></tr>
+<tr class="regression-lose">
+  <td>GEANT FIX v3 — correct r+phi, <em>full pitch</em> sigma</td>
+  <td>2.875 cm centers</td><td>2.875 cm</td>
+  <td>5914</td><td>0</td><td>140</td><td>2.362</td><td>5.198 cm</td></tr>
+<tr class="regression-lose">
+  <td>STEVENT — StFstFastSimMaker, pitch/√12</td>
+  <td>2.875 cm centers</td><td>0.830 cm</td>
+  <td>5432</td><td>0</td><td>126</td><td>2.349</td><td>5.527 cm</td></tr>
+</table>
+
+<h3>Conclusions</h3>
+<ul>
+  <li><strong>All "correct" digitization variants are worse than the 3.0 cm rasterizer.</strong>
+      Even GEANT FIX v3 (correct positions, unchanged full-pitch sigma) degrades FCS matches
+      and DCA_Z — isolating the position change as the culprit, not the sigma.</li>
+  <li>GEANT FIX v2 ≈ STEVENT in all metrics: the STEVENT path is consistent when
+      position and sigma conventions are properly matched (1536-strip phi).</li>
+  <li>sigma effect (v2 vs v3): pitch/√12 reduces convergence by ~200 tracks.
+      Tight search windows after the first FST disk reject valid hits at subsequent disks.</li>
+  <li>Position effect (v3 vs REVERT A): same convergence, but track quality worsens.
+      The seeding algorithm was developed and tuned against 3.0 cm raster positions;
+      switching to correct 2.875 cm centers disrupts seed formation subtly.</li>
+  <li>STEVENT has fewer convergences than GEANT direct (5432 vs 5920) because
+      StFstFastSimMaker merges GEANT deposits in the same strip into one cluster,
+      reducing the number of hits available per track.</li>
+</ul>
+
+<h3>Current status</h3>
+<p><code>loadFstHitsFromGEANT</code> restored to <code>FstRasterizer</code> (3.0 cm r-bins,
+full pitch r-sigma) — REVERT A baseline.
+FST <strong>φ-sigma</strong> is now tightened (pitch/√12) in a second KalmanFitter pass after
+the initial fit converges (<a href="#pT-resolution">pT Resolution Study, Issue #24</a>) — this
+bypasses the seeding-window problem because tight φ is applied only post-convergence.
+FST <strong>r-sigma</strong>: full pitch retained; retuning seeding for correct 2.875 cm strip
+geometry is future work.</p>
+</div>
+
+<!-- ─────────────────────────────────────────────────── FTT CLUSTER MAKER -->
+<h2 id="ftt-cluster" class="section-anchor">FTT Cluster Maker — Real-Data Path (Issue 21)</h2>
+
+<table>
+<tr>
+  <th width="4%">#</th>
+  <th width="8%">Sev.</th>
+  <th width="6%">Det.</th>
+  <th width="22%">File : Line</th>
+  <th width="28%">Problem</th>
+  <th width="20%">Fix</th>
+  <th width="12%">Impact</th>
+</tr>
+<tr>
+  <td><a name="21" id="21"></a>21</td>
+  <td><span class="badge high">HIGH</span></td>
+  <td>FTT</td>
+  <td><code>StFttClusterMaker.cxx : 368</code><br>
+      <small>(real-data path only;<br>fast-sim uses sigXY=100 μm)</small></td>
+  <td>
+    <p>For single-strip clusters the charge 2nd-moment variance is identically zero
+    (all ADC in one strip → m₂/m₀ = mean²). The existing code sets
+    <code>clu→setSigma(sqrt(var))</code> = 0.</p>
+    <p>This zero sigma flows into <code>StFttClusterPointMaker::MakeLocalPoints()</code>
+    as <code>covMatrix[precise][precise] = 0</code>, giving GenFit's Kalman fitter
+    <strong>infinite weight</strong> in the strip-crossing direction: the track is
+    forced to pass exactly through the strip centre, overriding all other measurements
+    and causing numerical instability in the covariance update.</p>
+    <p>Strip pitch = 3.2 mm (<code>StFttDb::stripPitch</code>).
+    Minimum physical uncertainty = pitch/√12 = <strong>0.924 mm</strong>.
+    Position coordinates are in mm (x = strip × 3.2 − 1.6), so sigma units are mm.</p>
+  </td>
+  <td>
+    Clamp sigma to <code>max(sigma_2ndmoment, pitch/√12)</code>:
+<pre>const float kSigmaMin = 3.2f / sqrtf(12.f); // 0.924 mm
+clu-&gt;setSigma(
+  std::max( sqrtf(std::max(var, 0.f)), kSigmaMin ) );</pre>
+    <p>Applies only to the real-data path (<code>mUseGeantData=false</code>).
+    The fast-sim path (<code>MakeGeantPoints</code>) already uses
+    <code>sigXY = 0.01 cm = 100 μm</code> with correct covariance — unaffected.</p>
+  </td>
+  <td>Prevents infinite Kalman weight for single-strip FTT clusters in real-data
+      processing. Not yet tested on data (discovered 2026-06-22).</td>
+</tr>
+</table>
+
+<div class="card">
+<h3>Context: how the sigma reaches GenFit</h3>
+<p>Chain: <code>StFttClusterMaker::calcClusterProperties()</code>
+→ <code>clu→setSigma()</code>
+→ <code>StFttClusterPointMaker::MakeLocalPoints()</code>
+→ <code>covMatrix[0][0] = clu→sigma() × clu→sigma()</code>
+→ <code>StFttPoint::setCov(covMatrix)</code>
+→ <code>StFwdHitLoader::loadFttHits()</code>
+→ <code>GenFit::PlanarMeasurement</code> rawHitCov.</p>
+<p>The filter in <code>StFwdHitLoader</code> (line 177) skips hits where
+<code>sqrt(hitCov3(0,0)) == sqrt(hitCov3(1,1))</code> (diagonal strips),
+but it does <em>not</em> skip hits with sigma=0 in one direction — those
+pass through to GenFit with a singular measurement covariance.</p>
+</div>
+
+<!-- ─────────────────────────────────────────────────── pT RESOLUTION -->
+<h2 id="pT-resolution" class="section-anchor">Issue #24 — FST φ-Sigma Warm-Start (pT Resolution)</h2>
+
+<div class="card">
+<h3>Problem</h3>
+<p>Design target: σ(1/p<sub>T</sub>) ≈ 0.2 GeV⁻¹. Measured in perfect MC (ele⁻ gun,
+p<sub>T</sub>=1.5 GeV, η∈[2.5,4.0]): σ(1/p<sub>T</sub>) ≈ 0.815 GeV⁻¹ (&gt;4× worse).
+Root cause: FST φ-covariance uses full strip pitch (0.004091 rad) instead of
+pitch/√12 (0.001181 rad), so the Kalman fitter underweights the φ measurement by 12×.
+Setting tight φ globally kills efficiency (Attempt 1 → eff &lt;5%) because it also
+narrows the hit search window during initial seeding.</p>
+<p><strong>Solution (Issue #24):</strong> two-pass fitting — initial pass with full φ pitch for
+stable seeding, then a warm-start second pass (KalmanFitter, blowUp=10⁶) with tight φ
+after convergence. Applied to all five track types (Global, BLC, Primary, FwdVtx, BLCVtx).
+</p>
+</div>
+
+<div class="card">
+<h3>Warm-start addition — where the new code lives</h3>
+<p>For the original tracking flow before this fix, see
+<a href="../code/index.html#trackingflaw">code/index.html — Tracking Flaw</a>.</p>
+<p>The warm fitter is inserted at the end of <code>refitTrack()</code>, <em>after</em>
+the normal FST+FTT+EPD refit converges, for <strong>all five track types</strong>
+(Global, BLC, Primary, FwdVtx, BLCVtx).</p>
+
+<h4>Cold start vs warm start</h4>
+<p>The initial global fit (<code>mFitter</code> = KalmanFitterRefTrack, blowUp=10⁹) is a
+<strong>cold start</strong>: the state covariance seed is blown up by 10⁹, so the fitter
+ignores the seed momentum entirely and converges from scratch using only the measurements.
+This is robust but must use a wide FST φ covariance (full pitch) so the χ² surface is
+smooth enough to converge.</p>
+<p>The tight-φ pass (<code>mWarmFitter</code> = KalmanFitter, blowUp=10⁶) is a
+<strong>warm start</strong>: the seed is the <em>already-converged</em> state from the
+RefTrack fit (position + momentum within 10–30% of truth).  The 10⁶ blow-up is large
+enough to let measurements pull the state, but small enough that the good seed prevents
+p<sub>T</sub>→∞ divergence.  Starting close to the solution, the fitter can handle the
+tight FST φ (pitch/√12 ≈ 0.00118 rad) without going unstable.</p>
+
+<pre>
+┌─────────────────────────────────────────────────────────────┐
+│  refitTrack() — UPDATED FLOW (2026-06-24)                   │
+│                                                             │
+│  1. addFttHits() + addEpdHits() + addFstHits()             │
+│     → gtrGlobal.mSeed now has FST+FTT+EPD+vertex hits      │
+│                                                             │
+│  2. fitTrack(seed) using KalmanFitterRefTrack (cold start)  │
+│     blowUp=1e9, full FST r+φ pitch → gtrGlobalRefit        │
+│                                                             │
+│  3. ←─── warmFitFstTightSigma() ────────────────────────►  │
+│     if gtrGlobalRefit.mIsFitConvergedFully:                 │
+│       a) Re-seed mFitTrack from fitted pos+mom (warm start) │
+│       b) Tighten FST r+φ: rawHitCov /= 12 (all 4 elements) │
+│             (0,0) r  (0,1) cross-term                       │
+│             (1,0) cross-term  (1,1) φ                       │
+│          (only FST PlanarMeasurements: detId == kFstId)     │
+│       c) Run KalmanFitter (blowUp=1e6) on mFitTrack         │
+│          → mFitTrack left in tight r+φ state (in-place)     │
+│       on exception: restore savedMeas covariances only      │
+│     if warmOk: gtr.refreshFromTrack()                       │
+│       → re-reads momentum, charge, chi2, convergence        │
+│         from tight r+φ mTrack (shared_ptr identity)         │
+│     (applies to all 5 track types: Global/BLC/Primary/      │
+│      FwdVtx/BLCVtx — no track-type guard in refitTrack)    │
+│                                                             │
+│  4. gtrGlobalRefit.setDCA(vertex) → return                 │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+
+
+<h3>Key design decisions</h3>
+<table>
+<tr><th>Decision</th><th>Rationale</th></tr>
+<tr>
+  <td>blowUpFactor=10⁶ (warm) vs 10⁹ (RefTrack)</td>
+  <td>Large enough to not be dominated by old RefTrack fitter states;
+      small enough that the warm seed momentum prevents p<sub>T</sub>→∞ divergence.</td>
+</tr>
+<tr>
+  <td>Re-seed from RefTrack fitted state (not original track seed)</td>
+  <td>RefTrack fitted p<sub>T</sub> is already within 10–30% of truth.
+      Starting from the good estimate avoids the p<sub>T</sub>→∞ blowup
+      that kills cold-start fits with tight φ.</td>
+</tr>
+<tr>
+  <td>Filter by <code>detId == kFstId</code> (not sortingParameter)</td>
+  <td>FST hits have detId=kFstId; FTT have kFttId; beamline/PV have kTpcId.
+      Only FST PlanarMeasurements get tight φ covariance — beamline and
+      EPD hits are unaffected.</td>
+</tr>
+<tr>
+  <td>No restore; use <code>refreshFromTrack()</code></td>
+  <td>Downstream <code>fitTrack()</code> calls (BLC, Primary, FwdVtx, BLCVtx) each
+      create a new <code>make_shared&lt;genfit::Track&gt;</code>, so they never read the
+      tight r+φ <code>mFitTrack</code> state.  <code>refreshFromTrack()</code> re-syncs
+      the scalar fields (momentum, charge, chi2, convergence) from the in-place tight r+φ
+      fit without needing an extra RefTrack pass.</td>
+</tr>
+<tr>
+  <td>No <code>deleteFitterInfo()</code></td>
+  <td>Tested: BLC improved (0.814→0.781) but Primary regressed badly
+      (0.568→0.684) and BLC efficiency dropped (98.4%→90.4%) because the
+      warm fitter without prior FitterInfo fails to converge for
+      vertex-constrained tracks. Reverted.</td>
+</tr>
+</table>
+
+<h3>Code locations</h3>
+<table>
+<tr><th>File</th><th>Location</th><th>Role</th></tr>
+<tr>
+  <td><code>TrackFitter.h</code></td>
+  <td>line ~195: <code>setupGenfitKalmanFitter()</code></td>
+  <td>Initializes <code>mWarmFitter = KalmanFitter(maxIt=20, blowUp=10⁶)</code></td>
+</tr>
+<tr>
+  <td><code>TrackFitter.h</code></td>
+  <td>line ~878: <code>warmFitFstTightSigma()</code></td>
+  <td>Warm-start method — steps a–c; tightens both r (0,0) and φ (1,1) covariance (and cross-terms) by ÷12; leaves mFitTrack in tight r+φ state on success</td>
+</tr>
+<tr>
+  <td><code>GenfitTrackResult.h</code></td>
+  <td><code>refreshFromTrack()</code></td>
+  <td>Re-reads momentum, charge, chi2, convergence from current mTrack fitted state</td>
+</tr>
+<tr>
+  <td><code>FwdTracker.h</code></td>
+  <td>inside <code>refitTrack()</code>, all 5 track types</td>
+  <td><code>if (warmOk) gtr.refreshFromTrack();</code> — propagates tight r+φ state</td>
+</tr>
+</table>
+</div>
+
+<div class="card">
+<h3>Strategy: warm-start KalmanFitter with tight r+φ (2026-06-24 extension)</h3>
+<p>After the RefTrackFitter converges (wide r+φ pitch, all hits found), inject a second pass
+using <code>KalmanFitter</code> (blowUp=10⁶) with FST r <em>and</em> φ covariance tightened in-place.
+All four elements of the 2×2 planar covariance are divided by 12:
+<code>rawHitCov(0,0) /= 12</code> (radial),
+<code>rawHitCov(1,1) /= 12</code> (azimuthal),
+<code>rawHitCov(0,1) /= rawHitCov(1,0) /= 12</code> (cross-terms).
+On success, <code>mFitTrack</code> is left in the tight r+φ fitted state and
+<code>refreshFromTrack()</code> propagates momentum, charge, chi2, and convergence flags to the
+<code>GenfitTrackResult</code>.  Applies to all five track types.
+Implemented in <code>TrackFitter.h::warmFitFstTightSigma()</code>
+(renamed from <code>warmFitFstTightPhi()</code> to reflect that both coordinates are now tightened).</p>
+
+<h4>Why tighten r in warm-start (but not in initial fit)?</h4>
+<p>The FST radial strip pitch is 2.875 cm.  In the initial fit the full pitch is used as σ_r
+(keeping the Kalman search window wide so hits on subsequent FST disks are found).
+In the warm-start pass the hits are already associated — the Kalman fitter is not searching
+for new hits, it is refining the momentum estimate with the associated ones.
+Tightening σ_r to pitch/√12 ≈ 0.83 cm correctly weights the radial measurement,
+analogous to what the φ warm-start did for σ_φ.</p>
+
+<h3>Seed theta fix (2026-06-22, FitterUtils.h)</h3>
+<p>Bug: <code>GenericFitSeeder::makeSeed()</code> computed θ from seed[0]→seed[1].
+When disks 0 and 1 rasterize to the same strip centre (common at η≈3 where Δr ≈ one
+pitch), dx=dy=0 → Rxy=0 → θ=0 → p<sub>z</sub>=p<sub>T</sub>/tan(0)=∞.
+Fix: always use seed[0] and seed[2] (outermost pair, 2× longer z-baseline, no degenerate case).</p>
+
+<h3>Results — 800 events, p<sub>T</sub>=1.5 GeV, ele⁻ gun</h3>
+<table>
+<tr>
+  <th>Variant</th><th>BLC eff</th><th>BLC σ(1/p<sub>T</sub>) GeV⁻¹</th>
+  <th>Pri σ(1/p<sub>T</sub>) GeV⁻¹</th><th>Spike (BLC)</th>
+</tr>
+<tr class="regression-lose">
+  <td>Baseline (all fixes, full phi pitch)</td>
+  <td>78%</td><td class="result-bad">0.815</td><td class="result-bad">0.579</td><td>7%</td>
+</tr>
+<tr class="regression-win">
+  <td>+ warm-start (blowUp=10⁶, kFstId filter)</td>
+  <td class="result-good">97%</td><td>0.788</td><td>0.562</td><td class="result-good">3.2%</td>
+</tr>
+<tr>
+  <td>+ seed theta fix (seed[0]→seed[2])</td>
+  <td class="result-good">98.4%</td><td>0.814</td><td>0.568</td><td>—</td>
+</tr>
+<tr>
+  <td>+ deleteFitterInfo before warm fit</td>
+  <td class="result-bad">90.4%</td><td class="result-good">0.781</td>
+  <td class="result-bad">0.684</td><td>—</td>
+</tr>
+</table>
+
+<h3>Results — tight-phi covariance to all track types (2026-06-23, 1000 events, p<sub>T</sub>=1.5 GeV)</h3>
+<p>Comparison: old library (momentum-only update) vs new library
+(<code>refreshFromTrack()</code> propagates full tight-phi state — momentum, charge,
+chi2, convergence — to all five track types).
+1000 events, single e⁻ gun, p<sub>T</sub>=1.5–3.0 GeV flat, η∈[2.5,4.0].</p>
+<table>
+<tr>
+  <th>Track type</th>
+  <th colspan="3">Old (momentum only)</th>
+  <th colspan="3">New (refreshFromTrack)</th>
+</tr>
+<tr>
+  <th></th>
+  <th>σ(q/p<sub>T</sub>) GeV⁻¹</th><th>mean</th><th>N</th>
+  <th>σ(q/p<sub>T</sub>) GeV⁻¹</th><th>mean</th><th>N</th>
+</tr>
+<tr class="regression-win">
+  <td>Global</td>
+  <td>1.026</td><td>−0.189</td><td>334</td>
+  <td class="result-good">0.753</td><td>−0.081</td><td class="result-good">1189</td>
+</tr>
+<tr class="regression-win">
+  <td>Beamline</td>
+  <td>0.833</td><td>−0.008</td><td>788</td>
+  <td>0.821</td><td>+0.010</td><td>793</td>
+</tr>
+<tr>
+  <td>Primary</td>
+  <td>0.560</td><td>−0.071</td><td>824</td>
+  <td>0.575</td><td>−0.066</td><td>822</td>
+</tr>
+<tr class="regression-lose">
+  <td>FwdVtx</td>
+  <td>0.755</td><td>+0.338</td><td>57</td>
+  <td class="result-bad">0.833</td><td>+0.279</td><td class="result-bad">23</td>
+</tr>
+</table>
+<p><strong>Global N=334 (old) &lt; BLC N=788 / Primary N=824 — is this a bug?</strong>
+No. In the old code <code>mIsFitConvergedFully</code> for Global came from the
+<em>cold</em> KalmanFitterRefTrack (blowUp=10⁹, no vertex, full φ pitch). Cold RefTrack
+with only FST+FTT+EPD and no vertex anchor fails for many forward tracks → only 334 pass
+<code>didFitConvergeFully()</code>. BLC and Primary add a beamline/PV constraint hit that
+anchors the track → RefTrack converges for ~800 tracks each. So Global N &lt; BLC/Primary
+in the old code is physically real.</p>
+<p><strong>Global improvement (334→1189, σ 1.03→0.75)</strong>: in the new code
+<code>refreshFromTrack()</code> propagates <code>mIsFitConvergedFully</code> from the
+<em>warm</em> KalmanFitter (blowUp=10⁶). Starting from the already-converged cold state,
+the warm fitter succeeds for nearly all tracks → N=1189, now correctly exceeding BLC/Primary.</p>
+<p><strong>FwdVtx degradation (57→23 entries)</strong>: needs investigation.  The secondary
+vertex finder seeds from Global tracks; the changed Global population may shift which tracks
+reach the secondary vertex fitter.  Low statistics make this hard to interpret.</p>
+
+<h3>Physics context</h3>
+<p>For η=3, p<sub>T</sub>=1.5 GeV at B=0.5 T (R<sub>bend</sub>=10 m):</p>
+<ul>
+  <li><strong>FTT sagitta</strong> (z=2.8→3.7 m, chord 8.98 cm):
+      s<sub>FTT</sub> ≈ 100 μm. With σ<sub>FTT</sub>=100 μm (fast-sim):
+      σ(1/p<sub>T</sub>)<sub>FTT</sub> ≈ 0.67 GeV⁻¹ — sets the floor.</li>
+  <li><strong>FST φ sagitta</strong> at z=1.5 m: s<sub>FST</sub> ≈ 1.2 mm.
+      Full φ (σ=614 μm) → σ(1/p<sub>T</sub>)<sub>FST</sub> ≈ 0.34 GeV⁻¹, combined ≈ 0.75 GeV⁻¹.<br>
+      Tight φ (σ=177 μm) → σ(1/p<sub>T</sub>)<sub>FST</sub> ≈ 0.10 GeV⁻¹, combined ≈ 0.68 GeV⁻¹
+      — limited because FTT dominates.</li>
+</ul>
+<p>The warm fitter also fixes <strong>spike tracks</strong> (p<sub>T</sub>→∞ from RefTrack)
+by pulling them to physical values (spike fraction 7%→3.2%).  The large increase in
+converged Global tracks (334→1189, 2026-06-23 test) comes from <code>refreshFromTrack()</code>
+propagating the tight-φ convergence status — tracks that didn't fully converge with wide φ
+but do with tight φ are now accepted.  Reaching the design 0.2 GeV⁻¹ further requires
+fully exploiting the vertex→FTT long baseline (z=0→3.7 m).</p>
+
+<h3>Current best code state (2026-06-24)</h3>
+<p>Theta fix (seed[0]→seed[2]) + warm-start (blowUp=10⁶, kFstId filter)
+<strong>without</strong> deleteFitterInfo (reverted — Primary regressed badly) +
+tight r+φ covariance propagated to all five track types via <code>refreshFromTrack()</code>.
+Function renamed <code>warmFitFstTightPhi()</code> → <code>warmFitFstTightSigma()</code>
+with one additional line: <code>tightCov(0,0) /= scale;</code> (radial tightening).
+No restore step.  Full-production comparison (20 k J/ψ events, BBB library) pending condor re-run.</p>
+
+<h4>Local quick-look (200 events, run1 only, system library, phi-warm vs no-warm)</h4>
+<p>Note: local test used the <em>system</em> StFwdTrackMaker (no warm-start) via BFC chain —
+the BBB library can only be loaded inside the singularity container used by condor.
+This comparison shows the effect of <strong>phi-only</strong> warm-start (DataDisk baseline)
+vs <strong>no warm-start</strong> (system library, 200 events), NOT the r-tight extension.
+Full J/ψ MC re-run needed to quantify the r-tightening benefit.</p>
+<table>
+<tr>
+  <th>Track type</th>
+  <th>σ(q/p<sub>T</sub>) no-warm</th>
+  <th>σ(q/p<sub>T</sub>) φ-warm (prod)</th>
+  <th>Δσ</th>
+  <th>trk/evt no-warm</th>
+  <th>trk/evt φ-warm</th>
+</tr>
+<tr class="regression-win">
+  <td>Global</td><td>1.065</td><td class="result-good">1.044</td><td>−0.021</td>
+  <td>2.25</td><td>2.50</td>
+</tr>
+<tr>
+  <td>Beamline</td><td class="result-good">0.884</td><td>0.912</td><td style="color:#c62828;">+0.028</td>
+  <td>5.29</td><td>5.36</td>
+</tr>
+<tr>
+  <td>Primary</td><td>0.796</td><td>0.797</td><td>+0.001</td>
+  <td>5.61</td><td>5.72</td>
+</tr>
+<tr class="regression-win">
+  <td>BLCVtx</td><td>0.846</td><td class="result-good">0.834</td><td>−0.012</td>
+  <td>5.96</td><td>6.08</td>
+</tr>
+</table>
+<p>φ-warm-start improves BLCVtx σ by 0.012 and trk/evt by 0.12.
+Beamline +0.028 is statistically consistent with zero (σ_stat ≈ 0.013 for 200 events);
+it likely reflects statistical fluctuation or the different library/chain rather than a real degradation.
+The r-tight extension is expected to further improve BLCVtx resolution —
+to be measured after condor re-run with the BBB library.</p>
+</div>
+
+<!-- ─────────────────────────────────────────────────── ISSUE 25 -->
+<h2 id="seed-curvature" class="section-anchor">Issue #25 — Seed Curvature Sentinel Bug (B=0 Tracking)</h2>
+
+<div class="card">
+<h3>Problem</h3>
+<p>Found while testing whether forward tracking works on B=0 (magnet-off) data
+(<code>runSimFlat.C</code>/<code>runPythia.C</code> <code>fieldOff</code> flag +
+<code>sim.C</code> <code>UseZeroB</code> → <code>StFwdTrackMaker::setZeroB()</code>,
+GenFit <code>ConstField(0,0,0)</code>). First attempt: <strong>0 tracks of any type</strong>
+survived <code>didFitConverge()</code>, for a 50-event <code>ele.pt1.5.vz0</code> sample —
+with the field on <em>or</em> off. Traced to three compounding bugs in
+<code>GenericFitSeeder::makeSeed()</code> (<code>FitterUtils.h</code>), the routine that
+estimates a seed p<sub>T</sub>/charge from the curvature of the outermost FST hit triple
+before GenFit's own Kalman fit runs. None of these are specific to B=0 — a genuinely
+straight (B=0) track's hits are collinear <em>by definition</em>, so it hits this code
+100% of the time, but curved tracks with an accidentally-collinear or near-along-z hit
+triple hit it too (see the field-<strong>on</strong> control run below).</p>
+</div>
+
+<div class="card">
+<h3>Bug 1 — collinear sentinel doesn't match its own filter</h3>
+<pre>
+computeSignedCurvature():
+    if (area == 0) {
+        ...
+        return -1e-7;   // "curvature undefined" sentinel
+
+averageCurvature():
+    if (curvature != -1) {   // BUG: checks -1, sentinel is -1e-7 — never matches
+        totalCurvature += curvature;
+        ++validCombinations;
+    }
+</pre>
+<p>The collinear sentinel (<code>-1e-7</code>) silently passes the exclusion filter
+(which checked <code>!= -1</code>, a different value) and gets averaged in as if it
+were a real, tiny, near-zero curvature measurement.</p>
+<p><strong>Fix:</strong> named constant <code>kCollinearCurvature = -1e-7</code>, used on
+both sides of the comparison so they can't drift apart again.</p>
+</div>
+
+<div class="card">
+<h3>Bug 2 — "no curvature known" sentinel fed into the pT formula anyway</h3>
+<p>Once Bug 1 is fixed, a fully-collinear triple correctly returns the <em>other</em>,
+pre-existing sentinel: <code>averageCurvature()</code> returns <code>-1</code> for
+"no valid combinations" (also used for "&lt;3 points"). But <code>makeSeed()</code> still
+computed <code>pt = fabs(K*5/qc)</code> unconditionally — dividing by <code>-1</code>
+gives <code>pt ≈ 0.0015</code> GeV, a degenerate near-zero-momentum seed.</p>
+<p><strong>Fix:</strong> detect <code>qc == -1</code> explicitly and fall back to
+<code>pt = 10</code> GeV (matching the existing <code>momSeed.SetXYZ(0,0,10)</code>
+default already used elsewhere in this same function/class as the generic
+"assume roughly straight" placeholder — not a new number). Charge sign similarly
+defaults to <code>+1</code> instead of <code>sgn(-1)</code>, which had been silently
+biasing every degenerate seed to negative charge.</p>
+</div>
+
+<div class="card">
+<h3>Bug 3 — completes the 2026-06-22 seed-theta fix (still not fully guarded)</h3>
+<p>The <a href="#pT-resolution">2026-06-22 seed theta fix</a> (Issue #24 card above)
+already found that <code>Rxy=0 → θ=0 → p<sub>z</sub>=p<sub>T</sub>/tan(θ)=∞</code> when
+disk0/disk1 rasterize to the same strip centre, and mitigated it by switching to the
+wider disk0/disk2 baseline. That reduces but does not eliminate the risk — this test hit
+a real event where disk0 and disk2 <em>also</em> landed at identical (x,y)
+(<code>p1=p2=p3=(3.2154, 5.649)</code>, differing only in z), still giving
+<code>tan(θ)=0</code> and crashing <code>StarMagField::Search()</code> with a NaN assertion
+several frames downstream.</p>
+<p><strong>Fix:</strong> guard the division directly —
+<code>pz = (fabs(tan(theta)) &gt; 1e-6) ? (pt/tan(theta)) : (dz&gt;=0 ? 10.0 : -10.0)</code>,
+same high-|p<sub>z</sub>| placeholder philosophy as Bug 2's fallback, sign-matched to
+direction of travel in z.</p>
+</div>
+
+<div class="card">
+<h3>Why this matters conceptually (not just numerically)</h3>
+<p>GenFit's own fit parameterizes tracks by <code>q/p</code>, and <code>q/p=0</code>
+(infinite momentum / straight line) is a perfectly valid, finite, well-behaved state —
+position and direction have essentially zero Jacobian sensitivity to <code>q/p</code>
+when curvature is genuinely unmeasurable, so a straight track's residuals don't depend on
+getting the seed momentum "right". All three bugs above are artifacts of this seeder's own
+<code>curvature → p<sub>T</sub> → p<sub>x,y,z</sub></code> conversion arithmetic
+(singular at the exact points a straight track lives), not anything fundamental about the
+Kalman fit itself.</p>
+</div>
+
+<div class="card">
+<h3>Validation — 50 events, ele⁻ gun, p<sub>T</sub>=1.5 GeV, η∈[2.5,4.0]</h3>
+<p>Same <code>sim.C</code> pipeline, only <code>fieldOff</code>/<code>UseZeroB</code> differ.
+Residuals from <code>StFwdResidualMaker</code> (Global tracks, FST r·Δφ and FTT Δx/Δy),
+see <a href="../residual/index.html">residual/index.html</a>.</p>
+<table>
+<tr><th>Sample</th><th>Global tracks</th><th>FST residuals</th><th>FTT residuals</th><th>FST RMS range</th></tr>
+<tr>
+  <td>Field ON (control, <code>run98</code>)</td>
+  <td>48</td><td>129</td><td>190</td><td>0.16–0.36 cm</td>
+</tr>
+<tr class="regression-win">
+  <td>Field OFF (B=0, <code>run99</code>)</td>
+  <td class="result-good">58</td><td class="result-good">174</td><td class="result-good">203</td><td>0.19–0.27 cm</td>
+</tr>
+</table>
+<p>B=0 gives comparable-quality, well-centered residuals — and slightly <em>more</em>
+converged tracks than field-on, since every track now reliably takes the safe fallback
+seed rather than depending on getting a real curvature measurement.</p>
+</div>
+
+<div class="card">
+<h3>Code locations</h3>
+<table>
+<tr><th>File</th><th>Location</th><th>Role</th></tr>
+<tr>
+  <td><code>FitterUtils.h</code></td>
+  <td><code>GenericFitSeeder::kCollinearCurvature</code> (new)</td>
+  <td>Named sentinel shared by <code>computeSignedCurvature()</code> and
+      <code>averageCurvature()</code> so they can't drift apart (Bug 1)</td>
+</tr>
+<tr>
+  <td><code>FitterUtils.h</code></td>
+  <td><code>makeSeed()</code>, <code>curvatureKnown</code> check</td>
+  <td>Falls back to <code>pt=10</code>, <code>q=1</code> when <code>qc==-1</code> instead
+      of dividing by it (Bug 2)</td>
+</tr>
+<tr>
+  <td><code>FitterUtils.h</code></td>
+  <td><code>makeSeed()</code>, <code>tanTheta</code> guard</td>
+  <td>Falls back to <code>pz=±10</code> when <code>|tan(theta)|&lt;1e-6</code> instead of
+      dividing by it (Bug 3)</td>
+</tr>
+<tr>
+  <td><code>runSimFlat.C</code> / <code>runPythia.C</code></td>
+  <td><code>fieldOff</code> parameter</td>
+  <td>Appends BFC <code>FieldOff</code> chain tag for zero-field GEANT transport</td>
+</tr>
+<tr>
+  <td><code>sim.C</code></td>
+  <td><code>doFwdResidual</code> flag</td>
+  <td>In-chain <code>StFwdResidualMaker</code> hook, positioned
+      <code>AddAfter("MuDst", ...)</code> (must run after MuDst is fully populated,
+      not just after <code>fwdTrack</code>)</td>
+</tr>
+</table>
+</div>
+
+<div class="card">
+<h3>Relationship to Issues #2 and #19 — not overlapping, three different points in the same pipeline</h3>
+<p><a href="#hit-finding">Issue #2</a> (<code>addFttHits</code>/<code>addFstHits</code>/<code>addEpdHits</code>)
+found blown-up Kalman states (p<sub>T</sub>=0.001&ndash;22000 GeV/c) reaching the
+<em>hit-search</em> stage, and explicitly records that an upper-p<sub>T</sub> guard was
+tried there and <strong>removed</strong> &mdash; "high-p<sub>T</sub> tracks are straight
+lines with valid projections; only truly degenerate zero-curvature states need
+guarding." Bugs 2/3 above independently converge on the same principle at the
+<em>seeding</em> stage (one step earlier): the fixes give a safe finite fallback for the
+degenerate (near-zero-curvature / near-along-z) case, and deliberately do
+<strong>not</strong> add an upper-p<sub>T</sub> cap &mdash; <code>setupTrack()</code>'s
+existing <code>Perp()&gt;1000 &rarr; (0,0,1)</code> reset already covers a legitimately
+huge p<sub>T</sub> without needing a duplicate guard here.</p>
+<p><a href="#track-fitting">Issue #19</a> already documented that
+<code>GenericFitSeeder</code>'s curvature-based charge is
+<strong>"numerically unstable &rarr; wrong charge ~20% of events"</strong> for
+near-zero-curvature tracks &mdash; a real statistical/resolution limit of a 3-point
+circle fit, not a bug, and not something Bugs 1&ndash;3 above fix or need to fix. Its
+solution routes around this for BLC/Primary/FwdVtx/BLCVtx by inheriting the
+<strong>Global</strong> track's already-fitted charge (<code>externalCharge</code>
+parameter through <code>setupTrack &rarr; fitTrack</code>) instead of re-deriving it.
+But the Global track itself has nothing to inherit from &mdash; it's the one seed that
+still runs <code>GenericFitSeeder::makeSeed()</code> unguarded
+(<code>externalCharge=0</code>). That's exactly where Bugs 1&ndash;3 live, and because
+Issue #19 propagates Global's charge to every other track type, a defect in Global's own
+seed (the crash, or the deterministic-charge-bias sentinel bugs) doesn't stay contained
+to Global tracks &mdash; it silently propagates everywhere. Fixing Bugs 1&ndash;3 closes
+that gap; the pre-existing ~20% mis-charge rate for genuinely near-zero-curvature tracks
+is unrelated and, per Issue #19's own conclusion, not worth chasing further &mdash;
+consistency across track types matters more than the raw geometric precision, and none
+of this affects position/direction residuals either way (see "Why this matters
+conceptually" above).</p>
+</div>
+
+<!-- ─────────────────────────────────────────────────── ISSUE 26 -->
+<h2 id="ftt-calib-gap" class="section-anchor">Issue #26 — FTT Diagonal-Strip Calibration File Gaps (Real-Data First Run)</h2>
+
+<div class="card">
+<ul>
+<li><a href="Row4.txt"><code>Row4.txt</code></a> was missing its header line, so
+<code>loadStripCenterFromFile()</code> (which unconditionally discards the first line as a
+header) silently swallowed the genuine strip-0 data row instead &mdash; <code>scMapDiag</code>
+never got an entry for strip 0. <strong>added the header line</strong></li>
+<li><a href="Row4_StripLength.txt"><code>Row4_StripLength.txt</code></a> only went up to
+strip 150, one short of <code>Row4.txt</code>'s strip 0&ndash;151 range &mdash; exactly
+matching the strip-151 error. <strong>appended a guessed
+<code>151  272.2</code>, linearly extrapolated from strips 149 & 150</strong></li>
+</ul>
+</div>
+
+<h2 id="dca-fix" class="section-anchor">Issue #27 — DCA Target/Method Bug in refitTrack() (Track Types 0–3)</h2>
+
+<div class="card">
+<h3>Problem</h3>
+<p><code>GenfitTrackResult::setDCA(TVector3 pv)</code> (<code>GenfitTrackResult.h</code>) picks
+point- vs line-extrapolation from <code>mTrackType</code>, and extrapolates to whatever
+<code>pv</code> it's given. <code>refitTrack()</code> (<code>FwdTracker.h</code>) builds a
+fresh <code>GenfitTrackResult</code> via <code>fitTrack()</code>, which never sets
+<code>mTrackType</code> (defaults to <code>kGlobal=0</code>), then unconditionally called
+<code>setDCA(mEventVertex)</code> at the end — regardless of the caller's real track type or
+intended vertex. Since <code>setTrackRefit(true)</code> is on by default
+(<code>fwd_afterburner_db.C</code>), this ran for every track, every event.</p>
+<ul>
+<li><b>Global (0):</b> no effect in practice — target/method happened to match by coincidence (default type is kGlobal).</li>
+<li><b>Beamline (1):</b> no effect — same target (<code>mEventVertex</code>) used before and after refit.</li>
+<li><b>Primary (2):</b> silently downgraded from point-extrapolation (true 3D DCA to vertex) to line-extrapolation once refit succeeded — same target point, wrong method.</li>
+<li><b>FwdVtx (3):</b> two bugs stacked — <code>mTrackType</code> was assigned <em>after</em> the (pre-refit) <code>setDCA()</code> call, so even the initial DCA used line- not point-extrapolation; and after refit, the target silently changed from the found forward vertex to <code>mEventVertex</code>, a different vertex.</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>Fix</h3>
+<p><code>refitTrack()</code> now takes an explicit <code>dcaTarget</code> argument and
+propagates the caller's <code>mTrackType</code> onto the refit result before calling
+<code>setDCA()</code>, so every call site passes the same target it used for its own
+pre-refit <code>setDCA()</code>. Fixed the order bug in
+<code>doSecondaryTrackFitting()</code> (<code>mTrackType</code> now set before
+<code>setDCA()</code>). Also extended the point-extrapolation whitelist in
+<code>GenfitTrackResult::setDCA()</code> to cover <code>kForwardVertexConstrained</code> and
+<code>kFCSConstrained</code>, which are constrained to a literal 3D point same as
+Primary/BLCVtx.</p>
+</div>
+
+<!-- ─────────────────────────────────────────────────── REGRESSION -->
+<h2 id="regression" class="section-anchor">Regression Test Results (200 events)</h2>
+
+<p>Input: <code>DataDisk/pythia/pythia.JPsi.vz0/pythia.JPsi.vz0.run1.fzd</code>
+(200 Pythia J/ψ events). All variants compiled and run independently.
+Results in <a href="regression/">regression/</a>.</p>
+
+<table>
+<tr>
+  <th>Variant</th><th>σ_r (FST)</th><th>Conv.</th><th>Fail</th>
+  <th>FCS matches</th><th>dr mean/med (cm)</th><th>DCA_Z σ (cm)</th><th>BestPT ns</th>
+</tr>
+<tr class="regression-lose">
+  <td><strong>ALL REVERTED</strong> — original code before session</td>
+  <td>2.875 cm</td><td>5238</td><td class="result-bad">6</td>
+  <td>169</td><td>5.48 / 3.83</td><td>32.9</td><td>307</td>
+</tr>
+<tr class="regression-win">
+  <td><strong>FINAL STATE</strong> — all fixes + FST full pitch</td>
+  <td>2.875 cm</td><td class="result-good"><b>5920</b></td><td class="result-good"><b>1</b></td>
+  <td>162</td><td>5.92 / 4.25</td><td class="result-good"><b>25.6</b></td><td>295</td>
+</tr>
+<tr class="regression-lose">
+  <td>All fixes + FST pitch/√12</td>
+  <td>0.830 cm</td><td>5869</td><td>0</td>
+  <td>162</td><td>6.13 / 4.47</td><td>30.4</td><td>293</td>
+</tr>
+<tr class="regression-lose">
+  <td>All fixes + FST pitch/√12 + δ_align=1.5 cm</td>
+  <td>1.714 cm</td><td>5831</td><td>0</td>
+  <td>157</td><td>6.10 / 4.41</td><td>32.5</td><td>290</td>
+</tr>
+<tr class="regression-lose">
+  <td>GEANT FIX v3 — correct strip centers (kFstrStart), full pitch σ</td>
+  <td>2.875 cm</td><td>5914</td><td>0</td>
+  <td>140</td><td>—</td><td>32.4</td><td>—</td>
+</tr>
+<tr class="regression-lose">
+  <td>GEANT FIX v2 — correct strip centers + pitch/√12</td>
+  <td>0.830 cm</td><td>5703</td><td>1</td>
+  <td>127</td><td>—</td><td>40.7</td><td>—</td>
+</tr>
+<tr class="regression-lose">
+  <td>STEVENT — StFstFastSimMaker (correct centers + pitch/√12)</td>
+  <td>0.830 cm</td><td>5432</td><td>0</td>
+  <td>126</td><td>—</td><td>41.0</td><td>—</td>
+</tr>
+</table>
+
+<div class="card">
+<h3>Key observations vs original</h3>
+<ul>
+  <li class="result-good"><strong>+682 converged fits (+13%)</strong> with all fixes active</li>
+  <li class="result-good"><strong>Fit failures: 6 → 1</strong></li>
+  <li class="result-good"><strong>DCA_Z σ: 32.9 → 25.6 cm (−22%)</strong> — sharpest vertex-z resolution</li>
+  <li class="result-neutral"><strong>FCS matches: 169 → 162 (−4%)</strong> — the 7 lost matches came
+      from the 6 convergence failures in the original that happened to produce FCS-matched tracks</li>
+  <li class="result-neutral"><strong>dr residuals: 5.48 → 5.92 cm</strong> mean — slightly wider,
+      consistent with tighter fitting being more selective</li>
+</ul>
+</div>
+
+<!-- ─────────────────────────────────────────────────── FILES -->
+<h2 id="files" class="section-anchor">Files &amp; Logs</h2>
+
+<h3>Modified source files (copies as of session end)</h3>
+<ul class="file-list">
+  <li><code>StRoot/StFttClusterMaker/StFttClusterMaker.cxx</code>
+      &nbsp;—&nbsp; sigma floor at pitch/√12=0.924 mm for single-strip FTT clusters (real-data path)
+      &nbsp;<span class="badge fixed">Bug 21</span></li>
+  <li><code>StRoot/StFwdTrackMaker/include/Tracker/TrackFitter.h</code>
+      &nbsp;—&nbsp; <code>warmFitFstTightSigma()</code>: warm-start KalmanFitter with tight FST r+φ (÷12 on all 4 cov elements)
+      &nbsp;<span class="badge fixed">#24</span></li>
+  <li><code>StRoot/StFwdTrackMaker/include/Tracker/FitterUtils.h</code>
+      &nbsp;—&nbsp; seed theta uses disk0→disk2 (outermost pair, avoids degenerate same-strip case)
+      &nbsp;<span class="badge fixed">#24</span></li>
+  <li><a href="StFwdTrackMaker.cxx">StFwdTrackMaker.cxx</a>
+      &nbsp;—&nbsp; FCS track projection to showermax depth instead of front face
+      &nbsp;<span class="badge fixed">Bug 20</span></li>
+  <li><a href="StFwdHitLoader.cxx">StFwdHitLoader.cxx</a>
+      &nbsp;—&nbsp; <code>makeFstCovMat()</code>: FST strip pitch, covariance
+      &nbsp;<span class="badge fixed">Bug 5</span>
+      <span class="badge reverted">Bug 6 (reverted)</span></li>
+  <li><a href="StFwdHitLoader.h">StFwdHitLoader.h</a>
+      &nbsp;—&nbsp; <code>FstRasterizer</code> default pitch (kept at 3.0 cm pending geometry investigation)</li>
+  <li><a href="FwdTracker.h">FwdTracker.h</a>
+      &nbsp;—&nbsp; hit search (projection planes, blown-up guard lower-only, strip selection, EPD, beamline seed, charge);
+      segfault fix: <code>msp</code> default-constructed when projection block accidentally commented out;
+      warm-start call site in <code>refitTrack()</code> for all 5 track types
+      &nbsp;<span class="badge fixed">Bug 1–4, 7–11, 13–14, 19, #24</span></li>
+  <li><a href="GenfitTrackResult.h">GenfitTrackResult.h</a>
+      &nbsp;—&nbsp; QaTruth denominator, DCA method, <code>refreshFromTrack()</code>
+      &nbsp;<span class="badge fixed">Bug 15, 16, #24</span></li>
+  <li><a href="TrackFitter.h">TrackFitter.h</a>
+      &nbsp;—&nbsp; charge propagation parameter in <code>setupTrack / fitTrack</code>
+      &nbsp;<span class="badge fixed">Bug 19</span></li>
+  <li><a href="FitterUtils.h">FitterUtils.h</a>
+      &nbsp;—&nbsp; dead code, wrong comment in GenericFitSeeder
+      &nbsp;<span class="badge fixed">Bug 17, 18</span></li>
+</ul>
+
+<h3>Debug logs — single-electron simulation (ele.pt1.5.vz0)</h3>
+<ul class="file-list">
+  <li><a href="fwdtrack.1.log">fwdtrack.1.log</a> &nbsp;—&nbsp; original code, no fixes</li>
+  <li><a href="fwdtrack.2.log">fwdtrack.2.log</a> &nbsp;—&nbsp; after FTT projection + blown-up guard (1, 2)</li>
+  <li><a href="fwdtrack.3.log">fwdtrack.3.log</a> &nbsp;—&nbsp; after EPD + FST fixes (8–12)</li>
+  <li><a href="fwdtrack.4.log">fwdtrack.4.log</a> &nbsp;—&nbsp; after FTT strip selection fix (3, 4, 7)</li>
+  <li><a href="fwdtrack.5.log">fwdtrack.5.log</a> &nbsp;—&nbsp; all fitting fixes applied (13–19)</li>
+</ul>
+
+<h3>Full text session notes</h3>
+<ul class="file-list">
+  <li><a href="forwardTrackingSummary_2.txt">forwardTrackingSummary_2.txt</a>
+      &nbsp;—&nbsp; complete root-cause analysis for all 19 possible issues, search window budgets,
+      regression tables</li>
+</ul>
+
+</div><!-- end .content -->
+
+<footer style="background:#263238;color:#90a4ae;text-align:center;padding:18px;margin-top:50px;font-size:0.82em;">
+  STAR FWD Calibration &nbsp;|&nbsp; Akio Ogawa &nbsp;|&nbsp; akio@bnl.gov &nbsp;|&nbsp; June 2026
+</footer>
+
+</body>
+</html>

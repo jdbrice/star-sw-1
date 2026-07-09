@@ -1,0 +1,23 @@
+<HTML><HEAD><TITLE>More Detailed Look at R*dPhi</TITLE></HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+<p><a href="../../index.html">&larr; back to wedge-correction validation</a> | <a href="../../../translation/index.html">before (uncorrected) version of this page</a></p>
+<H1>More Detailed Look at r#middot#Delta#phi vs #phi &mdash; AFTER Per-Wedge Phi Correction</H1><HR>
+<ul>
+<li><b>This is the corrected (FstWedgeAligner applied) version of <a href="../../../translation/index.html">../../../translation/index.html</a></b> &mdash; same 15 files as the before/after table on <a href="../../index.html">wedgecorrection/index.html</a>.</li>
+<li>Source: <code>DataDisk/wedgecorr_condor/*.FwdAlignment_BLCVtx.root</code> (track type: BLCVtx (wedge-corrected)), 15 files, 8138945 rows</li>
+<li>Profile (mean per #phi bin, core cut |r#middot#Delta#phi|<0.3cm) of the 2D r#middot#Delta#phi-vs-#phi histogram from <a href="../distributions.html">distributions.html</a> (the AFTER-correction version), plus a sine fit A#middot sin(#phi-#phi<sub>0</sub>).</li>
+<li>Scripts: <code>script/plotFwdAlignmentResidual.C</code>, <code>script/testFwdAlignmentTranslation.C</code></li>
+</ul>
+<table border=1 cellpadding=4>
+<tr><th>Disk</th><th>N(fit pts)</th><th>Amplitude [cm]</th><th>&chi;&sup2;/ndf</th><th>sig</th><th>plot</th></tr>
+<tr><td>FST0 (z=151.8)</td><td>80</td><td>0.0039&plusmn;0.0024</td><td>139.7</td><td>1.6</td><td><a href="fst0_translation_core.png"><img src="fst0_translation_core.png" height=150></a></td></tr>
+<tr><td>FST1 (z=165.2)</td><td>80</td><td>0.0030&plusmn;0.0014</td><td>123.0</td><td>2.2</td><td><a href="fst1_translation_core.png"><img src="fst1_translation_core.png" height=150></a></td></tr>
+<tr><td>FST2 (z=178.8)</td><td>80</td><td>0.0035&plusmn;0.0016</td><td>83.1</td><td>2.2</td><td><a href="fst2_translation_core.png"><img src="fst2_translation_core.png" height=150></a></td></tr>
+</table>
+<H3>After-correction observations</H3>
+<ul>
+<li>Sine amplitude and &chi;&sup2;/ndf both drop substantially vs. the uncorrected page (core, before &rarr; after): FST0 0.0089&plusmn;0.0050&rarr;0.0039&plusmn;0.0024&nbsp;cm (&chi;&sup2;/ndf 8241.5&rarr;139.7); FST1 0.0096&plusmn;0.0040&rarr;0.0030&plusmn;0.0014&nbsp;cm (12806.1&rarr;123.0); FST2 0.0145&plusmn;0.0029&rarr;0.0035&plusmn;0.0016&nbsp;cm (3390.0&rarr;83.1). Note the before numbers are from the full 150-file set and after from the 15-file corrected subset, so this is illustrative, not a controlled comparison.</li>
+<li>&chi;&sup2;/ndf is still far from 1 (~80-140) on every row, consistent with real structure remaining after correction (see <a href="../../index.html">wedgecorrection/index.html</a>'s "why the steps aren't fully eliminated" discussion).</li>
+</ul>
+<HR>OGAWA, Akio<ADDRESS><A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+</BODY></HTML>

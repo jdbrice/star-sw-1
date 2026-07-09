@@ -1,0 +1,605 @@
+Executable   = /bin/env
+Universe     = vanilla
+notification = never
+getenv       = True
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 1 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run1.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run1.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run1.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 2 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run2.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run2.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run2.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 3 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run3.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run3.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run3.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 4 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run4.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run4.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run4.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 5 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run5.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run5.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run5.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 6 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run6.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run6.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run6.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 7 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run7.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run7.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run7.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 8 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run8.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run8.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run8.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 9 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run9.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run9.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run9.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 10 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run10.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run10.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run10.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 11 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run11.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run11.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run11.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 12 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run12.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run12.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run12.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 13 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run13.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run13.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run13.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 14 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run14.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run14.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run14.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 15 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run15.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run15.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run15.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 16 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run16.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run16.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run16.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 17 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run17.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run17.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run17.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 18 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run18.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run18.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run18.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 19 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run19.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run19.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run19.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 20 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run20.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run20.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run20.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 21 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run21.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run21.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run21.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 22 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run22.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run22.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run22.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 23 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run23.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run23.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run23.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 24 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run24.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run24.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run24.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 25 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run25.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run25.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run25.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 26 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run26.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run26.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run26.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 27 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run27.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run27.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run27.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 28 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run28.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run28.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run28.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 29 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run29.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run29.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run29.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 30 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run30.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run30.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run30.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 31 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run31.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run31.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run31.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 32 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run32.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run32.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run32.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 33 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run33.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run33.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run33.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 34 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run34.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run34.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run34.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 35 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run35.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run35.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run35.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 36 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run36.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run36.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run36.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 37 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run37.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run37.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run37.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 38 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run38.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run38.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run38.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 39 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run39.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run39.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run39.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 40 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run40.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run40.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run40.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 41 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run41.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run41.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run41.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 42 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run42.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run42.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run42.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 43 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run43.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run43.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run43.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 44 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run44.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run44.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run44.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 45 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run45.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run45.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run45.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 46 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run46.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run46.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run46.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 47 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run47.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run47.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run47.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 48 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run48.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run48.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run48.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 49 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run49.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run49.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run49.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 50 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run50.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run50.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run50.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 51 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run51.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run51.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run51.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 52 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run52.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run52.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run52.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 53 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run53.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run53.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run53.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 54 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run54.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run54.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run54.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 55 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run55.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run55.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run55.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 56 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run56.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run56.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run56.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 57 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run57.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run57.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run57.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 58 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run58.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run58.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run58.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 59 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run59.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run59.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run59.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 60 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run60.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run60.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run60.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 61 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run61.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run61.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run61.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 62 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run62.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run62.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run62.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 63 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run63.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run63.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run63.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 64 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run64.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run64.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run64.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 65 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run65.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run65.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run65.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 66 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run66.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run66.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run66.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 67 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run67.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run67.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run67.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 68 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run68.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run68.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run68.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 69 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run69.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run69.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run69.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 70 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run70.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run70.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run70.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 71 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run71.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run71.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run71.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 72 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run72.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run72.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run72.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 73 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run73.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run73.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run73.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 74 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run74.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run74.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run74.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 75 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run75.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run75.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run75.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 76 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run76.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run76.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run76.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 77 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run77.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run77.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run77.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 78 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run78.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run78.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run78.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 79 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run79.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run79.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run79.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 80 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run80.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run80.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run80.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 81 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run81.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run81.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run81.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 82 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run82.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run82.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run82.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 83 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run83.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run83.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run83.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 84 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run84.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run84.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run84.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 85 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run85.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run85.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run85.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 86 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run86.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run86.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run86.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 87 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run87.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run87.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run87.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 88 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run88.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run88.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run88.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 89 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run89.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run89.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run89.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 90 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run90.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run90.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run90.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 91 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run91.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run91.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run91.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 92 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run92.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run92.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run92.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 93 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run93.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run93.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run93.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 94 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run94.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run94.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run94.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 95 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run95.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run95.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run95.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 96 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run96.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run96.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run96.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 97 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run97.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run97.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run97.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 98 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run98.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run98.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run98.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 99 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run99.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run99.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run99.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runsim 1000 100 ele pt1.5 0 /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0 /star/u/akio/fcstrk11/star-sw-fwd"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run100.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run100.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/particle/ele.pt1.5.vz0/log/ele.pt1.5.vz0.run100.log
+Queue
+

@@ -1,0 +1,224 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <TITLE>Forward Tracking Code Structure</TITLE>
+<header>
+  <!-- Changed by: Akio Ogawa, 08-Jul-2026 -->
+</header>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+  <tr>
+    <td colspan=2 align=right> <font size="-1">
+            <script language="JavaScript">
+            <!-- Hide script from old browsers
+             document.write("Last modified "+ document.lastModified)
+             // end of script --></script></font></td>
+  </tr>
+
+<H1>Forward Tracking Code Structure and Flow</H1>
+<HR>
+
+<ul>
+  <li>Code : StRoot/StFwdTrackMaker
+
+  <li><b>Overview</b>
+    <ul>
+      <li>Forward tracking covers pseudorapidity &eta;&nbsp;&sim;&nbsp;2.5&ndash;4.0 using two detectors:
+        <ul>
+          <li>FST (Forward Silicon Tracker): 3 disks at z&nbsp;&sim;&nbsp;152, 165, 179 cm
+          <li>FTT (sTGC): 4 planes at z&nbsp;&sim;&nbsp;281, 304, 327, 349 cm
+        </ul>
+      <li>load MuDst &rarr; reconstruct FTT clusters/points &rarr; load FST hits &rarr;
+          forward seed finding (KiTrack) &rarr; fit with GenFit Kalman filter &rarr;
+          optionally associate with FCS calorimeter &rarr; write PicoDst output.
+    </ul>
+
+  <li><b>fwd_afterburner_db.C</b> (<a href="code/fwd_afterburner_db.C">StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C</a>)
+    <ul>
+      <li>ROOT macro that assembles and runs the STAR maker chain as an "afterburner" (post-processes existing MuDst files to re-run/improve forward tracking).
+      <li>Key configuration flags (global booleans at top):
+        <ul>
+          <li><code>runDb</code> &mdash; enable STAR database connection (beamline, FCS calibrations); timestamp now read from the 1st event instead of hardcoded
+          <li><code>runFttChain</code> &mdash; run FTT hit calibration, clustering, and point-making makers
+          <li><code>runFcsChain</code> &mdash; run FCS waveform fit and cluster makers
+          <li><code>runFwdChain</code> &mdash; run StFwdTrackMaker (seed finding + GenFit track fitting)
+          <li><code>refillMuDst</code> &mdash; attempt to refill MuDst from StEvent (currently broken)
+          <li><code>runFwdQa</code> &mdash; run StFwdQAMaker and StFwdAnalysisMaker for tree output
+          <li><code>runFitQa</code> &mdash; run StFwdFitQAMaker
+          <li><code>runPico</code> &mdash; run StPicoDstMaker to produce PicoDst output
+          <li><code>runFwdAlignment</code> &mdash; run StFwdAlignmentMaker (unbiased, hit-removed residuals); off by default, set per-invocation via the <code>enableAlignment</code> macro argument (this is how condor batch jobs turn it on without a source edit)
+        </ul>
+      <li>Chain order: St_db_Maker &rarr; StMuDst2StEventMaker &rarr; StFcsDbMaker (if <code>runDb||runFitQa</code>, needed for beamline even when FCS chain itself is off) &rarr;
+          StFttDbMaker &rarr; StFttHitCalibMaker &rarr; StFttClusterMaker &rarr; StFttClusterPointMaker &rarr;
+          [StFcsWaveformFitMaker &rarr; StFcsClusterMaker] &rarr; StFwdTrackMaker &rarr; [StFcsTrackMatchMaker] &rarr;
+          [StFwdQAMaker] &rarr; [StFwdResidualMaker &times;3] &rarr; [StFwdAlignmentMaker] &rarr; StPicoDstMaker &rarr; [StFwdFitQAMaker]
+      <li>StFwdTrackMaker configuration in the macro: seed finding FST-only, track refit enabled (adds FTT hits after FST seeding), FST hit source MuDst, FTT hit source StEvent, Kalman fit iterations min=40/max=100, geometry cache <code>fGeom.root</code>, beamline from DB when <code>runDb</code>, optional <code>applyFstWedgeAlignment</code> (see <a href="../residual/data/alignment/wedgecorrection/index.html">wedge correction page</a>).
+      <li>Event loop: iterates MuDst events (capped at <code>nEvents</code>), calls <code>chain-&gt;Make()</code> per event, monitors memory with StMemStat. <code>chain-&gt;Finish()</code>/<code>delete chain</code> are commented out, but StFwdResidualMaker/StFwdAlignmentMaker are explicitly <code>Finish()</code>'d at the end so their output isn't lost.
+    </ul>
+
+  <li><b>StFwdTrackMaker</b> (<a href="code/StFwdTrackMaker.h">StFwdTrackMaker.h</a>, <a href="code/StFwdTrackMaker.cxx">.cxx</a>) &mdash; the primary STAR maker, inherits StMaker
+    <ul>
+      <li><b>Init()</b> &mdash; determines geometry cache file; instantiates ForwardTracker (wraps ForwardTrackMaker) and FwdDataSource; calls <code>ForwardTracker::initialize()</code> which sets up the TrackFitter (GenFit) and loads the geometry ROOT file; reads FST/FTT z-positions from gGeoManager with hardcoded fallbacks.
+      <li><b>InitRun(runNumber)</b> &mdash; if <code>setUseBeamlineFromDB(true)</code>, retrieves StFcsDb from the chain and calls <code>mForwardTracker-&gt;setBeamline(...)</code> once per run (beamline is run-level, not per-event).
+      <li><b>Make()</b> (per-event):
+        <ol>
+          <li>Get StEvent pointer; return kStOk if missing
+          <li>Determine primary vertex via GetEventPrimaryVertex(), priority: GEANT g2t_vertex &gt; StMcEvent &gt; MuDst primary vertex &gt; VPD Vz; (0,0,0) with large uncertainty if none found
+          <li>Load MC tracks from g2t_track (simulation)
+          <li>Load FTT hits (mFwdHitLoader.loadFttHits()), FST hits (loadFstHits()), EPD/preshower hits (loadEpdHits())
+          <li><code>mForwardTracker-&gt;findTrackSeeds()</code>
+          <li><code>mForwardTracker-&gt;doTrackFitting()</code> on the seeds
+          <li><code>FillEvent()</code> writes results to StEvent's StFwdTrackCollection
+        </ol>
+      <li><b>FillEvent()</b> &mdash; creates StFwdTrackCollection if absent; for each GenfitTrackResult calls <code>makeStFwdTrack()</code>; adds forward vertices (RAVE vertex finder) as StPrimaryVertex objects, including the BLC vertex (see <a href="../BLCVtx/index.html">BLCVtx/index.html</a>).
+      <li><b>makeStFwdTrack()</b> &mdash; stores FST/FTT seed hit positions and covariances; sets MC truth info; for converged fits fills chi2, NDF, pval, DCA, momentum, #fit points; projects track to z-planes of TPC (z=0), FST (3), FTT (4), FCS preshower (z=375), WCAL (z=715), HCAL (z=807); WCAL/HCAL use a straight-line projection (GenFit can't reliably extrapolate that far).
+      <li><b>GenfitUtils::accept&lt;genfit::Track*&gt;()</b> &mdash; sanity filter: rejects tracks with 0 points, non-converged fits, missing fitter info, or p<sub>T</sub>&lt;0.10 GeV/c.
+      <li><b>FwdVertexSource priority enum</b> &mdash; kFwdVertexSourceUnknown (not yet searched) &rarr; kFwdVertexSourceMc (GEANT/StMcEvent) &rarr; kFwdVertexSourceTpc (MuDst primary vertex) &rarr; kFwdVertexSourceVpd (VPD Vz, sigmaXY=1cm, sigmaZ=6cm) &rarr; kFwdVertexSourceNone.
+      <li>Default XML tracker configuration (embedded string): 1 iteration, 1 phi slice; segment criteria Crit2_DeltaPhi [0,2.0]; three-hit criteria Crit3_3DAngle/Crit3_2DAngle [0,1]; SubsetNN active (min 3 hits/track, omega=0.99); HitRemover inactive; connector distance 1 (adjacent planes only).
+    </ul>
+
+  <li><b>StFwdHitLoader</b> (<a href="code/StFwdHitLoader.h">StFwdHitLoader.h</a>, <a href="code/StFwdHitLoader.cxx">.cxx</a>) &mdash; loads hits from FTT, FST, EPD into FwdHit vectors for the tracker
+    <ul>
+      <li>DataSource enum: GEANT=0, STEVENT=1, MUDST=2, IGNORE=3
+      <li><b>FTT hit loading</b> &mdash; GEANT: reads g2t_stg_hit, uses only odd volume_id (front modules), plane_id=(volume_id-1)/100, sigXY=0.1cm. STEVENT: reads StFttCollection points, uses the points' own covariance matrix, skips NaN entries and diagonal strips (sigma_x==sigma_y). MUDST source not implemented.
+      <li><b>FST hit loading</b> &mdash; MUDST: reads StMuFstCollection, converts (r,phi,z)&rarr;(x,y,z), covariance via <code>makeFstCovMat()</code>, stores local strip position. STEVENT: reads StFstHitCollection, same conversion, also keeps a pointer to the original StFstHit, iterates wedges/sensors. GEANT: reads g2t_fsi_hit, applies FstRasterizer to simulate Si readout granularity (default dr=3.0cm, dphi=0.0041rad). Optional <code>FstWedgeAligner</code> per-wedge phi correction applied here when enabled (see <a href="../residual/data/alignment/wedgecorrection/index.html">wedge correction page</a>).
+      <li><b>EPD/Preshower hit loading</b> &mdash; STEVENT only; reads FCS preshower hits (north/south), energy threshold (default 0.2 MIP), StEpdGeom corner positions averaged; fixed covariance sigXY=4cm; always sector 7. GEANT/MuDst not implemented.
+      <li><b>makeFstCovMat()</b> &mdash; computes the FST 2D covariance by propagating cylindrical uncertainties (dr, dphi) to Cartesian (x,y) via Jacobian transform; z-error fixed at 0.1cm.
+      <li><b>FstRasterizer</b> &mdash; simulates Si strip readout for GEANT hits: quantizes r and phi to nearest strip center; minR=5.0cm.
+      <li>Hit vector management: after pushing hits into <code>mFwdHitsFtt</code>/<code>mFwdHitsFst</code>, a second pass sets up pointers into those vectors for the hit map &mdash; done after all pushes to avoid pointer invalidation from vector reallocation.
+    </ul>
+
+  <li><b>FwdTrackerConfig</b> (<a href="code/FwdTrackerConfig.h">FwdTrackerConfig.h</a>, <a href="code/FwdTrackerConfig.cxx">.cxx</a>) &mdash; XML-based hierarchical configuration system (TXMLEngine)
+    <ul>
+      <li>Storage: flat <code>std::map&lt;string,string&gt;</code>, keys are dot-separated paths with colon-separated attribute suffix, e.g. <code>"TrackFinder.Iteration:nPhiSlices"</code>.
+      <li><code>load()</code> parses XML and maps all nodes/attributes; <code>get&lt;T&gt;(path,default)</code>/<code>set&lt;T&gt;(path,value)</code>; <code>getVector&lt;T&gt;</code> parses comma-separated lists; <code>childrenOf(path)</code>; <code>canonize(path)</code> strips whitespace and <code>[0]</code> array notation; repeated nodes indexed as <code>path[1]</code>, <code>path[2]</code>, ...
+    </ul>
+
+  <li><b>StFwdQAMaker</b> (<a href="code/StFwdQAMaker.h">StFwdQAMaker.h</a>) &mdash; QA maker that writes a TTree for offline analysis
+    <ul>
+      <li>Stores per-event: run/event headers, MC tracks, FTT points/clusters, FST hit points, FCS WCAL/HCAL clusters and hits, EPD hits, reconstructed forward tracks, seed track points.
+      <li>Two modes: StEvent (default) or MuDst (<code>setMuDstInput()</code>).
+      <li><code>TClonesArrayWriter&lt;T&gt;</code> helper template for TTree branch management; <code>FcsClusterWithStarXYZ</code>/<code>FcsHitWithStarXYZ</code> attach a global XYZ position (from the FCS database) to a cluster/hit.
+    </ul>
+
+  <li><b>Common.h</b> (<a href="code/Common.h">Common.h</a>) &mdash; small utility header: <code>FwdTrackerUtils::labelAxis()</code> sets TAxis bin labels; <code>FwdTrackerUtils::nowNanoSecond()</code> high-resolution timestamp (per-event tracking performance timing).
+
+  <li><b>StFwdClosureMaker</b> (<a href="code/StFwdClosureMaker.h">StFwdClosureMaker.h</a>) / <b>StFwdMockMaker</b> (<a href="code/StFwdMockMaker.h">StFwdMockMaker.h</a>) &mdash; closure-test and toy-MC-based validation makers.
+</ul>
+
+<h3><a name="trackingflaw"><b>Tracking Flaw</b></a></H3>
+<pre>
+FST hit map (3 disks × hits per disk)
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  STEP 1: FST SEED FINDING  (doSeedFindingIteration)         │
+│  - KiTrack SegmentBuilder connects FST hits across disks    │
+│  - Cellular automaton selects 3-hit track candidates        │
+│  - Output: list of FST triplet seeds (Seed_t)               │
+└─────────────────────────┬───────────────────────────────────┘
+                          │  3 FST hits per seed
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  STEP 2: INITIAL GLOBAL FIT  (fitTrack, mFitter=RefTrack)   │
+│  - KalmanFitterRefTrack (blowUpFactor=1e9, sqrt formalism)  │
+│  - Fits 3 FST hits → seed track with position &amp; momentum    │
+│  - Uses FULL phi pitch as σ (wide covariance)               │
+│  - If convergeFully → proceed; else save failed seed        │
+└─────────────────────────┬───────────────────────────────────┘
+                          │  converged FST-only track
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  STEP 3: ADD FTT + EPD HITS  (addFttHits, addEpdHits)       │
+│  - Project fitted track to each FTT plane (4 planes)        │
+│  - Hard-coded search window: dx&lt;1.5 cm, dy&lt;1.5 cm           │
+│  - Add matched FTT hits to seed                             │
+│  - Similarly add EPD hit (at large z)                       │
+└─────────────────────────┬───────────────────────────────────┘
+                          │  seed now has FST + FTT + EPD hits
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  STEP 4: GLOBAL REFIT  (fitTrack inside refitTrack)         │
+│  - KalmanFitterRefTrack on full FST+FTT+EPD seed            │
+│  - Uses FULL phi pitch as σ for FST (12× underweighted)     │
+│  - Longer z lever arm (FST at z~150 cm, FTT at z~280 cm)    │
+│  - Output: kGlobal track (stored in globalTracks)           │
+└─────────────────────────┬───────────────────────────────────┘
+                          │  global tracks
+          ┌───────────────┼──────────────────────┐
+          ▼               ▼                      ▼
+┌──────────────┐ ┌──────────────────┐  ┌─────────────────────┐
+│  BLC FIT     │ │  PRIMARY FIT     │  │  FWD VERTEX FIT     │
+│ (doBeamline) │ │ (doPrimary)      │  │ (doFwdVertex)       │
+│              │ │                  │  │                     │
+│ Add beamline │ │ Add PV point     │  │ Add fwd vtx point   │
+│ hit (x,y=0)  │ │ (0,0,0) in MC    │  │                     │
+│ fitTrack →   │ │ fitTrack →       │  │ fitTrack →          │
+│ refitTrack → │ │ refitTrack →     │  │ refitTrack →        │
+│ kBeamline    │ │ kPrimaryVertex   │  │ kForwardVertex      │
+└──────────────┘ └──────────────────┘  └─────────────────────┘
+
+refitTrack() = add more FTT/FST hits near track + final fit
+  - Calls addFttHits(), addFstHits(), addEpdHits() again
+  - Then fitTrack() on updated seed → final track momentum
+</pre>
+
+<H3>Track Types &amp; DCA</H3>
+<p><code>StFwdTrack::dca()</code> (and <code>StPicoFwdTrack::dcaXY()</code>/<code>dcaZ()</code>) is
+computed by <code>GenfitTrackResult::setDCA()</code>: the track is extrapolated to the point of
+closest approach to a target &mdash; either a literal 3D <b>point</b> (for the types
+constrained through a vertex hit) or a vertical <b>line</b> through the target's (x,y) with z
+free (for Global/Beamline). The stored value is the track's own (x,y,z) at that point, not a
+distance; <code>dcaXY = &radic;(x&sup2;+y&sup2;)</code> only reads as a true impact parameter
+when the target's (x,y) is near the origin. See
+<a href="../debug/index.html#dca-fix">debug/index.html, Issue #27</a> for a bug in this that was
+found and fixed (2026-07-08): a stale default track type inside <code>refitTrack()</code> was
+silently substituting the wrong target/method for some types whenever the refit step succeeded.</p>
+<table border=1 cellpadding=4>
+<tr><th>#</th><th>Name</th><th>Detectors / hits used</th><th>DCA target &amp; method</th></tr>
+<tr>
+  <td>0</td><td><code>kGlobal</code></td>
+  <td>FST + FTT + EPD (no vertex hit)</td>
+  <td>Line-extrapolation to a vertical line through the found event vertex
+      (<code>mEventVertex</code>: GEANT&nbsp;&gt;&nbsp;StMcEvent&nbsp;&gt;&nbsp;MuDst
+      PV&nbsp;&gt;&nbsp;VPD Vz priority, or (0,0,0) if none found) &mdash; z is left free by
+      this method</td>
+</tr>
+<tr>
+  <td>1</td><td><code>kBeamlineConstrained</code></td>
+  <td>FST + FTT + EPD + beamline hit (DB x0,y0; z free)</td>
+  <td>Same target/method as Global (line through <code>mEventVertex</code>) &mdash; <i>not</i>
+      distance to the beamline hit the track was actually fit with</td>
+</tr>
+<tr>
+  <td>2</td><td><code>kPrimaryVertexConstrained</code></td>
+  <td>FST + FTT + EPD + primary-vertex hit at <code>mEventVertex</code></td>
+  <td>True 3D point-extrapolation to <code>mEventVertex</code> &mdash; the vertex the track is
+      actually constrained through</td>
+</tr>
+<tr>
+  <td>3</td><td><code>kForwardVertexConstrained</code></td>
+  <td>FST + FTT + EPD + RAVE-found forward-vertex hit</td>
+  <td>True 3D point-extrapolation to the found forward vertex position</td>
+</tr>
+<tr>
+  <td>4</td><td><code>kBLCVertexConstrained</code></td>
+  <td>FST + FTT + EPD + BLC-derived vertex hit (<code>mBLCVtxPos</code>: weighted-mean z of BLC
+      tracks, x,y from the beamline; see <a href="../BLCVtx/index.html">BLCVtx/index.html</a>)</td>
+  <td>True 3D point-extrapolation to <code>mBLCVtxPos</code></td>
+</tr>
+<tr>
+  <td>5</td><td><code>kFCSConstrained</code></td>
+  <td>BLCVtx seed (FST+FTT+EPD+BLC vertex hit) + matched FCS ECAL cluster hit</td>
+  <td>True 3D point-extrapolation to <code>mBLCVtxPos</code> &mdash; same vertex as its parent
+      BLCVtx track</td>
+</tr>
+</table>
+
+<HR>OGAWA, Akio
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

@@ -1,0 +1,86 @@
+#!/bin/csh
+# Per-file condor job: MuDst -> picoDst (+ residual, + optional alignment ntuple).
+# Usage: runab INPUTDIR BASE OUTDIR [ALIGN]
+#   ALIGN: "1" to also run StFwdAlignmentMaker for this file (off if omitted/0)
+#          -- see fwd_afterburner_db.C's enableAlignment parameter.
+
+# Without this, csh aborts with "No match" the instant any ${x}*.root glob
+# below doesn't match an existing file (e.g. the diagnostic echo before
+# root4star has even run, or the copy-back loop if root4star produced zero
+# residual/alignment files) -- nonomatch makes an unmatched glob pass through
+# literally instead of killing the job.
+set nonomatch
+
+set inputdir=$1
+set base=$2
+set outdir=$3
+set align=$4
+if ( "$align" == "" ) set align="0"
+set alignArg="false"
+if ( "$align" == "1" ) set alignArg="true"
+#set dir=/star/u/akio/fcstrk11/star-sw-fwd
+set dir=$cwd
+
+echo dir=$dir align=$align
+
+set mudst = $base
+set pico = $mudst:s/.MuDst.root/.picoDst.root/
+# fwd_afterburner_db.C suffixes residual/alignment output with the track type
+# (e.g. .FwdDetResidual_Global.root, .FwdAlignment_BLCVtx.root), not the old
+# unsuffixed .FwdDetResidual.root this script used to look for -- that old
+# name is never produced anymore, so the copy-back silently did nothing (see
+# proposal_rerun_data_picodst.txt section 2). Glob for whatever got written
+# instead of hardcoding one name, so this doesn't break again if the set of
+# track types running changes.
+set residualBase = $mudst:s/.MuDst.root/.FwdDetResidual_/
+set alignBase     = $mudst:s/.MuDst.root/.FwdAlignment_/
+echo MuDst=$mudst PicoDst=$pico ResidualBase=${residualBase}* AlignBase=${alignBase}*
+
+cd $SCRATCH
+
+/bin/cp $dir/fwd_afterburner_db.C .
+/bin/cp $dir/fGeom.root .
+ln -s $dir/.$STAR_HOST_SYS
+ln -s $dir/StRoot
+
+echo coping $inputdir/$base
+/bin/cp $inputdir/$base ./
+
+pwd
+ls -la
+
+#root4star -l -b -q fwd_afterburner_db.C'("'$base'",10000000)' | grep -v "StError: Cannot find"
+root4star -l -b -q fwd_afterburner_db.C'("'$base'",10000000,0,0,"",'$alignArg')' >& /dev/null
+
+pwd
+ls -la
+
+echo /bin/mv $pico $outdir/
+/bin/mv $pico $outdir/
+
+set nres=0
+foreach f (${residualBase}*.root)
+    if ( -e $f ) then
+        mkdir -p $outdir/residual
+        echo /bin/mv $f $outdir/residual/
+        /bin/mv $f $outdir/residual/
+        @ nres++
+    endif
+end
+if ( $nres == 0 ) echo "WARNING: no ${residualBase}*.root files found -- residual copy-back got nothing"
+
+if ( "$align" == "1" ) then
+    set nalign=0
+    foreach f (${alignBase}*.root)
+        if ( -e $f ) then
+            mkdir -p $outdir/alignment
+            echo /bin/mv $f $outdir/alignment/
+            /bin/mv $f $outdir/alignment/
+            @ nalign++
+        endif
+    end
+    if ( $nalign == 0 ) echo "WARNING: align=1 but no ${alignBase}*.root files found"
+endif
+
+/bin/rm $base
+

@@ -1,0 +1,65 @@
+
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE> OGAWA Akio Home page </TITLE>
+<header>
+  <!-- Changed by: Akio Ogawa, 07-Jul-2026 -->
+</header>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<p><a href="../index.html">&larr; back to residual index</a></p>
+<H1>Biased FST/FTT Residuals (StFwdResidualMaker)</H1>
+<HR>
+<p style="background:#f0f0f8;border:1px solid #888;padding:8px"><b>Preliminary study, superseded.</b> This is the original residual check, done before <code>StFwdAlignmentMaker</code> (the unbiased, hit-removed maker) existed. The residual here is <b>pulled toward the hit</b> by the fit that produced it, so misalignments are underestimated &mdash; treat this as a rough first look only. The current main analysis is on the <a href="../index.html">residual index page</a>.</p>
+
+<ul>
+  <li>Code: StRoot/StFwdResidualMaker (<a href="code/StFwdResidualMaker.h">StFwdResidualMaker.h</a>, <a href="code/StFwdResidualMaker.cxx">.cxx</a>)
+  <li>Plot macro: <a href="../../script/plotFwdResidual.C">script/plotFwdResidual.C</a>
+  <li>Goal: simple first-pass check for large misalignments, ahead of the full multi-parameter (xyz+3 angle per element) alignment fit
+  <li>Method: per-plane residual between the hit used in the fit and the track's fitted projection at that z
+    <ul>
+      <li>Since the hit is in the fit, the residual is <b>pulled toward the hit</b> &mdash; misalignments are <b>underestimated</b> (rough first look, not the final alignment)
+      <li>FST residual = r&middot;&Delta;&phi; = r&middot;(&phi;<sub>hit</sub> &minus; &phi;<sub>proj</sub>), folded to (&minus;&pi;,&pi;)
+      <li>FTT residual = &Delta;x (V-strip) or &Delta;y (H-strip), picked by hit covariance. Diagonal U/V strips not yet used in the fit.
+    </ul>
+  <li>Plane usage: per track type (Global/BLC/Primary/FwdVtx/BLCVtx/FCSConstrained), fraction of tracks with a hit/vertex/cluster on each plane
+  <li>Data source: <code>StEvent::fwdTrackCollection()</code> by default, or <code>StMuDst::muFwdTrackCollection()</code> via <code>setUseMuDst(true)</code> for standalone MuDst analysis &mdash; see <a href="../../debug/index.html#residual-mudst-source">debug/index.html Issue #27</a>
+  <li>Residual axis range: FST &plusmn;1&nbsp;cm, FTT &plusmn;2.5&nbsp;cm
+  <li><a href="../summary.html"><b>Outlier summary</b></a> &mdash; auto-generated (<code>script/summarizeFwdResidual.C</code>): usage/offset table, plus translation/rotation/length-scale misalignment-mode tests. Covers both subpages below.
+</ul>
+
+<hr>
+<H3>To do</H3>
+<ul>
+  <li>Generate a properly-sized fresh pythia sample (the current one silently under-filled due to a small fixed <code>run1.fzd</code>)
+  <li>Add Primary/FwdVtx/FCSConstrained track types as additional sections
+  <li>Publish single-particle field-on/off MC (<code>DataDisk/particle/ele.pt1.5.vz0[.magoff]</code>)
+</ul>
+
+<hr>
+<H3>Result sets</H3>
+<p>Each subpage uses the same plot layout (plane usage, FST residual per disk, FTT &Delta;y/&Delta;x residual per plane), broken out by track type. To add a new dataset: run <code>plotFwdResidual.C("your.FwdDetResidual.root","residual/&lt;name&gt;")</code>, copy an existing subpage's index.html as a template, and link it here.</p>
+<table border=1>
+  <tr><th>Subpage</th><th>Sample</th><th>Track types shown</th><th>Notes</th></tr>
+  <tr>
+    <td><a href="../pythia/index.html">pythia</a></td>
+    <td>Pythia J/Psi MC, run 23081015-style config</td>
+    <td>Global (301), BLC (255), BLCVtx (309) tracks</td>
+    <td>Under-filled sample &mdash; see To do</td>
+  </tr>
+  <tr>
+    <td><a href="../data/index.html">data</a></td>
+    <td>Real data (afterburner refit), run 23081015, 1500 events</td>
+    <td>Global (15941), BLC (15940), BLCVtx (15940) tracks</td>
+    <td>FST usage 100% for all three types</td>
+  </tr>
+</table>
+
+<HR>OGAWA, Akio
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

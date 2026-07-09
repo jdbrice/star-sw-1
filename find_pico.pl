@@ -1,0 +1,1 @@
+script/find_pico.pl

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/star/nfs4/AFS/star/opt/star/sl73_x8664_gcc485/bin/perl -w
 
 #
 # Written J.Lauret sometime in January 2002

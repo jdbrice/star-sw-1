@@ -1,0 +1,88 @@
+#!/bin/csh
+# Unified pico analysis wrapper for particle gun, Pythia, and real data.
+# Called by submit_ana.pl condor jobs inside the singularity container.
+#
+# Usage: runpico_uni TYPE RUN ISET OPTION WORKDIR OUTDIR
+#   TYPE    sample type or "data"
+#             contains "pythia" → Pythia MC
+#             "data"            → real data
+#             otherwise         → particle gun
+#   RUN     run number passed to readpico3.C
+#             particle/Pythia: 1  (uses picolist_pythia/{ISET}.list dispatch)
+#             data:            actual 8-digit run number
+#   ISET    list shard index (0-based)
+#   OPTION  analysis option (11 = picoMatch + picoDilepton)
+#   WORKDIR full path to macro working directory
+#   OUTDIR  full path to histogram output directory
+
+set type=$1
+set run=$2
+set iset=$3
+set option=$4
+set workdir=$5
+set outdir=$6
+
+echo "runpico_uni: type=$type run=$run iset=$iset option=$option"
+echo "runpico_uni: workdir=$workdir"
+echo "runpico_uni: outdir=$outdir"
+
+# === Set up scratch working directory ===
+set tmpdir=${SCRATCH}/ana.${type}.${run}.${iset}
+mkdir -p $tmpdir
+cd $tmpdir
+
+# === Copy analysis macros ===
+foreach f (pico3.C readpico3.C picoMatch.C picoDilepton.C)
+    /bin/cp $workdir/$f .
+end
+
+# === Symlink local build so ROOT loads BBB-patched libraries (e.g. StPicoEvent pack5and3) ===
+ln -s $workdir/.$STAR_HOST_SYS .
+ln -s $workdir/StRoot .
+
+# === Set up list file access ===
+# readpico3.C dispatches:
+#   run < 10^7  → picolist_pythia/{iset}.list  (particle / Pythia)
+#   run ≥ 10^7  → picolist/{run}.{iset}.lis    (data)
+if ( $type == "data" ) then
+    # Symlink the whole picolist/ directory (contains {run}.{iset}.lis files)
+    if ( ! -e picolist ) ln -sf $workdir/picolist
+else
+    # Build picolist_pythia/{iset}.list pointing to picolist/{type}.{iset}.list
+    mkdir -p picolist_pythia
+    set src=$workdir/picolist/${type}.${iset}.list
+    if ( -e $src ) then
+        ln -sf $src picolist_pythia/${iset}.list
+    else
+        echo "ERROR: list file not found: $src"
+        exit 1
+    endif
+endif
+
+mkdir -p hist_match hist_dilep
+pwd; ls -la
+
+# === Run analysis ===
+root -b -q "pico3.C(0,$option,$run,$iset)"
+set root_status=$status
+echo "runpico_uni: root exit status=$root_status"
+
+# === Move outputs to destination ===
+set match_src=hist_match/${run}.${iset}.match.root
+set dilep_src=hist_dilep/${run}.${iset}.dilep.root
+
+mkdir -p $outdir/hist_match $outdir/hist_dilep
+
+if ( -e $match_src ) then
+    /bin/mv $match_src $outdir/hist_match/
+else
+    echo "WARNING: $match_src not found"; ls hist_match/
+endif
+
+if ( -e $dilep_src ) then
+    /bin/mv $dilep_src $outdir/hist_dilep/
+else
+    echo "WARNING: $dilep_src not found"; ls hist_dilep/
+endif
+
+echo "runpico_uni: done"

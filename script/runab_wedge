@@ -1,0 +1,54 @@
+#!/bin/csh
+# Per-file condor job: MuDst -> FwdAlignment_BLCVtx.root ntuple, WITH the
+# per-wedge FST phi correction applied (FstWedgeAligner -- see
+# StRoot/StFwdTrackMaker/StFwdHitLoader.h/.cxx and bugreport_StFstHitMaker.txt).
+# One-off validation-campaign counterpart to script/runab (which never
+# applies the wedge correction): used to reprocess the remaining files of the
+# same 15-file run-23081015 subset already used for the sequential
+# before/after check (run_corrected2.sh), via condor instead of one file at a
+# time on a single interactive machine.
+# Usage: runab_wedge INPUTDIR BASE OUTDIR
+
+set nonomatch
+
+set inputdir=$1
+set base=$2
+set outdir=$3
+set dir=$cwd
+
+echo dir=$dir
+
+set mudst = $base
+set alignBase = $mudst:s/.MuDst.root/.FwdAlignment_/
+
+cd $SCRATCH
+
+/bin/cp $dir/fwd_afterburner_db.C .
+/bin/cp $dir/fGeom.root .
+ln -s $dir/.$STAR_HOST_SYS
+ln -s $dir/StRoot
+
+echo copying $inputdir/$base
+/bin/cp $inputdir/$base ./
+
+pwd
+ls -la
+
+# enableAlignment=true, applyFstWedgeAlignment=true
+root4star -l -b -q fwd_afterburner_db.C'("'$base'",10000000,0,0,"",true,true)' >& /dev/null
+
+pwd
+ls -la
+
+set nalign=0
+foreach f (${alignBase}*.root)
+    if ( -e $f ) then
+        mkdir -p $outdir
+        echo /bin/mv $f $outdir/
+        /bin/mv $f $outdir/
+        @ nalign++
+    endif
+end
+if ( $nalign == 0 ) echo "WARNING: no ${alignBase}*.root files found -- copy-back got nothing"
+
+/bin/rm $base

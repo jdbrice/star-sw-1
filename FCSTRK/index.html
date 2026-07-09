@@ -1,0 +1,364 @@
+<HTML>
+<HEAD>
+  <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+  <TITLE>Fwd ECAL Cluster in Tracking (FCSTRK)</TITLE>
+  <!-- Changed by: Akio Ogawa, 2026-06-25 (initial), 2026-06-26 (gamma gun sigma_pos; z-correction), 2026-06-27 (FCSTRK implemented; momentum resolution measured), 2026-06-27 (revised: looper fix; B-field sign fix; shower secondary filter; double-Gaussian fit; efficiency, charge misID, per-event multiplicity), 2026-06-29 (dynamic matching window from Genfit covariance; add Global/BLC to resolution and misID plots; phi-cut row in momentum efficiency plot; two-step extrapolation fallback + diagnostic counters; efficiency plateau identified as physics limit) -->
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<td align=right><font size="-1">
+  <script language="JavaScript">document.write("Last modified "+ document.lastModified)</script>
+</font></td>
+
+<H1>Forward ECAL Cluster in Tracking (FCSTRK, TrkType=5)</H1>
+<HR>
+
+<ul>
+  <a name="20260625">
+
+  <li><b>Goal:</b> Add FCS ECAL clusters to the Genfit forward track refit to improve
+      momentum resolution for J/&psi;&rarr;e<sup>+</sup>e<sup>-</sup> and Drell-Yan electrons.
+      FTT covers z=281&ndash;349 cm; ECAL is at z=710 cm. The extra 361 cm lever arm
+      improves the exit-angle (slope) measurement and thus momentum resolution.
+
+  <li><b>Key question:</b> What &sigma;<sub>pos</sub> to use in the Genfit PlanarMeasurement
+      covariance for the ECAL cluster hit?
+      Theory (Shashlyk Pb/scintillator, PHENIX PbSc): &sigma;<sub>pos</sub> &asymp; 0.5/&radic;E + 0.2 cm
+      &rarr; <b>0.35 cm at E=15 GeV</b>. But is this achieved in STAR FCS simulation?
+
+  <li><b>Code:</b> /star/u/akio/fcstrk11/star-sw-fwd (branch: dev)
+
+  <li><b>Momentum resolution gain (Fisher information estimate)</b>
+    <ul>
+      <li>4 FTT planes at z=281,304,327,349 cm, &sigma;<sub>FTT</sub>=1 mm/hit, centroid at z=315 cm:
+          I<sub>slope,FTT</sub> = 261,096 cm<sup>&minus;2</sup> &rArr; &sigma;(slope)<sub>FTT</sub> = 1.96 mrad
+      <li>Adding one ECAL cluster at z=710 cm (lever arm &Delta;z=395 cm from FTT centroid):
+          I<sub>slope,ECAL</sub> = (&Delta;z)<sup>2</sup>/&sigma;<sub>pos</sub><sup>2</sup>
+        <ul>
+          <li>&sigma;<sub>pos</sub>=0.35 cm (PHENIX PbSc formula, same 5.54 cm cells, E=15 GeV):
+              I<sub>ECAL</sub>=1,270,000 &rarr; <b>&sim;58% improvement in slope/momentum</b>
+          <li>&sigma;<sub>pos</sub>=1.2 cm (<b>measured in STAR FCS MC</b>, with centroid weighting, E=15 GeV):
+              I<sub>ECAL</sub>=108,000 &rarr; <b>&sim;19% improvement</b>
+          <li>&sigma;<sub>pos</sub>=1.6 cm (no centroid weighting, cell center only): I<sub>ECAL</sub>=61,000 &rarr; <b>&sim;11%</b>
+          <li>&sigma;<sub>pos</sub>=3 cm (uncorrected truth, z-mismatch systematic): I<sub>ECAL</sub>=17,200 &rarr; <b>&sim;3%</b>
+        </ul>
+      <li><b>Centroid weighting is implemented in StFcsClusterMaker and working.</b>
+          Flat-E &gamma; gun measures &sigma;<sub>pos</sub>&asymp;0.9&ndash;1.4 cm (decreasing with E)
+          after correcting for truth-z vs cluster-z mismatch (z=710 vs z<sub>showermax</sub>&asymp;725 cm).
+          This is larger than the PHENIX formula but the PHENIX formula may not apply at this cell size; actual STAR FCS resolution needs validation with data.
+    </ul>
+
+</ul>
+<HR>
+<ul>
+  <li><b>What the cluster-track residual measures</b>
+    <ul>
+      <li>&sigma;<sub>res</sub><sup>2</sup> = &sigma;<sub>pos</sub><sup>2</sup> + &sigma;<sub>trk_proj</sub><sup>2</sup>.
+          Primary tracks (constrained to v<sub>z</sub>=0, trkType=2) are extrapolated by Genfit
+          from z&asymp;349 cm (last FTT plane) to z=710 cm (361 cm further), crossing the solenoid
+          return-yoke fringe field &mdash; complex, non-uniform B-field.
+      <li>The measured residual &sigma;<sub>res</sub>=2&ndash;5 cm is dominated by &sigma;<sub>trk_proj</sub>.
+          Evidence: a simple helix in uniform B<sub>z</sub>=0.5 T gives 8.9 cm RMS (worse than
+          Genfit Primary 4.6 cm RMS), confirming that the real field is too complex for analytic propagation.
+      <li><b>The 2&ndash;5 cm is the <i>matching window</i> to find the right cluster;
+          the Genfit covariance must use &sigma;<sub>pos</sub>&asymp;0.35 cm.</b>
+    </ul>
+
+  <li><b>Track-based residual results</b> (single-electron MC, flat E=1&ndash;40 GeV, &eta;&isin;[2.5,4.0])
+    <ul>
+      <li>Generation: <tt>runSimFlat.C(1000,1,"ele",40)</tt> &rarr; BFC &rarr; <tt>pico3.C(0,1,0,0,2)</tt> &rarr; <tt>plotMatch.C(".",0,0)</tt>
+      <li>
+	<table border=1>
+	  <tr><td>E [GeV]</td><td>N</td><td>&sigma;(dx) [cm]</td><td>&sigma;(dy) [cm]</td><td>&sigma;<sub>pos</sub> theory</td></tr>
+	  <tr><td>5&ndash;10</td><td>72</td><td>1.58</td><td>1.12</td><td>0.36 cm</td></tr>
+	  <tr><td>10&ndash;15</td><td>74</td><td>0.98</td><td>1.05</td><td>0.35 cm</td></tr>
+	  <tr><td>15&ndash;20</td><td>66</td><td>1.09</td><td>1.19</td><td>0.32 cm</td></tr>
+	  <tr><td>20&ndash;25</td><td>74</td><td>1.26</td><td>1.22</td><td>0.31 cm</td></tr>
+	  <tr><td>25&ndash;30</td><td>81</td><td>1.26</td><td>1.08</td><td>0.29 cm</td></tr>
+	  <tr><td>30&ndash;35</td><td>74</td><td>0.93</td><td>1.06</td><td>0.29 cm</td></tr>
+	  <tr><td>35&ndash;40</td><td>68</td><td>0.93</td><td>1.30</td><td>0.28 cm</td></tr>
+	</table>
+      <li>&sigma;<sub>res</sub> &asymp; 1.1&ndash;2.0 cm across all energy bins &mdash; significantly smaller
+          than the old fixed-p<sub>T</sub>=1.5 GeV result (2&ndash;10 cm) because flat-E electrons
+          are predominantly at higher energies where the track is straighter and the
+          Genfit extrapolation to z=710 cm is more precise.
+      <li>
+	<table border=0 cellspacing=4>
+	  <tr>
+	    <td><a href="fcsTrkFcsResolution.png"><img src="fcsTrkFcsResolution.png" height=350></a></td>
+	    <td><a href="fcsTrkFcsResolutionSlices.png"><img src="fcsTrkFcsResolutionSlices.png" height=350></a></td>
+	  </tr>
+	  <tr>
+	    <td align=center><i>&sigma;(dx), &sigma;(dy) vs E</i></td>
+	    <td align=center><i>dx, dy distributions per energy bin (blue/red=fitted; orange=outside fit range)</i></td>
+	  </tr>
+	</table>
+    </ul>
+
+</ul>
+<HR>
+<ul>
+  <li><b>Gamma gun study &mdash; direct &sigma;<sub>pos</sub> measurement</b>
+    <ul>
+      <li>Photons travel in exact straight lines. x<sub>MC</sub> = (p<sub>x</sub>/p<sub>z</sub>)&times;z<sub>FCS</sub>
+          gives the exact truth impact point. dx = fcsX&minus;x<sub>MC</sub> = pure &sigma;<sub>pos</sub>, no B-field approximation.
+      <li>Generation: <tt>runSimFlat.C(1000,1,"gamma",40)</tt> &rarr; BFC &rarr; <tt>pico3.C(0,1,2,0,2)</tt> &rarr; <tt>plotMatch.C(".",2,0)</tt>
+      <li>Flat E=1&ndash;40 GeV, &eta;&isin;[2.5,4.0]: breaks the fixed-p<sub>T</sub> E&ndash;&eta; correlation,
+          sampling all (x,y) positions uniformly across the FCS ECAL face.
+      <li>Photon id: <tt>mc->geantId()==1</tt>. Best-match cluster per &gamma; (min dr &lt; 25 cm).
+      <li>Truth position corrected to shower-max depth: x<sub>MC</sub>(z<sub>showermax</sub>) = (p<sub>x</sub>/p<sub>z</sub>)&times;z<sub>showermax</sub>
+          where z<sub>showermax</sub>&asymp;725 cm (z=710.16 cm front face + 15 cm shower max in ECAL).
+          Without this correction, slope &times; 15 cm extra depth added ~1 cm systematic spread.
+      <li>
+	<table border=1>
+	  <tr><td>E [GeV]</td><td>N</td><td>&sigma;(dx) [cm]</td><td>&sigma;(dy) [cm]</td><td>theory [cm]</td></tr>
+	  <tr><td>0&ndash;5</td><td>87</td><td>1.41</td><td>1.64</td><td>0.42</td></tr>
+	  <tr><td>5&ndash;10</td><td>94</td><td>1.39</td><td>1.25</td><td>0.36</td></tr>
+	  <tr><td>10&ndash;15</td><td>114</td><td>1.13</td><td>1.24</td><td>0.35</td></tr>
+	  <tr><td>15&ndash;20</td><td>79</td><td>1.32</td><td>1.26</td><td>0.32</td></tr>
+	  <tr><td>20&ndash;25</td><td>101</td><td>1.37</td><td>1.37</td><td>0.31</td></tr>
+	  <tr><td>25&ndash;30</td><td>100</td><td>1.24</td><td>1.20</td><td>0.29</td></tr>
+	  <tr><td>30&ndash;35</td><td>94</td><td>1.08</td><td>1.18</td><td>0.29</td></tr>
+	  <tr><td>35&ndash;40</td><td>68</td><td>0.86</td><td>1.26</td><td>0.28</td></tr>
+	</table>
+      <li><b>&sigma;<sub>pos</sub> &asymp; 0.9&ndash;1.4 cm measured, vs 0.3 cm PHENIX theory.</b>
+          Logarithmic shower centroid weighting IS implemented in StFcsClusterMaker
+          (w = log(e + 0.9), threshold 0.1 GeV). Improving with E indicates it is active.
+          Remaining gap vs theory: FCS 5.57 cm cells vs PHENIX Pb/Sc cells; MC shower profiles;
+          weighting parameters not yet optimized for STAR FCS geometry.
+      <li><b>Conclusion: centroid weighting works; &sigma;<sub>pos</sub>&asymp;1.2 cm at 15 GeV
+          &rarr; &sim;19% improvement in slope resolution from adding ECAL cluster to Genfit refit.</b>
+      <li>
+	<table border=0 cellspacing=4>
+	  <tr>
+	    <td><a href="fcsTrkGamResolution.png"><img src="fcsTrkGamResolution.png" height=350></a></td>
+	    <td><a href="fcsTrkGamResolutionSlices.png"><img src="fcsTrkGamResolutionSlices.png" height=350></a></td>
+	  </tr>
+	  <tr>
+	    <td align=center><i>&sigma;(dx), &sigma;(dy) vs E (&gamma; gun)</i></td>
+	    <td align=center><i>dx, dy distributions per energy bin (blue/red=good fit; red/orange=at &sigma; limit)</i></td>
+	  </tr>
+	</table>
+    </ul>
+
+</ul>
+<HR>
+<ul>
+  <li><b>FCSTRK Implementation (TrkType=5) &mdash; DONE (2026-06-27)</b>
+    <ul>
+      <li>Start from BLCVtx track (trkType=4); project to z<sub>showermax</sub>&asymp;725 cm.
+      <li>Find closest ECAL cluster within a <b>dynamic matching window</b> (2026-06-29):
+          window = 4&sigma; &times; &radic;(&sigma;<sub>u</sub><sup>2</sup> + &sigma;<sub>v</sub><sup>2</sup> + &sigma;<sub>cluster</sub><sup>2</sup>)
+          where &sigma;<sub>u</sub>, &sigma;<sub>v</sub> are the position uncertainties on the FCS plane
+          extracted from the Genfit propagated covariance matrix after <tt>projectToPlane()</tt>
+          (state vector indices 3,4 in the (q/p, u&prime;, v&prime;, u, v) parametrization),
+          and &sigma;<sub>cluster</sub>=1.2 cm.
+          Clamped to [5, 50] cm.
+          Low-p<sub>T</sub> tracks bent further in the fringe field get a wider window;
+          high-p<sub>T</sub> tracks stay near 5&ndash;10 cm.
+          No E/p cut (currently).
+      <li>Add matched cluster as Genfit <tt>SpacepointMeasurement</tt> (kTpcId)
+          with &sigma;<sub>pos</sub>=1.2 cm (measured in STAR FCS MC, see above).
+      <li>Refit &rarr; mTrackType = kFCSTRKstrained = 5.
+      <li>New enum: <tt>StFwdTrack::kFCSTRKstrained=5</tt>; predicate <tt>isFCSTRKstrainedTrack()</tt>.
+      <li>Implementation: <tt>doFCSTRKstrainedFitting()</tt> in <a href="FwdTracker.h">FwdTracker.h</a>;
+          cluster loading block in <a href="StFwdTrackMaker.cxx">StFwdTrackMaker.cxx</a>;
+          enum in <a href="StFwdTrack.h">StFwdTrack.h</a>.
+    </ul>
+
+  <li><b>Results (2026-06-27, updated 2026-06-29, final)</b> (sample: flat electron, E=1&ndash;40 GeV, &eta;&isin;[2.5,4.0], &phi;=2&pi;)
+    <ul>
+      <li><b>Bug fixes:</b>
+        <ul>
+          <li><b>Looper track skip (FwdTracker.h):</b> Low-p<sub>T</sub> tracks looping
+              in the 0.5 T field caused <tt>projectToPlane()</tt> to z=725 cm to throw a
+              <tt>genfit::Exception</tt>. Fixed with <tt>try/catch</tt>: looper tracks are
+              now cleanly skipped (no FCSTRK track produced).
+          <li><b>Shower secondary filter (picoMatch.C):</b> MC electron loop included EM shower
+              secondaries. Added |p|&gt;1 GeV/c cut on the MC 3-momentum magnitude
+              (<tt>mc-&gt;p().Mag()</tt>). Gun electrons have E&ge;1 GeV &rArr; |p|&asymp;E&ge;1 GeV/c
+              (ultra-relativistic); shower secondaries have |p|&ll;1 GeV/c.
+        </ul>
+
+      <li><b>FCSTRK conditional efficiency (BLCVtx &rarr; FCSTRK conversion)</b>:
+          5883 / 10033 BLCVtx tracks = <b>58.6%</b> overall.
+          Diagnostic counters from BFC log (aggregated over 10 runs) identify the ~41% loss:
+	<table border=1>
+	  <tr><td><b>Loss category</b></td><td><b>Tracks</b></td><td><b>Fraction of BLCVtx</b></td><td><b>Recoverable?</b></td></tr>
+	  <tr><td>True loopers (fail at z=725 <i>and</i> z=500 cm)</td><td>1144</td><td>13.8%</td><td>No &mdash; physics limit</td></tr>
+	  <tr><td>No matching cluster at z=725 cm</td><td>1022</td><td>12.3%</td><td>Partially (NS gap, &eta;&asymp;4 hole, low-E threshold)</td></tr>
+	  <tr><td>Refit failed after cluster match</td><td>248</td><td>3.0%</td><td>Minor</td></tr>
+	  <tr><td>Fallback via z=500 cm + straight line</td><td>3</td><td>&asymp;0%</td><td>Negligible</td></tr>
+	</table>
+          <b>Conclusion:</b> the efficiency plateau is a physics limit.
+          True loopers (pT &lt; 0.3&ndash;0.5 GeV/c, radius &lt; ~3 m in 0.5 T) cannot reach z=725 cm
+          and also fail at z=500 cm &mdash; the fallback straight-line approach yields essentially nothing.
+          The &ldquo;no cluster&rdquo; loss (12.3%) is dominated by NS gap (&phi;&asymp;&pm;&pi;/2),
+          &eta;&asymp;4 inner hole, and low-E showers below the cluster threshold.
+          No algorithmic improvement can recover the looper fraction.
+          (A helix-based denominator was tried first but is unreliable &mdash;
+          the complex fringe field between z=200 and z=710 cm makes simple helix propagation wrong.)
+
+      <li><b>Momentum resolution</b>
+          (double-Gaussian fit; per-event highest-|p<sub>T</sub>| track):
+	<table border=1>
+	  <tr>
+	    <td><b>Track type</b></td>
+	    <td><b>Entries</b></td>
+	    <td><b>&sigma;<sub>core</sub> [(GeV/c)<sup>&minus;1</sup>]</b></td>
+	    <td><b>&sigma;<sub>tail</sub> [(GeV/c)<sup>&minus;1</sup>]</b></td>
+	  </tr>
+	  <tr><td>Global (trkType=0)</td><td>4751</td><td>0.025</td><td>1.220</td></tr>
+	  <tr><td>BLC (trkType=1)</td><td>8526</td><td>0.342</td><td>1.427</td></tr>
+	  <tr><td>BLCVtx (trkType=4)</td><td>9158</td><td>0.216</td><td>0.977</td></tr>
+	  <tr><td><b>FCSTRK (trkType=5)</b></td><td><b>5746</b></td><td><b>0.219</b></td><td><b>0.888</b></td></tr>
+	</table>
+        Previously reported 17.9% improvement was an artifact of single-Gaussian fits
+        to all tracks mixed (no per-event selection, shower secondary contamination).
+        With corrected analysis: &sigma;<sub>core</sub> is essentially unchanged between BLCVtx and FCSTRK;
+        the main gains from FCSTRK are the reduced &sigma;<sub>tail</sub> (0.888 vs 0.977) and lower charge misID.
+        Global has a narrow core (&sigma;<sub>core</sub>=0.025) because all event types are included
+        (predominantly high-p<sub>T</sub> electrons) but a very wide tail from poorly measured tracks.
+
+      <li><b>Charge misidentification</b>
+          (q/p<sub>T</sub>&gt;0 for e<sup>&minus;</sup>; per-event highest-|p<sub>T</sub>| track):
+	<table border=1>
+	  <tr>
+	    <td><b>Track type</b></td>
+	    <td><b>Wrong-sign count</b></td>
+	    <td><b>Total tracks</b></td>
+	    <td><b>Charge misID rate</b></td>
+	  </tr>
+	  <tr><td>Global (trkType=0)</td><td>1354</td><td>4751</td><td>28.5%</td></tr>
+	  <tr><td>BLC (trkType=1)</td><td>1853</td><td>8526</td><td>21.7%</td></tr>
+	  <tr><td>BLCVtx (trkType=4)</td><td>1189</td><td>9158</td><td>13.0%</td></tr>
+	  <tr><td><b>FCSTRK (trkType=5)</b></td><td><b>462</b></td><td><b>5746</b></td><td><b>8.0%</b></td></tr>
+	</table>
+        Each step of tracking refinement roughly halves the charge misID rate.
+        FCSTRK reduces it by &asymp;38% relative vs BLCVtx (13.0%&rarr;8.0%);
+        the BLCVtx vertex constraint already cuts it vs BLC (21.7%&rarr;13.0%).
+
+      <li><b>Per-event track multiplicity</b> (10,000 total events):
+	<table border=1>
+	  <tr>
+	    <td><b>Track type</b></td>
+	    <td><b>Events with 0 tracks</b></td>
+	    <td><b>Events with &ge;2 tracks</b></td>
+	  </tr>
+	  <tr><td>BLCVtx (trkType=4)</td><td>8.4%</td><td>5.7%</td></tr>
+	  <tr><td><b>FCSTRK (trkType=5)</b></td><td><b>42.5%</b></td><td><b>1.4%</b></td></tr>
+	</table>
+        FCSTRK zero-track rate (42.8%) = 8.4% from no BLCVtx + 34.4% from BLCVtx with no FCSTRK match.
+        Loss breakdown: 13.8% true loopers (physics limit), 12.3% no cluster (NS gap + threshold), 3% refit failure.
+
+      <li>
+	<table border=0 cellspacing=4>
+	  <tr>
+	    <td><a href="fcsTrkCondEff1D.png"><img src="fcsTrkCondEff1D.png" height=300></a></td>
+	    <td><a href="fcsTrkCondEff2D.png"><img src="fcsTrkCondEff2D.png" height=300></a></td>
+	  </tr>
+	  <tr>
+	    <td align=center><i>Conditional efficiency (FCSTRK/BLCVtx) vs &eta; and &phi;</i></td>
+	    <td align=center><i>2D conditional efficiency vs (&eta;,&phi;)</i></td>
+	  </tr>
+	  <tr>
+	    <td><a href="fcsTrkCondEffMom.png"><img src="fcsTrkCondEffMom.png" height=300></a></td>
+	  </tr>
+	  <tr>
+	    <td align=center><i>Conditional efficiency vs |p| and p<sub>T</sub>: top = all &phi;, bottom = |&phi;|&lt;0.9 or |&phi;|&gt;2.5 (away from NS gap)</i></td>
+	  </tr>
+	  <tr>
+	    <td><a href="fcsTrkMomResolution.png"><img src="fcsTrkMomResolution.png" height=300></a></td>
+	    <td><a href="fcsTrkMomSignQ.png"><img src="fcsTrkMomSignQ.png" height=300></a></td>
+	  </tr>
+	  <tr>
+	    <td align=center><i>q/p<sub>T</sub> residual: double-Gaussian fit, per-event highest |p<sub>T</sub>|</i></td>
+	    <td align=center><i>q/p<sub>T</sub> distribution: charge misID</i></td>
+	  </tr>
+	  <tr>
+	    <td><a href="fcsTrkMomPerEvt.png"><img src="fcsTrkMomPerEvt.png" height=300></a></td>
+	  </tr>
+	  <tr>
+	    <td align=center><i>N tracks per event: BLCVtx (left) vs FCSTRK (right); FCSTRK 42.8% zero-track events</i></td>
+	  </tr>
+	</table>
+    </ul>
+
+</ul>
+<HR>
+<ul>
+  <li><b>Source files changed</b>
+    <ul>
+      <li><b>FCSTRK implementation (2026-06-27):</b>
+        <ul>
+          <li><a href="StFwdTrack.h">StRoot/StEvent/StFwdTrack.h</a> &mdash;
+              added <tt>kFCSTRKstrained=5</tt> to <tt>StFwdTrackType</tt> enum;
+              added <tt>isFCSTRKstrainedTrack()</tt> predicate.
+          <li><a href="FwdTracker.h">StRoot/StFwdTrackMaker/include/Tracker/FwdTracker.h</a> &mdash;
+              added <tt>FcsCluster</tt> struct, <tt>mFcsClusters</tt> member, <tt>setFcsClusters()</tt>;
+              added <tt>doFCSTRKstrainedFitting()</tt> (projects BLCVtx tracks to z<sub>showermax</sub>&asymp;725 cm,
+              matches nearest ECAL cluster, refits with Genfit SpacepointMeasurement, &sigma;<sub>pos</sub>=1.2 cm);
+              step 3.6 in <tt>doTrackFitting()</tt> calls it after BLCVtx fitting.
+              <b>Bug fix (revised 2026-06-27):</b> added <tt>try/catch(genfit::Exception)</tt>
+              around <tt>projectToPlane()</tt> call to skip looper tracks cleanly.
+              <b>Dynamic matching window (revised 2026-06-29):</b> replaced fixed 25 cm window with
+              per-track window from Genfit propagated covariance:
+              window = 4 &times; &radic;(cov(3,3) + cov(4,4) + 1.44) cm, clamped to [5, 50] cm.
+              Improved overall efficiency from 57.2% to ~58.6%.
+              <b>Two-step fallback + diagnostics (revised 2026-06-29):</b> added fallback extrapolation
+              to z=500 cm then straight-line to z=725 cm for tracks that fail the full projection.
+              Added per-event diagnostic counters (looper / fallback / no_cluster).
+              Result: fallback recovered only 3 tracks total &mdash; loopers that fail at z=725 cm
+              also fail at z=500 cm; the efficiency plateau is a physics limit, not an algorithmic one.
+          <li><a href="StFwdTrackMaker.cxx">StRoot/StFwdTrackMaker/StFwdTrackMaker.cxx</a> &mdash;
+              added FCS cluster extraction block before <tt>doTrackFitting()</tt>:
+              reads <tt>StFcsCollection</tt>, converts clusters to <tt>FcsCluster</tt> structs
+              via <tt>StFcsDb::getStarXYZfromColumnRow()</tt>, passes to tracker.
+          <li><a href="picoMatch.C">script/picoMatch.C</a> &mdash;
+              extended to trkType=5 (FCSTRK): <tt>mNType</tt> 5&rarr;6, added &ldquo;FCSTRK&rdquo; to <tt>TTYPE[]</tt>;
+              added AAA FCS per-track printout; extended EVSUM to show BLCVtx and FCSTRK counts.
+              <b>Revised 2026-06-27:</b> added p&gt;1 GeV cut to exclude shower secondaries;
+              added per-event highest-|p<sub>T</sub>| track selection histograms
+              (<tt>hNTrkPerEvt</tt>, <tt>hQPtSel</tt>, <tt>hDqPtSel</tt>);
+              added FCS efficiency histograms (<tt>hFCSEffDen</tt>, <tt>hFCSEffNum</tt>, <tt>hBLCVtxEffNum</tt>).
+              <b>Revised 2026-06-29:</b> added <tt>hTrkP_noNSgap</tt> and <tt>hTrkPt_noNSgap</tt>
+              histograms filled with |&phi;|&lt;0.9 or |&phi;|&gt;2.5 cut to isolate efficiency
+              loss away from the NS gap.
+        </ul>
+      <li><b>New macro (2026-06-27 revised):</b>
+        <ul>
+          <li><a href="plot_fcstrk_mom.C">script/plot_fcstrk_mom.C</a> &mdash;
+              standalone QA macro; reads <tt>hist_match/all.match.root</tt>;
+              produces <tt>fcsTrkMomPerEvt.png</tt> (track multiplicity per event),
+              <tt>fcsTrkMomResolution.png</tt> (double-Gaussian q/p<sub>T</sub> residual),
+              <tt>fcsTrkMomSignQ.png</tt> (charge misID).
+              Usage: <tt>root4star -b -q 'plot_fcstrk_mom.C("hist_match/all.match.root")'</tt>
+          <li><a href="plot_fcstrk_cond_eff.C">script/plot_fcstrk_cond_eff.C</a> &mdash;
+              conditional efficiency (FCSTRK/BLCVtx) vs &eta;, &phi;, |p|, p<sub>T</sub>, and 2D (&eta;,&phi;).
+              Momentum efficiency plot is 2&times;2: top row = all &phi;,
+              bottom row = |&phi;|&lt;0.9 or |&phi;|&gt;2.5 (away from NS gap)
+              to show intrinsic momentum-dependent loss without geometric effects.
+              Usage: <tt>root4star -b -q 'plot_fcstrk_cond_eff.C("hist_match/all.match.root")'</tt>
+        </ul>
+
+      <li><b>Track-cluster residual studies (2026-06-25/26):</b>
+        <ul>
+          <li><a href="../script/picoMatch.C">script/picoMatch.C</a> &mdash;
+              added FcsEdxVsE/FcsEdyVsE (Primary track residual vs E);
+              FcsMcDxVsE/FcsMcDyVsE (MC truth uniform-Bz helix vs cluster);
+              FcsGamDxVsE/FcsGamDyVsE (&gamma; gun truth straight-line vs cluster, geantId==1);
+              z-correction: truth extrapolated to actual shower-max z (xyz.z()&asymp;725 cm) not front-face z=710 cm.
+          <li><a href="../script/plotMatch.C">script/plotMatch.C</a> &mdash;
+              three &sigma;(dx,dy) vs E sections; robust Gaussian fit (peak-finding, &sigma;-bounded);
+              A/&radic;E+B fits with theory overlay.
+          <li><a href="../script/readpico3.C">script/readpico3.C</a> &mdash; run=2 &rarr; picolist_gamma.lis.
+          <li><a href="../picolist_gamma.lis">picolist_gamma.lis</a> &mdash; &gamma; gun picoDst file list.
+        </ul>
+    </ul>
+
+</ul>
+
+<HR>OGAWA, Akio
+<ADDRESS><A HREF="mailto:akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+</BODY>
+</HTML>

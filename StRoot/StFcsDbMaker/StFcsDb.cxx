@@ -396,8 +396,8 @@ int StFcsDb::InitRun(int runNumber) {
     }    
 
     // Get beamline 
-    //TDataSet* dbDataSet = StMaker::GetChain()->GetDataBase("Calibrations/rhic/vertexSeed");
-    TDataSet* dbDataSet = 0;
+    TDataSet* dbDataSet = StMaker::GetChain()->GetDataBase("Calibrations/rhic/vertexSeed");
+    //TDataSet* dbDataSet = 0;
     if(dbDataSet){
       vertexSeed_st* vSeed = ((St_vertexSeed*) (dbDataSet->FindObject("vertexSeed")))->GetTable();
       if(vSeed){

@@ -24,6 +24,24 @@ void build_geom( TString geomtag = "y2023", TString output="fGeom.root" ) {
         cout << "Building geometry for tag [" << geomtag.Data() << "]" << endl;
         StarGeometry::Construct( geomtag.Data() );
 
+        // Replace FCS ECAL (WcalGeo1_*) and FCS HCAL (HcalGeo1_*) materials with air
+        // so that Genfit can extrapolate to z=725 cm without hitting calorimeter material.
+        // Field is already zero at |z|>450 cm (STARField.h), so zero-material + zero-field
+        // means straight-line propagation, which Genfit handles trivially.
+        TGeoMaterial *airMat = new TGeoMaterial("AIR_FCS", 14.61, 7.3, 1.205e-3);
+        TGeoMedium   *airMed = new TGeoMedium("AIR_FCS", gGeoManager->GetListOfMedia()->GetEntries()+1, airMat);
+        TObjArray *vols = gGeoManager->GetListOfVolumes();
+        int nReplaced = 0;
+        for (int iv = 0; iv < vols->GetEntries(); iv++) {
+            TGeoVolume *v = (TGeoVolume*)vols->At(iv);
+            TString mname = v->GetMaterial()->GetName();
+            if (mname.BeginsWith("WcalGeo") || mname.BeginsWith("HcalGeo")) {
+                v->SetMedium(airMed);
+                nReplaced++;
+            }
+        }
+        cout << "Replaced " << nReplaced << " FCS calorimeter volumes with air for tracking geometry." << endl;
+
         // Genfit requires the geometry is cached in a ROOT file
         gGeoManager->Export( output.Data() );
         cout << "Writing output to geometry file [" << output.Data() << "]" << endl;

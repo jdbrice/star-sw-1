@@ -1,0 +1,392 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <TITLE>Fwd BLC Vertex</TITLE>
+<header>
+  <!-- Changed by: Akio Ogawa, 24-Jun-2026 -->
+  <!-- Changed by: Akio Ogawa, 29-Jun-2026: BLC vertex storage in StEvent / MuDst / PicoDst -->
+  <!-- Changed by: Akio Ogawa, 30-Jun-2026: Beamline from DB for BLC fitting -->
+</header>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+  <tr>
+    <td colspan=2 align=right> <font size="-1">
+            <script language="JavaScript">
+            <!-- Hide script from old browsers
+             document.write("Last modified "+ document.lastModified)
+             // end of script --></script></font></td>
+  </tr>
+
+<H1>Forward BLC-Derived Vertex (BLCVtx)</H1>
+<HR>
+
+<ul>
+  <a name="20260623">
+  <li>Code : /star/u/akio/fcstrk11/star-sw-fwd (branch: dev)
+  <li>Single-particle MC, e- at pT=1.5 GeV, eta in [2.5,4.0], vz=0
+
+  <li><b>Concept</b>
+    <ul>
+      <li>BLC (BeamlineConstrained) tracks are constrained to the beam <i>line</i> (sigma_z ~ 100 cm), so z is essentially free.
+      <li>When two or more BLC tracks come from the same vertex, their DCA-z values cluster near the true z. A weighted-mean fit of those DCA-z values gives a vertex <i>point</i> with sigma_z ~ a few cm.
+      <li>Each BLC track is then refitted with that vertex point as an additional hit &rarr; BLCVtx track. This is the forward analogue of TPC: Global &rarr; Beamline &rarr; Primary(vertex).
+      <li>Expected benefit: BLCVtx sigma(q/pT) should lie between BLC and Primary (MC truth vertex).
+    </ul>
+
+  <li><b>Algorithm (doBLCVertexFitting in FwdTracker.h)</b>
+    <ul>
+      <li>Select good BLC tracks: convergedFully, nFitPoints &ge; 4, chi2/NDF &lt; 10, |DCA-z| &lt; 100 cm
+      <li>Weighted mean z_vtx: w_i = nFitPoints; sigma_vtx = weighted RMS (floor 1 cm)
+      <li>Outlier rejection: remove |z_i - z_vtx| &gt; 3*sigma_vtx; iterate up to 3 times
+      <li>Build FwdHit at (x_BL, y_BL, z_vtx) with sigma_xy=0.1 cm, sigma_z=sigma_vtx
+      <li>For each BLC track: append hit, fitTrack, refitTrack &rarr; mTrackType = kBLCVertexConstrained (=4)
+      <li>Falls back to sigma_vtx = 30 cm for single-track events (no multi-track vertex)
+    </ul>
+
+  <li><b>Track type encoding change (StFwdTrack.h, StPicoFwdTrack.h)</b>
+    <ul>
+      <li>Old: pack6and2 &mdash; 6-bit vtxIndex, 2-bit trackType (max type=3, cannot hold 4)
+      <li>New: pack5and3 &mdash; 5-bit vtxIndex, 3-bit trackType (max type=7, holds kBLCVertexConstrained=4)
+      <li>kBLCVertexConstrained=4 added to StFwdTrackType and StPicoFwdTrackType enums
+    </ul>
+
+  <li><b>Results</b>
+    <ul>
+      <li>Track counts (after quality cuts in picoMatch.C) and sigma(q/pT) = RMS of (q/pT_reco - q/pT_true) in GeV<sup>-1</sup>;
+          z_vtx residual = (z_vtx^BLC - z_vtx^MC) where z_vtx^BLC is picoMatch's weighted-mean BLC DCA-z and z_vtx^MC is the MC truth vertex z.
+      <li>
+	<table border=1>
+	  <tr>
+	    <td rowspan=2>Set</td>
+	    <td rowspan=2>Ne/evt</td>
+	    <td colspan=2>Global</td>
+	    <td colspan=2>Beamline</td>
+	    <td colspan=2>Primary</td>
+	    <td colspan=2>BLCVtx</td>
+	    <td colspan=2>z_vtx^BLC - z_vtx^MC [cm]</td>
+	  </tr>
+	  <tr>
+	    <td>trk/evt</td><td>sigma(q/pT)</td>
+	    <td>trk/evt</td><td>sigma(q/pT)</td>
+	    <td>trk/evt</td><td>sigma(q/pT)</td>
+	    <td>trk/evt</td><td>sigma(q/pT)</td>
+	    <td>RMS</td><td>mean</td>
+	  </tr>
+	  <tr><td>set3</td><td>1</td>
+	    <td>0.42</td><td>1.031</td>
+	    <td>0.98</td><td>0.836</td>
+	    <td>1.01</td><td>0.573</td>
+	    <td>1.06</td><td>0.666</td>
+	    <td>12.33</td><td>-0.03</td>
+	  </tr>
+	  <tr><td>set6</td><td>2</td>
+	    <td>0.94</td><td>0.995</td>
+	    <td>1.87</td><td>0.827</td>
+	    <td>1.95</td><td>0.588</td>
+	    <td>2.02</td><td>0.653</td>
+	    <td>13.75</td><td>+1.19</td>
+	  </tr>
+	  <tr><td>set7</td><td>4</td>
+	    <td>1.83</td><td>0.995</td>
+	    <td>3.69</td><td>0.826</td>
+	    <td>3.86</td><td>0.631</td>
+	    <td>4.01</td><td>0.678</td>
+	    <td>14.74</td><td>+3.12</td>
+	  </tr>
+	  <tr><td>set8</td><td>8</td>
+	    <td>3.46</td><td>1.002</td>
+	    <td>7.22</td><td>0.850</td>
+	    <td>7.61</td><td>0.705</td>
+	    <td>7.92</td><td>0.733</td>
+	    <td>15.64</td><td>+6.06</td>
+	  </tr>
+	  <tr><td>J/&psi;</td><td>Pythia</td>
+	    <td>2.50</td><td>1.044</td>
+	    <td>5.36</td><td>0.912</td>
+	    <td>5.72</td><td>0.797</td>
+	    <td>6.08</td><td>0.834</td>
+	    <td>16.99</td><td>+7.58</td>
+	  </tr>
+	</table>
+      <li>sigma(q/pT): Global &gt; Beamline &gt; BLCVtx &gt; Primary for all single-particle MC sets (as expected).
+          BLCVtx lies between BLC and Primary, confirming the vertex z constraint helps.
+      <li>sigma(q/pT) values for J/&psi; Pythia are for all forward tracks in full Pythia events, not just J/&psi; daughters.
+          BLCVtx (6.08 trk/evt, &sigma;=0.834) lies between Beamline and Primary as expected.
+      <li><b>Known issue &mdash; sigma(q/pT) and Zres RMS do NOT decrease as more tracks are added (opposite of expectation):</b>
+        <ul>
+          <li>Expected: more BLC tracks &rarr; better vertex z determination &rarr; tighter BLCVtx constraint &rarr; smaller sigma(q/pT) and smaller Zres RMS.
+          <li>Observed: both sigma(q/pT)<sub>BLCVtx</sub> and Zres RMS increase monotonically with Ne/evt (0.666, 0.653, 0.678, 0.733 GeV<sup>-1</sup>; 12.3, 13.8, 14.7, 15.6 cm).
+          <li>Importantly, sigma(q/pT)<sub>Primary</sub> (which uses the MC truth vertex point &mdash; perfect vertex) <i>also</i> degrades (0.573, 0.588, 0.631, 0.705 GeV<sup>-1</sup>). This means the degradation is NOT specific to the BLC vertex quality but is a general tracking issue with higher track multiplicity &mdash; likely hit confusion or occupancy effects in the forward detectors.
+          <li>A positive mean bias in z_vtx grows with Ne/evt (+0.03, +1.19, +3.12, +6.06 cm). This is a secondary concern: even if the bias were corrected, the RMS would still increase.
+          <li>The sentinel (99,99,99) bias from failed genfit extrapolateToLine was fixed via DCA-XY &lt; 10 cm filter; the remaining degradation is a different, multiplicity-driven effect.
+        </ul>
+    </ul>
+
+  <li><b>BLCVtx vertex quality plots</b>
+    (5 panels: BLCVtx DCA-z after refit, fitted z_vtx, DCA-z pair difference, z_vtx residual vs MC truth, N BLC tracks/event)
+    <ul>
+      <li>
+	<table border=1>
+	  <tr>
+	    <td>set3 (1e/evt)</td>
+	    <td>set6 (2e/evt)</td>
+	    <td>set7 (4e/evt)</td>
+	    <td>set8 (8e/evt)</td>
+	    <td>J/&psi; Pythia</td>
+	  </tr>
+	  <tr>
+	    <td><a href="fcsTrkBLCVtx_set3.png"><img src="fcsTrkBLCVtx_set3.png" height=300></a></td>
+	    <td><a href="fcsTrkBLCVtx_set6.png"><img src="fcsTrkBLCVtx_set6.png" height=300></a></td>
+	    <td><a href="fcsTrkBLCVtx_set7.png"><img src="fcsTrkBLCVtx_set7.png" height=300></a></td>
+	    <td><a href="fcsTrkBLCVtx_set8.png"><img src="fcsTrkBLCVtx_set8.png" height=300></a></td>
+	    <td><a href="fcsTrkBLCVtx_JPsi.png"><img src="fcsTrkBLCVtx_JPsi.png" height=300></a></td>
+	  </tr>
+	</table>
+    </ul>
+
+  <li><b>Track quality plots</b>
+    (4 panels: q/pT, eta, phi, DCA-z; all track types overlaid)
+    <ul>
+      <li>
+	<table border=1>
+	  <tr>
+	    <td>set3 (1e/evt)</td>
+	    <td>set6 (2e/evt)</td>
+	    <td>set7 (4e/evt)</td>
+	    <td>set8 (8e/evt)</td>
+	    <td>J/&psi; Pythia</td>
+	  </tr>
+	  <tr>
+	    <td><a href="fcsTrkQuality_set3.png"><img src="fcsTrkQuality_set3.png" height=300></a></td>
+	    <td><a href="fcsTrkQuality_set6.png"><img src="fcsTrkQuality_set6.png" height=300></a></td>
+	    <td><a href="fcsTrkQuality_set7.png"><img src="fcsTrkQuality_set7.png" height=300></a></td>
+	    <td><a href="fcsTrkQuality_set8.png"><img src="fcsTrkQuality_set8.png" height=300></a></td>
+	    <td><a href="fcsTrkQuality_JPsi.png"><img src="fcsTrkQuality_JPsi.png" height=300></a></td>
+	  </tr>
+	</table>
+    </ul>
+
+  <li><b>q/pT resolution plots</b>
+    (q/pT_reco - q/pT_true; all track types overlaid; sigma annotated)
+    <ul>
+      <li>
+	<table border=1>
+	  <tr>
+	    <td>set3 (1e/evt)</td>
+	    <td>set6 (2e/evt)</td>
+	    <td>set7 (4e/evt)</td>
+	    <td>set8 (8e/evt)</td>
+	    <td>J/&psi; Pythia</td>
+	  </tr>
+	  <tr>
+	    <td><a href="fcsTrkResolution_set3.png"><img src="fcsTrkResolution_set3.png" height=300></a></td>
+	    <td><a href="fcsTrkResolution_set6.png"><img src="fcsTrkResolution_set6.png" height=300></a></td>
+	    <td><a href="fcsTrkResolution_set7.png"><img src="fcsTrkResolution_set7.png" height=300></a></td>
+	    <td><a href="fcsTrkResolution_set8.png"><img src="fcsTrkResolution_set8.png" height=300></a></td>
+	    <td><a href="fcsTrkResolution_JPsi.png"><img src="fcsTrkResolution_JPsi.png" height=300></a></td>
+	  </tr>
+	</table>
+    </ul>
+
+  <a name="20260629">
+  <li><b>BLC Vertex Storage in StEvent / MuDst / PicoDst (2026-06-29)</b>
+    <p>
+    Previously the BLC vertex z was computed inside <tt>doBLCVertexFitting()</tt> and used only for
+    refitting &mdash; it was discarded after the event.  These changes persist it as a proper vertex
+    object accessible from all three data formats.
+    </p>
+
+    <ul>
+      <li><b>Design decision &mdash; PicoDst storage</b>
+        <ul>
+          <li>There is exactly one BLC vertex per event (or none), so a TClonesArray would always hold 0 or 1 entries.
+          <li>The existing pattern for &ldquo;the one vertex&rdquo; in PicoDst is scalar fields in <tt>StPicoEvent</tt>
+              (e.g. <tt>mPrimaryVertexX/Y/Z</tt>), not a separate array.
+          <li>BLC vertex is stored the same way: five new inline fields in <tt>StPicoEvent</tt>,
+              keeping it cleanly separate from the TPC primary vertex and from the FwdVertex TClonesArray.
+          <li><tt>StPicoFwdVertex</tt> class is <b>not modified</b> (ClassDef stays at 1).
+        </ul>
+
+      <li><b>Layer 1 &mdash; StEvent: new flag bit</b>
+        <ul>
+          <li><a href="code/StEnumerations.h">StRoot/StEvent/StEnumerations.h</a> &mdash;
+              <tt>kBLCVtxId</tt> appended after <tt>kFwdVtxId</tt> in <tt>StVertexId</tt> enum
+          <li><a href="code/StVertex.h">StRoot/StEvent/StVertex.h</a> &mdash;
+              <tt>setBLCVertex()</tt> and <tt>isBLCVertex()</tt> added alongside <tt>setFwdVertex()</tt> / <tt>isFwdVtx()</tt>
+        </ul>
+
+      <li><b>Layer 2 &mdash; FwdTracker: expose BLC vertex per event</b>
+        <ul>
+          <li><a href="code/FwdTracker.h">StRoot/StFwdTrackMaker/include/Tracker/FwdTracker.h</a> &mdash;
+            <ul>
+              <li>New member <tt>int mBLCVtxNTracks = 0</tt> alongside existing <tt>mBLCVtxPos</tt> / <tt>mBLCVtxHit</tt>
+              <li>Reset <tt>mBLCVtxNTracks = 0</tt> at top of <tt>doBLCVertexFitting()</tt> (per-event)
+              <li>Assigned <tt>mBLCVtxNTracks = trkZs.size()</tt> after outlier-rejection loop (inlier count)
+              <li>Public accessors: <tt>getBLCVtxPos()</tt>, <tt>getBLCVtxSigmaZ()</tt> (derived from <tt>mBLCVtxHit._covmat(2,2)</tt>), <tt>getBLCVtxNTracks()</tt>
+            </ul>
+        </ul>
+
+      <li><b>Layer 3 &mdash; StFwdTrackMaker: emit BLC vertex to StEvent</b>
+        <ul>
+          <li><a href="code/StFwdTrackMaker.cxx">StRoot/StFwdTrackMaker/StFwdTrackMaker.cxx</a> &mdash;
+              after the existing FwdVertex loop, adds one <tt>StPrimaryVertex</tt> when <tt>getBLCVtxNTracks()&nbsp;&gt;&nbsp;0</tt>:
+            <ul>
+              <li>Position from <tt>getBLCVtxPos()</tt>
+              <li>Covariance: sigma_xy = 0.1 cm (beam spot), sigma_z from <tt>getBLCVtxSigmaZ()</tt>
+              <li>nTracks from <tt>getBLCVtxNTracks()</tt>
+              <li><tt>setBLCVertex()</tt> flag set &mdash; distinguishes it from TPC and FwdVtx entries
+            </ul>
+        </ul>
+
+      <li><b>Layer 4 &mdash; MuDst: automatic + accessor</b>
+        <ul>
+          <li><tt>StMuDstMaker</tt> copies <i>all</i> <tt>StPrimaryVertex</tt> entries &mdash; BLC vertex appears in
+              <tt>muPrimaryVertex</tt> array at no extra cost; <tt>mFlag</tt> is already serialized.
+          <li><a href="code/StMuPrimaryVertex.h">StRoot/StMuDSTMaker/COMMON/StMuPrimaryVertex.h</a> &mdash;
+              <tt>isBLCVtx()</tt> added alongside <tt>isBeamConstrained()</tt>
+        </ul>
+
+      <li><b>Layer 5 &mdash; PicoDst: scalar fields in StPicoEvent</b>
+        <ul>
+          <li><a href="code/StPicoEvent.h">StRoot/StPicoEvent/StPicoEvent.h</a> &mdash;
+              five new data members after <tt>mZdcUnAttenuated[2]</tt>:
+              <tt>mBLCVtxX</tt>, <tt>mBLCVtxY</tt>, <tt>mBLCVtxZ</tt>, <tt>mBLCVtxSigmaZ</tt>, <tt>mBLCVtxNTracks</tt>;
+              getters <tt>blcVertex()</tt>, <tt>blcVertexSigmaZ()</tt>, <tt>blcVertexNTracks()</tt>;
+              setters <tt>setBLCVertexPosition()</tt>, <tt>setBLCVertexSigmaZ()</tt>, <tt>setBLCVertexNTracks()</tt>;
+              <tt>ClassDef</tt> bumped 8&nbsp;&rarr;&nbsp;9
+          <li><a href="code/StPicoEvent.cxx">StRoot/StPicoEvent/StPicoEvent.cxx</a> &mdash;
+              fields initialized to 0 in default constructor; copied in copy constructor
+          <li><a href="code/StPicoDstMaker.cxx">StRoot/StPicoDstMaker/StPicoDstMaker.cxx</a> &mdash;
+              at end of <tt>fillFwdTracks()</tt>, loops primary vertices looking for <tt>isBLCVertex()</tt>,
+              fills the five <tt>StPicoEvent</tt> fields (breaks after first match since there is only one)
+        </ul>
+
+      <li><b>How to use in analysis</b>
+        <ul>
+          <li>StEvent: <tt>StPrimaryVertex *v = ...; if(v-&gt;isBLCVertex()) ...</tt>
+          <li>MuDst: <tt>StMuPrimaryVertex *v = ...; if(v-&gt;isBLCVtx()) ...</tt>
+          <li>PicoDst: <tt>picoEvent-&gt;blcVertex().Z()</tt>, <tt>picoEvent-&gt;blcVertexSigmaZ()</tt>,
+              <tt>picoEvent-&gt;blcVertexNTracks()</tt> &mdash; returns 0 in all fields if no BLC vertex found
+          <li>Backward compatibility: old PicoDst files read by new code return 0 for all BLC fields (ROOT default for new members). New PicoDst files read by old code: old code simply ignores the new fields.
+        </ul>
+
+      <li><b>Files changed summary</b>
+        <table border=1 cellpadding=3>
+          <tr><th>File</th><th>Change</th></tr>
+          <tr><td><tt>StEvent/StEnumerations.h</tt></td><td>Add <tt>kBLCVtxId</tt> enum value</td></tr>
+          <tr><td><tt>StEvent/StVertex.h</tt></td><td>Add <tt>setBLCVertex()</tt> / <tt>isBLCVertex()</tt></td></tr>
+          <tr><td><tt>StFwdTrackMaker/include/Tracker/FwdTracker.h</tt></td><td>Add <tt>mBLCVtxNTracks</tt>, per-event reset, accessors</td></tr>
+          <tr><td><tt>StFwdTrackMaker/StFwdTrackMaker.cxx</tt></td><td>Emit BLC <tt>StPrimaryVertex</tt> to StEvent</td></tr>
+          <tr><td><tt>StMuDSTMaker/COMMON/StMuPrimaryVertex.h</tt></td><td>Add <tt>isBLCVtx()</tt></td></tr>
+          <tr><td><tt>StPicoEvent/StPicoEvent.h</tt></td><td>Add 5 BLC fields + getters/setters; ClassDef 8&rarr;9</td></tr>
+          <tr><td><tt>StPicoEvent/StPicoEvent.cxx</tt></td><td>Init + copy BLC fields</td></tr>
+          <tr><td><tt>StPicoDstMaker/StPicoDstMaker.cxx</tt></td><td>Fill BLC fields in <tt>fillFwdTracks()</tt></td></tr>
+        </table>
+    </ul>
+
+  <a name="20260630">
+  <li><b>Beamline from DB for BLC Track and Vertex Fitting (2026-06-30)</b>
+    <p>
+    Previously the BLC beam-line constraint used a hardcoded line at x&nbsp;=&nbsp;y&nbsp;=&nbsp;0 (fine for MC
+    where truth particles originate on axis).  For real data the measured RHIC beamline
+    (stored in the STAR DB table <tt>Calibrations/rhic/vertexSeed</tt>) should be used instead.
+    This adds an optional, run-level beamline update that is off by default (MC unchanged).
+    </p>
+
+    <ul>
+      <li><b>DB reading &mdash; StFcsDb (already existed, now enabled)</b>
+        <ul>
+          <li><tt>StFcsDbMaker/StFcsDb.cxx</tt> line 399: the call to
+              <tt>beamline</tt> DB lookup (filling <tt>mVx</tt>, <tt>mVy</tt>, <tt>mVdxdz</tt>, <tt>mVdydz</tt>)
+              was commented out; it is now <b>enabled</b>.
+          <li><a href="code/StFcsDb.h">StFcsDbMaker/StFcsDb.h</a> &mdash;
+              four new inline public getters added after <tt>getLorentzVector()</tt>:
+              <tt>getBeamlineX()</tt>, <tt>getBeamlineY()</tt>,
+              <tt>getBeamlineDxDz()</tt>, <tt>getBeamlineDyDz()</tt>.
+              No <tt>.cxx</tt> change needed &mdash; the members are already filled in <tt>InitRun()</tt>.
+        </ul>
+
+      <li><b>Tracker update &mdash; FwdTracker.h</b>
+        <ul>
+          <li>New method <tt>setBeamline(x0, y0, dxdz, dydz)</tt>: updates <tt>mBeamlineHit.x/y</tt>
+              and stores slopes in new private members <tt>mBeamlineDxDz</tt>, <tt>mBeamlineDyDz</tt>.
+          <li>Slope correction applied in <tt>doBLCVertexFitting()</tt> Step&nbsp;4:
+              the BLC vertex <i>point</i> is now at
+              (x<sub>0</sub>&nbsp;+&nbsp;dx/dz&nbsp;&middot;&nbsp;z<sub>vtx</sub>,
+               y<sub>0</sub>&nbsp;+&nbsp;dy/dz&nbsp;&middot;&nbsp;z<sub>vtx</sub>,
+               z<sub>vtx</sub>) instead of (x<sub>0</sub>, y<sub>0</sub>, z<sub>vtx</sub>).
+          <li>Default slopes are 0.0, so MC behavior is unchanged even if <tt>setBeamline</tt> is called with slopes only.
+        </ul>
+
+      <li><b>Maker wiring &mdash; StFwdTrackMaker</b>
+        <ul>
+          <li><a href="code/StFwdTrackMaker.h">StFwdTrackMaker.h</a> &mdash;
+              added <tt>InitRun(int runNumber)</tt> declaration and public setter
+              <tt>setUseBeamlineFromDB(bool use=true)</tt>;
+              private flag <tt>mUseBeamlineFromDB = false</tt>.
+          <li><a href="code/StFwdTrackMaker.cxx">StFwdTrackMaker.cxx</a> &mdash;
+              new <tt>InitRun()</tt> method: if flag is set, retrieves <tt>StFcsDb</tt> from chain
+              and calls <tt>mForwardTracker-&gt;setBeamline(...)</tt> once per run.
+              Beamline is run-level data &mdash; set in <tt>InitRun()</tt>, <i>not</i> per-event in <tt>Make()</tt>.
+              Prints x0, y0, dxdz, dydz at <tt>LOG_INFO</tt> level.
+        </ul>
+
+      <li><b>Afterburner macro</b>
+        <ul>
+          <li><a href="code/fwd_afterburner_db.C">StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C</a> &mdash;
+              one line added in the <tt>fwdTrack</tt> setup block:
+              <pre>if (runDb) fwdTrack-&gt;setUseBeamlineFromDB( true ); // use measured beamline for BLC; off for MC</pre>
+              No other macro changes needed.  MC runs leave <tt>runDb=false</tt> and continue to use x&nbsp;=&nbsp;y&nbsp;=&nbsp;0.
+        </ul>
+
+      <li><b>Validation &mdash; single-file real-data test (run 23081004, 2022-03-22 pp500)</b>
+        <ul>
+          <li>Beamline values read from DB: x<sub>0</sub>&nbsp;=&nbsp;&minus;0.0803&nbsp;cm,
+              y<sub>0</sub>&nbsp;=&nbsp;&minus;0.2138&nbsp;cm,
+              dx/dz&nbsp;=&nbsp;&minus;9.02&nbsp;&times;&nbsp;10<sup>&minus;4</sup>,
+              dy/dz&nbsp;=&nbsp;+3.33&nbsp;&times;&nbsp;10<sup>&minus;4</sup>.
+          <li>Offsets are ~1&ndash;2&nbsp;mm and slopes are sub-mrad &mdash; physically sensible for the RHIC beam.
+          <li><tt>LOG_INFO</tt> line confirmed at chain init; tracking ran without errors.
+        </ul>
+
+      <li><b>Files changed summary</b>
+        <table border=1 cellpadding=3>
+          <tr><th>File</th><th>Change</th></tr>
+          <tr><td><tt>StFcsDbMaker/StFcsDb.cxx</tt></td><td>Line&nbsp;399: enable beamline DB read (was commented out)</td></tr>
+          <tr><td><tt>StFcsDbMaker/StFcsDb.h</tt></td><td>Add <tt>getBeamlineX/Y/DxDz/DyDz()</tt> getters</td></tr>
+          <tr><td><tt>StFwdTrackMaker/include/Tracker/FwdTracker.h</tt></td><td>Add <tt>setBeamline()</tt>, slope members, slope correction in <tt>doBLCVertexFitting()</tt></td></tr>
+          <tr><td><tt>StFwdTrackMaker/StFwdTrackMaker.h</tt></td><td>Add <tt>InitRun()</tt> declaration, <tt>setUseBeamlineFromDB()</tt>, <tt>mUseBeamlineFromDB</tt></td></tr>
+          <tr><td><tt>StFwdTrackMaker/StFwdTrackMaker.cxx</tt></td><td>Add <tt>InitRun()</tt> implementation that calls <tt>setBeamline()</tt> once per run</td></tr>
+          <tr><td><tt>StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C</tt></td><td>Add <tt>setUseBeamlineFromDB(true)</tt> when <tt>runDb=true</tt></td></tr>
+        </table>
+    </ul>
+
+  <li><b>Source code (snapshots as of 2026-06-24; search <tt>//BBB</tt> for all changes)</b>
+    <ul>
+      <li><b>Reconstruction (STAR libraries)</b>
+        <ul>
+          <li><a href="code/FwdTracker.h">StRoot/StFwdTrackMaker/include/Tracker/FwdTracker.h</a> &mdash; core of BLCVtx: <tt>doBLCVertexFitting()</tt> computes weighted-mean z_vtx from BLC DCA-z values, builds FwdHit, refits each BLC track; also <tt>blcVtxMaxDcaXY=10 cm</tt> cut that rejects the genfit sentinel (99,99,99)
+          <li><a href="code/GenfitTrackResult.h">StRoot/StFwdTrackMaker/include/Tracker/GenfitTrackResult.h</a> &mdash; <tt>setDCA()</tt>: catch block sets <tt>mDCA=(99,99,99)</tt> when <tt>extrapolateToLine</tt> throws; BLCVtx refit uses <tt>extrapolateToPoint</tt> (same path as Primary)
+          <li><a href="code/StFwdTrack.h">StRoot/StEvent/StFwdTrack.h</a> &mdash; <tt>pack6and2 &rarr; pack5and3</tt> (vtxIndex 6&rarr;5 bits, trackType 2&rarr;3 bits); <tt>kBLCVertexConstrained=4</tt> added to enum; <tt>isBLCVertexConstrainedTrack()</tt> helper
+          <li><a href="code/StFwdTrackMaker.h">StRoot/StFwdTrackMaker/StFwdTrackMaker.h</a> &mdash; <tt>kFwdVertexSourceBLC</tt> added to <tt>FwdVertexSource</tt> enum
+          <li><a href="code/StFwdTrackMaker.cxx">StRoot/StFwdTrackMaker/StFwdTrackMaker.cxx</a> &mdash; <tt>makeStFwdTrack()</tt>: replaced old <tt>setVtxIndex(0/UCHAR_MAX)</tt> with <tt>setVtxIndexAndTrackType(gtr.mVertexIndex, gtr.mTrackType)</tt> so that <tt>kBLCVertexConstrained=4</tt> is correctly stored via <tt>pack5and3</tt>
+          <li><a href="code/StMuFwdTrack.h">StRoot/StMuDSTMaker/COMMON/StMuFwdTrack.h</a> &mdash; <tt>mTrackType</tt> (UChar_t) data member added; getter/setter; <tt>ClassDef</tt> version 3&rarr;4 (previously track type was dropped when copying StFwdTrack &rarr; StMuFwdTrack)
+          <li><a href="code/StMuFwdTrack.cxx">StRoot/StMuDSTMaker/COMMON/StMuFwdTrack.cxx</a> &mdash; <tt>set(StFwdTrack*)</tt>: <tt>mTrackType = evTrack-&gt;trackType()</tt>
+          <li><a href="code/StPicoFwdTrack.h">StRoot/StPicoEvent/StPicoFwdTrack.h</a> &mdash; 3-bit <tt>trackType()</tt> extractor (<tt>mVtxIndex&amp;0x07</tt>); <tt>kBLCVertexConstrained=4</tt>; <tt>isBLCVertexConstrainedTrack()</tt>
+        </ul>
+      <li><b>Analysis macros</b>
+        <ul>
+          <li><a href="code/picoMatch.C">script_test/picoMatch.C</a> &mdash; fills BLCVtx track and vertex-quality histograms; DCA-XY &lt; 10 cm filter for <tt>perEvtBLCdcaZ</tt>; MC truth q/pT residuals for all 5 track types
+          <li><a href="code/plotMatch.C">script_test/plotMatch.C</a> &mdash; produces <tt>fcsTrkBLCVtx.png</tt>, <tt>fcsTrkQuality.png</tt>, <tt>fcsTrkResolution.png</tt>
+        </ul>
+    </ul>
+
+</ul>
+
+<HR>OGAWA, Akio
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

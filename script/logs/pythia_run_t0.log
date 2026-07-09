@@ -1,0 +1,1000 @@
+AAA FTT hit V pos=( 41.055+/-0.01,  -3.865+/-4.33)  dx=53.820 dy=12.561 dR=20.433 dPhi=2.1376 (tid=3)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 49.239+/-0.01,  -8.819+/-4.33)  dx=62.004 dy= 7.608 dR=29.219 dPhi=2.0542 (tid=10)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 38.463+/-0.01, -10.357+/-4.33)  dx=51.228 dy= 6.070 dR=19.029 dPhi=1.9684 (tid=16)  dPhi:FAIL dR:OK XY:OK
+StFwdTrackMaker:INFO  - Adding horizontal strip hit with dPhi = 0.0976577, dR = 1.87666, dx = 2.83135, dy = 0.0395473
+StFwdTrackMaker:INFO  - Adding vertical strip hit with dPhi = 0.159261, dR = 4.7128, dx = 0.501482, dy = 5.94933
+StFwdTrackMaker:INFO  - Closest horizontal FTT strip to FST state: dR=1.876655, dPhi=0.097658, dx=2.831345, dy=0.039547 (tid=15) 
+AAA FTT closest-H dPhi=0.0977(<0.1200) dR= 1.877(< 30.0) dx= 2.831 dy= 0.040(< 7.50) tid=15 -> ACCEPT
+StFwdTrackMaker:INFO  - Closest vertical FTT strip to FST state: dR=4.712803, dPhi=0.159261, dx=0.501482, dy=5.949328 (tid=15) 
+AAA FTT closest-V dPhi=0.1593(<0.1200) dR= 4.713(< 30.0) dx= 0.501 dy= 5.949(< 7.50) tid=15 -> ACCEPT
+AAA FTT result: 2 hits added (H:ACCEPT V:ACCEPT)
+StFwdTrackMaker:INFO  -  Found #FTT strips on plane #3 = [2]
+StFwdTrackMaker:INFO  - Found 10 existing seed points
+StFwdTrackMaker:INFO  - Adding 2 new FTT seed points
+StFwdTrackMaker:INFO  - Closest EPD hit to state: dR=0.819555, dPhi=-0.006136, dx=0.602767, dy=0.570000
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 15, QaTruth = 0.833333
+The points are collinear, curvature is undefined.
+p1 = 0, 0
+p2 = -5.82937, -7.50123
+p3 = -5.82937, -7.50123
+The points are collinear, curvature is undefined.
+p1 = 0, 0
+p2 = -5.82937, -7.50123
+p3 = -5.82937, -7.50123
+The points are collinear, curvature is undefined.
+p1 = 0, 0
+p2 = -5.82937, -7.50123
+p3 = -5.82937, -7.50123
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -5.82937, -7.50123
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -13.2247, -14.0809
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -10.5663, -7.74896
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -18.3978, -14.892
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -11.1481, -19.0779
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -5.54842, -15.6202
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -11.6464, -22.7698
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -15.5967, -16.466
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -12.2639, -22.3758
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -12.5192, -16.3153
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -13.2247, -14.0809
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -10.5663, -7.74896
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -18.3978, -14.892
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -11.1481, -19.0779
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -5.54842, -15.6202
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -11.6464, -22.7698
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -15.5967, -16.466
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -12.2639, -22.3758
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -12.5192, -16.3153
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -13.2247, -14.0809
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -10.5663, -7.74896
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -18.3978, -14.892
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -11.1481, -19.0779
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -5.54842, -15.6202
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -11.6464, -22.7698
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -15.5967, -16.466
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -12.2639, -22.3758
+The points are collinear, curvature is undefined.
+p1 = -5.82937, -7.50123
+p2 = -5.82937, -7.50123
+p3 = -12.5192, -16.3153
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::Curvature: -0.0019388
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::pt = 0.773133
+StFwdTrackMaker:INFO  - Note: Using externally provided seed momentum
+StFwdTrackMaker:INFO  - Track Setup complete, track has 13 points
+StFwdTrackMaker:INFO  -  sorting changed track points: 1
+StFwdTrackMaker:INFO  - Fit status:  1
+StFwdTrackMaker:INFO  - -Fit pvalue: 0.383332
+StFwdTrackMaker:INFO  - -Fit Chi2:   22.2835
+StFwdTrackMaker:INFO  - -Fit Chi2:   22.2835
+StFwdTrackMaker:INFO  - Track fit charge: -1Fit momentum: -0.208219, -0.256779, 5.8739
+StFwdTrackMaker:INFO  - 	Fit Pt: 0.330591, eta: 3.57133, phi: -2.25214
+StFwdTrackMaker:INFO  - Track fit update complete!
+StFwdTrackMaker:INFO  - Track Reps: 1
+StFwdTrackMaker:INFO  - Track Rep 0 
+genfit::AbsTrackRep, pdgCode = -211. PropDir = 0
+fitStatus 
+ track has been fitted, fit has converged fully, 0 TrackPoints could not be processed, fitted charge = -1, PruneFlags: 
+ track has been fitted with reference track, numIterations = 4, track length = 366.011, fChi2 = 22.2835, bChi2 = 22.2835, fNdf = 21, bNdf = 21, fPVal = 0.383332, bPVal = 0.383332
+
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 15, QaTruth = 0.833333
+StFwdTrackMaker:INFO  - GTR Setting momentum from track
+StFwdTrackMaker:INFO  - --isFitConvergedPartially() = 1
+StFwdTrackMaker:INFO  - --isFitConverged() = 1
+StFwdTrackMaker:INFO  - --isFitConvergedFully() = 1
+StFwdTrackMaker:INFO  - Refitting Track 4, McId=10 with Primary Vertex, seed already has: 3 hits
+StFwdTrackMaker:INFO  - mEventVertexHit: 0, 0, 0
+StFwdTrackMaker:INFO  - This fit is for a global that converged? = 1
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 10, QaTruth = 1
+The points are collinear, curvature is undefined.
+p1 = 0, 0
+p2 = 21.1287, -3.97858
+p3 = 21.1287, -3.97858
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 24.0581, -4.63218
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::Curvature: 0.00272575
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::pt = 0.549923
+StFwdTrackMaker:INFO  - Note: Using externally provided seed momentum
+StFwdTrackMaker:INFO  - Note: Using externally provided seed charge = 1
+StFwdTrackMaker:INFO  - Track Setup complete, track has 4 points
+StFwdTrackMaker:INFO  -  sorting changed track points: 0
+StFwdTrackMaker:INFO  - Fit status:  1
+StFwdTrackMaker:INFO  - -Fit pvalue: 0.952056
+StFwdTrackMaker:INFO  - -Fit Chi2:   0.341436
+StFwdTrackMaker:INFO  - -Fit Chi2:   0.341436
+StFwdTrackMaker:INFO  - Track fit charge: 1Fit momentum: 0.642428, -0.104772, 4.79138
+StFwdTrackMaker:INFO  - 	Fit Pt: 0.650915, eta: 2.69392, phi: -0.161664
+StFwdTrackMaker:INFO  - Track fit update complete!
+StFwdTrackMaker:INFO  - Track Reps: 1
+StFwdTrackMaker:INFO  - Track Rep 0 
+genfit::AbsTrackRep, pdgCode = 211. PropDir = 0
+fitStatus 
+ track has been fitted, fit has converged fully, 0 TrackPoints could not be processed, fitted charge = 1, PruneFlags: 
+ track has been fitted with reference track, numIterations = 4, track length = 180.774, fChi2 = 0.341436, bChi2 = 0.341436, fNdf = 3, bNdf = 3, fPVal = 0.952056, bPVal = 0.952056
+
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 10, QaTruth = 1
+StFwdTrackMaker:INFO  - GTR Setting momentum from track
+StFwdTrackMaker:INFO  - --isFitConvergedPartially() = 1
+StFwdTrackMaker:INFO  - --isFitConverged() = 1
+StFwdTrackMaker:INFO  - --isFitConvergedFully() = 1
+StFwdTrackMaker:INFO  - 	Initial fit complete, now refitting with additional points
+StFwdTrackMaker:INFO  - Looking for FTT strips near projected state on disk 0
+StFwdTrackMaker:INFO  - There are 27 available FTT strips on this disk
+AAA FTT proj z= 312.90  x= 41.559 y= -8.847  r= 42.491 phi=-0.2098  sigU= 0.291 sigV= 0.010
+AAA FTT momentum at proj: pT= 0.651 eta= 2.694 phi=-0.2486  px=  0.631 py= -0.160 pz=  4.791
+AAA FTT search thresholds: dPhi<0.1200 dR<30.00 dx<7.50 dy<7.50  nHits=27
+findFttHitsNearProjectedState, msp = (41.559317, -8.847428)
+AAA FTT hit V pos=( 38.272+/-0.01,  27.684+/-4.33)  dx= 3.287 dy=36.531 dR= 4.744 dPhi=0.8360 (tid=63)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 38.233+/-0.01,  33.952+/-4.33)  dx= 3.326 dy=42.799 dR= 8.642 dPhi=0.9359 (tid=64)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-54.778+/-4.33, -18.532+/-0.01)  dx=96.338 dy= 9.685 dR=15.338 dPhi=2.6056 (tid=2)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-32.026+/-4.33, -17.367+/-0.01)  dx=73.585 dy= 8.520 dR= 6.059 dPhi=2.4349 (tid=18)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-40.966+/-4.33, -27.105+/-0.01)  dx=82.525 dy=18.257 dR= 6.630 dPhi=2.3473 (tid=23)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-49.519+/-0.01, -11.641+/-4.33)  dx=91.078 dy= 2.794 dR= 8.378 dPhi=2.7009 (tid=2)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-32.105+/-0.01, -18.434+/-4.33)  dx=73.664 dy= 9.587 dR= 5.470 dPhi=2.4106 (tid=18)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-46.149+/-0.01, -23.489+/-4.33)  dx=87.709 dy=14.642 dR= 9.293 dPhi=2.4610 (tid=23)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( -8.707+/-4.33,  -5.842+/-0.01)  dx=50.266 dy= 3.005 dR=32.005 dPhi=2.3408 (tid=38)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit H pos=(-15.087+/-4.33,  -4.947+/-0.01)  dx=56.647 dy= 3.900 dR=26.613 dPhi=2.6150 (tid=39)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -9.380+/-0.01,  -0.491+/-4.33)  dx=50.939 dy= 8.356 dR=33.098 dPhi=2.8795 (tid=38)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( -8.901+/-0.01,  -9.400+/-4.33)  dx=50.460 dy= 0.552 dR=29.545 dPhi=2.1192 (tid=39)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-39.672+/-4.33,   6.974+/-0.01)  dx=81.231 dy=15.821 dR= 2.210 dPhi=3.1058 (tid=98)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-33.606+/-0.01,   0.305+/-4.33)  dx=75.166 dy= 9.152 dR= 8.883 dPhi=2.9409 (tid=98)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.225+/-4.33, -14.081+/-0.01)  dx=54.784 dy= 5.233 dR=23.173 dPhi=2.1151 (tid=15)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-10.566+/-0.01,  -7.749+/-4.33)  dx=52.126 dy= 1.098 dR=29.387 dPhi=2.2991 (tid=15)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 35.724+/-4.33,   2.993+/-0.01)  dx= 5.835 dy=11.841 dR= 6.641 dPhi=0.2934 (tid=3)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(45.296139+/-4.330127, -9.170529+/-0.010000) => dx=3.736822, dy=0.323101, dR=3.724504, dPhi=0.009998 (tid=10), strip=horizontal
+AAA FTT hit H pos=( 45.296+/-4.33,  -9.171+/-0.01)  dx= 3.737 dy= 0.323 dR= 3.725 dPhi=0.0100 (tid=10)  dPhi:OK dR:OK XY:OK
+AAA FTT hit H pos=( 67.417+/-4.33,   4.062+/-0.01)  dx=25.857 dy=12.909 dR=25.048 dPhi=0.2699 (tid=59)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 63.810+/-4.33,   1.608+/-0.01)  dx=22.251 dy=10.456 dR=21.339 dPhi=0.2350 (tid=60)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(32.566357+/-4.330127, -4.528347+/-0.010000) => dx=8.992960, dy=4.319082, dR=9.610949, dPhi=0.071591 (tid=16), strip=horizontal
+AAA FTT hit H pos=( 32.566+/-4.33,  -4.528+/-0.01)  dx= 8.993 dy= 4.319 dR= 9.611 dPhi=0.0716 (tid=16)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 35.162+/-0.01,   4.268+/-4.33)  dx= 6.398 dy=13.115 dR= 7.071 dPhi=0.3305 (tid=3)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(42.245598+/-0.010000, -12.927508+/-4.330127) => dx=0.686281, dy=4.080080, dR=1.688674, dPhi=0.087205 (tid=10), strip=vertical
+AAA FTT hit V pos=( 42.246+/-0.01, -12.928+/-4.33)  dx= 0.686 dy= 4.080 dR= 1.689 dPhi=0.0872 (tid=10)  dPhi:OK dR:OK XY:OK
+	 vs. hit@(42.407360+/-0.010000, -12.157447+/-4.330127) => dx=0.848043, dy=3.310019, dR=1.624986, dPhi=0.069439 (tid=35), strip=vertical
+AAA FTT hit V pos=( 42.407+/-0.01, -12.157+/-4.33)  dx= 0.848 dy= 3.310 dR= 1.625 dPhi=0.0694 (tid=35)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 61.119+/-0.01,   2.398+/-4.33)  dx=19.560 dy=11.245 dR=18.676 dPhi=0.2490 (tid=59)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 59.154+/-0.01,   6.130+/-4.33)  dx=17.595 dy=14.977 dR=16.981 dPhi=0.3130 (tid=60)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(32.957104+/-0.010000, -3.981364+/-4.330127) => dx=8.602213, dy=4.866064, dR=9.293916, dPhi=0.089534 (tid=16), strip=vertical
+AAA FTT hit V pos=( 32.957+/-0.01,  -3.981+/-4.33)  dx= 8.602 dy= 4.866 dR= 9.294 dPhi=0.0895 (tid=16)  dPhi:OK dR:OK XY:OK
+StFwdTrackMaker:INFO  - Adding horizontal strip hit with dPhi = 0.00999828, dR = 3.7245, dx = 3.73682, dy = 0.323101
+StFwdTrackMaker:INFO  - Adding vertical strip hit with dPhi = 0.0872045, dR = 1.68867, dx = 0.686281, dy = 4.08008
+StFwdTrackMaker:INFO  - Closest horizontal FTT strip to FST state: dR=3.724504, dPhi=0.009998, dx=3.736822, dy=0.323101 (tid=10) 
+AAA FTT closest-H dPhi=0.0100(<0.1200) dR= 3.725(< 30.0) dx= 3.737 dy= 0.323(< 7.50) tid=10 -> ACCEPT
+StFwdTrackMaker:INFO  - Closest vertical FTT strip to FST state: dR=1.688674, dPhi=0.087205, dx=0.686281, dy=4.080080 (tid=10) 
+AAA FTT closest-V dPhi=0.0872(<0.1200) dR= 1.689(< 30.0) dx= 0.686 dy= 4.080(< 7.50) tid=10 -> ACCEPT
+AAA FTT result: 2 hits added (H:ACCEPT V:ACCEPT)
+StFwdTrackMaker:INFO  -  Found #FTT strips on plane #0 = [2]
+StFwdTrackMaker:INFO  - Found 4 existing seed points
+StFwdTrackMaker:INFO  - Adding 2 new FTT seed points
+StFwdTrackMaker:INFO  - Looking for FTT strips near projected state on disk 1
+StFwdTrackMaker:INFO  - There are 27 available FTT strips on this disk
+AAA FTT proj z= 330.76  x= 43.912 y= -9.440  r= 44.915 phi=-0.2118  sigU= 0.291 sigV= 0.010
+AAA FTT momentum at proj: pT= 0.650 eta= 2.695 phi=-0.2446  px=  0.631 py= -0.158 pz=  4.791
+AAA FTT search thresholds: dPhi<0.1200 dR<30.00 dx<7.50 dy<7.50  nHits=27
+findFttHitsNearProjectedState, msp = (43.911947, -9.440267)
+AAA FTT hit H pos=( 45.368+/-4.33,  31.478+/-0.01)  dx= 1.456 dy=40.918 dR=10.303 dPhi=0.8183 (tid=63)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 36.134+/-4.33,  31.551+/-0.01)  dx= 7.778 dy=40.991 dR= 3.054 dPhi=0.9295 (tid=64)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 40.533+/-0.01,  32.042+/-4.33)  dx= 3.379 dy=41.483 dR= 6.753 dPhi=0.8807 (tid=63)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 39.855+/-0.01,  31.404+/-4.33)  dx= 4.057 dy=40.844 dR= 5.826 dPhi=0.8791 (tid=64)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-52.955+/-4.33, -19.551+/-0.01)  dx=96.867 dy=10.110 dR=11.533 dPhi=2.5762 (tid=2)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-59.549+/-4.33, -19.466+/-0.01)  dx=103.461 dy=10.025 dR=17.735 dPhi=2.6139 (tid=33)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-55.550+/-4.33, -21.737+/-0.01)  dx=99.462 dy=12.297 dR=14.736 dPhi=2.5568 (tid=34)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-34.795+/-4.33, -18.453+/-0.01)  dx=78.707 dy= 9.013 dR= 5.530 dPhi=2.4422 (tid=18)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-50.017+/-4.33, -28.724+/-0.01)  dx=93.929 dy=19.284 dR=12.763 dPhi=2.4085 (tid=23)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-52.398+/-0.01, -13.808+/-4.33)  dx=96.310 dy= 4.368 dR= 9.272 dPhi=2.6722 (tid=2)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-33.938+/-0.01, -19.426+/-4.33)  dx=77.849 dy= 9.985 dR= 5.811 dPhi=2.4100 (tid=18)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-48.784+/-0.01, -29.285+/-4.33)  dx=92.696 dy=19.845 dR=11.984 dPhi=2.3892 (tid=23)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-11.294+/-4.33,  -6.153+/-0.01)  dx=55.205 dy= 3.287 dR=32.054 dPhi=2.4310 (tid=38)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit H pos=( -2.602+/-4.33,  -5.256+/-0.01)  dx=46.514 dy= 4.184 dR=39.050 dPhi=1.8187 (tid=39)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit V pos=( -9.924+/-0.01,  -6.213+/-4.33)  dx=53.836 dy= 3.228 dR=33.207 dPhi=2.3705 (tid=38)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit V pos=( -9.469+/-0.01,  -0.976+/-4.33)  dx=53.381 dy= 8.465 dR=35.396 dPhi=2.8272 (tid=39)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-18.398+/-4.33, -14.892+/-0.01)  dx=62.310 dy= 5.452 dR=21.246 dPhi=2.2494 (tid=15)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-11.148+/-0.01, -19.078+/-4.33)  dx=55.060 dy= 9.638 dR=22.819 dPhi=1.8879 (tid=15)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 35.930+/-4.33,   3.231+/-0.01)  dx= 7.982 dy=12.671 dR= 8.840 dPhi=0.3014 (tid=3)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(46.607124+/-4.330127, -9.801097+/-0.010000) => dx=2.695177, dy=0.360830, dR=2.711293, dPhi=0.004487 (tid=10), strip=horizontal
+AAA FTT hit H pos=( 46.607+/-4.33,  -9.801+/-0.01)  dx= 2.695 dy= 0.361 dR= 2.711 dPhi=0.0045 (tid=10)  dPhi:OK dR:OK XY:OK
+	 vs. hit@(52.690731+/-4.330127, -9.028125+/-0.010000) => dx=8.778784, dy=0.412142, dR=8.543356, dPhi=0.042065 (tid=35), strip=horizontal
+AAA FTT hit H pos=( 52.691+/-4.33,  -9.028+/-0.01)  dx= 8.779 dy= 0.412 dR= 8.543 dPhi=0.0421 (tid=35)  dPhi:OK dR:OK XY:OK
+AAA FTT hit H pos=( 66.211+/-4.33,   2.044+/-0.01)  dx=22.299 dy=11.485 dR=21.327 dPhi=0.2426 (tid=59)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(39.363235+/-4.330127, -5.060619+/-0.010000) => dx=4.548711, dy=4.379648, dR=5.228024, dPhi=0.083898 (tid=16), strip=horizontal
+AAA FTT hit H pos=( 39.363+/-4.33,  -5.061+/-0.01)  dx= 4.549 dy= 4.380 dR= 5.228 dPhi=0.0839 (tid=16)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 37.196+/-0.01,   3.923+/-4.33)  dx= 6.716 dy=13.363 dR= 7.513 dPhi=0.3168 (tid=3)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(44.684288+/-0.010000, -14.057120+/-4.330127) => dx=0.772341, dy=4.616853, dR=1.928002, dPhi=0.093027 (tid=10), strip=vertical
+AAA FTT hit V pos=( 44.684+/-0.01, -14.057+/-4.33)  dx= 0.772 dy= 4.617 dR= 1.928 dPhi=0.0930 (tid=10)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 62.913+/-0.01,   1.364+/-4.33)  dx=19.001 dy=10.805 dR=18.012 dPhi=0.2334 (tid=59)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(34.827259+/-0.010000, -6.285368+/-4.330127) => dx=9.084688, dy=3.154899, dR=9.525345, dPhi=0.033208 (tid=16), strip=vertical
+AAA FTT hit V pos=( 34.827+/-0.01,  -6.285+/-4.33)  dx= 9.085 dy= 3.155 dR= 9.525 dPhi=0.0332 (tid=16)  dPhi:OK dR:OK XY:OK
+StFwdTrackMaker:INFO  - Adding horizontal strip hit with dPhi = 0.00448704, dR = 2.71129, dx = 2.69518, dy = 0.36083
+StFwdTrackMaker:INFO  - Adding vertical strip hit with dPhi = 0.0930268, dR = 1.928, dx = 0.772341, dy = 4.61685
+StFwdTrackMaker:INFO  - Closest horizontal FTT strip to FST state: dR=2.711293, dPhi=0.004487, dx=2.695177, dy=0.360830 (tid=10) 
+AAA FTT closest-H dPhi=0.0045(<0.1200) dR= 2.711(< 30.0) dx= 2.695 dy= 0.361(< 7.50) tid=10 -> ACCEPT
+StFwdTrackMaker:INFO  - Closest vertical FTT strip to FST state: dR=1.928002, dPhi=0.093027, dx=0.772341, dy=4.616853 (tid=10) 
+AAA FTT closest-V dPhi=0.0930(<0.1200) dR= 1.928(< 30.0) dx= 0.772 dy= 4.617(< 7.50) tid=10 -> ACCEPT
+AAA FTT result: 2 hits added (H:ACCEPT V:ACCEPT)
+StFwdTrackMaker:INFO  -  Found #FTT strips on plane #1 = [2]
+StFwdTrackMaker:INFO  - Found 6 existing seed points
+StFwdTrackMaker:INFO  - Adding 2 new FTT seed points
+StFwdTrackMaker:INFO  - Looking for FTT strips near projected state on disk 2
+StFwdTrackMaker:INFO  - There are 25 available FTT strips on this disk
+AAA FTT proj z= 346.86  x= 46.033 y= -9.964  r= 47.099 phi=-0.2132  sigU= 0.291 sigV= 0.010
+AAA FTT momentum at proj: pT= 0.650 eta= 2.695 phi=-0.2392  px=  0.632 py= -0.154 pz=  4.791
+AAA FTT search thresholds: dPhi<0.1200 dR<30.00 dx<7.50 dy<7.50  nHits=25
+findFttHitsNearProjectedState, msp = (46.033217, -9.963783)
+AAA FTT hit H pos=( 35.576+/-4.33,  32.924+/-0.01)  dx=10.458 dy=42.888 dR= 1.374 dPhi=0.9599 (tid=63)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 39.982+/-4.33,  34.632+/-0.01)  dx= 6.052 dy=44.596 dR= 5.796 dPhi=0.9270 (tid=64)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 42.808+/-0.01,  27.183+/-4.33)  dx= 3.225 dy=37.146 dR= 3.610 dPhi=0.7789 (tid=63)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 41.522+/-0.01,  28.186+/-4.33)  dx= 4.511 dy=38.150 dR= 3.086 dPhi=0.8095 (tid=64)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-53.616+/-4.33, -20.413+/-0.01)  dx=99.650 dy=10.449 dR=10.272 dPhi=2.5647 (tid=2)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-33.557+/-4.33, -19.395+/-0.01)  dx=79.591 dy= 9.431 dR= 8.340 dPhi=2.4044 (tid=18)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-54.919+/-0.01, -23.971+/-4.33)  dx=100.952 dy=14.007 dR=12.823 dPhi=2.5169 (tid=2)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-54.924+/-0.01, -22.341+/-4.33)  dx=100.957 dy=12.377 dR=12.194 dPhi=2.5421 (tid=32)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-35.531+/-0.01, -13.037+/-4.33)  dx=81.564 dy= 3.073 dR= 9.252 dPhi=2.5768 (tid=18)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-15.447+/-4.33,  -6.451+/-0.01)  dx=61.481 dy= 3.513 dR=30.359 dPhi=2.5329 (tid=38)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit H pos=( -2.510+/-4.33,  -5.475+/-0.01)  dx=48.543 dy= 4.489 dR=41.076 dPhi=1.7875 (tid=39)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit V pos=(-10.418+/-0.01,  -9.794+/-4.33)  dx=56.451 dy= 0.170 dR=32.801 dPhi=2.1739 (tid=38)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit V pos=( -9.949+/-0.01, -10.229+/-4.33)  dx=55.982 dy= 0.265 dR=32.830 dPhi=2.1292 (tid=39)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit H pos=(-12.454+/-4.33, -15.640+/-0.01)  dx=58.487 dy= 5.676 dR=27.107 dPhi=2.0301 (tid=15)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( -5.548+/-4.33, -15.620+/-0.01)  dx=51.582 dy= 5.656 dR=30.523 dPhi=1.6989 (tid=76)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit V pos=(-11.646+/-0.01, -22.770+/-4.33)  dx=57.680 dy=12.806 dR=21.524 dPhi=1.8304 (tid=15)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-11.009+/-0.01, -12.223+/-4.33)  dx=57.042 dy= 2.259 dR=30.649 dPhi=2.0908 (tid=76)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit H pos=( 41.420+/-4.33,   3.401+/-0.01)  dx= 4.613 dy=13.364 dR= 5.540 dPhi=0.2951 (tid=3)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(50.622692+/-4.330127, -10.366666+/-0.010000) => dx=4.589476, dy=0.402883, dR=4.574056, dPhi=0.011169 (tid=10), strip=horizontal
+AAA FTT hit H pos=( 50.623+/-4.33, -10.367+/-0.01)  dx= 4.589 dy= 0.403 dR= 4.574 dPhi=0.0112 (tid=10)  dPhi:OK dR:OK XY:OK
+AAA FTT hit H pos=( 59.244+/-4.33,   0.888+/-0.01)  dx=13.210 dy=10.852 dR=12.151 dPhi=0.2281 (tid=59)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(42.318111+/-4.330127, -5.520391+/-0.010000) => dx=3.715105, dy=4.443393, dR=4.422534, dPhi=0.083442 (tid=16), strip=horizontal
+AAA FTT hit H pos=( 42.318+/-4.33,  -5.520+/-0.01)  dx= 3.715 dy= 4.443 dR= 4.423 dPhi=0.0834 (tid=16)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 38.993+/-0.01,   0.957+/-4.33)  dx= 7.040 dy=10.921 dR= 8.094 dPhi=0.2377 (tid=3)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(46.792042+/-0.010000, -6.899229+/-4.330127) => dx=0.758825, dy=3.064555, dR=0.198740, dPhi=0.066770 (tid=10), strip=vertical
+AAA FTT hit V pos=( 46.792+/-0.01,  -6.899+/-4.33)  dx= 0.759 dy= 3.065 dR= 0.199 dPhi=0.0668 (tid=10)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 64.553+/-0.01,   1.247+/-4.33)  dx=18.520 dy=11.210 dR=17.466 dPhi=0.2325 (tid=59)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 36.566+/-0.01,  -2.508+/-4.33)  dx= 9.467 dy= 7.456 dR=10.447 dPhi=0.1447 (tid=16)  dPhi:FAIL dR:OK XY:OK
+StFwdTrackMaker:INFO  - Adding horizontal strip hit with dPhi = 0.0111691, dR = 4.57406, dx = 4.58948, dy = 0.402883
+StFwdTrackMaker:INFO  - Adding vertical strip hit with dPhi = 0.0667697, dR = 0.19874, dx = 0.758825, dy = 3.06455
+StFwdTrackMaker:INFO  - Closest horizontal FTT strip to FST state: dR=4.574056, dPhi=0.011169, dx=4.589476, dy=0.402883 (tid=10) 
+AAA FTT closest-H dPhi=0.0112(<0.1200) dR= 4.574(< 30.0) dx= 4.589 dy= 0.403(< 7.50) tid=10 -> ACCEPT
+StFwdTrackMaker:INFO  - Closest vertical FTT strip to FST state: dR=0.198740, dPhi=0.066770, dx=0.758825, dy=3.064555 (tid=10) 
+AAA FTT closest-V dPhi=0.0668(<0.1200) dR= 0.199(< 30.0) dx= 0.759 dy= 3.065(< 7.50) tid=10 -> ACCEPT
+AAA FTT result: 2 hits added (H:ACCEPT V:ACCEPT)
+StFwdTrackMaker:INFO  -  Found #FTT strips on plane #2 = [2]
+StFwdTrackMaker:INFO  - Found 8 existing seed points
+StFwdTrackMaker:INFO  - Adding 2 new FTT seed points
+StFwdTrackMaker:INFO  - Looking for FTT strips near projected state on disk 3
+StFwdTrackMaker:INFO  - There are 23 available FTT strips on this disk
+AAA FTT proj z= 364.81  x= 48.402 y=-10.534  r= 49.535 phi=-0.2143  sigU= 0.291 sigV= 0.010
+AAA FTT momentum at proj: pT= 0.650 eta= 2.695 phi=-0.2335  px=  0.633 py= -0.150 pz=  4.791
+AAA FTT search thresholds: dPhi<0.1200 dR<30.00 dx<7.50 dy<7.50  nHits=23
+findFttHitsNearProjectedState, msp = (48.401518, -10.533916)
+AAA FTT hit H pos=( 40.776+/-4.33,  34.190+/-0.01)  dx= 7.625 dy=44.724 dR= 3.679 dPhi=0.9121 (tid=63)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 40.268+/-4.33,  38.293+/-0.01)  dx= 8.134 dy=48.827 dR= 6.034 dPhi=0.9746 (tid=64)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 45.530+/-0.01,  37.211+/-4.33)  dx= 2.871 dy=47.745 dR= 9.267 dPhi=0.8995 (tid=63)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 42.594+/-0.01,  41.975+/-4.33)  dx= 5.808 dy=52.509 dR=10.267 dPhi=0.9924 (tid=64)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-61.619+/-4.33, -21.469+/-0.01)  dx=110.021 dy=10.935 dR=15.718 dPhi=2.5920 (tid=2)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-33.625+/-4.33, -20.462+/-0.01)  dx=82.027 dy= 9.928 dR=10.173 dPhi=2.3806 (tid=18)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-57.799+/-0.01, -16.266+/-4.33)  dx=106.200 dy= 5.732 dR=10.510 dPhi=2.6530 (tid=2)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-37.340+/-0.01, -20.157+/-4.33)  dx=85.741 dy= 9.623 dR= 7.102 dPhi=2.4323 (tid=18)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-63.785+/-4.33, -11.945+/-0.01)  dx=112.186 dy= 1.411 dR=15.359 dPhi=2.7422 (tid=32)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( -4.547+/-4.33,  -6.789+/-0.01)  dx=52.948 dy= 3.745 dR=41.364 dPhi=1.9466 (tid=38)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit H pos=(-11.175+/-4.33,  -5.812+/-0.01)  dx=59.576 dy= 4.722 dR=36.939 dPhi=2.4477 (tid=39)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit V pos=(-62.417+/-0.01,  -8.634+/-4.33)  dx=110.819 dy= 1.900 dR=13.477 dPhi=2.7898 (tid=32)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-10.942+/-0.01,  -0.116+/-4.33)  dx=59.343 dy=10.418 dR=38.592 dPhi=2.9167 (tid=38)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-10.503+/-0.01,  -4.303+/-4.33)  dx=58.904 dy= 6.231 dR=38.185 dPhi=2.5385 (tid=39)  dPhi:FAIL dR:FAIL XY:OK
+AAA FTT hit H pos=(-15.597+/-4.33, -16.466+/-0.01)  dx=63.998 dy= 5.932 dR=26.854 dPhi=2.1148 (tid=15)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-12.264+/-0.01, -22.376+/-4.33)  dx=60.665 dy=11.842 dR=24.018 dPhi=1.8579 (tid=15)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.438+/-4.33,   3.581+/-0.01)  dx=10.963 dy=14.115 dR=11.926 dPhi=0.3096 (tid=3)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(49.625034+/-4.330127, -10.987667+/-0.010000) => dx=1.223516, dy=0.453751, dR=1.292354, dPhi=0.003604 (tid=10), strip=horizontal
+AAA FTT hit H pos=( 49.625+/-4.33, -10.988+/-0.01)  dx= 1.224 dy= 0.454 dR= 1.292 dPhi=0.0036 (tid=10)  dPhi:OK dR:OK XY:OK
+AAA FTT hit H pos=( 64.224+/-4.33,   0.116+/-0.01)  dx=15.822 dy=10.649 dR=14.689 dPhi=0.2161 (tid=59)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(42.032780+/-4.330127, -6.032267+/-0.010000) => dx=6.368739, dy=4.501649, dR=7.071108, dPhi=0.071754 (tid=16), strip=horizontal
+AAA FTT hit H pos=( 42.033+/-4.33,  -6.032+/-0.01)  dx= 6.369 dy= 4.502 dR= 7.071 dPhi=0.0718 (tid=16)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 41.055+/-0.01,  -3.865+/-4.33)  dx= 7.347 dy= 6.669 dR= 8.298 dPhi=0.1204 (tid=3)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(49.239029+/-0.010000, -8.818730+/-4.330127) => dx=0.837511, dy=1.715186, dR=0.487978, dPhi=0.037073 (tid=10), strip=vertical
+AAA FTT hit V pos=( 49.239+/-0.01,  -8.819+/-4.33)  dx= 0.838 dy= 1.715 dR= 0.488 dPhi=0.0371 (tid=10)  dPhi:OK dR:OK XY:OK
+	 vs. hit@(38.462723+/-0.010000, -10.356849+/-4.330127) => dx=9.938796, dy=0.177068, dR=9.701820, dPhi=0.048737 (tid=16), strip=vertical
+AAA FTT hit V pos=( 38.463+/-0.01, -10.357+/-4.33)  dx= 9.939 dy= 0.177 dR= 9.702 dPhi=0.0487 (tid=16)  dPhi:OK dR:OK XY:OK
+StFwdTrackMaker:INFO  - Adding horizontal strip hit with dPhi = 0.00360403, dR = 1.29235, dx = 1.22352, dy = 0.453751
+StFwdTrackMaker:INFO  - Adding vertical strip hit with dPhi = 0.0370729, dR = 0.487978, dx = 0.837511, dy = 1.71519
+StFwdTrackMaker:INFO  - Closest horizontal FTT strip to FST state: dR=1.292354, dPhi=0.003604, dx=1.223516, dy=0.453751 (tid=10) 
+AAA FTT closest-H dPhi=0.0036(<0.1200) dR= 1.292(< 30.0) dx= 1.224 dy= 0.454(< 7.50) tid=10 -> ACCEPT
+StFwdTrackMaker:INFO  - Closest vertical FTT strip to FST state: dR=0.487978, dPhi=0.037073, dx=0.837511, dy=1.715186 (tid=10) 
+AAA FTT closest-V dPhi=0.0371(<0.1200) dR= 0.488(< 30.0) dx= 0.838 dy= 1.715(< 7.50) tid=10 -> ACCEPT
+AAA FTT result: 2 hits added (H:ACCEPT V:ACCEPT)
+StFwdTrackMaker:INFO  -  Found #FTT strips on plane #3 = [2]
+StFwdTrackMaker:INFO  - Found 10 existing seed points
+StFwdTrackMaker:INFO  - Adding 2 new FTT seed points
+StFwdTrackMaker:INFO  - Closest EPD hit to state: dR=8.232029, dPhi=-0.083879, dx=-7.427315, dy=5.280496
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 10, QaTruth = 0.916667
+The points are collinear, curvature is undefined.
+p1 = 0, 0
+p2 = 21.1287, -3.97858
+p3 = 21.1287, -3.97858
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 24.0581, -4.63218
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 45.2961, -9.17053
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 42.2456, -12.9275
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 46.6071, -9.8011
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 44.6843, -14.0571
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 50.6227, -10.3667
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 46.792, -6.89923
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 49.625, -10.9877
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 49.239, -8.81873
+The points are collinear, curvature is undefined.
+p1 = 21.1287, -3.97858
+p2 = 21.1287, -3.97858
+p3 = 42.3198, -5.57151
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::Curvature: -0.0189617
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::pt = 0.0790515
+StFwdTrackMaker:INFO  - Note: Using externally provided seed momentum
+StFwdTrackMaker:INFO  - Track Setup complete, track has 13 points
+StFwdTrackMaker:INFO  -  sorting changed track points: 1
+StFwdTrackMaker:INFO  - Fit status:  1
+StFwdTrackMaker:INFO  - -Fit pvalue: 4.16125e-05
+StFwdTrackMaker:INFO  - -Fit Chi2:   56.569
+StFwdTrackMaker:INFO  - -Fit Chi2:   56.569
+StFwdTrackMaker:INFO  - Track fit charge: 1Fit momentum: 0.529866, -0.0828873, 3.88066
+StFwdTrackMaker:INFO  - 	Fit Pt: 0.53631, eta: 2.67694, phi: -0.155173
+StFwdTrackMaker:INFO  - Track fit update complete!
+StFwdTrackMaker:INFO  - Track Reps: 1
+StFwdTrackMaker:INFO  - Track Rep 0 
+genfit::AbsTrackRep, pdgCode = -211. PropDir = 0
+fitStatus 
+ track has been fitted, fit has converged fully, 0 TrackPoints could not be processed, fitted charge = 1, PruneFlags: 
+ track has been fitted with reference track, numIterations = 4, track length = 368.903, fChi2 = 56.569, bChi2 = 56.569, fNdf = 21, bNdf = 21, fPVal = 4.16125e-05, bPVal = 4.16125e-05
+
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 10, QaTruth = 0.916667
+StFwdTrackMaker:INFO  - GTR Setting momentum from track
+StFwdTrackMaker:INFO  - --isFitConvergedPartially() = 1
+StFwdTrackMaker:INFO  - --isFitConverged() = 1
+StFwdTrackMaker:INFO  - --isFitConvergedFully() = 1
+StFwdTrackMaker:INFO  - Refitting Track 5, McId=16 with Primary Vertex, seed already has: 3 hits
+StFwdTrackMaker:INFO  - mEventVertexHit: 0, 0, 0
+StFwdTrackMaker:INFO  - This fit is for a global that converged? = 1
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 16, QaTruth = 0.666667
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::Curvature: -0.0499732
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::pt = 0.0299951
+StFwdTrackMaker:INFO  - Note: Using externally provided seed momentum
+StFwdTrackMaker:INFO  - Note: Using externally provided seed charge = -1
+StFwdTrackMaker:INFO  - Track Setup complete, track has 4 points
+StFwdTrackMaker:INFO  -  sorting changed track points: 0
+StFwdTrackMaker:INFO  - Fit status:  1
+StFwdTrackMaker:INFO  - -Fit pvalue: 4.12534e-23
+StFwdTrackMaker:INFO  - -Fit Chi2:   107.327
+StFwdTrackMaker:INFO  - -Fit Chi2:   107.327
+StFwdTrackMaker:INFO  - Track fit charge: -1Fit momentum: -0.00207288, -0.000859565, 0.0429147
+StFwdTrackMaker:INFO  - 	Fit Pt: 0.00224404, eta: 3.64477, phi: -2.7485
+StFwdTrackMaker:INFO  - Track fit update complete!
+StFwdTrackMaker:INFO  - Track Reps: 1
+StFwdTrackMaker:INFO  - Track Rep 0 
+genfit::AbsTrackRep, pdgCode = -211. PropDir = 0
+fitStatus 
+ track has been fitted, fit has converged fully, 0 TrackPoints could not be processed, fitted charge = -1, PruneFlags: 
+ track has been fitted with reference track, numIterations = 5, track length = 179.375, fChi2 = 107.327, bChi2 = 107.327, fNdf = 3, bNdf = 3, fPVal = 4.12534e-23, bPVal = 4.12534e-23
+
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 16, QaTruth = 0.666667
+StFwdTrackMaker:INFO  - GTR Setting momentum from track
+StFwdTrackMaker:INFO  - --isFitConvergedPartially() = 1
+StFwdTrackMaker:INFO  - --isFitConverged() = 1
+StFwdTrackMaker:INFO  - --isFitConvergedFully() = 1
+StFwdTrackMaker:INFO  - 	Initial fit complete, now refitting with additional points
+StFwdTrackMaker:WARN  - addFttHits: skipping blown-up state pT=0.00224404
+StFwdTrackMaker:WARN  - addFttHits: skipping blown-up state pT=0.00224404
+StFwdTrackMaker:WARN  - addFttHits: skipping blown-up state pT=0.00224404
+StFwdTrackMaker:WARN  - addFttHits: skipping blown-up state pT=0.00224404
+StFwdTrackMaker:WARN  - addEpdHits: skipping blown-up state pT=0.00224404
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 16, QaTruth = 0.666667
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::Curvature: -0.0499732
+StFwdTrackMaker:INFO  - GenericFitSeeder::makeSeed::pt = 0.0299951
+StFwdTrackMaker:INFO  - Note: Using externally provided seed momentum
+StFwdTrackMaker:INFO  - Track Setup complete, track has 4 points
+StFwdTrackMaker:INFO  -  sorting changed track points: 0
+StFwdTrackMaker:INFO  - Fit status:  1
+StFwdTrackMaker:INFO  - -Fit pvalue: 4.12943e-23
+StFwdTrackMaker:INFO  - -Fit Chi2:   107.325
+StFwdTrackMaker:INFO  - -Fit Chi2:   107.325
+StFwdTrackMaker:INFO  - Track fit charge: -1Fit momentum: -0.00206558, -0.000858075, 0.0429311
+StFwdTrackMaker:INFO  - 	Fit Pt: 0.00223672, eta: 3.64841, phi: -2.74787
+StFwdTrackMaker:INFO  - Track fit update complete!
+StFwdTrackMaker:INFO  - Track Reps: 1
+StFwdTrackMaker:INFO  - Track Rep 0 
+genfit::AbsTrackRep, pdgCode = -211. PropDir = 0
+fitStatus 
+ track has been fitted, fit has converged fully, 0 TrackPoints could not be processed, fitted charge = -1, PruneFlags: 
+ track has been fitted with reference track, numIterations = 2, track length = 179.373, fChi2 = 107.325, bChi2 = 107.325, fNdf = 3, bNdf = 3, fPVal = 4.12943e-23, bPVal = 4.12943e-23
+
+StFwdTrackMaker:INFO  - GenFitTrackResult::mIdTruth = 16, QaTruth = 0.666667
+StFwdTrackMaker:INFO  - GTR Setting momentum from track
+StFwdTrackMaker:INFO  - --isFitConvergedPartially() = 1
+StFwdTrackMaker:INFO  - --isFitConverged() = 1
+StFwdTrackMaker:INFO  - --isFitConvergedFully() = 1
+StFwdTrackMaker:INFO  - >>doSecondaryTrackFitting( #globals = 6 )
+StFwdTrackMaker:INFO  - <<Fwd Tracking Fit :27 GenFit Tracks
+StFwdTrackMaker:INFO  - Creating the StFwdTrackCollection
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=0): 0 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=3
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(76.4052,-0.901188,723.385)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(84.6812,-0.602236,805.727)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=0): 1 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=3
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-70.7108,-29.0109,723.557)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-78.2156,-32.5189,805.922)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=0): 2 mIsFitConverged=0, mIsFitConvergedPartially=0, mNumFitPoints=0
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=0): 3 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=3
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-5.62627,-7.66013,725.522)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-5.58238,-7.69448,808.116)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=0): 4 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=3
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(73.7365,-23.9634,723.465)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(81.4354,-25.8208,805.825)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=0): 5 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=3
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(28.9908,-39.602,724.817)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(31.5742,-50.6459,807.331)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=2): 6 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=12
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine result: tv3=(-nan,-nan,-nan)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 0.194555 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine result: tv3=(-nan,-nan,-nan)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=2): 7 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-73.7985,-41.0234,723.463)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-82.1772,-45.7231,805.802)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=2): 8 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=4
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-0.0425066,-0.175501,725.694)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-0.04399,-0.201579,808.286)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=2): 9 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-24.1603,-32.8471,724.963)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-26.8963,-36.5935,807.472)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=2): 10 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(97.1753,-22.3743,722.757)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(108.218,-24.9755,805.016)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=2): 11 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=4
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-11.1408,-3.85915,725.356)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-13.8492,-4.85395,807.866)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=1): 12 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=12
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine result: tv3=(-nan,-nan,-nan)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 3.45137 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine result: tv3=(-nan,-nan,-nan)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=1): 13 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-73.7904,-40.9044,723.464)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-82.1723,-45.5726,805.802)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=1): 14 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=12
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-30.4044,-20.0932,724.774)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-33.8818,-22.236,807.261)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=1): 15 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-24.2281,-33.005,724.961)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-26.9714,-36.7405,807.47)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=1): 16 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(129.109,-96.3364,721.793)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(143.65,-108.68,803.946)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=1): 17 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(77.8754,-13.6694,723.34)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(86.8249,-15.385,805.662)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=4): 18 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=14
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine result: tv3=(-nan,-nan,-nan)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+StFwdTrackMaker:INFO  - Track projection Failed from trackPoint 0 E: genfit::Exception thrown with excString:
+RKTrackRep::RKutta ==> momentum too low: 1.50874 MeV
+in line: 1844 in file: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/var/spack/stage/smirnovd/spack-stage-genfit-b496504a-mlcdbxg7bmdsbfrppi7qmzppfw4lh52r/spack-src/trackReps/src/RKTrackRep.cc
+with fatal flag 0
+
+AAA FCS StraightLine result: tv3=(-nan,-nan,-nan)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=4): 19 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=14
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-73.8629,-41.0536,723.461)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-82.2563,-45.7586,805.8)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=4): 20 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-43.2895,-87.9834,724.385)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-48.3817,-98.4082,806.823)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=4): 21 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=15
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-24.046,-32.7195,724.966)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-26.7587,-36.4373,807.476)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=4): 22 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=15
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(113.825,-22.8162,722.254)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(127,-25.5933,804.448)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=4): 23 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=14
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(77.8846,-13.4576,723.34)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(86.8417,-15.126,805.661)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=5): 24 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=15
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-73.8014,-40.9713,723.463)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-82.1886,-45.6664,805.802)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=5): 25 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=16
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.153) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-24.1606,-32.8632,724.963)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0397,1.8,807.619) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-26.8973,-36.6122,807.472)
+StFwdTrackMaker:INFO  - Processing GenfitTrackResult(type=5): 26 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=15
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.153) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(76.7068,-12.9592,723.376)
+AAA FCS StraightLine: det=3 xyzdet=(22.0397,1.8,807.619) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(85.5062,-14.558,805.702)
+StFwdTrackMaker:INFO  - StFwdTrackCollection has 27 tracks now
+StFwdTrackMaker:INFO  - StFwdTrackCollection has 27 tracks now
+StFwdTrackMaker:INFO  - *** StFwdTrackMaker::Make() == StOK(0) ***
+StFcsTrackMatchMaker:INFO  - *** StFcsTrackMatchMaker::Make() == StOK(0) ***
+StStrangeMuDstMaker:INFO  - StV0Controller: found 0 V0 candidates
+StStrangeMuDstMaker:INFO  - StXiController: found 0 Xi candidates
+StStrangeMuDstMaker:INFO  - StKinkController: found 0 Kink candidates
+StStrangeMuDstMaker:INFO  - *** StStrangeMuDstMaker::Make() == StOK(0) ***
+StMuDstMaker:INFO  - fillMuFtt
+StMuDstMaker:INFO  - fillMuFttRawHits
+StMuDstMaker:INFO  - fillMuFttPoints
+StMuDstMaker:INFO  - fillMuFttClusters
+StMuDstMaker:INFO  - StMuDstMaker::fillFwdTrack(StEvent* ev)
+StMuDstMaker:INFO  - StMuDSTMaker filling StMuFwdTrackCollection from StEvent
+StMuDstMaker:INFO  - Adding 27 StMuFwdTracks to MuDSt
+StMuDstMaker:INFO  - *** StMuDstMaker::Make() == StOK(0) ***
+StFwdResidualMaker:INFO  - *** StFwdResidualMaker::Make() == StOK(0) ***
+StTreeMaker:INFO  - *** StTreeMaker::Make() == StOK(0) ***
+StPicoDstMaker:WARN  - No trigger data bank available!
+StPicoDstMaker:INFO  - StPicoDstMaker::fillFcsHits filled 298
+StPicoDstMaker:INFO  - StPicoDstMaker::fillFcsClusters filled 48
+StPicoDstMaker:INFO  - *** StPicoDstMaker::Make() == StOK(0) ***
+MEM after Chain::Clear + Make	 total =823.203125 heap =231.372589 and   4.521851( -1.032379)
+<---------- END EVENT
+--------->START EVENT: 200
+MEM before Chain::Clear + Make	 total =823.203125 heap =231.372787 and   4.521683( +0.000198)
+
+ FZIDIA.  LUN=  21  Attempt to read beyond E-o-D
+ *****  RZMAKE. OLD RZ format selected for RZDOC               
+ ***** event loop ends because the IQUEST flag set by program is      6
+
+St_geant_Maker:INFO  - *** St_geant_Maker::Make() == StEOF(2) ***
+BFC:INFO  - StFwdResidualMaker: 1166 Global tracks, 2916 FST residuals, 2188 FTT residuals
+BFC:INFO  - StFwdResidualMaker: wrote pythia.JPsi.vz0.run1.FwdDetResidual_Global.root
+MEM after event loop	 total =823.203125 heap =223.977753 and  11.908966( -7.395035)
+MEM after delete chain	 total =823.203125 heap =223.978088 and  11.908630( +0.000336)
+QA :INFO  - =================================================================================
+QA :INFO  - QAInfo:Chain            StBFChain::bfc                  Ast =369.46        Cpu =288.20 
+QA :INFO  - QAInfo:Maker       StPicoDstMaker::PicoDst              Ast =  1.06( 0.3%) Cpu =  0.86( 0.3%) 
+QA :INFO  - QAInfo:Maker          StTreeMaker::outputStream         Ast =  0.20( 0.1%) Cpu =  0.05( 0.0%) 
+QA :INFO  - QAInfo:Maker   StFwdResidualMaker::fwdResidual          Ast =  0.17( 0.0%) Cpu =  0.16( 0.1%) 
+QA :INFO  - QAInfo:Maker         StMuDstMaker::MuDst                Ast = 12.18( 3.3%) Cpu = 10.41( 3.6%) 
+QA :INFO  - QAInfo:Maker  StStrangeMuDstMaker::strangeMuDst         Ast =  0.38( 0.1%) Cpu =  0.34( 0.1%) 
+QA :INFO  - QAInfo:Maker StFcsTrackMatchMaker::FcsTrkMatch          Ast =  0.12( 0.0%) Cpu =  0.07( 0.0%) 
+QA :INFO  - QAInfo:Maker      StFwdTrackMaker::fwdTrack             Ast =311.24(84.2%) Cpu =264.09(91.6%) 
+QA :INFO  - QAInfo:Maker StFttClusterPointMaker::fttClusterPointMaker Ast =  0.22( 0.1%) Cpu =  0.21( 0.1%) 
+QA :INFO  - QAInfo:Maker    StFcsClusterMaker::StFcsClusterMaker    Ast =  1.21( 0.3%) Cpu =  0.97( 0.3%) 
+QA :INFO  - QAInfo:Maker StFcsWaveformFitMaker::StFcsWaveformFitMaker Ast =  0.03( 0.0%) Cpu =  0.03( 0.0%) 
+QA :INFO  - QAInfo:Maker StFcsFastSimulatorMaker::fcsSim               Ast =  3.36( 0.9%) Cpu =  2.95( 1.0%) 
+QA :INFO  - QAInfo:Maker       StMcEventMaker::StMcEventMaker       Ast =  1.40( 0.4%) Cpu =  1.37( 0.5%) 
+QA :INFO  - QAInfo:Maker         StEventMaker::0Event               Ast =  0.56( 0.2%) Cpu =  0.29( 0.1%) 
+QA :INFO  - QAInfo:Maker         StFcsDbMaker::fcsDbMkr             Ast =  0.00( 0.0%) Cpu =  0.01( 0.0%) 
+QA :INFO  - QAInfo:Maker         StTpcDbMaker::tpcDB                Ast =  0.70( 0.2%) Cpu =  0.06( 0.0%) 
+QA :INFO  - QAInfo:Maker    StDetectorDbMaker::detDb                Ast =  0.00( 0.0%) Cpu =  0.00( 0.0%) 
+QA :INFO  - QAInfo:Maker          StMagFMaker::MagField             Ast =  0.00( 0.0%) Cpu =  0.01( 0.0%) 
+QA :INFO  - QAInfo:Maker          St_db_Maker::db                   Ast = 22.95( 6.2%) Cpu =  0.73( 0.3%) 
+QA :INFO  - QAInfo:Maker       St_geant_Maker::geant                Ast = 13.67( 3.7%) Cpu =  5.59( 1.9%) 
+StTreeMaker:INFO  - StFttClusterPointMaker::StMaker::Init : GetCVS is not overloaded
+  Please add into file /direct/star+u/akio/fcstrk11/star-sw-fwd/.sl73_x8664_gcc485/obj/StRoot/StFttClusterPointMaker/StFttClusterPointMaker.h the following line: 
+  virtual const char *GetCVS() const
+  {static const char cvs[]="Tag $Name:$ $Id:$ built "__DATE__" " __TIME__ ; return cvs;}
+
+StTreeMaker:INFO  - StFwdTrackMaker::StMaker::Init : GetCVS is not overloaded
+  Please add into file /direct/star+u/akio/fcstrk11/star-sw-fwd/.sl73_x8664_gcc485/obj/StRoot/StFwdTrackMaker/StFwdTrackMaker.h the following line: 
+  virtual const char *GetCVS() const
+  {static const char cvs[]="Tag $Name:$ $Id:$ built "__DATE__" " __TIME__ ; return cvs;}
+
+StTreeMaker:INFO  - StFwdResidualMaker::StMaker::Init : GetCVS is not overloaded
+  Please add into file /direct/star+u/akio/fcstrk11/star-sw-fwd/.sl73_x8664_gcc485/obj/StRoot/StFwdResidualMaker/StFwdResidualMaker.h the following line: 
+  virtual const char *GetCVS() const
+  {static const char cvs[]="Tag $Name:$ $Id:$ built "__DATE__" " __TIME__ ; return cvs;}
+
+StTreeMaker:INFO  - StFttClusterPointMaker::StMaker::Init : GetCVS is not overloaded
+  Please add into file /direct/star+u/akio/fcstrk11/star-sw-fwd/.sl73_x8664_gcc485/obj/StRoot/StFttClusterPointMaker/StFttClusterPointMaker.h the following line: 
+  virtual const char *GetCVS() const
+  {static const char cvs[]="Tag $Name:$ $Id:$ built "__DATE__" " __TIME__ ; return cvs;}
+
+StTreeMaker:INFO  - StFwdTrackMaker::StMaker::Init : GetCVS is not overloaded
+  Please add into file /direct/star+u/akio/fcstrk11/star-sw-fwd/.sl73_x8664_gcc485/obj/StRoot/StFwdTrackMaker/StFwdTrackMaker.h the following line: 
+  virtual const char *GetCVS() const
+  {static const char cvs[]="Tag $Name:$ $Id:$ built "__DATE__" " __TIME__ ; return cvs;}
+
+StTreeMaker:INFO  - StFwdResidualMaker::StMaker::Init : GetCVS is not overloaded
+  Please add into file /direct/star+u/akio/fcstrk11/star-sw-fwd/.sl73_x8664_gcc485/obj/StRoot/StFwdResidualMaker/StFwdResidualMaker.h the following line: 
+  virtual const char *GetCVS() const
+  {static const char cvs[]="Tag $Name:$ $Id:$ built "__DATE__" " __TIME__ ; return cvs;}
+
+** <StBranch::Close> Branch=runcoBranch 	File=pythia.JPsi.vz0.runco.root 	Closed **
+<StTreeMaker::Finish> outputStream: 200 I/O's
+StMuDstMaker:INFO  -  ##### virtual void StMuDstMaker::closeWrite()
+StMuDstMaker:INFO  -  ##### File=./pythia.MuDst.root  NumberOfEvents= 200  ##### 
+StStrangeMuDstMaker:INFO  - StV0Controller: Total kept: 0 V0 candidates
+StStrangeMuDstMaker:INFO  - StXiController: Total kept: 0 Xi candidates
+StStrangeMuDstMaker:INFO  - StKinkController: Total kept: 0 Kink candidates
+St_db_Maker::Init 
+Real time 0:00:06, CP time 0.230, 3 slices
+      MySQL::Init 
+Real time 0:00:16, CP time 0.450, 2 slices
+St_db_Maker::Make 
+Real time 0:00:00, CP time 0.110, 1234 slices
+      MySQL::Make 
+Real time 0:00:02, CP time 0.080, 812 slices
+      MySQL::Data 
+Real time 0:00:02, CP time 0.080, 29 slices
+St_db_Maker:INFO  - St_db_Maker::dbStat : Evts = 201 dbEvts=1 Evts/dbEvts = 201.0
+
+St_db_Maker:INFO  - St_db_Maker::dbStat : dbData =       0.1 dbTime=1.63315 dbData/dbTime=0.0429796
+
+St_db_Maker:INFO  - St_db_Maker::dbStat : dbTime =       1.6 dbEvts=1 dbTime/dbEvts =1.63315
+
+St_db_Maker:INFO  - St_db_Maker::dbStat : dbCpu  =       0.1 dbEvts=1  dbCpu/dbEvts =0.08
+
+St_db_Maker:INFO  - St_db_Maker::dbStat : dbTime/tot  =      0.56 dbCpu/tot=      0.03 
+
+QA :INFO  - St_geant_Maker summary -QA- total number of active volumes with hits: 18
+QA :INFO  - St_geant_Maker summary -QA- list of volumes with hits: 
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (ALL) nhits = 442346
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (BBCH:BPOL) nhits = 1768
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (BTOH:BRSG) nhits = 6422
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (CALH:CSDA) nhits = 2600
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (CALH:CSUP) nhits = 10669
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (ECAH:EHMS) nhits = 14755
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (ECAH:ESCI) nhits = 34546
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (EPDH:EPDT) nhits = 5429
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (FSTH:FTUS) nhits = 5792
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (HCAH:HSCI) nhits = 21463
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (MUTH:MIGG) nhits = 25
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (STGH:STGL) nhits = 15889
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (STGH:STGP) nhits = 4993
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (STGH:STGS) nhits = 5818
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (TPCH:TPAD) nhits = 236983
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (VPDH:VRAD) nhits = 2345
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (WCAH:WSCI) nhits = 68063
+QA :INFO  - St_geant_Maker summary -QA- g2t hits (ZCAH:QSCI) nhits = 4786
+QA :INFO  - St_geant_Maker summary -QA- energy deposition by container:
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (BBCH) Esum  = 0.00142421
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (BTOH) Esum  = 8.71994e-07
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (CALH) Esum  = 0.043951
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (ECAH) Esum  = 0.0336098
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (EPDH) Esum  = 0.0472324
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (FSTH) Esum  = 0.00493829
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (HCAH) Esum  = 0.367339
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (MUTH) Esum  = 2.36885e-07
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (STGH) Esum  = 6.63658e-05
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (TPCH) Esum  = 2.72971e-05
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (VPDH) Esum  = 0.038578
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (WCAH) Esum  = 12.41
+QA :INFO  - St_geant_Maker summary -QA- g2t Esum (ZCAH) Esum  = 0.00161326
+StChain:INFO  - --------------Error Codes-------------------------
+StChain:INFO  -      nStOK   nStWarn    nStEOF    nStErr  nStFatal
+StChain:INFO  -       3800         0         1         0         0
+StChain:INFO  - --------------------------------------------------
+               StMemStat::Summary(calls)        Min        Aver         Max         RMS 
+=============================================================================================
+
+This is the end of STAR ROOT -- Goodbye
+

@@ -1,0 +1,11 @@
+Executable = /bin/env
+Universe = vanilla
+notification = never
+getenv = True
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runpico_uni pythia.JPsi.vz0 1 0 11 /star/u/akio/fcstrk11/star-sw-fwd /gpfs01/star/pwg_tasks/FwdCalib/akio/pythia.JPsi.vz0"
+Log = /gpfs01/star/pwg_tasks/FwdCalib/akio/pythia.JPsi.vz0/log/pythia.JPsi.vz0.0.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pythia.JPsi.vz0/log/pythia.JPsi.vz0.0.log
+Error = /gpfs01/star/pwg_tasks/FwdCalib/akio/pythia.JPsi.vz0/log/pythia.JPsi.vz0.0.log
+Queue
+

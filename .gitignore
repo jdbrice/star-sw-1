@@ -4,3 +4,72 @@
 .DS_Store
 .vscode/
 StRoot/StBFChain/doc/
+
+# --- build artifacts (akio, 2026-07) ---
+.al96_x8664_gcc11/
+.sl*_gcc*/
+.al*_gcc*/
+.claude/
+*.o
+*.so
+*.d
+
+# --- ROOT / MC / job data ---
+*.root
+*.fzd
+
+# --- generated office docs ---
+*.pdf
+*.pptx
+
+# --- editor backups ---
+\#*#
+*~
+
+# --- scratch symlinks / data areas ---
+DataDisk
+202604
+202606
+pythia
+FwdCalib
+StRoot_StBFChain_doc/
+daqfile
+claude
+
+# --- scratch job/list/output directories ---
+jpsi/
+pythia/
+trackmatch/
+hist_match/
+filelist.old/
+picolist.old/
+picolist/
+picolist_pythia/
+script_old/
+script_test/
+script_test_old/
+
+# --- repeated tarball snapshots of residual/ ---
+residual_2026*.tar.gz
+residual.tar.gz
+
+# --- dropped from snapshot on request (2026-07-09) ---
+answer_barak.txt
+keep/StMuFcsCluster.h
+progress*.txt
+proposal*.txt
+summary_ecalprojection.txt
+bug.txt
+bugreport_StFstHitMaker.txt
+
+# --- misc scratch/regenerable catalogs ---
+mudst_test3.list
+paw.metafile
+runs.txt
+runs2.txt
+runs2.txt.old
+temp_gccflags.c
+mem_log2.txt
+prod_mudst.txt
+picolist_flat.lis
+picolist_gamma.lis

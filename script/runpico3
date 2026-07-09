@@ -1,0 +1,36 @@
+#!/bin/csh
+set run=$1
+set iset=$2
+set option=$3
+set dir=$4
+set outdir=$5
+
+set tmpdir=$SCRATCH/$run.$iset
+
+if ( ! -e $tmpdir ) then
+  mkdir -p $tmpdir
+endif
+cd $tmpdir
+
+if ( ! -e picolist ) then
+  ln -sf $dir/picolist
+endif
+if ( ! -e hist_match ) then
+  mkdir hist_match
+endif
+if ( ! -e hist_dilep ) then
+  mkdir hist_dilep
+endif
+
+/bin/cp $dir/pico3.C .
+/bin/cp $dir/readpico3.C .
+/bin/cp $dir/picoMatch.C .
+/bin/cp $dir/picoDilepton.C .
+
+pwd
+ls
+
+root -b -q 'pico3.C(0,'$option','$run','$iset')'
+
+/bin/mv hist_match/$run.$iset.match.root $outdir/hist_match/
+/bin/mv hist_dilep/$run.$iset.dilep.root $outdir/hist_dilep/

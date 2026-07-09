@@ -1,0 +1,429 @@
+
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; Linux 2.0.32 i686) [Netscape]">
+   <TITLE> OGAWA Akio Home page </TITLE>
+<header>
+  <!-- Changed by: Akio Ogawa, 02-Jul-2026 -->
+</header>
+
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+<BODY>
+
+  <tr>
+    <td colspan=2 align=right> <font size="-1">
+            <script language="JavaScript">
+            <!-- Hide script from old browsers
+             document.write("Last modified "+ document.lastModified)
+             // end of script --></script></font></td>
+  </tr>
+
+<p><a href="../biased/index.html">&larr; back to biased-residual index</a> | <a href="../index.html">main residual index</a></p>
+<H1>FST/FTT Tracking-Detector Alignment Residuals &mdash; Real Data (afterburner)</H1>
+<HR>
+
+<ul>
+  <li>Code : StRoot/StFwdResidualMaker
+  <li>Macro : <a href="../../StRoot/StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C">macro/mudst/fwd_afterburner_db.C</a> (reads an existing production MuDst, reruns FST/FTT/FCS reconstruction and forward tracking in memory)
+  <li>Plot macro : <a href="../../script/plotFwdResidual.C">script/plotFwdResidual.C</a>
+  <li>Sample : <code>st_fwd_23081015_raw_6000057.MuDst.root</code>, 1500 events, ~15940 tracks per type (Global 15941/BLC 15940/BLCVtx 15940)
+  <li>Method : same as the <a href="../pythia/index.html">Pythia MC page</a> &mdash; per-plane residual between the hit used in the fit and the track's fitted projection at that z (pulled toward the hit; misalignments underestimated)
+  <li>Residual axis range : FST &plusmn;1&nbsp;cm, FTT &plusmn;2.5&nbsp;cm (FST RMS 0.03&ndash;0.05&nbsp;cm, FTT RMS 0.6&ndash;1.2&nbsp;cm)
+  <li>Jump to: <a href="#usage">Plane Usage</a> &nbsp;|&nbsp; <a href="#global">Global</a> &nbsp;|&nbsp; <a href="#blc">BLC</a> &nbsp;|&nbsp; <a href="#blcvtx">BLCVtx</a> &nbsp;|&nbsp; <a href="../summary.html">Outlier summary (all sets)</a>
+  <li>Unbiased (hit-removed) residuals from StFwdAlignmentMaker are the current main analysis &mdash; see <a href="../../index.html">residual/index.html</a>
+</ul>
+
+<a name="mudst-source">
+<hr>
+<H3>Fixed: FST "disk0 bucketing" bug</H3>
+<ul>
+  <li>Every real-data run used to show 100% of FST hits landing in "disk0" regardless of the physical disk crossed. Root cause/fix: <a href="../../debug/index.html#residual-mudst-source">debug/index.html Issue #27</a> &mdash; <code>StFwdResidualMaker</code> was reading a stale, on-disk <code>muDst-&gt;muFwdTrackCollection()</code> instead of this session's freshly-refit tracks. Now reads <code>StEvent::fwdTrackCollection()</code> directly (with a <code>setUseMuDst(true)</code> fallback for standalone MuDst analysis).
+  <li>Result: FST disk usage went from 100%/0%/0% to 100%/100%/100%, and FST residual RMS is now 0.03&ndash;0.05&nbsp;cm per disk instead of meaningless.
+</ul>
+
+<a name="usage">
+<hr>
+<H3>Plane / Vertex Usage Fraction</H3>
+<p>Fraction of tracks (of each type) with a hit on each plane. Denominator = AllTrk bin (all tracks of that type passing basic quality cuts).</p>
+<table border=1>
+  <tr><td>All types overlaid</td>
+    <td><a href="planeUsage_All.png"><img src="planeUsage_All.png" height=260></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>Global</td><td>BLC</td><td>Primary</td></tr>
+  <tr>
+    <td><a href="planeUsage_Global.png"><img src="planeUsage_Global.png" height=200></a></td>
+    <td><a href="planeUsage_BLC.png"><img src="planeUsage_BLC.png" height=200></a></td>
+    <td><a href="planeUsage_Primary.png"><img src="planeUsage_Primary.png" height=200></a></td>
+  </tr>
+  <tr><td>FwdVtx</td><td>BLCVtx</td><td>FCSConstrained</td></tr>
+  <tr>
+    <td><a href="planeUsage_FwdVtx.png"><img src="planeUsage_FwdVtx.png" height=200></a></td>
+    <td><a href="planeUsage_BLCVtx.png"><img src="planeUsage_BLCVtx.png" height=200></a></td>
+    <td><a href="planeUsage_FCSConstrained.png"><img src="planeUsage_FCSConstrained.png" height=200></a></td>
+  </tr>
+</table>
+
+<a name="global">
+<hr>
+<H2>Global tracks</H2>
+
+<a name="fst">
+<H3>FST Residual (r&middot;&Delta;&phi;), Global tracks</H3>
+<table border=1>
+  <tr><td>Disk1</td><td>Disk2</td><td>Disk3</td></tr>
+  <tr>
+    <td><a href="fstResD0.png"><img src="fstResD0.png" height=200></a></td>
+    <td><a href="fstResD1.png"><img src="fstResD1.png" height=200></a></td>
+    <td><a href="fstResD2.png"><img src="fstResD2.png" height=200></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Disk1</td><td>Disk2</td><td>Disk3</td></tr>
+  <tr><td>x</td>
+    <td><a href="fstResD0_vsX.png"><img src="fstResD0_vsX.png" height=180></a></td>
+    <td><a href="fstResD1_vsX.png"><img src="fstResD1_vsX.png" height=180></a></td>
+    <td><a href="fstResD2_vsX.png"><img src="fstResD2_vsX.png" height=180></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="fstResD0_vsY.png"><img src="fstResD0_vsY.png" height=180></a></td>
+    <td><a href="fstResD1_vsY.png"><img src="fstResD1_vsY.png" height=180></a></td>
+    <td><a href="fstResD2_vsY.png"><img src="fstResD2_vsY.png" height=180></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="fstResD0_vsR.png"><img src="fstResD0_vsR.png" height=180></a></td>
+    <td><a href="fstResD1_vsR.png"><img src="fstResD1_vsR.png" height=180></a></td>
+    <td><a href="fstResD2_vsR.png"><img src="fstResD2_vsR.png" height=180></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="fstResD0_vsRphi.png"><img src="fstResD0_vsRphi.png" height=180></a></td>
+    <td><a href="fstResD1_vsRphi.png"><img src="fstResD1_vsRphi.png" height=180></a></td>
+    <td><a href="fstResD2_vsRphi.png"><img src="fstResD2_vsRphi.png" height=180></a></td>
+  </tr>
+</table>
+
+<a name="ftty">
+<hr>
+<H3>FTT Residual &Delta;y (H-strip), Global tracks</H3>
+<table border=1>
+  <tr><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr>
+    <td><a href="fttResDyP0.png"><img src="fttResDyP0.png" height=180></a></td>
+    <td><a href="fttResDyP1.png"><img src="fttResDyP1.png" height=180></a></td>
+    <td><a href="fttResDyP2.png"><img src="fttResDyP2.png" height=180></a></td>
+    <td><a href="fttResDyP3.png"><img src="fttResDyP3.png" height=180></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr><td>x</td>
+    <td><a href="fttResDyP0_vsX.png"><img src="fttResDyP0_vsX.png" height=170></a></td>
+    <td><a href="fttResDyP1_vsX.png"><img src="fttResDyP1_vsX.png" height=170></a></td>
+    <td><a href="fttResDyP2_vsX.png"><img src="fttResDyP2_vsX.png" height=170></a></td>
+    <td><a href="fttResDyP3_vsX.png"><img src="fttResDyP3_vsX.png" height=170></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="fttResDyP0_vsY.png"><img src="fttResDyP0_vsY.png" height=170></a></td>
+    <td><a href="fttResDyP1_vsY.png"><img src="fttResDyP1_vsY.png" height=170></a></td>
+    <td><a href="fttResDyP2_vsY.png"><img src="fttResDyP2_vsY.png" height=170></a></td>
+    <td><a href="fttResDyP3_vsY.png"><img src="fttResDyP3_vsY.png" height=170></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="fttResDyP0_vsR.png"><img src="fttResDyP0_vsR.png" height=170></a></td>
+    <td><a href="fttResDyP1_vsR.png"><img src="fttResDyP1_vsR.png" height=170></a></td>
+    <td><a href="fttResDyP2_vsR.png"><img src="fttResDyP2_vsR.png" height=170></a></td>
+    <td><a href="fttResDyP3_vsR.png"><img src="fttResDyP3_vsR.png" height=170></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="fttResDyP0_vsRphi.png"><img src="fttResDyP0_vsRphi.png" height=170></a></td>
+    <td><a href="fttResDyP1_vsRphi.png"><img src="fttResDyP1_vsRphi.png" height=170></a></td>
+    <td><a href="fttResDyP2_vsRphi.png"><img src="fttResDyP2_vsRphi.png" height=170></a></td>
+    <td><a href="fttResDyP3_vsRphi.png"><img src="fttResDyP3_vsRphi.png" height=170></a></td>
+  </tr>
+</table>
+
+<a name="fttx">
+<hr>
+<H3>FTT Residual &Delta;x (V-strip), Global tracks</H3>
+<table border=1>
+  <tr><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr>
+    <td><a href="fttResDxP0.png"><img src="fttResDxP0.png" height=180></a></td>
+    <td><a href="fttResDxP1.png"><img src="fttResDxP1.png" height=180></a></td>
+    <td><a href="fttResDxP2.png"><img src="fttResDxP2.png" height=180></a></td>
+    <td><a href="fttResDxP3.png"><img src="fttResDxP3.png" height=180></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr><td>x</td>
+    <td><a href="fttResDxP0_vsX.png"><img src="fttResDxP0_vsX.png" height=170></a></td>
+    <td><a href="fttResDxP1_vsX.png"><img src="fttResDxP1_vsX.png" height=170></a></td>
+    <td><a href="fttResDxP2_vsX.png"><img src="fttResDxP2_vsX.png" height=170></a></td>
+    <td><a href="fttResDxP3_vsX.png"><img src="fttResDxP3_vsX.png" height=170></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="fttResDxP0_vsY.png"><img src="fttResDxP0_vsY.png" height=170></a></td>
+    <td><a href="fttResDxP1_vsY.png"><img src="fttResDxP1_vsY.png" height=170></a></td>
+    <td><a href="fttResDxP2_vsY.png"><img src="fttResDxP2_vsY.png" height=170></a></td>
+    <td><a href="fttResDxP3_vsY.png"><img src="fttResDxP3_vsY.png" height=170></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="fttResDxP0_vsR.png"><img src="fttResDxP0_vsR.png" height=170></a></td>
+    <td><a href="fttResDxP1_vsR.png"><img src="fttResDxP1_vsR.png" height=170></a></td>
+    <td><a href="fttResDxP2_vsR.png"><img src="fttResDxP2_vsR.png" height=170></a></td>
+    <td><a href="fttResDxP3_vsR.png"><img src="fttResDxP3_vsR.png" height=170></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="fttResDxP0_vsRphi.png"><img src="fttResDxP0_vsRphi.png" height=170></a></td>
+    <td><a href="fttResDxP1_vsRphi.png"><img src="fttResDxP1_vsRphi.png" height=170></a></td>
+    <td><a href="fttResDxP2_vsRphi.png"><img src="fttResDxP2_vsRphi.png" height=170></a></td>
+    <td><a href="fttResDxP3_vsRphi.png"><img src="fttResDxP3_vsRphi.png" height=170></a></td>
+  </tr>
+</table>
+<a name="blc">
+<hr>
+<H2>BLC tracks</H2>
+
+<a name="fst-blc">
+<H3>FST Residual (r&middot;&Delta;&phi;), BLC tracks</H3>
+<table border=1>
+  <tr><td>Disk1</td><td>Disk2</td><td>Disk3</td></tr>
+  <tr>
+    <td><a href="blc/fstResD0.png"><img src="blc/fstResD0.png" height=200></a></td>
+    <td><a href="blc/fstResD1.png"><img src="blc/fstResD1.png" height=200></a></td>
+    <td><a href="blc/fstResD2.png"><img src="blc/fstResD2.png" height=200></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Disk1</td><td>Disk2</td><td>Disk3</td></tr>
+  <tr><td>x</td>
+    <td><a href="blc/fstResD0_vsX.png"><img src="blc/fstResD0_vsX.png" height=180></a></td>
+    <td><a href="blc/fstResD1_vsX.png"><img src="blc/fstResD1_vsX.png" height=180></a></td>
+    <td><a href="blc/fstResD2_vsX.png"><img src="blc/fstResD2_vsX.png" height=180></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="blc/fstResD0_vsY.png"><img src="blc/fstResD0_vsY.png" height=180></a></td>
+    <td><a href="blc/fstResD1_vsY.png"><img src="blc/fstResD1_vsY.png" height=180></a></td>
+    <td><a href="blc/fstResD2_vsY.png"><img src="blc/fstResD2_vsY.png" height=180></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="blc/fstResD0_vsR.png"><img src="blc/fstResD0_vsR.png" height=180></a></td>
+    <td><a href="blc/fstResD1_vsR.png"><img src="blc/fstResD1_vsR.png" height=180></a></td>
+    <td><a href="blc/fstResD2_vsR.png"><img src="blc/fstResD2_vsR.png" height=180></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="blc/fstResD0_vsRphi.png"><img src="blc/fstResD0_vsRphi.png" height=180></a></td>
+    <td><a href="blc/fstResD1_vsRphi.png"><img src="blc/fstResD1_vsRphi.png" height=180></a></td>
+    <td><a href="blc/fstResD2_vsRphi.png"><img src="blc/fstResD2_vsRphi.png" height=180></a></td>
+  </tr>
+</table>
+
+<a name="ftty-blc">
+<hr>
+<H3>FTT Residual &Delta;y (H-strip), BLC tracks</H3>
+<table border=1>
+  <tr><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr>
+    <td><a href="blc/fttResDyP0.png"><img src="blc/fttResDyP0.png" height=180></a></td>
+    <td><a href="blc/fttResDyP1.png"><img src="blc/fttResDyP1.png" height=180></a></td>
+    <td><a href="blc/fttResDyP2.png"><img src="blc/fttResDyP2.png" height=180></a></td>
+    <td><a href="blc/fttResDyP3.png"><img src="blc/fttResDyP3.png" height=180></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr><td>x</td>
+    <td><a href="blc/fttResDyP0_vsX.png"><img src="blc/fttResDyP0_vsX.png" height=170></a></td>
+    <td><a href="blc/fttResDyP1_vsX.png"><img src="blc/fttResDyP1_vsX.png" height=170></a></td>
+    <td><a href="blc/fttResDyP2_vsX.png"><img src="blc/fttResDyP2_vsX.png" height=170></a></td>
+    <td><a href="blc/fttResDyP3_vsX.png"><img src="blc/fttResDyP3_vsX.png" height=170></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="blc/fttResDyP0_vsY.png"><img src="blc/fttResDyP0_vsY.png" height=170></a></td>
+    <td><a href="blc/fttResDyP1_vsY.png"><img src="blc/fttResDyP1_vsY.png" height=170></a></td>
+    <td><a href="blc/fttResDyP2_vsY.png"><img src="blc/fttResDyP2_vsY.png" height=170></a></td>
+    <td><a href="blc/fttResDyP3_vsY.png"><img src="blc/fttResDyP3_vsY.png" height=170></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="blc/fttResDyP0_vsR.png"><img src="blc/fttResDyP0_vsR.png" height=170></a></td>
+    <td><a href="blc/fttResDyP1_vsR.png"><img src="blc/fttResDyP1_vsR.png" height=170></a></td>
+    <td><a href="blc/fttResDyP2_vsR.png"><img src="blc/fttResDyP2_vsR.png" height=170></a></td>
+    <td><a href="blc/fttResDyP3_vsR.png"><img src="blc/fttResDyP3_vsR.png" height=170></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="blc/fttResDyP0_vsRphi.png"><img src="blc/fttResDyP0_vsRphi.png" height=170></a></td>
+    <td><a href="blc/fttResDyP1_vsRphi.png"><img src="blc/fttResDyP1_vsRphi.png" height=170></a></td>
+    <td><a href="blc/fttResDyP2_vsRphi.png"><img src="blc/fttResDyP2_vsRphi.png" height=170></a></td>
+    <td><a href="blc/fttResDyP3_vsRphi.png"><img src="blc/fttResDyP3_vsRphi.png" height=170></a></td>
+  </tr>
+</table>
+
+<a name="fttx-blc">
+<hr>
+<H3>FTT Residual &Delta;x (V-strip), BLC tracks</H3>
+<table border=1>
+  <tr><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr>
+    <td><a href="blc/fttResDxP0.png"><img src="blc/fttResDxP0.png" height=180></a></td>
+    <td><a href="blc/fttResDxP1.png"><img src="blc/fttResDxP1.png" height=180></a></td>
+    <td><a href="blc/fttResDxP2.png"><img src="blc/fttResDxP2.png" height=180></a></td>
+    <td><a href="blc/fttResDxP3.png"><img src="blc/fttResDxP3.png" height=180></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr><td>x</td>
+    <td><a href="blc/fttResDxP0_vsX.png"><img src="blc/fttResDxP0_vsX.png" height=170></a></td>
+    <td><a href="blc/fttResDxP1_vsX.png"><img src="blc/fttResDxP1_vsX.png" height=170></a></td>
+    <td><a href="blc/fttResDxP2_vsX.png"><img src="blc/fttResDxP2_vsX.png" height=170></a></td>
+    <td><a href="blc/fttResDxP3_vsX.png"><img src="blc/fttResDxP3_vsX.png" height=170></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="blc/fttResDxP0_vsY.png"><img src="blc/fttResDxP0_vsY.png" height=170></a></td>
+    <td><a href="blc/fttResDxP1_vsY.png"><img src="blc/fttResDxP1_vsY.png" height=170></a></td>
+    <td><a href="blc/fttResDxP2_vsY.png"><img src="blc/fttResDxP2_vsY.png" height=170></a></td>
+    <td><a href="blc/fttResDxP3_vsY.png"><img src="blc/fttResDxP3_vsY.png" height=170></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="blc/fttResDxP0_vsR.png"><img src="blc/fttResDxP0_vsR.png" height=170></a></td>
+    <td><a href="blc/fttResDxP1_vsR.png"><img src="blc/fttResDxP1_vsR.png" height=170></a></td>
+    <td><a href="blc/fttResDxP2_vsR.png"><img src="blc/fttResDxP2_vsR.png" height=170></a></td>
+    <td><a href="blc/fttResDxP3_vsR.png"><img src="blc/fttResDxP3_vsR.png" height=170></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="blc/fttResDxP0_vsRphi.png"><img src="blc/fttResDxP0_vsRphi.png" height=170></a></td>
+    <td><a href="blc/fttResDxP1_vsRphi.png"><img src="blc/fttResDxP1_vsRphi.png" height=170></a></td>
+    <td><a href="blc/fttResDxP2_vsRphi.png"><img src="blc/fttResDxP2_vsRphi.png" height=170></a></td>
+    <td><a href="blc/fttResDxP3_vsRphi.png"><img src="blc/fttResDxP3_vsRphi.png" height=170></a></td>
+  </tr>
+</table>
+
+<a name="blcvtx">
+<hr>
+<H2>BLCVtx tracks</H2>
+
+<a name="fst-blcvtx">
+<H3>FST Residual (r&middot;&Delta;&phi;), BLCVtx tracks</H3>
+<table border=1>
+  <tr><td>Disk1</td><td>Disk2</td><td>Disk3</td></tr>
+  <tr>
+    <td><a href="blcvtx/fstResD0.png"><img src="blcvtx/fstResD0.png" height=200></a></td>
+    <td><a href="blcvtx/fstResD1.png"><img src="blcvtx/fstResD1.png" height=200></a></td>
+    <td><a href="blcvtx/fstResD2.png"><img src="blcvtx/fstResD2.png" height=200></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Disk1</td><td>Disk2</td><td>Disk3</td></tr>
+  <tr><td>x</td>
+    <td><a href="blcvtx/fstResD0_vsX.png"><img src="blcvtx/fstResD0_vsX.png" height=180></a></td>
+    <td><a href="blcvtx/fstResD1_vsX.png"><img src="blcvtx/fstResD1_vsX.png" height=180></a></td>
+    <td><a href="blcvtx/fstResD2_vsX.png"><img src="blcvtx/fstResD2_vsX.png" height=180></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="blcvtx/fstResD0_vsY.png"><img src="blcvtx/fstResD0_vsY.png" height=180></a></td>
+    <td><a href="blcvtx/fstResD1_vsY.png"><img src="blcvtx/fstResD1_vsY.png" height=180></a></td>
+    <td><a href="blcvtx/fstResD2_vsY.png"><img src="blcvtx/fstResD2_vsY.png" height=180></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="blcvtx/fstResD0_vsR.png"><img src="blcvtx/fstResD0_vsR.png" height=180></a></td>
+    <td><a href="blcvtx/fstResD1_vsR.png"><img src="blcvtx/fstResD1_vsR.png" height=180></a></td>
+    <td><a href="blcvtx/fstResD2_vsR.png"><img src="blcvtx/fstResD2_vsR.png" height=180></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="blcvtx/fstResD0_vsRphi.png"><img src="blcvtx/fstResD0_vsRphi.png" height=180></a></td>
+    <td><a href="blcvtx/fstResD1_vsRphi.png"><img src="blcvtx/fstResD1_vsRphi.png" height=180></a></td>
+    <td><a href="blcvtx/fstResD2_vsRphi.png"><img src="blcvtx/fstResD2_vsRphi.png" height=180></a></td>
+  </tr>
+</table>
+
+<a name="ftty-blcvtx">
+<hr>
+<H3>FTT Residual &Delta;y (H-strip), BLCVtx tracks</H3>
+<table border=1>
+  <tr><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr>
+    <td><a href="blcvtx/fttResDyP0.png"><img src="blcvtx/fttResDyP0.png" height=180></a></td>
+    <td><a href="blcvtx/fttResDyP1.png"><img src="blcvtx/fttResDyP1.png" height=180></a></td>
+    <td><a href="blcvtx/fttResDyP2.png"><img src="blcvtx/fttResDyP2.png" height=180></a></td>
+    <td><a href="blcvtx/fttResDyP3.png"><img src="blcvtx/fttResDyP3.png" height=180></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr><td>x</td>
+    <td><a href="blcvtx/fttResDyP0_vsX.png"><img src="blcvtx/fttResDyP0_vsX.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP1_vsX.png"><img src="blcvtx/fttResDyP1_vsX.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP2_vsX.png"><img src="blcvtx/fttResDyP2_vsX.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP3_vsX.png"><img src="blcvtx/fttResDyP3_vsX.png" height=170></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="blcvtx/fttResDyP0_vsY.png"><img src="blcvtx/fttResDyP0_vsY.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP1_vsY.png"><img src="blcvtx/fttResDyP1_vsY.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP2_vsY.png"><img src="blcvtx/fttResDyP2_vsY.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP3_vsY.png"><img src="blcvtx/fttResDyP3_vsY.png" height=170></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="blcvtx/fttResDyP0_vsR.png"><img src="blcvtx/fttResDyP0_vsR.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP1_vsR.png"><img src="blcvtx/fttResDyP1_vsR.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP2_vsR.png"><img src="blcvtx/fttResDyP2_vsR.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP3_vsR.png"><img src="blcvtx/fttResDyP3_vsR.png" height=170></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="blcvtx/fttResDyP0_vsRphi.png"><img src="blcvtx/fttResDyP0_vsRphi.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP1_vsRphi.png"><img src="blcvtx/fttResDyP1_vsRphi.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP2_vsRphi.png"><img src="blcvtx/fttResDyP2_vsRphi.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDyP3_vsRphi.png"><img src="blcvtx/fttResDyP3_vsRphi.png" height=170></a></td>
+  </tr>
+</table>
+
+<a name="fttx-blcvtx">
+<hr>
+<H3>FTT Residual &Delta;x (V-strip), BLCVtx tracks</H3>
+<table border=1>
+  <tr><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr>
+    <td><a href="blcvtx/fttResDxP0.png"><img src="blcvtx/fttResDxP0.png" height=180></a></td>
+    <td><a href="blcvtx/fttResDxP1.png"><img src="blcvtx/fttResDxP1.png" height=180></a></td>
+    <td><a href="blcvtx/fttResDxP2.png"><img src="blcvtx/fttResDxP2.png" height=180></a></td>
+    <td><a href="blcvtx/fttResDxP3.png"><img src="blcvtx/fttResDxP3.png" height=180></a></td>
+  </tr>
+</table>
+<table border=1>
+  <tr><td>vs</td><td>Plane1</td><td>Plane2</td><td>Plane3</td><td>Plane4</td></tr>
+  <tr><td>x</td>
+    <td><a href="blcvtx/fttResDxP0_vsX.png"><img src="blcvtx/fttResDxP0_vsX.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP1_vsX.png"><img src="blcvtx/fttResDxP1_vsX.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP2_vsX.png"><img src="blcvtx/fttResDxP2_vsX.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP3_vsX.png"><img src="blcvtx/fttResDxP3_vsX.png" height=170></a></td>
+  </tr>
+  <tr><td>y</td>
+    <td><a href="blcvtx/fttResDxP0_vsY.png"><img src="blcvtx/fttResDxP0_vsY.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP1_vsY.png"><img src="blcvtx/fttResDxP1_vsY.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP2_vsY.png"><img src="blcvtx/fttResDxP2_vsY.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP3_vsY.png"><img src="blcvtx/fttResDxP3_vsY.png" height=170></a></td>
+  </tr>
+  <tr><td>r</td>
+    <td><a href="blcvtx/fttResDxP0_vsR.png"><img src="blcvtx/fttResDxP0_vsR.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP1_vsR.png"><img src="blcvtx/fttResDxP1_vsR.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP2_vsR.png"><img src="blcvtx/fttResDxP2_vsR.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP3_vsR.png"><img src="blcvtx/fttResDxP3_vsR.png" height=170></a></td>
+  </tr>
+  <tr><td>r&middot;&phi;</td>
+    <td><a href="blcvtx/fttResDxP0_vsRphi.png"><img src="blcvtx/fttResDxP0_vsRphi.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP1_vsRphi.png"><img src="blcvtx/fttResDxP1_vsRphi.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP2_vsRphi.png"><img src="blcvtx/fttResDxP2_vsRphi.png" height=170></a></td>
+    <td><a href="blcvtx/fttResDxP3_vsRphi.png"><img src="blcvtx/fttResDxP3_vsRphi.png" height=170></a></td>
+  </tr>
+</table>
+
+
+<HR>OGAWA, Akio
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODYBG>
+</HTML>

@@ -1,0 +1,338 @@
+================================================================================
+FORWARD TRACKING CODE SUMMARY
+Files: fwd_afterburner.C, StRoot/StFwdTrackMaker/*.*
+Date: 2026-04-15
+================================================================================
+
+OVERVIEW
+--------
+This code implements forward tracking for the STAR detector at RHIC, targeting
+the pseudorapidity range eta ~ 2.5-4.0 using two detectors:
+  - FTT (Forward Time-projection Tracker / sTGC): 4 planes at z ~ 281, 304, 327, 349 cm
+  - FST (Forward Silicon Tracker): 3 disks at z ~ 152, 165, 179 cm
+
+The pipeline: load MuDst -> reconstruct FTT clusters/points -> load FST hits ->
+run forward track seeding (KiTrack) -> fit with GenFit Kalman filter ->
+optionally associate with FCS calorimeter -> write PicoDst output.
+
+================================================================================
+FILE-BY-FILE SUMMARY
+================================================================================
+
+--- fwd_afterburner.C ---
+
+A ROOT macro that assembles and runs the STAR maker chain as an "afterburner"
+(post-processing of existing MuDst files to re-run or improve forward tracking).
+
+Key configuration flags (global booleans at top):
+  runDb          - enable STAR database connection (sets timestamp 20220225)
+  runFttChain    - run FTT hit calibration, clustering, and point-making makers
+  runFcsChain    - run FCS waveform fit and cluster makers
+  runFwdChain    - run StFwdTrackMaker (seed finding + GenFit track fitting)
+  refillMuDst    - attempt to refill MuDst from StEvent (currently broken, see bugs)
+  runFwdQa       - run StFwdQAMaker and StFwdAnalysisMaker for tree output
+  runFitQa       - run StFwdFitQAMaker
+  runPico        - run StPicoDstMaker to produce PicoDst output
+
+Chain order:
+  St_db_Maker -> StMuDst2StEventMaker -> StFcsDbMaker (if needed) ->
+  StFttDbMaker -> StFttHitCalibMaker -> StFttClusterMaker ->
+  StFttClusterPointMaker -> [StFcsWaveformFitMaker -> StFcsClusterMaker] ->
+  StFwdTrackMaker -> [StFcsTrackMatchMaker] -> [StFwdQAMaker] ->
+  StPicoDstMaker
+
+StFwdTrackMaker configuration in the macro:
+  - Seed finding: FST-only ("fst" source)
+  - Track refit: enabled (adds FTT hits after FST seeding)
+  - FST hit source: MuDst (value 2)
+  - FTT hit source: StEvent (value 1)
+  - Kalman fit iterations: min=40, max=100
+  - Geometry cache: "fGeom.root"
+
+loadLibs():
+  Loads all required shared libraries including StarClassLibrary, StEvent,
+  StarMagField, geometry libs, StFttDbMaker chain, GenFit, KiTrack, and
+  StFwdTrackMaker.
+
+Event loop:
+  Iterates over MuDst events (capped at nEvents), calls chain->Make() per event,
+  monitors memory with StMemStat, skips first event before starting memory
+  accounting. Does NOT call chain->Finish() (commented out).
+
+--- StRoot/StFwdTrackMaker/StFwdTrackMaker.h / .cxx ---
+
+The primary STAR maker. Inherits from StMaker.
+
+Init():
+  - Determines geometry cache file (from argument or chain options)
+  - Instantiates ForwardTracker (wraps ForwardTrackMaker) and FwdDataSource
+  - Calls ForwardTracker::initialize() which sets up the TrackFitter (GenFit)
+    and loads the geometry ROOT file
+  - Reads FST and FTT z-positions from gGeoManager with hardcoded fallbacks
+
+Make() (per-event):
+  1. Gets StEvent pointer; returns kStOk if missing
+  2. Determines primary vertex via GetEventPrimaryVertex() with priority:
+       GEANT g2t_vertex > StMcEvent > MuDst primary vertex > VPD Vz
+     If none found, uses (0,0,0) with large uncertainty
+  3. Loads MC tracks from g2t_track (for simulation)
+  4. Loads FTT hits (if useFtt attr) via mFwdHitLoader.loadFttHits()
+  5. Loads FST hits (if useFst attr) via mFwdHitLoader.loadFstHits()
+  6. Loads EPD/preshower hits (if useEpd attr) via mFwdHitLoader.loadEpdHits()
+  7. Calls mForwardTracker->findTrackSeeds()
+  8. Calls mForwardTracker->doTrackFitting() on the seeds
+  9. Calls FillEvent() to write results to StEvent's StFwdTrackCollection
+
+FillEvent():
+  - Creates StFwdTrackCollection in StEvent if not present
+  - For each GenfitTrackResult, calls makeStFwdTrack() to build StFwdTrack
+  - Adds forward vertices (from RAVE vertex finder) as StPrimaryVertex objects
+
+makeStFwdTrack():
+  - Stores FST and FTT seed hit positions and covariance matrices
+  - Sets MC truth info (dominant track contribution + quality)
+  - For converged fits: fills chi2, NDF, pval, DCA, momentum, # fit points
+  - Projects track to z-planes of: TPC (z=0), FST (3 planes), FTT (4 planes),
+    FCS preshower (z=375), WCAL (z=715), HCAL (z=807)
+  - For WCAL/HCAL: uses straight-line projection instead of GenFit extrapolation
+    because GenFit cannot reliably propagate over such long distances
+
+GenfitUtils::accept<genfit::Track*>():
+  - Sanity filter: rejects tracks with 0 points, non-converged fits, missing
+    fitter info, or pT < 0.10 GeV/c
+
+Default XML configuration (embedded string):
+  - 1 iteration, 1 phi slice
+  - Segment criteria: Crit2_DeltaPhi [0, 2.0]
+  - Three-hit segment criteria: Crit3_3DAngle [0,1], Crit3_2DAngle [0,1]
+  - SubsetNN: active, min 3 hits/track, omega=0.99
+  - HitRemover: inactive
+  - Connector distance: 1 (adjacent planes only)
+
+FwdVertexSource priority enum:
+  kFwdVertexSourceUnknown -> (not yet searched)
+  kFwdVertexSourceMc      -> from GEANT g2t_vertex or StMcEvent
+  kFwdVertexSourceTpc     -> from MuDst primary vertex (TPC-reconstructed)
+  kFwdVertexSourceVpd     -> from VPD Vz (sigmaXY=1 cm, sigmaZ=6 cm)
+  kFwdVertexSourceNone    -> searched but nothing found
+
+--- StRoot/StFwdTrackMaker/StFwdHitLoader.h / .cxx ---
+
+Loads hits from FTT, FST, and EPD into FwdHit vectors for the tracker.
+
+DataSource enum: GEANT=0, STEVENT=1, MUDST=2, IGNORE=3
+
+FTT hit loading:
+  - GEANT: reads g2t_stg_hit table; uses only odd volume_id (front modules);
+    assigns plane_id = (volume_id-1)/100; sigXY = 0.1 cm
+  - STEVENT: reads StFttCollection points; uses covariance matrix from points
+    themselves; skips NaN entries; SKIPS diagonal strips (equal dx==dy cov)
+
+FST hit loading:
+  - MUDST: reads StMuFstCollection; converts (r, phi, z) -> (x, y, z) via
+    cos/sin; computes covariance matrix via makeFstCovMat(); stores local
+    strip position for later use
+  - STEVENT: reads StFstHitCollection; same conversion as above; also stores
+    pointer to original StFstHit; iterates over wedges and sensors
+  - GEANT: reads g2t_fsi_hit; applies FstRasterizer to simulate Si readout
+    granularity (default: dr=3.0 cm, dphi=0.0041 rad)
+
+EPD/Preshower hit loading:
+  - STEVENT only (GEANT and MuDst not implemented)
+  - Reads FCS preshower hits (north and south), applies energy threshold
+    (default 0.2 MIP), uses StEpdGeom to get corner positions, averages them
+  - Fixed covariance: sigXY = 4 cm (described as "TODO: get good")
+  - Always assigned to sector 7 in the hit map
+
+makeFstCovMat():
+  Computes the FST 2D covariance matrix by propagating cylindrical uncertainties
+  (dr, dphi) to Cartesian (x,y) via Jacobian transformation. The z-error is set
+  to a fixed 0.1 cm. NOTE: dr and dphi are used directly (not divided by sqrt(12)
+  for uniform distribution - see bugs section).
+
+FstRasterizer:
+  Simulates the Si strip readout for GEANT hits: quantizes r and phi to nearest
+  strip center. minR = 5.0 cm (inner radius of Si sensors).
+
+Important implementation detail in hit vector management:
+  After pushing hits into mFwdHitsFtt/mFwdHitsFst vectors, a second pass sets
+  up pointers into those vectors for the hit map. This is done AFTER all pushes
+  to avoid pointer invalidation from vector reallocation.
+
+--- StRoot/StFwdTrackMaker/FwdTrackerConfig.h / .cxx ---
+
+XML-based hierarchical configuration system using ROOT's TXMLEngine.
+
+Storage: flat std::map<string, string> where keys are dot-separated paths
+with colon-separated attribute suffix. Example: "TrackFinder.Iteration:nPhiSlices"
+
+Features:
+  - load(filename or string): parses XML, maps all nodes and attributes
+  - get<T>(path, default): returns value at path or default if missing
+  - set<T>(path, value): writes value to path (creates or overwrites)
+  - getVector<T>: parses comma-separated list from a node value
+  - childrenOf(path): returns all child paths for a given node
+  - canonize(path): removes whitespace and "[0]" array index notation
+  - exists(path): checks if a key is present
+  - Repeated nodes get indexed: path[1], path[2], etc.
+
+--- StRoot/StFwdTrackMaker/StFwdQAMaker.h ---
+
+Quality Assurance maker that writes a TTree for offline analysis.
+
+Stores per-event: run/event headers, MC tracks, FTT points and clusters,
+FST hit points, FCS WCAL/HCAL clusters and hits, EPD hits, reconstructed
+forward tracks, and seed track points.
+
+Can operate in two modes: StEvent (default) or MuDst (setMuDstInput()).
+
+Includes TClonesArrayWriter<T> helper template for TTree branch management.
+
+Includes FcsClusterWithStarXYZ and FcsHitWithStarXYZ helper classes that
+attach a global XYZ position (from FCS database) to a cluster or hit object.
+
+--- StRoot/StFwdTrackMaker/Common.h ---
+
+Small utility header:
+  - FwdTrackerUtils::labelAxis(): sets bin labels on a TAxis
+  - FwdTrackerUtils::nowNanoSecond(): returns high-resolution timestamp in ns
+    (used for per-event tracking performance timing)
+
+--- StRoot/StFwdTrackMaker/StFwdClosureMaker.h / .cxx ---
+--- StRoot/StFwdTrackMaker/StFwdMockMaker.h / .cxx ---
+
+(Not fully read, but present in the directory - likely used for closure tests
+and mock/toy-MC-based validation respectively.)
+
+================================================================================
+BUGS AND ISSUES
+================================================================================
+
+1. [BUG] fwd_afterburner.C:244 - Out-of-scope variable access
+   In the `if (refillMuDst)` block, `fwdQA->Make()` is called, but `fwdQA`
+   is only defined inside the `if (runFwdQa)` block further up. If refillMuDst
+   is true and runFwdQa is false, this will fail to compile or access an
+   undefined pointer. Even if runFwdQa is true, fwdQA is out of scope here
+   (defined inside an inner if-block, not in the enclosing scope).
+
+2. [BUG/RISK] fwd_afterburner.C: chain->Finish() and delete chain are commented out
+   Lines 258-263: cleanup is disabled. This causes resource leaks (open file
+   handles, unflushed histograms) and may result in corrupt or incomplete output
+   ROOT files, especially for the PicoDst and QA trees.
+
+3. [ISSUE] Duplicate library loading in loadLibs()
+   - StFcsDbMaker is loaded at lines 313 and 317 (duplicate)
+   - libGeom.so is loaded at lines 287 and 291 (duplicate)
+   - StarMagField is loaded at lines 281 and 285 (duplicate)
+   These are harmless but indicate code maintenance issues.
+
+4. [ISSUE] StFwdHitLoader.cxx lines 25-26: LOG macros silenced at compile time
+   The file redefines LOG_DEBUG and LOG_INFO as `if(false) std::cerr`. This
+   disables ALL diagnostic logging in the hit loader at compile time without
+   any way to re-enable it at runtime. The kLogLevel / kLogVerbose constants
+   are then meaningless. This makes debugging hit loading issues very difficult.
+   Should use the STAR LOG_DEBUG/LOG_INFO macros properly.
+
+5. [POTENTIAL BUG] makeFstCovMat(): missing sqrt(12) normalization
+   The function uses dr and dphi directly as sigma values in the covariance
+   matrix. For a uniform distribution (which describes a strip detector),
+   the standard deviation is size/sqrt(12), not size. Since dr=3.0 cm for
+   the strip pitch, the actual sigma should be ~0.87 cm, but as written the
+   full 3.0 cm is used. This overestimates the hit uncertainty by sqrt(12) ~
+   3.46x, which can degrade fit quality. (For dphi the same applies.)
+
+6. [BUG] StFwdHitLoader.cxx line 665: EPD track_id not propagated
+   In loadEpdHitsFromStEvent(), the FwdHit for EPD hits is constructed with
+   `track_id = 0` hardcoded (line 665), not the actual track_id that was
+   resolved from hit->getGeantTracks(). The mcTrack pointer is correctly set
+   but the integer track_id stored in the hit is wrong.
+
+7. [ISSUE] fwd_afterburner.C: DB timestamp is hardcoded (line 81)
+   `dbMk->SetDateTime(20220225, 0)` is hardcoded to Feb 25, 2022. For
+   production use on different run periods, this would need to be updated or
+   read from the MuDst file's run/event header.
+
+8. [ISSUE] FCS WCAL/HCAL projection side selection logic is fragile
+   StFwdTrackMaker.cxx lines 703-714: The north/south detector side is chosen
+   based on conditions like `p[2]>=0 && p[0]>=0` where p is the momentum vector
+   (p[0]=px, p[2]=pz). Including pz in the detector side logic for an x-split
+   detector is unexpected and worth verifying with the FCS geometry.
+
+9. [ISSUE] FCS projection starting points are hardcoded
+   StFwdTrackMaker.cxx lines 722-723: `xyz0 = {0,0,575}` and `xyz1 = {0,0,625}`
+   are hardcoded z positions used for the straight-line projection to WCAL/HCAL.
+   These should ideally come from the geometry or database to remain correct
+   as the geometry evolves.
+
+10. [ISSUE] FTT MUDST source not implemented
+    StFwdHitLoader.cxx lines 98-102: Loading FTT hits from MuDst is silently
+    not implemented (returns 0 with a log message). If someone sets the FTT
+    source to MUDST expecting it to work, they will get no hits and no error.
+    Should either implement it or return an error code.
+
+11. [ISSUE] EPD hits from GEANT and MuDst not implemented
+    StFwdHitLoader.cxx lines 586-598: GEANT and MuDst EPD loading are
+    not implemented. Similar to above - silently returns 0.
+
+12. [ISSUE] NaN detection in loadFttPointsFromStEvent is non-idiomatic
+    Lines 146-153: NaN is detected via `sqrt(x) != sqrt(x)`. While this works,
+    it relies on NaN != NaN behavior. The standard `std::isnan(x)` would be
+    clearer and more readable.
+
+13. [ISSUE] FTT diagonal strip hits are silently skipped
+    StFwdHitLoader.cxx lines 155-163: Hits where sigma_x == sigma_y (diagonal
+    or combined strips) are skipped with only an info-level log. This is a known
+    limitation but means some valid data is discarded without any counter or
+    summary statistic being reported.
+
+14. [ISSUE] setFttHitSource / setFstHitSource called with integer literals in macro
+    fwd_afterburner.C lines 149-150: The functions accept DataSource enums but
+    are called with integers (1, 2). While this compiles due to implicit
+    conversion, using `StFwdHitLoader::STEVENT` and `StFwdHitLoader::MUDST`
+    would be safer and self-documenting.
+
+15. [MINOR] StFwdTrackMaker::LoadConfiguration(): minimum filename length check
+    StFwdTrackMaker.cxx line 219: `if (mConfigFile.length() < 5)` is used as a
+    proxy for "no config file specified". This is fragile - a 4-character
+    filename like "a.xml" would be rejected. A cleaner check would be
+    `if (mConfigFile.empty())`.
+
+16. [MINOR] Memory: mFwdVertexSource reset per-event could be clearer
+    StFwdTrackMaker.cxx line 474: mFwdVertexSource is reset to
+    kFwdVertexSourceUnknown before each call to GetEventPrimaryVertex().
+    This works but is slightly surprising since GetEventPrimaryVertex() also
+    sets mFwdVertexSource internally. A comment explaining the double-assignment
+    or a simpler API would help.
+
+================================================================================
+POSSIBLE IMPROVEMENTS
+================================================================================
+
+1. Enable chain->Finish() in the macro to ensure all output files are properly
+   flushed and closed.
+
+2. Fix the fwdQA scope issue in the refillMuDst branch by moving fwdQA to
+   the enclosing scope or removing the dead code.
+
+3. Consolidate duplicate library loads in loadLibs().
+
+4. Remove or fix the LOG_DEBUG/LOG_INFO redefinitions in StFwdHitLoader.cxx
+   so that runtime verbosity control actually works.
+
+5. Apply sqrt(12) normalization in makeFstCovMat() for strip detectors:
+   sigma = strip_pitch / sqrt(12).
+
+6. Fix EPD FwdHit construction to use the resolved track_id, not 0.
+
+7. Implement or guard FTT-from-MuDst and EPD-from-GEANT/MuDst paths more
+   explicitly (return error, not silent 0).
+
+8. Read DB timestamp from the MuDst header rather than hardcoding it.
+
+9. Add hit-type counters for skipped diagonal/combined FTT strips so the
+   fraction of discarded hits is visible in the output log.
+
+10. Consider adding a configuration validation step after LoadConfiguration()
+    to warn about missing or out-of-range parameters before the event loop starts.
+
+================================================================================

@@ -1,0 +1,1000 @@
+AAA FTT hit V pos=( -3.582+/-3.68, -39.246+/-288.39)  dx= 3.954 dy=11.253 dR=11.413 dPhi=0.1043 (tid=0)  dPhi:OK dR:OK XY:OK
+	 vs. hit@(-0.396531+/-1.904825, -4.386000+/-288.386459) => dx=0.768703, dy=23.607475, dR=23.592061, dPhi=0.103457 (tid=0), strip=vertical
+AAA FTT hit V pos=( -0.397+/-1.90,  -4.386+/-288.39)  dx= 0.769 dy=23.607 dR=23.592 dPhi=0.1035 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(-46.441+/-2.95, -39.246+/-288.39)  dx=46.813 dy=11.253 dR=32.807 dPhi=0.8825 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-25.735+/-1.84, -39.246+/-288.39)  dx=26.108 dy=11.253 dR=18.936 dPhi=0.5937 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-18.803+/-2.03,  -4.386+/-288.39)  dx=19.175 dy=23.607 dR= 8.688 dPhi=1.3549 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-21.240+/-1.60,  -4.386+/-288.39)  dx=21.612 dy=23.607 dR= 6.308 dPhi=1.3805 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-30.218+/-2.55, -23.166+/-288.39)  dx=30.590 dy= 4.827 dR=10.080 dPhi=0.9300 (tid=0)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(-1.690174+/-2.828916, -39.246002+/-288.386459) => dx=2.062346, dy=11.252527, dR=11.286431, dPhi=0.056334 (tid=0), strip=vertical
+AAA FTT hit V pos=( -1.690+/-2.83, -39.246+/-288.39)  dx= 2.062 dy=11.253 dR=11.286 dPhi=0.0563 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( -8.155+/-4.80, -39.246+/-288.39)  dx= 8.528 dy=11.253 dR=12.088 dPhi=0.2182 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-17.368+/-1.58, -23.166+/-288.39)  dx=17.740 dy= 4.827 dR= 0.958 dPhi=0.6566 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -8.491+/-2.56,  -4.386+/-288.39)  dx= 8.863 dy=23.607 dR=18.439 dPhi=1.1073 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -6.952+/-1.10, -39.246+/-288.39)  dx= 7.324 dy=11.253 dR=11.861 dPhi=0.1886 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-26.055+/-2.56, -23.166+/-288.39)  dx=26.427 dy= 4.827 dR= 6.869 dPhi=0.8573 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-26.196+/-0.92, -39.246+/-288.39)  dx=26.568 dy=11.253 dR=19.190 dPhi=0.6019 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-37.827+/-2.43, -39.246+/-288.39)  dx=38.199 dy=11.253 dR=26.512 dPhi=0.7803 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-29.029+/-1.13, -23.166+/-288.39)  dx=29.401 dy= 4.827 dR= 9.144 dPhi=0.9106 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-21.007+/-1.32, -23.166+/-288.39)  dx=21.379 dy= 4.827 dR= 3.276 dPhi=0.7499 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-29.440+/-1.10, -23.166+/-288.39)  dx=29.812 dy= 4.827 dR= 9.466 dPhi=0.9174 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-23.584+/-2.07, -23.166+/-288.39)  dx=23.957 dy= 4.827 dR= 5.063 dPhi=0.8076 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -3.656+/-2.84, -23.166+/-288.39)  dx= 4.028 dy= 4.827 dR= 4.543 dPhi=0.1698 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -6.331+/-2.07, -23.166+/-288.39)  dx= 6.703 dy= 4.827 dR= 3.980 dPhi=0.2801 (tid=0)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(-1.811574+/-2.147372, -23.165998+/-288.386459) => dx=2.183746, dy=4.827477, dR=4.759227, dPhi=0.091335 (tid=0), strip=vertical
+AAA FTT hit V pos=( -1.812+/-2.15, -23.166+/-288.39)  dx= 2.184 dy= 4.827 dR= 4.759 dPhi=0.0913 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( -8.985+/-1.32, -39.246+/-288.39)  dx= 9.358 dy=11.253 dR=12.266 dPhi=0.2384 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-26.762+/-2.11, -39.246+/-288.39)  dx=27.134 dy=11.253 dR=19.506 dPhi=0.6118 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-48.299+/-2.08, -39.246+/-288.39)  dx=48.671 dy=11.253 dR=34.238 dPhi=0.9017 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-19.380+/-2.21, -23.166+/-288.39)  dx=19.753 dy= 4.827 dR= 2.208 dPhi=0.7099 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-37.326+/-1.32, -39.246+/-288.39)  dx=37.698 dy=11.253 dR=26.166 dPhi=0.7736 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-13.644+/-3.01, -39.246+/-288.39)  dx=14.016 dy=11.253 dR=13.554 dPhi=0.3479 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-38.857+/-3.23, -23.166+/-288.39)  dx=39.229 dy= 4.827 dR=17.243 dPhi=1.0465 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-10.193+/-1.69, -39.246+/-288.39)  dx=10.565 dy=11.253 dR=12.552 dPhi=0.2674 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-49.857+/-2.11, -39.246+/-288.39)  dx=50.229 dy=11.253 dR=35.455 dPhi=0.9172 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-20.756+/-0.92,  -4.386+/-288.39)  dx=21.128 dy=23.607 dR= 6.782 dPhi=1.3758 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-12.661+/-2.12,  -4.386+/-288.39)  dx=13.033 dy=23.607 dR=14.597 dPhi=1.2506 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-14.097+/-2.20, -23.166+/-288.39)  dx=14.469 dy= 4.827 dR= 0.878 dPhi=0.5599 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-11.156+/-0.92, -39.246+/-288.39)  dx=11.528 dy=11.253 dR=12.805 dPhi=0.2902 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -7.093+/-1.47,  -4.386+/-288.39)  dx= 7.465 dy=23.607 dR=19.657 dPhi=1.0303 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-33.870+/-2.10, -23.166+/-288.39)  dx=34.242 dy= 4.827 dR=13.039 dPhi=0.9842 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -6.573+/-1.49, -39.246+/-288.39)  dx= 6.945 dy=11.253 dR=11.797 dPhi=0.1792 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-10.753+/-1.40, -39.246+/-288.39)  dx=11.125 dy=11.253 dR=12.696 dPhi=0.2807 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-39.636+/-0.92, -23.166+/-288.39)  dx=40.008 dy= 4.827 dR=17.913 dPhi=1.0552 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-50.604+/-1.43, -39.246+/-288.39)  dx=50.976 dy=11.253 dR=36.043 dPhi=0.9244 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-51.668+/-1.57, -39.246+/-288.39)  dx=52.040 dy=11.253 dR=36.887 dPhi=0.9345 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( -5.600+/-2.77, -39.246+/-288.39)  dx= 5.973 dy=11.253 dR=11.648 dPhi=0.1550 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -9.682+/-1.56, -39.246+/-288.39)  dx=10.054 dy=11.253 dR=12.427 dPhi=0.2552 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-16.383+/-1.51, -39.246+/-288.39)  dx=16.755 dy=11.253 dR=14.532 dPhi=0.4087 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-16.622+/-2.62, -23.166+/-288.39)  dx=16.994 dy= 4.827 dR= 0.516 dPhi=0.6357 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-47.316+/-0.92, -39.246+/-288.39)  dx=47.688 dy=11.253 dR=33.478 dPhi=0.8917 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-13.702+/-1.81,  -4.386+/-288.39)  dx=14.074 dy=23.607 dR=13.609 dPhi=1.2743 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -6.036+/-0.92, -39.246+/-288.39)  dx= 6.408 dy=11.253 dR=11.712 dPhi=0.1659 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-43.983+/-1.58, -39.246+/-288.39)  dx=44.355 dy=11.253 dR=30.951 dPhi=0.8555 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+	 vs. hit@(-0.276000+/-0.923760, -23.165998+/-288.386459) => dx=0.648171, dy=4.827477, dR=4.828307, dPhi=0.025208 (tid=0), strip=vertical
+AAA FTT hit V pos=( -0.276+/-0.92, -23.166+/-288.39)  dx= 0.648 dy= 4.827 dR= 4.828 dPhi=0.0252 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(-23.956+/-0.92,  -4.386+/-288.39)  dx=24.328 dy=23.607 dR= 3.642 dPhi=1.4030 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -4.756+/-0.92, -39.246+/-288.39)  dx= 5.128 dy=11.253 dR=11.537 dPhi=0.1339 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-16.442+/-1.60,  -4.386+/-288.39)  dx=16.814 dy=23.607 dR=10.979 dPhi=1.3234 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-28.756+/-0.92, -39.246+/-288.39)  dx=29.128 dy=11.253 dR=20.657 dPhi=0.6456 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-45.076+/-0.92, -39.246+/-288.39)  dx=45.448 dy=11.253 dR=31.771 dPhi=0.8677 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-10.196+/-0.92,  -4.386+/-288.39)  dx=10.568 dy=23.607 dR=16.897 dPhi=1.1779 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-19.851+/-2.37, -39.246+/-288.39)  dx=20.223 dy=11.253 dR=15.985 dPhi=0.4816 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-13.396+/-0.92,  -4.386+/-288.39)  dx=13.768 dy=23.607 dR=13.900 dPhi=1.2677 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(-0.916000+/-0.923760, -23.165998+/-288.386459) => dx=1.288171, dy=4.827477, dR=4.811848, dPhi=0.052814 (tid=0), strip=vertical
+AAA FTT hit V pos=( -0.916+/-0.92, -23.166+/-288.39)  dx= 1.288 dy= 4.827 dR= 4.812 dPhi=0.0528 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(-10.985+/-1.60, -23.166+/-288.39)  dx=11.357 dy= 4.827 dR= 2.357 dPhi=0.4561 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -7.316+/-0.92, -23.166+/-288.39)  dx= 7.688 dy= 4.827 dR= 3.702 dPhi=0.3192 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-21.716+/-0.92,  -4.386+/-288.39)  dx=22.088 dy=23.607 dR= 5.841 dPhi=1.3848 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-27.156+/-0.92, -39.246+/-288.39)  dx=27.528 dy=11.253 dR=19.729 dPhi=0.6186 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-30.036+/-0.92,  -4.386+/-288.39)  dx=30.408 dy=23.607 dR= 2.359 dPhi=1.4391 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  41.064+/-2.60)  dx=47.993 dy=69.058 dR=35.451 dPhi=2.2614 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  27.185+/-3.18)  dx=31.913 dy=55.178 dR=14.210 dPhi=2.2573 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  33.144+/-2.90)  dx=31.913 dy=61.137 dR=18.273 dPhi=2.3560 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  14.169+/-3.17)  dx=13.133 dy=42.162 dR= 8.422 dPhi=2.3669 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  16.892+/-3.98)  dx=13.133 dy=44.885 dR= 6.369 dPhi=2.4539 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  35.341+/-2.85)  dx=47.993 dy=63.335 dR=31.905 dPhi=2.1885 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  36.080+/-2.03)  dx=47.993 dy=64.074 dR=32.344 dPhi=2.1984 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  54.150+/-1.84)  dx=47.993 dy=82.143 dR=44.608 dPhi=2.3993 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  51.586+/-1.98)  dx=47.993 dy=79.580 dR=42.717 dPhi=2.3751 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  15.558+/-2.20)  dx=13.133 dy=43.552 dR= 7.394 dPhi=2.4134 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  31.507+/-2.02)  dx=47.993 dy=59.500 dR=29.726 dPhi=2.1349 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  14.987+/-1.60)  dx=13.133 dy=42.980 dR= 7.822 dPhi=2.3949 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  28.662+/-2.98)  dx=31.913 dy=56.656 dR=15.176 dPhi=2.2835 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  34.265+/-1.43)  dx=47.993 dy=62.259 dR=31.277 dPhi=2.1739 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  53.480+/-1.35)  dx=47.993 dy=81.473 dR=44.110 dPhi=2.3931 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  29.788+/-2.25)  dx=31.913 dy=57.781 dR=15.932 dPhi=2.3027 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  34.768+/-1.45)  dx=13.133 dy=62.761 dR= 9.303 dPhi=2.7578 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  59.300+/-2.27)  dx=47.993 dy=87.294 dR=48.526 dPhi=2.4441 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  28.088+/-1.58)  dx=31.913 dy=56.082 dR=14.797 dPhi=2.2735 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  54.921+/-1.43)  dx=47.993 dy=82.915 dR=45.186 dPhi=2.4063 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  37.035+/-1.55)  dx=13.133 dy=65.029 dR=11.425 dPhi=2.7786 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  55.253+/-1.47)  dx=31.913 dy=83.247 dR=35.998 dPhi=2.5995 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  48.971+/-1.50)  dx=47.993 dy=76.964 dR=40.832 dPhi=2.3491 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  42.200+/-1.60)  dx=47.993 dy=70.194 dR=36.192 dPhi=2.2749 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  23.106+/-2.25)  dx=13.133 dy=51.099 dR= 1.233 dPhi=2.5994 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  23.262+/-1.51)  dx=31.913 dy=51.255 dR=11.796 dPhi=2.1819 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  10.058+/-2.24)  dx=13.133 dy=38.052 dR=11.157 dPhi=2.1976 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  38.064+/-1.57)  dx=31.913 dy=66.057 dR=21.916 dPhi=2.4249 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  13.195+/-2.58)  dx=47.993 dy=41.188 dR=22.137 dPhi=1.8238 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  21.683+/-1.57)  dx=47.993 dy=49.676 dR=25.007 dPhi=1.9790 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  39.155+/-0.92)  dx=47.993 dy=67.148 dR=34.232 dPhi=2.2381 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  13.128+/-1.51)  dx=13.133 dy=41.121 dR= 9.162 dPhi=2.3287 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  31.795+/-0.92)  dx=31.913 dy=59.788 dR=17.317 dPhi=2.3353 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  18.231+/-1.56)  dx=13.133 dy=46.224 dR= 5.308 dPhi=2.4907 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,   9.511+/-1.54)  dx=31.913 dy=37.505 dR= 5.661 dPhi=1.8440 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  18.995+/-0.92)  dx=47.993 dy=46.988 dR=23.965 dPhi=1.9317 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  26.035+/-0.92)  dx=31.913 dy=54.028 dR=13.479 dPhi=2.2361 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  11.480+/-3.35)  dx=31.913 dy=39.474 dR= 6.269 dPhi=1.8991 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  30.835+/-0.92)  dx=47.993 dy=58.828 dR=29.362 dPhi=2.1251 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  15.475+/-0.92)  dx=31.913 dy=43.468 dR= 7.806 dPhi=2.0045 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  16.594+/-1.60)  dx=31.913 dy=44.588 dR= 8.304 dPhi=2.0323 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  14.835+/-0.92)  dx=47.993 dy=42.828 dR=22.593 dPhi=1.8551 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  25.715+/-0.92)  dx=47.993 dy=53.708 dR=26.780 dPhi=2.0462 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  20.595+/-0.92)  dx=47.993 dy=48.588 dR=24.571 dPhi=1.9601 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  21.069+/-1.60)  dx=31.913 dy=49.062 dR=10.555 dPhi=2.1357 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  11.482+/-1.60)  dx=47.993 dy=39.476 dR=21.713 dPhi=1.7906 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.365+/-288.39,  10.675+/-0.92)  dx=47.993 dy=38.668 dR=21.533 dPhi=1.7747 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  24.115+/-0.92)  dx=31.913 dy=52.108 dR=12.301 dPhi=2.1990 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.505+/-288.39,  31.475+/-0.92)  dx=13.133 dy=59.468 dR= 6.254 dPhi=2.7230 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.285+/-288.39,  12.595+/-0.92)  dx=31.913 dy=40.588 dR= 6.659 dPhi=1.9295 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+StInfo: Adding horizontal strip hit with dPhi = 0.657473, dR = 7.62354, dx = 21.7632, dy = 0.487628
+StInfo: Adding vertical strip hit with dPhi = 0.00912746, dR = 11.2119, dx = 0.506858, dy = 11.2045
+StInfo: Closest horizontal FTT strip to FST state: dR=7.623541, dPhi=0.657473, dx=21.763170, dy=0.487628 (tid=0)
+AAA FTT closest-H dPhi=0.6575(<0.1200) dR= 7.624(< 30.0) dx=21.763 dy= 0.488(< 7.50) tid=0 -> ACCEPT
+StInfo: Closest vertical FTT strip to FST state: dR=11.211907, dPhi=0.009127, dx=0.506858, dy=11.204526 (tid=0)
+AAA FTT closest-V dPhi=0.0091(<0.1200) dR=11.212(< 30.0) dx= 0.507 dy=11.205(< 7.50) tid=0 -> ACCEPT
+AAA FTT result: 2 hits added (H:ACCEPT V:ACCEPT)
+StInfo:  Found #FTT strips on plane #2 = [2]
+StInfo: Found 13 existing seed points
+StInfo: Adding 2 new FTT seed points
+StInfo: Hit already in seed, skipping
+StInfo: Hit already in seed, skipping
+StInfo: Looking for FTT strips near projected state on disk 3
+StInfo: There are 580 available FTT strips on this disk
+AAA FTT proj z= 365.39  x=  0.404 y=-29.818  r= 29.820 phi=-1.5572  sigU=22360.680 sigV= 0.001
+AAA FTT momentum at proj: pT= 9.586 eta= 2.979 phi=-1.5532  px=  0.169 py= -9.585 pz= 94.058
+AAA FTT search thresholds: dPhi<0.1200 dR<30.00 dx<7.50 dy<7.50  nHits=580
+findFttHitsNearProjectedState, msp = (0.404305, -29.817651)
+AAA FTT hit V pos=(  9.855+/-0.92, -23.220+/-288.39)  dx= 9.450 dy= 6.598 dR= 4.596 dPhi=0.3878 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 19.574+/-2.89, -23.220+/-288.39)  dx=19.170 dy= 6.598 dR= 0.549 dPhi=0.6868 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 30.611+/-1.95, -23.220+/-288.39)  dx=30.206 dy= 6.598 dR= 8.601 dPhi=0.9083 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(  3.912+/-4.56,  -4.440+/-288.39)  dx= 3.507 dy=25.378 dR=23.903 dPhi=0.7087 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 26.905+/-2.72, -39.300+/-288.39)  dx=26.501 dy= 9.482 dR=17.807 dPhi=0.5868 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(  9.412+/-2.14, -23.220+/-288.39)  dx= 9.008 dy= 6.598 dR= 4.765 dPhi=0.3716 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 31.152+/-1.97, -23.220+/-288.39)  dx=30.748 dy= 6.598 dR= 9.034 dPhi=0.9167 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 27.586+/-1.52, -39.300+/-288.39)  dx=27.181 dy= 9.482 dR=18.195 dPhi=0.5985 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 28.130+/-1.84, -23.220+/-288.39)  dx=27.725 dy= 6.598 dR= 6.655 dPhi=0.8672 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(  2.342+/-3.24,  -4.440+/-288.39)  dx= 1.938 dy=25.378 dR=24.801 dPhi=0.4718 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 36.541+/-3.06, -39.300+/-288.39)  dx=36.137 dy= 9.482 dR=23.843 dPhi=0.7355 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(  1.099+/-3.35,  -4.440+/-288.39)  dx= 0.695 dy=25.378 dR=25.246 dPhi=0.2292 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(  5.688+/-4.56,  -4.440+/-288.39)  dx= 5.283 dy=25.378 dR=22.605 dPhi=0.8944 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 28.059+/-2.21, -39.300+/-288.39)  dx=27.655 dy= 9.482 dR=18.468 dPhi=0.6065 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 31.755+/-1.55, -23.220+/-288.39)  dx=31.351 dy= 6.598 dR= 9.519 dPhi=0.9259 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 29.068+/-1.98,  -4.440+/-288.39)  dx=28.664 dy=25.378 dR= 0.415 dPhi=1.4057 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 10.262+/-1.31, -23.220+/-288.39)  dx= 9.858 dy= 6.598 dR= 4.434 dPhi=0.4026 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 24.895+/-2.06, -23.220+/-288.39)  dx=24.490 dy= 6.598 dR= 4.222 dPhi=0.8066 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 26.836+/-2.02, -23.220+/-288.39)  dx=26.431 dy= 6.598 dR= 5.666 dPhi=0.8439 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 22.242+/-3.27, -39.300+/-288.39)  dx=21.838 dy= 9.482 dR=15.337 dPhi=0.5014 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 25.147+/-3.18, -39.300+/-288.39)  dx=24.743 dy= 9.482 dR=16.837 dPhi=0.5557 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(  8.455+/-1.59, -23.220+/-288.39)  dx= 8.050 dy= 6.598 dR= 5.109 dPhi=0.3356 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 25.086+/-1.60,  -4.440+/-288.39)  dx=24.682 dy=25.378 dR= 4.344 dPhi=1.3821 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 19.955+/-1.60, -39.300+/-288.39)  dx=19.550 dy= 9.482 dR=14.255 dPhi=0.4563 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 23.333+/-2.16,  -4.440+/-288.39)  dx=22.929 dy=25.378 dR= 6.069 dPhi=1.3692 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 21.882+/-2.49, -23.220+/-288.39)  dx=21.478 dy= 6.598 dR= 2.086 dPhi=0.7422 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(  7.888+/-2.23, -39.300+/-288.39)  dx= 7.484 dy= 9.482 dR=10.263 dPhi=0.1845 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 23.322+/-2.43, -39.300+/-288.39)  dx=22.917 dy= 9.482 dR=15.879 dPhi=0.5220 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 25.874+/-0.92, -39.300+/-288.39)  dx=25.470 dy= 9.482 dR=17.232 dPhi=0.5687 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 18.514+/-0.92, -23.220+/-288.39)  dx=18.110 dy= 6.598 dR= 0.123 dPhi=0.6596 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 13.812+/-1.47, -23.220+/-288.39)  dx=13.408 dy= 6.598 dR= 2.803 dPhi=0.5231 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 43.895+/-2.25, -39.300+/-288.39)  dx=43.490 dy= 9.482 dR=29.097 dPhi=0.8270 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 37.125+/-1.18, -39.300+/-288.39)  dx=36.721 dy= 9.482 dR=24.242 dPhi=0.7434 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(  8.917+/-2.20,  -4.440+/-288.39)  dx= 8.513 dy=25.378 dR=19.859 dPhi=1.0952 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 27.502+/-2.04, -23.220+/-288.39)  dx=27.098 dy= 6.598 dR= 6.173 dPhi=0.8561 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(  5.522+/-1.57, -39.300+/-288.39)  dx= 5.118 dy= 9.482 dR= 9.866 dPhi=0.1260 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 40.392+/-1.55, -39.300+/-288.39)  dx=39.988 dy= 9.482 dR=26.536 dPhi=0.7855 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 24.283+/-2.56, -39.300+/-288.39)  dx=23.879 dy= 9.482 dR=16.377 dPhi=0.5399 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(  9.808+/-2.15, -39.300+/-288.39)  dx= 9.403 dy= 9.482 dR=10.685 dPhi=0.2310 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 42.085+/-1.51, -23.220+/-288.39)  dx=41.681 dy= 6.598 dR=18.245 dPhi=1.0531 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 21.275+/-1.55,  -4.440+/-288.39)  dx=20.870 dy=25.378 dR= 8.087 dPhi=1.3515 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 33.607+/-2.29, -23.220+/-288.39)  dx=33.202 dy= 6.598 dR=11.028 dPhi=0.9526 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 11.561+/-1.42, -23.220+/-288.39)  dx=11.157 dy= 6.598 dR= 3.882 dPhi=0.4484 (tid=0)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(1.371143+/-1.583588, -23.219997+/-288.386459) => dx=0.966838, dy=6.597653, dR=6.559946, dPhi=0.045423 (tid=0), strip=vertical
+AAA FTT hit V pos=(  1.371+/-1.58, -23.220+/-288.39)  dx= 0.967 dy= 6.598 dR= 6.560 dPhi=0.0454 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(  6.245+/-1.52, -23.220+/-288.39)  dx= 5.840 dy= 6.598 dR= 5.775 dPhi=0.2492 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 31.493+/-1.59, -39.300+/-288.39)  dx=31.088 dy= 9.482 dR=20.541 dPhi=0.6620 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 11.794+/-0.92, -23.220+/-288.39)  dx=11.390 dy= 6.598 dR= 3.777 dPhi=0.4564 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 12.963+/-1.52, -39.300+/-288.39)  dx=12.558 dy= 9.482 dR=11.562 dPhi=0.3050 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(  7.454+/-1.59, -23.220+/-288.39)  dx= 7.050 dy= 6.598 dR= 5.433 dPhi=0.2971 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 20.943+/-1.57,  -4.440+/-288.39)  dx=20.539 dy=25.378 dR= 8.412 dPhi=1.3483 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(  9.234+/-0.92, -39.300+/-288.39)  dx= 8.830 dy= 9.482 dR=10.550 dPhi=0.2172 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 12.904+/-1.60, -23.220+/-288.39)  dx=12.500 dy= 6.598 dR= 3.256 dPhi=0.4937 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(  4.928+/-1.59, -23.220+/-288.39)  dx= 4.524 dy= 6.598 dR= 6.083 dPhi=0.1956 (tid=0)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(1.391460+/-1.599797, -39.299999+/-288.386459) => dx=0.987156, dy=9.482349, dR=9.504233, dPhi=0.021833 (tid=0), strip=vertical
+AAA FTT hit V pos=(  1.391+/-1.60, -39.300+/-288.39)  dx= 0.987 dy= 9.482 dR= 9.504 dPhi=0.0218 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 33.554+/-0.92, -39.300+/-288.39)  dx=33.150 dy= 9.482 dR=21.855 dPhi=0.6931 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(  9.718+/-1.60,  -4.440+/-288.39)  dx= 9.313 dy=25.378 dR=19.136 dPhi=1.1287 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 33.050+/-1.58, -23.220+/-288.39)  dx=32.646 dy= 6.598 dR=10.571 dPhi=0.9448 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 12.114+/-0.92, -39.300+/-288.39)  dx=11.710 dy= 9.482 dR=11.304 dPhi=0.2854 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 37.394+/-0.92, -39.300+/-288.39)  dx=36.990 dy= 9.482 dR=24.427 dPhi=0.7470 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 14.994+/-0.92, -23.220+/-288.39)  dx=14.590 dy= 6.598 dR= 2.180 dPhi=0.5598 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( 38.034+/-0.92, -39.300+/-288.39)  dx=37.630 dy= 9.482 dR=24.870 dPhi=0.7555 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 10.663+/-1.60,  -4.440+/-288.39)  dx=10.259 dy=25.378 dR=18.269 dPhi=1.1627 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 38.994+/-0.92, -23.220+/-288.39)  dx=38.590 dy= 6.598 dR=15.564 dPhi=1.0202 (tid=0)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(2.194000+/-0.923760, -23.219997+/-288.386459) => dx=1.789695, dy=6.597653, dR=6.496972, dPhi=0.080649 (tid=0), strip=vertical
+AAA FTT hit V pos=(  2.194+/-0.92, -23.220+/-288.39)  dx= 1.790 dy= 6.598 dR= 6.497 dPhi=0.0806 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( 30.354+/-0.92,  -4.440+/-288.39)  dx=29.950 dy=25.378 dR= 0.857 dPhi=1.4120 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(0.594000+/-0.923760, -39.299999+/-288.386459) => dx=0.189695, dy=9.482349, dR=9.484096, dPhi=0.001555 (tid=0), strip=vertical
+AAA FTT hit V pos=(  0.594+/-0.92, -39.300+/-288.39)  dx= 0.190 dy= 9.482 dR= 9.484 dPhi=0.0016 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit H pos=(-31.967+/-288.39,  51.244+/-3.21)  dx=32.371 dy=81.061 dR=30.577 dPhi=2.5974 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  21.195+/-2.43)  dx=13.591 dy=51.013 dR= 4.858 dPhi=2.5986 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  14.899+/-3.49)  dx=48.451 dy=44.717 dR=20.484 dPhi=1.8850 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  15.684+/-3.08)  dx=13.591 dy=45.501 dR= 9.330 dPhi=2.4560 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  13.644+/-1.59)  dx=32.371 dy=43.462 dR= 4.937 dPhi=1.9878 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  26.057+/-3.19)  dx=32.371 dy=55.875 dR=11.421 dPhi=2.2682 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  12.887+/-3.06)  dx=32.371 dy=42.705 dR= 4.647 dPhi=1.9676 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  32.341+/-2.98)  dx=32.371 dy=62.158 dR=15.653 dPhi=2.3756 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  59.068+/-3.44)  dx=48.451 dy=88.886 dR=46.321 dPhi=2.4723 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  33.310+/-2.61)  dx=48.451 dy=63.128 dR=28.644 dPhi=2.1906 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  42.217+/-2.70)  dx=48.451 dy=72.035 dR=34.139 dPhi=2.3053 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,   9.597+/-2.07)  dx=48.451 dy=39.414 dR=19.176 dPhi=1.7815 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  61.110+/-3.53)  dx=48.451 dy=90.927 dR=47.916 dPhi=2.4889 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  61.821+/-0.92)  dx=48.451 dy=91.639 dR=48.476 dPhi=2.4945 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  29.953+/-2.85)  dx=32.371 dy=59.770 dR=13.987 dPhi=2.3372 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  22.636+/-2.40)  dx=32.371 dy=52.454 dR= 9.349 dPhi=2.2005 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  34.897+/-1.10)  dx=32.371 dy=64.714 dR=17.505 dPhi=2.4135 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  11.377+/-2.18)  dx=48.451 dy=41.195 dR=19.555 dPhi=1.8169 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  45.800+/-2.15)  dx=32.371 dy=75.618 dR=26.032 dPhi=2.5458 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  28.985+/-2.00)  dx=32.371 dy=58.803 dR=13.331 dPhi=2.3209 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  60.040+/-1.59)  dx=48.451 dy=89.858 dR=47.078 dPhi=2.4803 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  11.895+/-1.66)  dx=13.591 dy=41.713 dR=12.061 dPhi=2.3183 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  30.827+/-1.80)  dx=48.451 dy=60.645 dR=27.266 dPhi=2.1548 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  40.845+/-2.72)  dx=32.371 dy=70.662 dR=22.047 dPhi=2.4911 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  62.241+/-1.48)  dx=48.451 dy=92.059 dR=48.808 dPhi=2.4977 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  11.592+/-1.83)  dx=32.371 dy=41.409 dR= 4.183 dPhi=1.9322 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  30.461+/-0.92)  dx=48.451 dy=60.279 dR=27.069 dPhi=2.1494 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  14.141+/-0.92)  dx=32.371 dy=43.959 dR= 5.135 dPhi=2.0008 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  18.336+/-2.05)  dx=48.451 dy=48.153 dR=21.606 dPhi=1.9489 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  36.966+/-2.31)  dx=32.371 dy=66.784 dR=19.051 dPhi=2.4421 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  11.980+/-1.38)  dx=48.451 dy=41.797 dR=19.698 dPhi=1.8287 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  30.141+/-0.92)  dx=48.451 dy=59.959 dR=26.898 dPhi=2.1446 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  26.132+/-1.60)  dx=48.451 dy=55.950 dR=24.873 dPhi=2.0825 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  19.983+/-1.40)  dx=32.371 dy=49.801 dR= 7.878 dPhi=2.1430 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  31.685+/-1.22)  dx=32.371 dy=61.502 dR=15.189 dPhi=2.3653 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  12.302+/-1.39)  dx=13.591 dy=42.120 dR=11.786 dPhi=2.3350 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,   9.984+/-2.08)  dx=32.371 dy=39.801 dR= 3.669 dPhi=1.8871 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  14.783+/-2.16)  dx=32.371 dy=44.601 dR= 5.399 dPhi=2.0175 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  35.449+/-3.17)  dx=48.451 dy=65.266 dR=29.888 dPhi=2.2200 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  10.370+/-2.53)  dx=48.451 dy=40.188 dR=19.333 dPhi=1.7969 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  36.021+/-2.52)  dx=32.371 dy=65.839 dR=18.340 dPhi=2.4293 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  47.639+/-1.48)  dx=48.451 dy=77.457 dR=37.841 dPhi=2.3655 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  13.114+/-2.75)  dx=48.451 dy=42.932 dR=19.984 dPhi=1.8508 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  11.357+/-2.33)  dx=13.591 dy=41.174 dR=12.417 dPhi=2.2953 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  12.435+/-1.50)  dx=48.451 dy=42.253 dR=19.810 dPhi=1.8376 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  51.995+/-1.46)  dx=32.371 dy=81.813 dR=31.216 dPhi=2.6039 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  14.461+/-0.92)  dx=32.371 dy=44.279 dR= 5.265 dPhi=2.0092 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  53.310+/-1.57)  dx=48.451 dy=83.128 dR=41.946 dPhi=2.4216 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  27.593+/-2.20)  dx=32.371 dy=57.410 dR=12.408 dPhi=2.2964 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  33.341+/-0.92)  dx=32.371 dy=63.159 dR=16.370 dPhi=2.3908 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  48.914+/-1.51)  dx=48.451 dy=78.732 dR=38.744 dPhi=2.3787 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  39.919+/-1.59)  dx=32.371 dy=69.737 dR=21.321 dPhi=2.4799 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  54.904+/-1.56)  dx=32.371 dy=84.722 dR=33.712 dPhi=2.6279 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  19.017+/-1.36)  dx=48.451 dy=48.835 dR=21.853 dPhi=1.9612 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  52.861+/-0.92)  dx=48.451 dy=82.679 dR=41.613 dPhi=2.4174 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  26.703+/-1.40)  dx=48.451 dy=56.521 dR=25.148 dPhi=2.0916 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  17.429+/-2.10)  dx=48.451 dy=47.247 dR=21.290 dPhi=1.9323 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  31.632+/-1.52)  dx=13.591 dy=61.450 dR= 4.450 dPhi=2.7602 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  29.821+/-0.92)  dx=48.451 dy=59.639 dR=26.729 dPhi=2.1398 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  13.821+/-0.92)  dx=48.451 dy=43.639 dR=20.175 dPhi=1.8644 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  25.661+/-0.92)  dx=48.451 dy=55.479 dR=24.650 dPhi=2.0749 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  11.901+/-0.92)  dx=32.371 dy=41.719 dR= 4.290 dPhi=1.9407 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  18.621+/-0.92)  dx=48.451 dy=48.439 dR=21.709 dPhi=1.9541 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  28.020+/-1.55)  dx=48.451 dy=57.838 dR=25.800 dPhi=2.1123 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  31.532+/-1.52)  dx=48.451 dy=61.350 dR=27.649 dPhi=2.1651 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  20.861+/-0.92)  dx=32.371 dy=50.679 dR= 8.351 dPhi=2.1625 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  18.621+/-0.92)  dx=13.591 dy=48.439 dR= 7.003 dPhi=2.5390 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  16.495+/-1.53)  dx=48.451 dy=46.312 dR=20.979 dPhi=1.9151 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  29.233+/-2.41)  dx=48.451 dy=59.050 dR=26.421 dPhi=2.1309 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  21.685+/-1.58)  dx=48.451 dy=51.503 dR=22.894 dPhi=2.0083 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  26.743+/-1.55)  dx=32.371 dy=56.561 dR=11.858 dPhi=2.2810 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  23.580+/-1.60)  dx=48.451 dy=53.398 dR=23.701 dPhi=2.0406 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  50.301+/-0.92)  dx=32.371 dy=80.119 dR=29.779 dPhi=2.5890 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  37.640+/-1.59)  dx=48.451 dy=67.458 dR=31.215 dPhi=2.2489 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  23.240+/-1.59)  dx=32.371 dy=53.058 dR= 9.702 dPhi=2.2130 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  21.821+/-0.92)  dx=13.591 dy=51.639 dR= 4.324 dPhi=2.6116 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  28.541+/-0.92)  dx=32.371 dy=58.359 dR=13.034 dPhi=2.3132 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  38.781+/-0.92)  dx=48.451 dy=68.599 dR=31.925 dPhi=2.2634 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  35.261+/-0.92)  dx=13.591 dy=65.079 dR= 7.826 dPhi=2.7973 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-31.967+/-288.39,  34.621+/-0.92)  dx=32.371 dy=64.439 dR=17.302 dPhi=2.4096 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-48.047+/-288.39,  19.581+/-0.92)  dx=48.451 dy=49.399 dR=22.063 dPhi=1.9713 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  29.181+/-0.92)  dx=13.591 dy=58.999 dR= 2.202 dPhi=2.7307 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-13.187+/-288.39,  24.061+/-0.92)  dx=13.591 dy=53.879 dR= 2.383 dPhi=2.6538 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 24.447+/-3.22,  57.182+/-288.39)  dx=24.042 dy=87.000 dR=32.368 dPhi=2.7240 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 31.626+/-3.77,  57.182+/-288.39)  dx=31.222 dy=87.000 dR=35.525 dPhi=2.6228 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 19.590+/-2.90,  57.182+/-288.39)  dx=19.185 dy=87.000 dR=30.624 dPhi=2.7980 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 20.725+/-1.28,  22.322+/-288.39)  dx=20.320 dy=52.140 dR= 0.639 dPhi=2.3797 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 37.348+/-2.40,  41.102+/-288.39)  dx=36.944 dy=70.920 dR=25.715 dPhi=2.3905 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 36.230+/-2.10,  41.102+/-288.39)  dx=35.825 dy=70.920 dR=24.970 dPhi=2.4056 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 39.747+/-2.03,  57.182+/-288.39)  dx=39.343 dy=87.000 dR=39.819 dPhi=2.5206 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 14.808+/-1.48,  41.102+/-288.39)  dx=14.404 dy=70.920 dR=13.868 dPhi=2.7822 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 58.678+/-2.15,  57.182+/-288.39)  dx=58.274 dy=87.000 dR=52.112 dPhi=2.3297 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 41.899+/-2.05,  41.102+/-288.39)  dx=41.495 dy=70.920 dR=28.873 dPhi=2.3330 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 12.105+/-2.51,  57.182+/-288.39)  dx=11.701 dy=87.000 dR=28.629 dPhi=2.9194 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 40.559+/-2.05,  41.102+/-288.39)  dx=40.155 dy=70.920 dR=27.924 dPhi=2.3493 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 43.144+/-2.25,  41.102+/-288.39)  dx=42.740 dy=70.920 dR=29.768 dPhi=2.3184 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 20.030+/-2.90,  41.102+/-288.39)  dx=19.626 dy=70.920 dR=15.902 dPhi=2.6746 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 34.230+/-1.76,  22.322+/-288.39)  dx=33.826 dy=52.140 dR=11.045 dPhi=2.1351 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 36.088+/-2.10,  22.322+/-288.39)  dx=35.683 dy=52.140 dR=12.613 dPhi=2.1112 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 52.521+/-2.10,  41.102+/-288.39)  dx=52.117 dy=70.920 dR=36.872 dPhi=2.2213 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 17.643+/-2.97,  57.182+/-288.39)  dx=17.238 dy=87.000 dR=30.021 dPhi=2.8288 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 34.840+/-2.05,  41.102+/-288.39)  dx=34.435 dy=70.920 dR=24.061 dPhi=2.4249 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 57.311+/-2.12,  41.102+/-288.39)  dx=56.906 dy=70.920 dR=40.706 dPhi=2.1794 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 23.103+/-2.24,  57.182+/-288.39)  dx=22.699 dy=87.000 dR=31.853 dPhi=2.7441 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 39.410+/-1.26,  41.102+/-288.39)  dx=39.005 dy=70.920 dR=27.123 dPhi=2.3637 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 16.457+/-3.87,  41.102+/-288.39)  dx=16.053 dy=70.920 dR=14.454 dPhi=2.7472 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 31.043+/-2.10,  22.322+/-288.39)  dx=30.639 dy=52.140 dR= 8.415 dPhi=2.1806 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 34.617+/-1.31,  22.322+/-288.39)  dx=34.213 dy=52.140 dR=11.369 dPhi=2.1300 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 35.061+/-1.57,  57.182+/-288.39)  dx=34.656 dy=87.000 dR=37.254 dPhi=2.5780 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 11.926+/-3.68,  41.102+/-288.39)  dx=11.522 dy=70.920 dR=12.977 dPhi=2.8456 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 18.596+/-2.24,  22.322+/-288.39)  dx=18.192 dy=52.140 dR= 0.767 dPhi=2.4334 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 43.206+/-2.13,  57.182+/-288.39)  dx=42.802 dy=87.000 dR=41.849 dPhi=2.4810 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 14.831+/-3.07,  22.322+/-288.39)  dx=14.426 dy=52.140 dR= 3.021 dPhi=2.5416 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 36.879+/-1.44,  22.322+/-288.39)  dx=36.475 dy=52.140 dR=13.288 dPhi=2.1015 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 16.857+/-1.45,  57.182+/-288.39)  dx=16.452 dy=87.000 dR=29.794 dPhi=2.8414 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 18.549+/-0.92,  57.182+/-288.39)  dx=18.145 dy=87.000 dR=30.295 dPhi=2.8144 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 23.139+/-1.52,  41.102+/-288.39)  dx=22.734 dy=70.920 dR=17.347 dPhi=2.6153 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 39.029+/-0.92,  41.102+/-288.39)  dx=38.625 dy=70.920 dR=26.860 dPhi=2.3685 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 46.084+/-2.18,  57.182+/-288.39)  dx=45.679 dy=87.000 dR=43.620 dPhi=2.4497 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 63.034+/-2.12,  57.182+/-288.39)  dx=62.630 dy=87.000 dR=55.286 dPhi=2.2940 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 17.448+/-1.59,  41.102+/-288.39)  dx=17.044 dy=70.920 dR=14.832 dPhi=2.7266 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 12.317+/-1.60,  22.322+/-288.39)  dx=11.913 dy=52.140 dR= 4.326 dPhi=2.6238 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 59.189+/-0.92,  57.182+/-288.39)  dx=58.785 dy=87.000 dR=52.479 dPhi=2.3254 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 37.931+/-1.58,  41.102+/-288.39)  dx=37.526 dy=70.920 dR=26.109 dPhi=2.3827 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 22.177+/-1.51,  22.322+/-288.39)  dx=21.772 dy=52.140 dR= 1.645 dPhi=2.3459 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 31.412+/-2.54,  41.102+/-288.39)  dx=31.007 dy=70.920 dR=21.910 dPhi=2.4755 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 52.600+/-1.57,  57.182+/-288.39)  dx=52.195 dy=87.000 dR=47.875 dPhi=2.3844 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 29.533+/-1.50,  57.182+/-288.39)  dx=29.128 dy=87.000 dR=34.538 dPhi=2.6513 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 12.798+/-2.44,  41.102+/-288.39)  dx=12.394 dy=70.920 dR=13.228 dPhi=2.8262 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 28.149+/-0.92,  41.102+/-288.39)  dx=27.745 dy=70.920 dR=19.997 dPhi=2.5275 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 30.069+/-0.92,  57.182+/-288.39)  dx=29.665 dy=87.000 dR=34.786 dPhi=2.6439 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 64.184+/-1.56,  57.182+/-288.39)  dx=63.779 dy=87.000 dR=56.141 dPhi=2.2850 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 28.789+/-0.92,  57.182+/-288.39)  dx=28.385 dy=87.000 dR=34.200 dPhi=2.6616 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 41.150+/-1.55,  57.182+/-288.39)  dx=40.746 dy=87.000 dR=40.629 dPhi=2.5043 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 21.136+/-2.45,  57.182+/-288.39)  dx=20.732 dy=87.000 dR=31.143 dPhi=2.7740 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 19.189+/-0.92,  41.102+/-288.39)  dx=18.785 dy=70.920 dR=15.540 dPhi=2.6912 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 25.695+/-1.51,  41.102+/-288.39)  dx=25.290 dy=70.920 dR=18.652 dPhi=2.5693 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 24.309+/-0.92,  41.102+/-288.39)  dx=23.905 dy=70.920 dR=17.932 dPhi=2.5939 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 14.082+/-4.12,  57.182+/-288.39)  dx=13.678 dy=87.000 dR=29.070 dPhi=2.8866 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 21.861+/-1.53,  57.182+/-288.39)  dx=21.456 dy=87.000 dR=31.398 dPhi=2.7629 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 20.469+/-0.92,  57.182+/-288.39)  dx=20.065 dy=87.000 dR=30.915 dPhi=2.7843 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 33.068+/-1.54,  57.182+/-288.39)  dx=32.663 dy=87.000 dR=36.234 dPhi=2.6037 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 15.711+/-2.44,  57.182+/-288.39)  dx=15.307 dy=87.000 dR=29.481 dPhi=2.8599 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 21.109+/-0.92,  41.102+/-288.39)  dx=20.705 dy=70.920 dR=16.385 dPhi=2.6536 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 15.669+/-0.92,  22.322+/-288.39)  dx=15.265 dy=52.140 dR= 2.548 dPhi=2.5160 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 25.589+/-0.92,  41.102+/-288.39)  dx=25.185 dy=70.920 dR=18.596 dPhi=2.5712 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 16.309+/-0.92,  57.182+/-288.39)  dx=15.905 dy=87.000 dR=29.642 dPhi=2.8502 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 25.745+/-1.60,  57.182+/-288.39)  dx=25.340 dy=87.000 dR=32.890 dPhi=2.7050 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 22.389+/-0.92,  57.182+/-288.39)  dx=21.985 dy=87.000 dR=31.588 dPhi=2.7548 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 12.934+/-1.59,  57.182+/-288.39)  dx=12.530 dy=87.000 dR=28.806 dPhi=2.9056 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( 57.589+/-0.92,  57.182+/-288.39)  dx=57.185 dy=87.000 dR=51.335 dPhi=2.3391 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=( 26.700+/-1.60,  57.182+/-288.39)  dx=26.295 dy=87.000 dR=33.288 dPhi=2.6912 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( -2.592+/-288.39,  -1.589+/-2.19)  dx= 2.996 dy=28.229 dR=26.780 dPhi=1.0344 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39, -23.507+/-2.33)  dx=21.776 dy= 6.310 dR= 1.950 dPhi=0.7514 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( -2.592+/-288.39,   8.064+/-2.00)  dx= 2.996 dy=37.881 dR=21.350 dPhi=2.8441 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-37.452+/-288.39, -19.378+/-2.15)  dx=37.856 dy=10.440 dR=12.348 dPhi=1.1069 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( -2.592+/-288.39,   6.574+/-1.13)  dx= 2.996 dy=36.391 dR=22.754 dPhi=2.7796 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39, -21.811+/-1.14)  dx=21.776 dy= 8.007 dR= 0.716 dPhi=0.7888 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -31.800+/-1.95)  dx=21.776 dy= 1.982 dR= 8.494 dPhi=0.6053 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39, -21.215+/-2.35)  dx=21.776 dy= 8.603 dR= 0.293 dPhi=0.8026 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,  -3.408+/-2.58)  dx=37.856 dy=26.410 dR= 7.786 dPhi=1.4936 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,  -0.663+/-3.58)  dx=37.856 dy=29.154 dR= 7.637 dPhi=1.5666 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -13.289+/-3.25)  dx=37.856 dy=16.529 dR= 9.919 dPhi=1.2434 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39,  -2.719+/-2.03)  dx=21.776 dy=27.099 dR= 8.276 dPhi=1.4578 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -16.312+/-2.63)  dx=37.856 dy=13.506 dR=11.030 dPhi=1.1736 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,  -8.601+/-3.67)  dx=37.856 dy=21.216 dR= 8.607 dPhi=1.3586 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( -2.592+/-288.39,   6.215+/-1.42)  dx= 2.996 dy=36.033 dR=23.086 dPhi=2.7600 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( -2.592+/-288.39,   7.539+/-1.08)  dx= 2.996 dy=37.357 dR=21.848 dPhi=2.8240 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-37.452+/-288.39, -32.860+/-1.55)  dx=37.856 dy= 3.042 dR=20.004 dPhi=0.8642 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( -2.592+/-288.39,   7.015+/-1.35)  dx= 2.996 dy=36.833 dR=22.342 dPhi=2.8012 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-37.452+/-288.39,  -5.007+/-2.43)  dx=37.856 dy=24.810 dR= 7.965 dPhi=1.4514 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,  -6.154+/-2.08)  dx=37.856 dy=23.664 dR= 8.134 dPhi=1.4215 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -42.872+/-1.52)  dx=37.856 dy=13.054 dR=27.106 dPhi=0.7316 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -10.703+/-2.07)  dx=21.776 dy=19.115 dR= 5.918 dPhi=1.1201 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,  -4.259+/-0.92)  dx=37.856 dy=25.559 dR= 7.873 dPhi=1.4711 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,   0.572+/-2.95)  dx=37.856 dy=30.389 dR= 7.636 dPhi=1.5996 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -37.534+/-1.99)  dx=21.776 dy= 7.717 dR=13.372 dPhi=0.5312 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,  -2.474+/-2.37)  dx=37.856 dy=27.344 dR= 7.713 dPhi=1.5184 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,   5.852+/-2.98)  dx=37.856 dy=35.670 dR= 8.086 dPhi=1.7394 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39,  -8.780+/-2.14)  dx=21.776 dy=21.037 dR= 6.715 dPhi=1.1945 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -12.087+/-2.43)  dx=37.856 dy=17.731 dR= 9.534 dPhi=1.2722 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -12.149+/-1.52)  dx=21.776 dy=17.669 dR= 5.237 dPhi=1.0675 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,   4.846+/-2.30)  dx=37.856 dy=34.664 dR= 7.944 dPhi=1.7130 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39,  -1.951+/-1.31)  dx=21.776 dy=27.866 dR= 8.359 dPhi=1.4933 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -15.130+/-2.21)  dx=21.776 dy=14.687 dR= 3.635 dPhi=0.9683 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -22.179+/-0.92)  dx=21.776 dy= 7.639 dR= 0.980 dPhi=0.7804 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -18.779+/-1.55)  dx=21.776 dy=11.039 dR= 1.370 dPhi=0.8635 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( -2.592+/-288.39,   2.984+/-1.54)  dx= 2.996 dy=32.802 dR=25.867 dPhi=2.4400 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-37.452+/-288.39,   7.195+/-4.08)  dx=37.856 dy=37.013 dR= 8.316 dPhi=1.7742 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39,   3.445+/-2.14)  dx=21.776 dy=33.262 dR= 8.173 dPhi=1.7442 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,   8.330+/-1.52)  dx=37.856 dy=38.147 dR= 8.547 dPhi=1.8032 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -28.476+/-1.50)  dx=37.856 dy= 1.341 dR=17.228 dPhi=0.9343 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-37.452+/-288.39, -39.758+/-2.16)  dx=37.856 dy= 9.941 dR=24.800 dPhi=0.7691 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,  -9.829+/-1.57)  dx=37.856 dy=19.989 dR= 8.900 dPhi=1.3277 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( -2.592+/-288.39, -16.287+/-1.57)  dx= 2.996 dy=13.531 dR=13.329 dPhi=0.1714 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( -2.592+/-288.39,  -8.062+/-2.19)  dx= 2.996 dy=21.756 dR=21.352 dPhi=0.3246 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39, -17.230+/-1.60)  dx=21.776 dy=12.588 dR= 2.368 dPhi=0.9059 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -20.997+/-1.47)  dx=37.856 dy= 8.821 dR=13.116 dPhi=1.0734 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -22.111+/-2.30)  dx=37.856 dy= 7.707 dR=13.671 dPhi=1.0510 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( -2.592+/-288.39, -10.778+/-1.55)  dx= 2.996 dy=19.039 dR=18.735 dPhi=0.2496 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39,  -4.434+/-1.59)  dx=21.776 dy=25.383 dR= 7.993 dPhi=1.3798 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -33.852+/-1.60)  dx=21.776 dy= 4.034 dR=10.213 dPhi=0.5767 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39,  -1.417+/-2.43)  dx=21.776 dy=28.401 dR= 8.401 dPhi=1.5182 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -27.405+/-1.51)  dx=21.776 dy= 2.413 dR= 4.933 dPhi=0.6759 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39, -19.118+/-1.59)  dx=21.776 dy=10.699 dR= 1.145 dPhi=0.8546 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -24.419+/-0.92)  dx=21.776 dy= 5.399 dR= 2.630 dPhi=0.7325 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39,  -2.019+/-0.92)  dx=21.776 dy=27.799 dR= 8.353 dPhi=1.4902 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -36.899+/-0.92)  dx=37.856 dy= 7.081 dR=22.755 dPhi=0.8064 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-21.372+/-288.39,  -0.739+/-0.92)  dx=21.776 dy=29.079 dR= 8.436 dPhi=1.5498 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,   3.504+/-1.40)  dx=37.856 dy=33.321 dR= 7.795 dPhi=1.6776 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -10.125+/-1.51)  dx=37.856 dy=19.693 dR= 8.976 dPhi=1.3203 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -30.974+/-1.61)  dx=21.776 dy= 1.157 dR= 7.812 dPhi=0.6175 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-37.452+/-288.39,  -1.699+/-0.92)  dx=37.856 dy=28.119 dR= 7.670 dPhi=1.5390 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39,   5.223+/-1.54)  dx=21.776 dy=35.041 dR= 7.819 dPhi=1.8240 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39,  -5.659+/-1.55)  dx=21.776 dy=24.159 dR= 7.712 dPhi=1.3255 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -20.092+/-1.60)  dx=37.856 dy= 9.726 dR=12.681 dPhi=1.0920 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -14.348+/-1.60)  dx=21.776 dy=15.470 dR= 4.079 dPhi=0.9931 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -14.300+/-1.55)  dx=37.856 dy=15.518 dR=10.269 dPhi=1.2196 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,  -7.581+/-2.24)  dx=37.856 dy=22.237 dR= 8.391 dPhi=1.3846 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,   2.661+/-1.55)  dx=37.856 dy=32.478 dR= 7.726 dPhi=1.6553 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -42.019+/-0.92)  dx=37.856 dy=12.201 dR=26.467 dPhi=0.7416 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -14.819+/-0.92)  dx=37.856 dy=14.999 dR=10.457 dPhi=1.2076 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39, -26.339+/-0.92)  dx=21.776 dy= 3.479 dR= 4.099 dPhi=0.6952 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(-37.452+/-288.39,   2.170+/-2.43)  dx=37.856 dy=31.988 dR= 7.694 dPhi=1.6422 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -11.151+/-1.60)  dx=37.856 dy=18.667 dR= 9.256 dPhi=1.2950 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39,   1.501+/-0.92)  dx=37.856 dy=31.319 dR= 7.662 dPhi=1.6244 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -44.579+/-0.92)  dx=37.856 dy=14.761 dR=28.403 dPhi=0.7123 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-37.452+/-288.39, -21.539+/-0.92)  dx=37.856 dy= 8.279 dR=13.384 dPhi=1.0624 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(-21.372+/-288.39,   2.461+/-0.92)  dx=21.776 dy=32.279 dR= 8.307 dPhi=1.6990 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-27.184+/-3.77,  57.082+/-288.39)  dx=27.588 dy=86.900 dR=33.404 dPhi=2.7107 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-36.501+/-5.58,  57.082+/-288.39)  dx=36.906 dy=86.900 dR=37.934 dPhi=2.5862 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-28.807+/-1.60,  57.082+/-288.39)  dx=29.211 dy=86.900 dR=34.119 dPhi=2.6878 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-19.653+/-1.04,  41.002+/-288.39)  dx=20.057 dy=70.820 dR=15.648 dPhi=2.7082 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-22.623+/-2.48,  22.222+/-288.39)  dx=23.028 dy=52.040 dR= 1.891 dPhi=2.3608 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-19.572+/-2.65,  22.222+/-288.39)  dx=19.976 dy=52.040 dR= 0.208 dPhi=2.4331 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-15.883+/-1.74,  57.082+/-288.39)  dx=16.287 dy=86.900 dR=29.430 dPhi=2.8838 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-17.629+/-2.55,  22.222+/-288.39)  dx=18.033 dy=52.040 dR= 1.455 dPhi=2.4845 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-31.155+/-2.66,  57.082+/-288.39)  dx=31.559 dy=86.900 dR=35.210 dPhi=2.6555 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-29.545+/-1.30,  57.082+/-288.39)  dx=29.949 dy=86.900 dR=34.454 dPhi=2.6775 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-31.727+/-2.22,  41.002+/-288.39)  dx=32.132 dy=70.820 dR=22.023 dPhi=2.4966 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-25.103+/-1.98,  41.002+/-288.39)  dx=25.507 dy=70.820 dR=18.256 dPhi=2.6058 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-55.074+/-2.52,  57.082+/-288.39)  dx=55.479 dy=86.900 dR=49.499 dPhi=2.3877 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-19.464+/-1.45,  57.082+/-288.39)  dx=19.868 dy=86.900 dR=30.489 dPhi=2.8265 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-20.060+/-1.16,  41.002+/-288.39)  dx=20.465 dy=70.820 dR=15.826 dPhi=2.7001 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-11.679+/-2.02,  22.222+/-288.39)  dx=12.083 dy=52.040 dR= 4.716 dPhi=2.6713 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-19.254+/-1.54,  41.002+/-288.39)  dx=19.659 dy=70.820 dR=15.477 dPhi=2.7161 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-56.154+/-2.12,  57.082+/-288.39)  dx=56.558 dy=86.900 dR=50.252 dPhi=2.3780 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-20.076+/-1.29,  57.082+/-288.39)  dx=20.480 dy=86.900 dR=30.689 dPhi=2.8170 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-48.441+/-2.16,  57.082+/-288.39)  dx=48.845 dy=86.900 dR=45.045 dPhi=2.4515 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-26.676+/-1.20,  22.222+/-288.39)  dx=27.080 dy=52.040 dR= 4.899 dPhi=2.2789 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-34.177+/-1.42,  22.222+/-288.39)  dx=34.581 dy=52.040 dR=10.946 dPhi=2.1609 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-16.540+/-1.15,  41.002+/-288.39)  dx=16.944 dy=70.820 dR=14.392 dPhi=2.7717 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-29.931+/-0.92,  57.082+/-288.39)  dx=30.335 dy=86.900 dR=34.633 dPhi=2.6722 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-31.135+/-1.36,  41.002+/-288.39)  dx=31.539 dy=70.820 dR=21.663 dPhi=2.5057 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-16.863+/-1.18,  57.082+/-288.39)  dx=17.267 dy=86.900 dR=29.700 dPhi=2.8679 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-17.218+/-1.42,  57.082+/-288.39)  dx=17.622 dy=86.900 dR=29.802 dPhi=2.8622 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-50.056+/-2.24,  57.082+/-288.39)  dx=50.461 dy=86.900 dR=46.101 dPhi=2.4352 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-18.900+/-1.60,  41.002+/-288.39)  dx=19.304 dy=70.820 dR=15.328 dPhi=2.7232 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-31.626+/-1.46,  57.082+/-288.39)  dx=32.030 dy=86.900 dR=35.437 dPhi=2.6492 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-30.477+/-1.46,  57.082+/-288.39)  dx=30.881 dy=86.900 dR=34.888 dPhi=2.6647 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-20.560+/-2.25,  22.222+/-288.39)  dx=20.964 dy=52.040 dR= 0.454 dPhi=2.4086 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-22.894+/-2.27,  57.082+/-288.39)  dx=23.298 dy=86.900 dR=31.681 dPhi=2.7737 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-15.975+/-2.26,  41.002+/-288.39)  dx=16.380 dy=70.820 dR=14.184 dPhi=2.7836 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-41.501+/-1.17,  41.002+/-288.39)  dx=41.905 dy=70.820 dR=28.519 dPhi=2.3637 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-18.977+/-1.35,  57.082+/-288.39)  dx=19.382 dy=86.900 dR=30.334 dPhi=2.8342 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-38.350+/-1.48,  57.082+/-288.39)  dx=38.754 dy=86.900 dR=38.948 dPhi=2.5636 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-14.840+/-2.30,  41.002+/-288.39)  dx=15.244 dy=70.820 dR=13.785 dPhi=2.8079 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-17.829+/-2.41,  41.002+/-288.39)  dx=18.233 dy=70.820 dR=14.890 dPhi=2.7450 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-18.411+/-0.92,  41.002+/-288.39)  dx=18.815 dy=70.820 dR=15.125 dPhi=2.7331 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-10.993+/-2.17,  57.082+/-288.39)  dx=11.397 dy=86.900 dR=28.311 dPhi=2.9649 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-38.989+/-1.48,  41.002+/-288.39)  dx=39.393 dy=70.820 dR=26.760 dPhi=2.3949 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-14.180+/-1.33,  41.002+/-288.39)  dx=14.584 dy=70.820 dR=13.564 dPhi=2.8222 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-14.703+/-1.58,  22.222+/-288.39)  dx=15.107 dy=52.040 dR= 3.175 dPhi=2.5706 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-30.251+/-0.92,  57.082+/-288.39)  dx=30.655 dy=86.900 dR=34.782 dPhi=2.6678 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-33.421+/-2.25,  57.082+/-288.39)  dx=33.825 dy=86.900 dR=36.326 dPhi=2.6255 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-12.358+/-2.17,  41.002+/-288.39)  dx=12.762 dy=70.820 dR=13.003 dPhi=2.8624 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-41.852+/-1.39,  41.002+/-288.39)  dx=42.256 dy=70.820 dR=28.769 dPhi=2.3595 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-63.475+/-1.23,  57.082+/-288.39)  dx=63.880 dy=86.900 dR=55.546 dPhi=2.3168 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-21.286+/-2.27,  57.082+/-288.39)  dx=21.690 dy=86.900 dR=31.101 dPhi=2.7982 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-18.585+/-1.59,  57.082+/-288.39)  dx=18.989 dy=86.900 dR=30.211 dPhi=2.8404 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-16.491+/-0.92,  57.082+/-288.39)  dx=16.895 dy=86.900 dR=29.596 dPhi=2.8739 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-13.740+/-3.16,  57.082+/-288.39)  dx=14.144 dy=86.900 dR=28.892 dPhi=2.9189 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-29.291+/-0.92,  57.082+/-288.39)  dx=29.695 dy=86.900 dR=34.338 dPhi=2.6810 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-17.291+/-1.60,  41.002+/-288.39)  dx=17.695 dy=70.820 dR=14.678 dPhi=2.7561 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-47.444+/-1.43,  41.002+/-288.39)  dx=47.848 dy=70.820 dR=32.886 dPhi=2.2970 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-11.362+/-2.37,  41.002+/-288.39)  dx=11.766 dy=70.820 dR=12.727 dPhi=2.8848 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-41.160+/-2.32,  57.082+/-288.39)  dx=41.565 dy=86.900 dR=40.554 dPhi=2.5304 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-20.931+/-2.32,  41.002+/-288.39)  dx=21.335 dy=70.820 dR=16.215 dPhi=2.6832 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-36.331+/-0.92,  41.002+/-288.39)  dx=36.735 dy=70.820 dR=24.962 dPhi=2.4301 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-41.131+/-0.92,  41.002+/-288.39)  dx=41.535 dy=70.820 dR=28.256 dPhi=2.3682 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-11.371+/-0.92,  57.082+/-288.39)  dx=11.775 dy=86.900 dR=28.383 dPhi=2.9585 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-13.479+/-1.58,  41.002+/-288.39)  dx=13.883 dy=70.820 dR=13.340 dPhi=2.8375 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-62.053+/-1.55,  57.082+/-288.39)  dx=62.457 dy=86.900 dR=54.494 dPhi=2.3280 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-20.331+/-0.92,  41.002+/-288.39)  dx=20.735 dy=70.820 dR=15.945 dPhi=2.6948 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-31.851+/-0.92,  57.082+/-288.39)  dx=32.255 dy=86.900 dR=35.547 dPhi=2.6462 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-15.402+/-1.57,  57.082+/-288.39)  dx=15.806 dy=86.900 dR=29.303 dPhi=2.8916 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-32.811+/-0.92,  41.002+/-288.39)  dx=33.215 dy=70.820 dR=22.694 dPhi=2.4803 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-28.331+/-0.92,  57.082+/-288.39)  dx=28.735 dy=86.900 dR=33.906 dPhi=2.6945 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-20.651+/-0.92,  57.082+/-288.39)  dx=21.055 dy=86.900 dR=30.882 dPhi=2.8080 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-12.971+/-0.92,  41.002+/-288.39)  dx=13.375 dy=70.820 dR=13.184 dPhi=2.8488 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-63.851+/-0.92,  57.082+/-288.39)  dx=64.255 dy=86.900 dR=55.826 dPhi=2.3138 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-10.917+/-1.58,  41.002+/-288.39)  dx=11.321 dy=70.820 dR=12.610 dPhi=2.8949 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-23.211+/-0.92,  41.002+/-288.39)  dx=23.615 dy=70.820 dR=17.296 dPhi=2.6400 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-17.771+/-0.92,  57.082+/-288.39)  dx=18.175 dy=86.900 dR=29.964 dPhi=2.8533 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-48.969+/-1.61,  57.082+/-288.39)  dx=49.374 dy=86.900 dR=45.388 dPhi=2.4461 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-12.470+/-1.59,  57.082+/-288.39)  dx=12.874 dy=86.900 dR=28.608 dPhi=2.9401 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-54.251+/-0.92,  57.082+/-288.39)  dx=54.655 dy=86.900 dR=48.929 dPhi=2.3952 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-26.411+/-0.92,  22.222+/-288.39)  dx=26.815 dy=52.040 dR= 4.696 dPhi=2.2838 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-32.491+/-0.92,  57.082+/-288.39)  dx=32.895 dy=86.900 dR=35.861 dPhi=2.6377 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-30.251+/-0.92,  22.222+/-288.39)  dx=30.655 dy=52.040 dR= 7.715 dPhi=2.2179 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -9.369+/-2.63)  dx=21.426 dy=20.449 dR= 6.065 dPhi=1.1518 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(  3.050+/-288.39,   7.322+/-2.52)  dx= 2.646 dy=37.139 dR=21.889 dPhi=2.7333 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(  3.050+/-288.39,  -6.256+/-2.82)  dx= 2.646 dy=23.561 dR=22.860 dPhi=0.4400 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(  3.050+/-288.39, -10.624+/-1.89)  dx= 2.646 dy=19.194 dR=18.767 dPhi=0.2660 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39,   2.951+/-4.07)  dx=37.506 dy=32.769 dR= 8.204 dPhi=1.6349 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -5.977+/-1.55)  dx=21.426 dy=23.841 dR= 7.187 dPhi=1.2900 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,   2.350+/-1.61)  dx=21.426 dy=32.168 dR= 7.864 dPhi=1.6645 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,  -0.463+/-1.92)  dx=37.506 dy=29.355 dR= 8.092 dPhi=1.5450 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -12.559+/-2.30)  dx=37.506 dy=17.258 dR=10.116 dPhi=1.2373 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(  3.050+/-288.39,   0.168+/-1.14)  dx= 2.646 dy=29.986 dR=26.766 dPhi=1.6123 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39,  -9.532+/-1.19)  dx=37.506 dy=20.286 dR= 9.270 dPhi=1.3109 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -28.098+/-2.03)  dx=37.506 dy= 1.719 dR=17.367 dPhi=0.9194 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 21.830+/-288.39, -23.559+/-0.92)  dx=21.426 dy= 6.259 dR= 2.298 dPhi=0.7338 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39, -27.057+/-1.98)  dx=37.506 dy= 2.760 dR=16.755 dPhi=0.9374 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39, -42.687+/-4.11)  dx=37.506 dy=12.870 dR=27.271 dPhi=0.7126 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -3.185+/-2.67)  dx=21.426 dy=26.633 dR= 7.759 dPhi=1.4124 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39, -37.731+/-2.86)  dx=21.426 dy= 7.914 dR=13.771 dPhi=0.5109 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,   7.760+/-1.07)  dx=21.426 dy=37.577 dR= 6.652 dPhi=1.8988 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,  -9.877+/-1.37)  dx=37.506 dy=19.941 dR= 9.355 dPhi=1.3024 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   0.167+/-1.13)  dx=37.506 dy=29.985 dR= 8.090 dPhi=1.5617 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -14.267+/-2.05)  dx=37.506 dy=15.551 dR=10.685 dPhi=1.1973 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -5.481+/-1.60)  dx=21.426 dy=24.336 dR= 7.313 dPhi=1.3112 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   0.675+/-1.42)  dx=37.506 dy=30.492 dR= 8.096 dPhi=1.5750 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(  3.050+/-288.39,  -0.244+/-1.11)  dx= 2.646 dy=29.574 dR=26.761 dPhi=1.4775 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39, -10.519+/-1.38)  dx=37.506 dy=19.299 dR= 9.522 dPhi=1.2866 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   8.128+/-2.13)  dx=37.506 dy=37.946 dR= 8.951 dPhi=1.7685 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -16.236+/-2.11)  dx=37.506 dy=13.581 dR=11.420 dPhi=1.1526 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(  3.050+/-288.39,   8.372+/-1.32)  dx= 2.646 dy=38.189 dR=20.911 dPhi=2.7787 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39, -15.122+/-1.54)  dx=37.506 dy=14.696 dR=10.994 dPhi=1.1777 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -11.649+/-1.32)  dx=37.506 dy=18.168 dR= 9.839 dPhi=1.2591 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -22.800+/-3.02)  dx=37.506 dy= 7.017 dR=14.418 dPhi=1.0158 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39,  -0.979+/-1.59)  dx=37.506 dy=28.838 dR= 8.102 dPhi=1.5314 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,  -8.424+/-2.95)  dx=37.506 dy=21.394 dR= 9.014 dPhi=1.3386 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(  3.050+/-288.39,   4.601+/-0.92)  dx= 2.646 dy=34.419 dR=24.300 dPhi=2.5426 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 21.830+/-288.39,   0.622+/-3.07)  dx=21.426 dy=30.440 dR= 7.982 dPhi=1.5857 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -20.374+/-2.11)  dx=37.506 dy= 9.444 dR=13.217 dPhi=1.0641 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,  -1.537+/-1.23)  dx=37.506 dy=28.281 dR= 8.121 dPhi=1.5167 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39, -11.709+/-2.11)  dx=21.426 dy=18.109 dR= 5.048 dPhi=1.0649 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   4.548+/-2.20)  dx=37.506 dy=34.365 dR= 8.361 dPhi=1.6766 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(  3.050+/-288.39,   8.121+/-0.92)  dx= 2.646 dy=37.939 dR=21.146 dPhi=2.7688 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(  3.050+/-288.39,   4.281+/-0.92)  dx= 2.646 dy=34.099 dR=24.564 dPhi=2.5090 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39,  -2.048+/-2.28)  dx=37.506 dy=27.770 dR= 8.145 dPhi=1.5033 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -19.393+/-1.74)  dx=37.506 dy=10.425 dR=12.762 dPhi=1.0844 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,  -4.142+/-1.49)  dx=37.506 dy=25.676 dR= 8.315 dPhi=1.4484 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,  -5.327+/-2.19)  dx=37.506 dy=24.491 dR= 8.462 dPhi=1.4176 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   5.859+/-2.17)  dx=37.506 dy=35.676 dR= 8.540 dPhi=1.7106 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,   1.650+/-1.33)  dx=21.426 dy=31.468 dR= 7.928 dPhi=1.6327 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -7.633+/-2.26)  dx=21.426 dy=22.185 dR= 6.694 dPhi=1.2209 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39, -20.548+/-1.57)  dx=21.426 dy= 9.269 dR= 0.159 dPhi=0.8021 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39, -23.239+/-0.92)  dx=21.426 dy= 6.579 dR= 2.064 dPhi=0.7406 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 21.830+/-288.39, -26.806+/-2.20)  dx=21.426 dy= 3.012 dR= 4.750 dPhi=0.6699 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 21.830+/-288.39,  -0.265+/-1.30)  dx=21.426 dy=29.553 dR= 7.989 dPhi=1.5451 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -41.698+/-1.48)  dx=37.506 dy=11.881 dR=26.535 dPhi=0.7243 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39, -21.444+/-1.56)  dx=21.426 dy= 8.373 dR= 0.780 dPhi=0.7808 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -21.427+/-1.52)  dx=37.506 dy= 8.391 dR=13.726 dPhi=1.0428 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -4.277+/-2.61)  dx=21.426 dy=25.541 dR= 7.575 dPhi=1.3638 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -21.639+/-0.92)  dx=37.506 dy= 8.179 dR=13.831 dPhi=1.0386 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -19.719+/-0.92)  dx=37.506 dy=10.099 dR=12.911 dPhi=1.0776 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39, -17.308+/-1.59)  dx=21.426 dy=12.510 dR= 1.962 dPhi=0.8869 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39, -28.466+/-1.51)  dx=21.426 dy= 1.352 dR= 6.052 dPhi=0.6407 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 37.910+/-288.39,  -9.159+/-0.92)  dx=37.506 dy=20.659 dR= 9.180 dPhi=1.3202 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39, -35.673+/-2.36)  dx=21.426 dy= 5.855 dR=12.002 dPhi=0.5356 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 21.830+/-288.39, -12.884+/-1.53)  dx=21.426 dy=16.933 dR= 4.472 dPhi=1.0240 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,  -2.759+/-0.92)  dx=37.506 dy=27.059 dR= 8.190 dPhi=1.4846 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -44.679+/-0.92)  dx=37.506 dy=14.861 dR=28.775 dPhi=0.6901 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -1.900+/-1.49)  dx=21.426 dy=27.917 dR= 7.908 dPhi=1.4704 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -1.339+/-1.59)  dx=21.426 dy=28.479 dR= 7.949 dPhi=1.4960 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -18.297+/-1.59)  dx=37.506 dy=11.520 dR=12.274 dPhi=1.1076 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   1.562+/-1.60)  dx=37.506 dy=31.380 dR= 8.122 dPhi=1.5984 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   1.081+/-0.92)  dx=37.506 dy=30.899 dR= 8.105 dPhi=1.5857 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -44.359+/-0.92)  dx=37.506 dy=14.541 dR=28.531 dPhi=0.6936 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(  3.050+/-288.39,   6.434+/-1.42)  dx= 2.646 dy=36.251 dR=22.700 dPhi=2.6854 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 21.830+/-288.39,   8.228+/-1.51)  dx=21.426 dy=38.045 dR= 6.491 dPhi=1.9177 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   6.784+/-2.54)  dx=37.506 dy=36.602 dR= 8.692 dPhi=1.7343 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39,   5.241+/-0.92)  dx=37.506 dy=35.059 dR= 8.450 dPhi=1.6946 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 37.910+/-288.39, -13.319+/-0.92)  dx=37.506 dy=16.499 dR=10.361 dPhi=1.2194 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -0.519+/-0.92)  dx=21.426 dy=29.299 dR= 7.984 dPhi=1.5335 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,   6.093+/-1.51)  dx=21.426 dy=35.911 dR= 7.156 dPhi=1.8294 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 21.830+/-288.39,  -4.999+/-0.92)  dx=21.426 dy=24.819 dR= 7.425 dPhi=1.3321 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=(  3.050+/-288.39,   2.797+/-1.54)  dx= 2.646 dy=32.614 dR=25.682 dPhi=2.2993 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(  3.050+/-288.39,  -2.119+/-0.92)  dx= 2.646 dy=27.699 dR=26.107 dPhi=0.9500 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(  3.050+/-288.39,   5.561+/-0.92)  dx= 2.646 dy=35.379 dR=23.478 dPhi=2.6264 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=(  3.050+/-288.39,  -0.519+/-0.92)  dx= 2.646 dy=29.299 dR=26.727 dPhi=1.3887 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 21.830+/-288.39, -36.679+/-0.92)  dx=21.426 dy= 6.861 dR=12.863 dPhi=0.5233 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-20.910+/-3.02, -39.385+/-288.39)  dx=21.314 dy= 9.567 dR=14.771 dPhi=0.5016 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-34.971+/-2.04, -39.385+/-288.39)  dx=35.375 dy= 9.567 dR=22.850 dPhi=0.7397 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-13.404+/-2.92,  -4.525+/-288.39)  dx=13.808 dy=25.293 dR=15.674 dPhi=1.2588 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-42.660+/-1.92, -39.385+/-288.39)  dx=43.064 dy= 9.567 dR=28.240 dPhi=0.8389 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-19.818+/-1.40, -39.385+/-288.39)  dx=20.222 dy= 9.567 dR=14.270 dPhi=0.4798 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-23.163+/-2.46, -39.385+/-288.39)  dx=23.567 dy= 9.567 dR=15.871 dPhi=0.5452 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -6.673+/-4.02, -39.385+/-288.39)  dx= 7.077 dy= 9.567 dR=10.126 dPhi=0.1814 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -6.258+/-3.07, -23.305+/-288.39)  dx= 6.662 dy= 6.513 dR= 5.690 dPhi=0.2759 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-27.866+/-2.44, -23.305+/-288.39)  dx=28.270 dy= 6.513 dR= 6.506 dPhi=0.8879 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -7.602+/-2.30, -39.385+/-288.39)  dx= 8.006 dy= 9.567 dR=10.292 dPhi=0.2042 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-21.124+/-2.52, -23.305+/-288.39)  dx=21.529 dy= 6.513 dR= 1.634 dPhi=0.7499 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-27.474+/-1.83, -39.385+/-288.39)  dx=27.878 dy= 9.567 dR=18.200 dPhi=0.6227 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(-0.621257+/-2.692696, -39.385002+/-288.386459) => dx=1.025562, dy=9.567351, dR=9.569510, dPhi=0.029331 (tid=0), strip=vertical
+AAA FTT hit V pos=( -0.621+/-2.69, -39.385+/-288.39)  dx= 1.026 dy= 9.567 dR= 9.570 dPhi=0.0293 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(-26.023+/-2.84, -23.305+/-288.39)  dx=26.427 dy= 6.513 dR= 5.113 dPhi=0.8540 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-26.949+/-1.59, -39.385+/-288.39)  dx=27.354 dy= 9.567 dR=17.902 dPhi=0.6136 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-14.507+/-2.07,  -4.525+/-288.39)  dx=14.911 dy=25.293 dR=14.624 dPhi=1.2820 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-25.078+/-1.47, -23.305+/-288.39)  dx=25.482 dy= 6.513 dR= 4.415 dPhi=0.8356 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-11.415+/-1.91, -23.305+/-288.39)  dx=11.819 dy= 6.513 dR= 3.870 dPhi=0.4690 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-20.551+/-2.66,  -4.525+/-288.39)  dx=20.955 dy=25.293 dR= 8.778 dPhi=1.3676 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -5.335+/-0.92, -39.385+/-288.39)  dx= 5.739 dy= 9.567 dR= 9.924 dPhi=0.1482 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-39.571+/-2.06, -23.305+/-288.39)  dx=39.975 dy= 6.513 dR=16.103 dPhi=1.0521 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-12.020+/-2.21, -23.305+/-288.39)  dx=12.425 dy= 6.513 dR= 3.598 dPhi=0.4898 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-11.439+/-2.15, -39.385+/-288.39)  dx=11.843 dy= 9.567 dR=11.192 dPhi=0.2962 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-19.367+/-1.14, -39.385+/-288.39)  dx=19.771 dy= 9.567 dR=14.069 dPhi=0.4706 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-29.839+/-1.58, -23.305+/-288.39)  dx=30.243 dy= 6.513 dR= 8.041 dPhi=0.9213 (tid=0)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(-3.196545+/-3.148715, -39.385002+/-288.386459) => dx=3.600850, dy=9.567351, dR=9.694116, dPhi=0.094542 (tid=0), strip=vertical
+AAA FTT hit V pos=( -3.197+/-3.15, -39.385+/-288.39)  dx= 3.601 dy= 9.567 dR= 9.694 dPhi=0.0945 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(-44.058+/-2.08, -39.385+/-288.39)  dx=44.463 dy= 9.567 dR=29.275 dPhi=0.8549 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-46.007+/-2.17, -39.385+/-288.39)  dx=46.412 dy= 9.567 dR=30.743 dPhi=0.8764 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-23.527+/-2.21, -23.305+/-288.39)  dx=23.931 dy= 6.513 dR= 3.295 dPhi=0.8037 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-40.858+/-2.12, -23.305+/-288.39)  dx=41.262 dy= 6.513 dR=17.216 dPhi=1.0660 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-38.704+/-1.43, -39.385+/-288.39)  dx=39.109 dy= 9.567 dR=25.399 dPhi=0.7902 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-32.599+/-2.24, -23.305+/-288.39)  dx=33.003 dy= 6.513 dR=10.252 dPhi=0.9637 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -8.434+/-2.27,  -4.525+/-288.39)  dx= 8.838 dy=25.293 dR=20.249 dPhi=1.0919 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-17.197+/-2.20,  -4.525+/-288.39)  dx=17.601 dy=25.293 dR=12.038 dPhi=1.3271 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -8.701+/-1.60, -39.385+/-288.39)  dx= 9.105 dy= 9.567 dR=10.514 dPhi=0.2310 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-10.789+/-2.21, -23.305+/-288.39)  dx=11.193 dy= 6.513 dR= 4.139 dPhi=0.4471 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-17.306+/-1.57, -23.305+/-288.39)  dx=17.710 dy= 6.513 dR= 0.793 dPhi=0.6523 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-31.084+/-1.59, -39.385+/-288.39)  dx=31.488 dy= 9.567 dR=20.353 dPhi=0.6817 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -8.215+/-0.92, -39.385+/-288.39)  dx= 8.619 dy= 9.567 dR=10.412 dPhi=0.2192 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-14.935+/-0.92,  -4.525+/-288.39)  dx=15.339 dy=25.293 dR=14.215 dPhi=1.2902 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -9.366+/-1.57, -23.305+/-288.39)  dx= 9.770 dy= 6.513 dR= 4.704 dPhi=0.3957 (tid=0)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(-4.156053+/-1.487475, -39.385002+/-288.386459) => dx=4.560357, dy=9.567351, dR=9.783285, dPhi=0.118693 (tid=0), strip=vertical
+AAA FTT hit V pos=( -4.156+/-1.49, -39.385+/-288.39)  dx= 4.560 dy= 9.567 dR= 9.783 dPhi=0.1187 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(-10.667+/-1.51, -39.385+/-288.39)  dx=11.071 dy= 9.567 dR=10.983 dPhi=0.2780 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-48.020+/-1.57, -39.385+/-288.39)  dx=48.424 dy= 9.567 dR=32.285 dPhi=0.8974 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-30.173+/-1.56, -39.385+/-288.39)  dx=30.577 dy= 9.567 dR=19.794 dPhi=0.6673 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-49.798+/-2.36, -39.385+/-288.39)  dx=50.202 dy= 9.567 dR=33.670 dPhi=0.9152 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-30.740+/-1.56, -23.305+/-288.39)  dx=31.144 dy= 6.513 dR= 8.755 dPhi=0.9357 (tid=0)  dPhi:FAIL dR:OK XY:OK
+	 vs. hit@(-1.608973+/-1.532369, -39.385002+/-288.386459) => dx=2.013277, dy=9.567351, dR=9.597462, dPhi=0.054388 (tid=0), strip=vertical
+AAA FTT hit V pos=( -1.609+/-1.53, -39.385+/-288.39)  dx= 2.013 dy= 9.567 dR= 9.597 dPhi=0.0544 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(-49.078+/-1.46, -39.385+/-288.39)  dx=49.483 dy= 9.567 dR=33.107 dPhi=0.9081 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit V pos=(-36.208+/-1.60, -23.305+/-288.39)  dx=36.612 dy= 6.513 dR=13.239 dPhi=1.0125 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-26.455+/-0.92, -39.385+/-288.39)  dx=26.859 dy= 9.567 dR=17.625 dPhi=0.6050 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-14.412+/-1.54, -39.385+/-288.39)  dx=14.817 dy= 9.567 dR=12.119 dPhi=0.3644 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -9.844+/-2.25, -39.385+/-288.39)  dx=10.248 dy= 9.567 dR=10.776 dPhi=0.2585 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-53.223+/-1.53, -39.385+/-288.39)  dx=53.628 dy= 9.567 dR=36.391 dPhi=0.9473 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+	 vs. hit@(-1.878345+/-2.353731, -23.304998+/-288.386459) => dx=2.282650, dy=6.512652, dR=6.439820, dPhi=0.093983 (tid=0), strip=vertical
+AAA FTT hit V pos=( -1.878+/-2.35, -23.305+/-288.39)  dx= 2.283 dy= 6.513 dR= 6.440 dPhi=0.0940 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=( -4.859+/-1.60, -39.385+/-288.39)  dx= 5.264 dy= 9.567 dR= 9.863 dPhi=0.1363 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=( -9.175+/-0.92, -39.385+/-288.39)  dx= 9.579 dy= 9.567 dR=10.619 dPhi=0.2424 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -0.516+/-2.33,  -4.525+/-288.39)  dx= 0.920 dy=25.293 dR=25.266 dPhi=0.1270 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit V pos=(-28.542+/-1.60, -39.385+/-288.39)  dx=28.946 dy= 9.567 dR=18.819 dPhi=0.6407 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-38.295+/-0.92, -39.385+/-288.39)  dx=38.699 dy= 9.567 dR=25.113 dPhi=0.7849 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+	 vs. hit@(-0.528313+/-2.203567, -23.304998+/-288.386459) => dx=0.932618, dy=6.512652, dR=6.509406, dPhi=0.036224 (tid=0), strip=vertical
+AAA FTT hit V pos=( -0.528+/-2.20, -23.305+/-288.39)  dx= 0.933 dy= 6.513 dR= 6.509 dPhi=0.0362 (tid=0)  dPhi:OK dR:OK XY:OK
+AAA FTT hit V pos=(-24.535+/-0.92, -39.385+/-288.39)  dx=24.939 dy= 9.567 dR=16.582 dPhi=0.5707 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-16.215+/-0.92, -39.385+/-288.39)  dx=16.619 dy= 9.567 dR=12.772 dPhi=0.4041 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=(-35.735+/-0.92, -39.385+/-288.39)  dx=36.139 dy= 9.567 dR=23.360 dPhi=0.7504 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit V pos=( -3.095+/-0.92,  -4.525+/-288.39)  dx= 3.499 dy=25.293 dR=24.338 dPhi=0.6135 (tid=0)  dPhi:FAIL dR:OK XY:OK
+AAA FTT hit H pos=( 32.346+/-288.39,  22.890+/-3.95)  dx=31.942 dy=52.708 dR= 9.806 dPhi=2.1731 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  35.491+/-2.06)  dx=31.942 dy=65.309 dR=18.199 dPhi=2.3890 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  23.025+/-2.04)  dx=48.022 dy=52.842 dR=23.801 dPhi=2.0011 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  17.829+/-2.06)  dx=31.942 dy=47.646 dR= 7.114 dPhi=2.0610 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  11.813+/-1.95)  dx=31.942 dy=41.630 dR= 4.615 dPhi=1.9074 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  11.830+/-3.05)  dx=48.022 dy=41.648 dR=20.030 dPhi=1.7968 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  25.584+/-2.30)  dx=13.162 dy=55.402 dR= 0.862 dPhi=2.6405 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  12.685+/-1.44)  dx=13.162 dy=42.503 dR=11.248 dPhi=2.3091 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  11.735+/-1.39)  dx=13.162 dy=41.553 dR=11.883 dPhi=2.2704 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  58.059+/-2.08)  dx=48.022 dy=87.876 dR=45.783 dPhi=2.4329 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  49.722+/-1.59)  dx=48.022 dy=79.539 dR=39.587 dPhi=2.3558 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  15.804+/-1.60)  dx=13.162 dy=45.622 dR= 8.992 dPhi=2.4187 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  36.749+/-2.15)  dx=31.942 dy=66.567 dR=19.137 dPhi=2.4063 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  10.432+/-2.76)  dx=48.022 dy=40.250 dR=19.717 dPhi=1.7694 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  58.536+/-0.92)  dx=48.022 dy=88.354 dR=46.150 dPhi=2.4369 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,   9.732+/-1.60)  dx=13.162 dy=39.550 dR=13.124 dPhi=2.1795 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  10.631+/-1.46)  dx=31.942 dy=40.448 dR= 4.228 dPhi=1.8748 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  45.736+/-0.92)  dx=48.022 dy=75.554 dR=36.789 dPhi=2.3141 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  21.749+/-2.23)  dx=48.022 dy=51.567 dR=23.265 dPhi=1.9794 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  40.799+/-1.58)  dx=48.022 dy=70.617 dR=33.501 dPhi=2.2574 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  11.316+/-1.59)  dx=13.162 dy=41.134 dR=12.154 dPhi=2.2525 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  13.443+/-2.34)  dx=48.022 dy=43.261 dR=20.437 dPhi=1.8280 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  29.736+/-0.92)  dx=31.942 dy=59.554 dR=14.117 dPhi=2.3006 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  12.136+/-0.92)  dx=13.162 dy=41.954 dR=11.618 dPhi=2.2871 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  11.496+/-0.92)  dx=31.942 dy=41.314 dR= 4.508 dPhi=1.8987 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  19.832+/-2.28)  dx=48.022 dy=49.650 dR=22.509 dPhi=1.9459 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  11.128+/-2.52)  dx=48.022 dy=40.945 dR=19.868 dPhi=1.7831 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  32.088+/-1.53)  dx=48.022 dy=61.906 dR=28.272 dPhi=2.1424 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  18.707+/-1.60)  dx=13.162 dy=48.525 dR= 6.712 dPhi=2.5006 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  12.981+/-1.54)  dx=31.942 dy=42.798 dR= 5.033 dPhi=1.9389 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  12.695+/-1.39)  dx=48.022 dy=42.513 dR=20.242 dPhi=1.8136 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  41.832+/-2.24)  dx=31.942 dy=71.650 dR=23.059 dPhi=2.4698 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,   9.576+/-0.92)  dx=48.022 dy=39.394 dR=19.543 dPhi=1.7525 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  29.416+/-0.92)  dx=31.942 dy=59.234 dR=13.901 dPhi=2.2952 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  38.696+/-0.92)  dx=48.022 dy=68.514 dR=32.167 dPhi=2.2314 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,   9.896+/-0.92)  dx=31.942 dy=39.714 dR= 4.006 dPhi=1.8541 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  10.216+/-0.92)  dx=13.162 dy=40.034 dR=12.838 dPhi=2.2027 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  14.472+/-1.47)  dx=48.022 dy=44.290 dR=20.722 dPhi=1.8476 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  42.673+/-1.58)  dx=31.942 dy=72.491 dR=23.727 dPhi=2.4794 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  39.821+/-1.60)  dx=31.942 dy=69.639 dR=21.483 dPhi=2.4458 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  51.176+/-0.92)  dx=31.942 dy=80.994 dR=30.721 dPhi=2.5644 (tid=0)  dPhi:FAIL dR:FAIL XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  20.456+/-0.92)  dx=48.022 dy=50.274 dR=22.749 dPhi=1.9569 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  15.656+/-0.92)  dx=48.022 dy=45.474 dR=21.073 dPhi=1.8699 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  25.256+/-0.92)  dx=31.942 dy=55.074 dR=11.218 dPhi=2.2202 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  37.416+/-0.92)  dx=31.942 dy=67.234 dR=19.639 dPhi=2.4152 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,   9.256+/-0.92)  dx=13.162 dy=39.074 dR=13.398 dPhi=2.1560 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  25.256+/-0.92)  dx=48.022 dy=55.074 dR=24.796 dPhi=2.0380 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 32.346+/-288.39,  27.016+/-1.60)  dx=31.942 dy=56.834 dR=12.324 dPhi=2.2531 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  30.056+/-0.92)  dx=13.162 dy=59.874 dR= 3.155 dPhi=2.7041 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  26.412+/-1.56)  dx=48.022 dy=56.230 dR=25.340 dPhi=2.0565 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,   9.256+/-0.92)  dx=48.022 dy=39.074 dR=19.482 dPhi=1.7461 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  34.536+/-0.92)  dx=48.022 dy=64.354 dR=29.659 dPhi=2.1767 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  24.616+/-0.92)  dx=48.022 dy=54.434 dR=24.503 dPhi=2.0275 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 13.566+/-288.39,  20.456+/-0.92)  dx=13.162 dy=50.274 dR= 5.275 dPhi=2.5424 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+AAA FTT hit H pos=( 48.426+/-288.39,  26.216+/-0.92)  dx=48.022 dy=56.034 dR=25.246 dPhi=2.0534 (tid=0)  dPhi:FAIL dR:OK XY:FAIL
+StInfo: Adding horizontal strip hit with dPhi = 0.617537, dR = 7.81155, dx = 21.7763, dy = 1.15654
+StInfo: Adding vertical strip hit with dPhi = 0.00155494, dR = 9.4841, dx = 0.189695, dy = 9.48235
+StInfo: Closest horizontal FTT strip to FST state: dR=7.811545, dPhi=0.617537, dx=21.776304, dy=1.156537 (tid=0)
+AAA FTT closest-H dPhi=0.6175(<0.1200) dR= 7.812(< 30.0) dx=21.776 dy= 1.157(< 7.50) tid=0 -> ACCEPT
+StInfo: Closest vertical FTT strip to FST state: dR=9.484096, dPhi=0.001555, dx=0.189695, dy=9.482349 (tid=0)
+AAA FTT closest-V dPhi=0.0016(<0.1200) dR= 9.484(< 30.0) dx= 0.190 dy= 9.482(< 7.50) tid=0 -> ACCEPT
+AAA FTT result: 2 hits added (H:ACCEPT V:ACCEPT)
+StInfo:  Found #FTT strips on plane #3 = [2]
+StInfo: Found 13 existing seed points
+StInfo: Adding 2 new FTT seed points
+StInfo: Hit already in seed, skipping
+StInfo: Hit already in seed, skipping
+StInfo: Closest EPD hit to state: dR=-6.355601, dPhi=-0.379012, dx=13.797055, dy=-3.530229
+StInfo: GenFitTrackResult::mIdTruth = 0, QaTruth = 1
+The points are collinear, curvature is undefined.
+p1 = -0.144822, -0.220955
+p2 = 0.0571407, -9.31232
+p3 = 0.0571407, -9.31232
+The points are collinear, curvature is undefined.
+p1 = 0.0131657, -6.43749
+p2 = 0.0571407, -9.31232
+p3 = 0.0571407, -9.31232
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = -37.527, -24.1891
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = 21.97, -24.6723
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = 0.902927, -39.267
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = -0.336, -39.361
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = -37.587, -24.8837
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = -21.391, -28.4811
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = 0.87903, -39.198
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = -21.372, -30.9742
+The points are collinear, curvature is undefined.
+p1 = 0.0571407, -9.31232
+p2 = 0.0571407, -9.31232
+p3 = 0.594, -39.3
+StInfo: GenericFitSeeder::makeSeed::Curvature: -0.00752831
+StInfo: GenericFitSeeder::makeSeed::pt = 0.199108
+StInfo: Note: Using externally provided seed momentum
+StInfo: Track Setup complete, track has 13 points
+StInfo:  sorting changed track points: 0
+StInfo: Fit status:  1
+StInfo: -Fit pvalue: 0.999999
+StInfo: -Fit Chi2:   2.9905
+StInfo: -Fit Chi2:   2.9905
+StInfo: Fit momentum: 0.168724, -9.5793, 94.0588
+StInfo: 	Fit Pt: 9.58078, eta: 2.97989, phi: -1.55318
+StInfo: Track fit update complete!
+StInfo: Track Reps: 1
+StInfo: Track Rep 0
+genfit::AbsTrackRep, pdgCode = -211. PropDir = 0
+fitStatus 
+ track has been fitted, fit has converged fully, 0 TrackPoints could not be processed, fitted charge = -1, PruneFlags: 
+ track has been fitted with reference track, numIterations = 2, track length = 295.313, fChi2 = 2.9905, bChi2 = 2.9905, fNdf = 21, bNdf = 21, fPVal = 0.999999, bPVal = 0.999999
+
+StInfo: GenFitTrackResult::mIdTruth = 0, QaTruth = 1
+StInfo: GTR Setting momentum from track
+StInfo: --isFitConvergedPartially() = 1
+StInfo: --isFitConverged() = 1
+StInfo: --isFitConvergedFully() = 1
+StInfo: >>doSecondaryTrackFitting( #globals = 5 )
+StInfo: <<Fwd Tracking Fit :24 GenFit Tracks
+StInfo: Processing GenfitTrackResult(type=0): 0 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=5
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.157) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-4.26966,20.1708,725.567)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0399,1.8,807.621) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-5.46582,24.3673,808.122)
+StInfo: Processing GenfitTrackResult(type=0): 1 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=3
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.157) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-85.6861,28.8776,723.108)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0399,1.8,807.621) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-96.9203,32.7059,805.359)
+StInfo: Processing GenfitTrackResult(type=0): 2 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=3
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(116.97,-56.1499,722.163)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(133.222,-63.91,804.263)
+StInfo: Processing GenfitTrackResult(type=0): 3 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=3
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(2.14027,-6.11252,725.631)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(2.41061,-6.06625,808.214)
+StInfo: Processing GenfitTrackResult(type=0): 4 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=11
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(0.961064,-69.74,725.667)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(1.09692,-78.8266,808.254)
+StInfo: Processing GenfitTrackResult(type=2): 5 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=15
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(10.9913,-23.4042,725.364)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(12.3617,-26.3162,807.913)
+StInfo: Processing GenfitTrackResult(type=2): 6 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=4
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.157) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-65.1239,22.6113,723.729)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0399,1.8,807.621) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-73.3248,25.5156,806.072)
+StInfo: Processing GenfitTrackResult(type=2): 7 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=4
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(47.5469,-19.477,724.26)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(53.6127,-21.8525,806.667)
+StInfo: Processing GenfitTrackResult(type=2): 8 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=4
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(3.84248,-41.7891,725.58)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(4.3646,-47.0323,808.155)
+StInfo: Processing GenfitTrackResult(type=2): 9 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(1.05036,-66.4815,725.664)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(1.19852,-74.8912,808.251)
+StInfo: Processing GenfitTrackResult(type=1): 10 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=6
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.157) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-245.243,529.093,718.289)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0399,1.8,807.621) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-281.715,607.792,799.778)
+StInfo: Processing GenfitTrackResult(type=1): 11 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=4
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.157) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-65.307,22.3241,723.724)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0399,1.8,807.621) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-73.5526,25.1915,806.065)
+StInfo: Processing GenfitTrackResult(type=1): 12 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=4
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(107.84,-51.3425,722.439)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(122.751,-58.3961,804.579)
+StInfo: Processing GenfitTrackResult(type=1): 13 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=4
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(2.86283,-31.5551,725.61)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(3.24271,-35.3272,808.189)
+StInfo: Processing GenfitTrackResult(type=1): 14 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=13
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(0.970107,-69.0497,725.667)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(1.10711,-77.9931,808.253)
+StInfo: Processing GenfitTrackResult(type=4): 15 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=7
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(30.3476,-59.9593,724.779)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(34.345,-67.7889,807.249)
+StInfo: Processing GenfitTrackResult(type=4): 16 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=5
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.157) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-68.4516,22.8715,723.629)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0399,1.8,807.621) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-77.1817,25.826,805.956)
+StInfo: Processing GenfitTrackResult(type=4): 17 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=5
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(56.4758,-26.0651,723.99)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(64.0172,-29.4963,806.353)
+StInfo: Processing GenfitTrackResult(type=4): 18 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=5
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(3.19104,-41.0024,725.6)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(3.62026,-46.19,808.177)
+StInfo: Processing GenfitTrackResult(type=4): 19 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=14
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(1.22336,-67.9284,725.659)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(1.39681,-76.636,808.245)
+StInfo: Processing GenfitTrackResult(type=5): 20 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=8
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(28.3852,-34.4145,724.839)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(32.44,-39.2181,807.307)
+StInfo: Processing GenfitTrackResult(type=5): 21 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=6
+AAA FCS StraightLine: det=0 xyzdet=(-17.8518,-5.26,725.157) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-55.9032,5.88028,724.008)
+AAA FCS StraightLine: det=2 xyzdet=(-22.0399,1.8,807.621) norm=(-0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(-64.1425,6.75492,806.349)
+StInfo: Processing GenfitTrackResult(type=5): 22 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=6
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(45.5675,-23.3128,724.32)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(51.6413,-26.4078,806.727)
+StInfo: Processing GenfitTrackResult(type=5): 23 mIsFitConverged=1, mIsFitConvergedPartially=1, mNumFitPoints=6
+AAA FCS StraightLine: det=1 xyzdet=(17.8518,-5.26,725.157) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(12.1458,-18.9618,725.329)
+AAA FCS StraightLine: det=3 xyzdet=(22.0399,1.8,807.621) norm=(0.0301896,0,0.999544)
+AAA FCS StraightLine result: tv3=(13.9199,-21.6264,807.866)
+StInfo: StFwdTrackCollection has 24 tracks now
+StInfo: StFwdTrackCollection has 24 tracks now
+StInfo: *** StFwdTrackMaker::Make() == StOK(0) ***
+StInfo: NTrack=   24 NGoodTrack= 24 NEcalMatch=  0 NHcalMatch=  0
+StInfo: *** StFcsTrackMatchMaker::Make() == StOK(0) ***
+StInfo: *** StFwdResidualMaker::Make() == StOK(0) ***
+StInfo: StPicoEvent::setETofGoodEventFlag() - eTof flag vector wrong size 108 / 1728
+StInfo: StPicoDstMaker::fillFcsHits filled 1266
+StInfo: StPicoDstMaker::fillFcsClusters filled 51
+StInfo: *** StPicoDstMaker::Make() == StOK(0) ***
+After Event 299:	 total =1083.167969 heap =362.771484 and  54.900391( +0.376831)
+EVENT #299 COMPLETED
+After Event Loop	 total =1083.167969 heap =362.771179 and  54.900696( -0.000305)
+               StMemStat::Summary(calls)        Min        Aver         Max         RMS 
+=============================================================================================
+                                        (299)   -8.789505    0.091439   14.015747    2.790212
+---------------------------------------------------------------------------------------------
+                                   Total(1)   -8.789505    0.091439   14.015747    2.790212
+=============================================================================================
+StInfo: StFwdResidualMaker: 4250 Global tracks, 12750 FST residuals, 9683 FTT residuals
+StInfo: StFwdResidualMaker: wrote st_fwd_23081015_raw_6000057.FwdDetResidual_Global.root
+StQAInfo: =================================================================================
+StQAInfo: QAInfo:Chain              StChain::StChain              Ast =744.06        Cpu =635.01
+StQAInfo: QAInfo:Maker       StPicoDstMaker::picoDst              Ast = 61.14( 8.2%) Cpu = 54.24( 8.5%)
+StQAInfo: QAInfo:Maker   StFwdResidualMaker::fwdResidual          Ast =  0.30( 0.0%) Cpu =  0.26( 0.0%)
+StQAInfo: QAInfo:Maker StFcsTrackMatchMaker::FcsTrkMatch          Ast =  0.73( 0.1%) Cpu =  0.78( 0.1%)
+StQAInfo: QAInfo:Maker      StFwdTrackMaker::fwdTrack             Ast =345.12(46.4%) Cpu =295.17(46.5%)
+StQAInfo: QAInfo:Maker    StFcsClusterMaker::StFcsClusterMaker    Ast =  2.02( 0.3%) Cpu =  1.81( 0.3%)
+StQAInfo: QAInfo:Maker StFcsWaveformFitMaker::StFcsWaveformFitMaker Ast =225.61(30.3%) Cpu =201.23(31.7%)
+StQAInfo: QAInfo:Maker StFttClusterPointMaker::stgcClusterPoint     Ast = 11.04( 1.5%) Cpu =  9.78( 1.5%)
+StQAInfo: QAInfo:Maker    StFttClusterMaker::stgcCluster          Ast = 30.85( 4.1%) Cpu = 27.53( 4.3%)
+StQAInfo: QAInfo:Maker   StFttHitCalibMaker::fttHitCalib          Ast = 29.80( 4.0%) Cpu = 26.61( 4.2%)
+StQAInfo: QAInfo:Maker         StFttDbMaker::fttDbMkr             Ast =  0.00( 0.0%) Cpu =  0.00( 0.0%)
+StQAInfo: QAInfo:Maker         StFcsDbMaker::fcsDbMkr             Ast =  0.00( 0.0%) Cpu =  0.02( 0.0%)
+StQAInfo: QAInfo:Maker StMuDst2StEventMaker::muDst2StEventMaker   Ast = 10.56( 1.4%) Cpu =  8.95( 1.4%)
+StQAInfo: QAInfo:Maker          St_db_Maker::db                   Ast =  3.65( 0.5%) Cpu =  1.25( 0.2%)
+StQAInfo: QAInfo:Maker         StMuDstMaker::MuDst                Ast = 23.24( 3.1%) Cpu =  7.38( 1.2%)
+StInfo: Closing fcstrk.root
+StInfo: StFttHitCalibMaker::Finish()
+St_db_Maker::Init 
+Real time 0:00:00, CP time 0.160, 3 slices
+      MySQL::Init 
+Real time 0:00:03, CP time 0.740, 2 slices
+St_db_Maker::Make 
+Real time 0:00:00, CP time 0.340, 326 slices
+      MySQL::Make 
+Real time 0:00:00, CP time 0.010, 17 slices
+      MySQL::Data 
+Real time 0:00:00, CP time 0.010, 16 slices
+Info in <St_db_Maker::dbStat>: Evts = 300 dbEvts=2 Evts/dbEvts = 150.0
+
+Info in <St_db_Maker::dbStat>: dbData =       0.0 dbTime=0.052509 dbData/dbTime=0.824792
+
+Info in <St_db_Maker::dbStat>: dbTime =       0.1 dbEvts=2 dbTime/dbEvts =0.0262545
+
+Info in <St_db_Maker::dbStat>: dbCpu  =       0.0 dbEvts=2  dbCpu/dbEvts =0.005
+
+Info in <St_db_Maker::dbStat>: dbTime/tot  =      0.01 dbCpu/tot=      0.00 
+
+StInfo: --------------Error Codes-------------------------
+StInfo:      nStOK   nStWarn    nStEOF    nStErr  nStFatal
+StInfo:       4200         0         0         0         0
+StInfo: --------------------------------------------------
+               StMemStat::Summary(calls)        Min        Aver         Max         RMS 
+=============================================================================================
+
+This is the end of STAR ROOT -- Goodbye
+
