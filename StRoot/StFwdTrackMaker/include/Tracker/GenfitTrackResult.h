@@ -276,11 +276,14 @@ public:
                 // Fix (Issue #27): kForwardVertexConstrained is likewise fit through
                 // a literal 3D point (the found forward vertex), not a line -- same
                 // reasoning as Primary. kBLCVertexConstrained is fit through the
-                // BLC-derived forward vertex point for the same reason.
+                // BLC-derived forward vertex point for the same reason. kFCSConstrained
+                // is also fit through that same BLC vertex point (see setDCA(mBLCVtxPos)
+                // in doFCSConstrainedFitting).
                 TVector3 beamDirection = TVector3(0,0,1);
                 if ( mTrackType == StFwdTrack::kPrimaryVertexConstrained ||
                      mTrackType == StFwdTrack::kForwardVertexConstrained ||
-                     mTrackType == StFwdTrack::kBLCVertexConstrained ) {
+                     mTrackType == StFwdTrack::kBLCVertexConstrained ||
+                     mTrackType == StFwdTrack::kFCSConstrained ) {
                     mTrack->getCardinalRep()->extrapolateToPoint( dcaState, mPV );
                 } else {
                     mTrack->getCardinalRep()->extrapolateToLine( dcaState, mPV, beamDirection );

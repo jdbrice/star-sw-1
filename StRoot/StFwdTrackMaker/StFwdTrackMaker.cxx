@@ -573,9 +573,33 @@ int StFwdTrackMaker::Make() {
     if ( idealNumberOfSeeds > 0 ){
         float seedFindingEff = ( mForwardTracker -> getTrackSeeds().size() + 1e-5 ) / ( idealNumberOfSeeds + 1e-5 );
         LOG_INFO << "    (vs. " << idealNumberOfSeeds << " McTracks with FST>2, eff = " << seedFindingEff << ")" << endm;
-    } 
+    }
     /**********************************************************************/
-    
+
+    /**********************************************************************/
+    // Extract FCS ECAL clusters for FCS-constrained (trkType=5) fitting
+    {
+        std::vector<ForwardTrackMaker::FcsCluster> fcsClusters;
+        StFcsCollection* fcsColl = stEvent->fcsCollection();
+        if (fcsColl && mFcsDb) {
+            for (int det = 0; det <= 1; det++) {  // ECAL north=0, south=1
+                StSPtrVecFcsCluster& cls = fcsColl->clusters(det);
+                for (size_t ic = 0; ic < cls.size(); ic++) {
+                    StFcsCluster* clu = cls[ic];
+                    if (!clu || clu->energy() <= 0) continue;
+                    StThreeVectorD xyz = mFcsDb->getStarXYZfromColumnRow(det, clu->x(), clu->y());
+                    ForwardTrackMaker::FcsCluster fc;
+                    fc.x = xyz.x(); fc.y = xyz.y(); fc.z = xyz.z();
+                    fc.e = clu->energy(); fc.det = det;
+                    fcsClusters.push_back(fc);
+                }
+            }
+        }
+        LOG_INFO << "FCS-constrained: loaded " << fcsClusters.size() << " ECAL clusters for trkType=5 fitting" << endm;
+        mForwardTracker->setFcsClusters(fcsClusters);
+    }
+    /**********************************************************************/
+
     /**********************************************************************/
     // Run Track fitting on the seeds we found
     LOG_INFO << "\tFitting FWD Track Seeds" << endm;

@@ -152,6 +152,7 @@ public:
     bool isPrimaryTrack() const { return (trackType() == StFwdTrack::kPrimaryVertexConstrained); }
     bool isFwdVertexConstrainedTrack() const { return (trackType() == StFwdTrack::kForwardVertexConstrained); }
     bool isBLCVertexConstrainedTrack() const { return (trackType() == StFwdTrack::kBLCVertexConstrained); }
+    bool isFCSConstrainedTrack() const { return (trackType() == StFwdTrack::kFCSConstrained); }
 
     void setPrimaryMomentum( StThreeVectorD mom ) { mPrimaryMomentum = mom; }
     void setDidFitConverge( bool lDidFitConverge ) { mDidFitConverge = lDidFitConverge; }
@@ -183,7 +184,7 @@ public:
     void sortHcalClusterByET();
 
     // kBLCVertexConstrained added; pack expanded to 5+3 bits to hold values 0-7
-    enum StFwdTrackType { kGlobal=0, kBeamlineConstrained=1, kPrimaryVertexConstrained=2, kForwardVertexConstrained=3, kBLCVertexConstrained=4 };
+    enum StFwdTrackType { kGlobal=0, kBeamlineConstrained=1, kPrimaryVertexConstrained=2, kForwardVertexConstrained=3, kBLCVertexConstrained=4, kFCSConstrained=5 };
 
     static unsigned char inline pack5and3(unsigned int A, unsigned int B) {
         // 5 bits for vtxIndex (0-31), 3 bits for trackType (0-7)
