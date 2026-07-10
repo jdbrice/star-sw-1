@@ -563,7 +563,14 @@ class ForwardTrackMaker {
         return gtr;
     } // fitTrack
 
-    GenfitTrackResult refitTrack( GenfitTrackResult gtrGlobal ) {
+    // Fix (Issue #27): refitTrack() used to build a fresh GenfitTrackResult via
+    // fitTrack(), which never sets mTrackType (defaults to kGlobal=0), then
+    // unconditionally called setDCA(mEventVertex) -- regardless of the caller's
+    // real track type or intended vertex. Now takes an explicit dcaTarget
+    // argument and propagates the caller's mTrackType onto the refit result
+    // before calling setDCA(), so the correct point-vs-line extrapolation method
+    // and target are used for every track type.
+    GenfitTrackResult refitTrack( GenfitTrackResult gtrGlobal, TVector3 dcaTarget ) {
         LOG_DEBUG << "FwdTracker::refitTrack->" << endm;
         const bool doRefit = mConfig.get<bool>("TrackFitter:refit", false);
         if ( !doRefit ){
@@ -623,7 +630,8 @@ class ForwardTrackMaker {
                 gtrGlobalRefit.refreshFromTrack();
         }
 
-        gtrGlobalRefit.setDCA( mEventVertex );
+        gtrGlobalRefit.mTrackType = gtrGlobal.mTrackType;
+        gtrGlobalRefit.setDCA( dcaTarget );
 
         return gtrGlobalRefit;
     }
@@ -691,7 +699,7 @@ class ForwardTrackMaker {
             // Look for additional hits in the other tracking detector
             // and add the new hits to the track
 
-            GenfitTrackResult gtrGlobalRefit = refitTrack( gtrGlobal );
+            GenfitTrackResult gtrGlobalRefit = refitTrack( gtrGlobal, mEventVertex );
             gtrGlobalRefit.mIndex = index;
             gtrGlobalRefit.mTrackType = StFwdTrack::kGlobal;
             // End Step 2
@@ -791,10 +799,10 @@ class ForwardTrackMaker {
             }
             // only do this for a track the converges -> that we can project
             gtrPV.setDCA( mEventVertex );
-            
+
             LOG_INFO << "\tInitial fit complete, now refitting with additional points" << endm;
             // refit the track with additional points
-            GenfitTrackResult gtrPVRefit = refitTrack( gtrPV );
+            GenfitTrackResult gtrPVRefit = refitTrack( gtrPV, mEventVertex );
             gtrPVRefit.mIndex = index;
             gtrPVRefit.mTrackType = StFwdTrack::kPrimaryVertexConstrained;
             gtrPVRefit.mGlobalTrackIndex = gtr.mIndex;
@@ -905,11 +913,10 @@ class ForwardTrackMaker {
                 continue;
             }
             gtrPV.setDCA( mEventVertex );
-            
 
             LOG_INFO << "\tInitial Beamline fit completed, now refitting with additional hits" << endm;
             // refit the track with additional points
-            GenfitTrackResult gtrPVRefit = refitTrack( gtrPV );
+            GenfitTrackResult gtrPVRefit = refitTrack( gtrPV, mEventVertex );
             gtrPVRefit.mIndex = index;
             gtrPVRefit.mTrackType = StFwdTrack::kBeamlineConstrained;
             gtrPVRefit.mGlobalTrackIndex = gtr.mIndex;
@@ -1029,14 +1036,22 @@ class ForwardTrackMaker {
                     index++;
                     continue;
                 }
-                gtrPV.setDCA( TVector3( vtx->getPos().X(), vtx->getPos().Y(), vtx->getPos().Z() ) );
+                // Fix (Issue #27): set mTrackType before setDCA() -- previously
+                // setDCA() ran first, so even the initial DCA used line- not
+                // point-extrapolation (mTrackType still defaulted to kGlobal).
+                // Also save the found forward vertex position and pass it through
+                // to refitTrack() explicitly -- previously refitTrack() always
+                // used mEventVertex internally, silently changing the DCA target
+                // from the found forward vertex to the wrong vertex after refit.
+                TVector3 fwdVtxPos( vtx->getPos().X(), vtx->getPos().Y(), vtx->getPos().Z() );
                 gtrPV.mTrackType = StFwdTrack::kForwardVertexConstrained;
+                gtrPV.setDCA( fwdVtxPos );
                 gtrPV.mGlobalTrackIndex = gtr->mIndex;
                 gtrPV.mVertexIndex = iVtx;
 
                 LOG_INFO << "\tInitial fit complete, now refitting with additional points" << endm;
                 // refit the track with additional points
-                GenfitTrackResult gtrPVRefit = refitTrack( gtrPV );
+                GenfitTrackResult gtrPVRefit = refitTrack( gtrPV, fwdVtxPos );
                 gtrPVRefit.mIndex = index;
                 gtrPVRefit.mTrackType = StFwdTrack::kForwardVertexConstrained;
                 gtrPVRefit.mGlobalTrackIndex = gtr->mIndex;

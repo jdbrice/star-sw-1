@@ -257,8 +257,12 @@ public:
                 auto dcaState = mTrack->getFittedState( 0 );
                 // Fix (Issue #16): PV-constrained tracks benefit from full 3D DCA
                 // (extrapolateToPoint) instead of transverse-only extrapolateToLine.
+                // Fix (Issue #27): kForwardVertexConstrained is likewise fit through
+                // a literal 3D point (the found forward vertex), not a line -- same
+                // reasoning as Primary.
                 TVector3 beamDirection = TVector3(0,0,1);
-                if ( mTrackType == StFwdTrack::kPrimaryVertexConstrained ) {
+                if ( mTrackType == StFwdTrack::kPrimaryVertexConstrained ||
+                     mTrackType == StFwdTrack::kForwardVertexConstrained ) {
                     mTrack->getCardinalRep()->extrapolateToPoint( dcaState, mPV );
                 } else {
                     mTrack->getCardinalRep()->extrapolateToLine( dcaState, mPV, beamDirection );
