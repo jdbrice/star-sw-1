@@ -186,16 +186,7 @@ class TrackFitter {
 
         // Report all the parameters
         if (kVerbose > 0) {
-            // Warm-start KalmanFitter: simple forward/backward Kalman, small blowUpFactor.
-        // Used to refine an already-converged track with tight FST r+phi sigma (pitch/sqrt12)
-        // without the instability caused by blowing up the covariance 1e9x each iteration.
-        mWarmFitter = std::unique_ptr<genfit::KalmanFitter>(
-            new genfit::KalmanFitter(20, 1e-3, 1e3, true /*sqrt formalism*/)
-        );
-        mWarmFitter->setBlowUpFactor( 1e6 ); // large enough to reset, small enough vs RefTrack 1e9
-        mWarmFitter->setMaxFailedHits(-1);
-
-        LOG_INFO << "TrackFitter::setupGenfitKalmanFitter() called" << endm;
+            LOG_INFO << "TrackFitter::setupGenfitKalmanFitter() called" << endm;
             LOG_INFO << "\tMaxFailedHits: " << mFitter->getMaxFailedHits() << endm;
             LOG_INFO << "\tMaxIterations: " << mFitter->getMaxIterations() << endm;
             LOG_INFO << "\tMinIterations: " << mFitter->getMinIterations() << endm;
@@ -208,6 +199,20 @@ class TrackFitter {
             }
         }
 
+        // Bug fix: this block was previously nested inside "if (kVerbose > 0)"
+        // above, so mWarmFitter would silently never construct when verbosity is
+        // off -- the entire warm-start feature (issue #24) would then silently
+        // no-op via its own "if (!mWarmFitter) return false;" guard in
+        // warmFitFstTightSigma(). Moved outside so it always runs regardless of
+        // kVerbose.
+        // Warm-start KalmanFitter: simple forward/backward Kalman, small blowUpFactor.
+        // Used to refine an already-converged track with tight FST r+phi sigma (pitch/sqrt12)
+        // without the instability caused by blowing up the covariance 1e9x each iteration.
+        mWarmFitter = std::unique_ptr<genfit::KalmanFitter>(
+            new genfit::KalmanFitter(20, 1e-3, 1e3, true /*sqrt formalism*/)
+        );
+        mWarmFitter->setBlowUpFactor( 1e6 ); // large enough to reset, small enough vs RefTrack 1e9
+        mWarmFitter->setMaxFailedHits(-1);
 
     } // setupGenfitKalmanFitter
 
