@@ -77,6 +77,14 @@ class StFwdTrackMaker : public StMaker {
   #ifndef __CINT__
     // Get the FwdTracker object
     std::shared_ptr<ForwardTracker> GetForwardTracker() { return mForwardTracker; }
+    // Same underlying tracker as GetForwardTracker(), upcast to its publicly-
+    // includable base type: ForwardTracker itself is defined inline inside
+    // StFwdTrackMaker.cxx (not in any header), so external code -- e.g.
+    // StFwdAlignmentMaker -- can't name that type directly. getTrackResults(),
+    // getTrackFitter(), and fitTrack() all live on this base class
+    // (Tracker/FwdTracker.h), which is a normal includable header. Purely
+    // additive: does not change this maker's own behavior.
+    std::shared_ptr<ForwardTrackMaker> GetForwardTrackerBase();
     EventStats GetEventStats();
     const std::vector<Seed_t> &getTrackSeeds() const;
     const std::vector<GenfitTrackResult> &getFitResults() const;
