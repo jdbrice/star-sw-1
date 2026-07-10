@@ -4,6 +4,8 @@
 // that is a valid shebang to run script as executable, but with only one arg
 
 #include <typeinfo.h>
+#include <fstream>
+#include <string>
 
 // Fast fwd tracking without DB
 // bool runDb = false;
@@ -33,6 +35,12 @@ bool refillMuDst = false;
 bool runFwdQa = false;
 bool runFitQa = false;
 bool runPico = true;
+// Unbiased (hit-removed) FST/FTT residuals (StFwdAlignmentMaker) -- see
+// proposal_alignment_path.txt. Off by default: costs ~(num FST+FTT planes)
+// extra refits per track, not meant for routine running. Set at runtime
+// via fwd_afterburner_db()'s enableAlignment parameter (see signature below),
+// not by editing this default.
+bool runFwdAlignment = false;
 
 // Memory Baseline
 // bool runDb = false;
@@ -47,10 +55,17 @@ bool runPico = true;
 #include "StMemStat.h"
 
 void loadLibs();
-//void fwd_afterburner(const Char_t * fileList = "st_physics_23037002_raw_1000064.MuDst.root",size_t nEvents = 100, int debug=0){
-void fwd_afterburner(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0){
+// extraFileList: optional path to a plain text file, one MuDst.root path per
+// line, to Add() onto the same TChain as fileList -- StMuDstMaker's own
+// constructor does NOT auto-detect a .list/.lis fileList argument the way
+// some other STAR IO makers do. Empty (default) = old single-file behavior.
+// enableAlignment: turns on StFwdAlignmentMaker for THIS invocation only, no
+// source edit/rebuild needed.
+void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, const char* extraFileList="", bool enableAlignment=false){
 	cout << "FileList: " << fileList << endl;
 	cout << "nEvents: " << nEvents << endl;
+	cout << "enableAlignment: " << enableAlignment << endl;
+	runFwdAlignment = enableAlignment;
 
 	// First load some shared libraries we need
 	loadLibs();
@@ -68,6 +83,18 @@ void fwd_afterburner(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095/
 							1
 							);
 	TChain& muDstChain = *muDstMaker.chain();
+	if (extraFileList && strlen(extraFileList) > 0) {
+		std::ifstream extraIn(extraFileList);
+		std::string extraLine;
+		int nAdded = 0;
+		while (std::getline(extraIn, extraLine)) {
+			if (extraLine.empty()) continue;
+			muDstChain.Add(extraLine.c_str());
+			nAdded++;
+		}
+		cout << "Added " << nAdded << " extra MuDst files from " << extraFileList
+		     << " -- chain now has " << muDstChain.GetEntries() << " events total" << endl;
+	}
 	printf( "MuDst file has %d events available in tree\n", muDstChain.GetEntries());
 	
 	/*******************************************************************************************/
@@ -87,8 +114,10 @@ void fwd_afterburner(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095/
 	/*******************************************************************************************/
 
 	/*******************************************************************************************/
-	// Setup Fcs Database if needed
-	if ( (runFcsChain && runDb) || runFitQa){
+	// Setup Fcs Database if needed. Note: no longer requires runFcsChain --
+	// StFcsDb (beamline-from-DB) is needed for BLC track/vertex fitting even
+	// when the full FCS reconstruction chain is off.
+	if ( runDb || runFitQa){
 		StFcsDbMaker * fcsDb = new StFcsDbMaker();
 		chain->AddMaker(fcsDb);
 		// fcsDb->SetDebug();
@@ -147,11 +176,31 @@ void fwd_afterburner(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095/
 		fwdTrack->setFstHitSource( 2 /* = MUDST */);
 		fwdTrack->setFttHitSource( 1 /* = STEVENT */);
 
+		if (runDb) fwdTrack->setUseBeamlineFromDB( true ); // use measured beamline for BLC; off for MC
 
 		// fwdTrack->setConfigKeyValue("TrackFitter:doBeamlineTrackFitting", false);
         // fwdTrack->setConfigKeyValue("TrackFitter:doPrimaryTrackFitting", false);
         // fwdTrack->setConfigKeyValue("TrackFitter:doSecondaryTrackFitting", false);
         // skip finding fwd vertices
+	}
+
+	const int kNAlignTypes = 1;
+	int alignTypesToRun[kNAlignTypes] = {4}; // BLCVtx only by default; add 0 (Global)
+	                                          // back to this array for a clean-baseline
+	                                          // comparison sample too.
+	StFwdAlignmentMaker *fwdAlignments[kNAlignTypes] = {NULL};
+	if (runFwdAlignment && runFwdChain){
+		// Unbiased (hit-removed) residuals -- see proposal_alignment_path.txt.
+		// One instance per track type.
+		const char* alignTypeName[6] = {"Global","BLC","Primary","FwdVtx","BLCVtx","FCSConstrained"};
+		for (int i = 0; i < kNAlignTypes; i++) {
+			int rt = alignTypesToRun[i];
+			TString alignName( gSystem->BaseName(inMuDstFile) );
+			alignName.ReplaceAll(".MuDst.root", Form(".FwdAlignment_%s.root", alignTypeName[rt]));
+			fwdAlignments[i] = new StFwdAlignmentMaker(alignName, Form("fwdAlignment_%s", alignTypeName[rt]));
+			fwdAlignments[i]->setTrackMaker(fwdTrack);
+			fwdAlignments[i]->setTrackType((UChar_t)rt);
+		}
 	}
 
 
@@ -275,6 +324,12 @@ void fwd_afterburner(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095/
 	stmem.Summary();
 	/*******************************************************************************************/
 
+	// chain->Finish() is disabled below (pre-existing), so StFwdAlignmentMaker's
+	// output may not get flushed either -- call ours explicitly so it isn't silently lost.
+	for (int i = 0; i < kNAlignTypes; i++) {
+		if (fwdAlignments[i]) fwdAlignments[i]->Finish();
+	}
+
 	// Chain Finish
 	// if (nEntries > 1) {
 	// 	cout << "FINISH up" << endl;
@@ -344,6 +399,7 @@ void loadLibs(){
 	gSystem->Load("libKiTrack");
 	gSystem->Load("libXMLIO.so");
 	gSystem->Load( "StFwdTrackMaker.so" );
+	gSystem->Load( "StFwdAlignmentMaker.so" );
 	gSystem->Load( "StFwdUtils.so" );
 	gSystem->Load("libStEpdUtil.so");
 	gSystem->Load("StStarLogger.so");
