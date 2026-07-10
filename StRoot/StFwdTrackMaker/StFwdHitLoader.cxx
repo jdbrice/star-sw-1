@@ -35,8 +35,8 @@ const double FstWedgeAligner::kWedgePhiCorrection[3][12] = {
 //#define LOG_DEBUG if(true) std::cerr
 //#define LOG_INFO if(true) std::cerr
 
-//AAA: use kFstStripPitchR (2.875 cm) instead of hardcoded 3.0; phiSize stays numeric (= kFstStripPitchPhi)
-//TMatrixDSym makeFstCovMat(TVector3 hit, float rSize = 3.0, float phiSize = 0.0040906154) {
+// Issue #5: default rSize was 3.0, not kFstStripPitchR (2.875 cm) -- the actual
+// FST strip pitch in r. phiSize stays numeric (= kFstStripPitchPhi).
 TMatrixDSym makeFstCovMat(TVector3 hit, float rSize = kFstStripPitchR, float phiSize = 0.0040906154) {
     // we can calculate the CovMat since we know the det info, but in future we should probably keep this info in the hit itself
     // measurements on a plane only need 2x2
