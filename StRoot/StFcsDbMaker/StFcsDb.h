@@ -204,7 +204,13 @@ public:
 
   //! Get get 4 vector assuing m=0 and taking beamline from DB
   StLorentzVectorD getLorentzVector(const StThreeVectorD& xyz, float energy, float zVertex=0.0);
-  
+
+  //! Beamline parameters from DB (Calibrations/rhic/vertexSeed)
+  double getBeamlineX()    const { return mVx;    }  //! x offset at z=0 [cm]
+  double getBeamlineY()    const { return mVy;    }  //! y offset at z=0 [cm]
+  double getBeamlineDxDz() const { return mVdxdz; }  //! dx/dz slope
+  double getBeamlineDyDz() const { return mVdydz; }  //! dy/dz slope
+
   //! Project Hcal local x/y to Ecal local x/y [cm]
   //! See https://www.star.bnl.gov/protected/spin/akio/fcs/fcsProjection.pdf
   double getHcalProjectedToEcalX(int ns, double hcalLocalX, double zvtx=0.0);

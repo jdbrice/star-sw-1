@@ -285,8 +285,26 @@ int StFwdTrackMaker::Init() {
     return kStOK;
 };
 
-EventStats StFwdTrackMaker::GetEventStats() { 
-    return mForwardTracker->getEventStats(); 
+int StFwdTrackMaker::InitRun( int runNumber ) {
+    if ( mUseBeamlineFromDB ) {
+        StFcsDb *fcsDb = dynamic_cast<StFcsDb*>(GetDataSet("fcsDb"));
+        if ( fcsDb ) {
+            mForwardTracker->setBeamline( fcsDb->getBeamlineX(),    fcsDb->getBeamlineY(),
+                                          fcsDb->getBeamlineDxDz(), fcsDb->getBeamlineDyDz() );
+            LOG_INFO << "DB beamline for run " << runNumber
+                     << ": x0=" << fcsDb->getBeamlineX()
+                     << " y0=" << fcsDb->getBeamlineY()
+                     << " dxdz=" << fcsDb->getBeamlineDxDz()
+                     << " dydz=" << fcsDb->getBeamlineDyDz() << endm;
+        } else {
+            LOG_WARN << "setUseBeamlineFromDB requested but StFcsDb not available in InitRun" << endm;
+        }
+    }
+    return kStOK;
+}
+
+EventStats StFwdTrackMaker::GetEventStats() {
+    return mForwardTracker->getEventStats();
 }
 
 /**

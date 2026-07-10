@@ -60,6 +60,7 @@ class StFwdTrackMaker : public StMaker {
     ~StFwdTrackMaker(){/* nada */};
 
     int Init();
+    int InitRun(int runNumber);
     int Finish();
     int Make();
     void Clear(const Option_t *opts = "");
@@ -87,6 +88,7 @@ class StFwdTrackMaker : public StMaker {
 
     StFwdHitLoader mFwdHitLoader; // loads hits from StEvent or GEANT
     StFcsDb* mFcsDb = 0; // Pointer to fcs db object
+    bool mUseBeamlineFromDB = false; // if true, pass DB beamline to tracker each event
 
     // for Wavefront OBJ export
     size_t eventIndex = 0; // counts up for processed events
@@ -219,7 +221,12 @@ class StFwdTrackMaker : public StMaker {
      * @params sZ : sigma in Z (cm)
     */
     void setPrimaryVertexSigmaZ(  double sZ ) { mFwdConfig.set<double>( "TrackFitter.Vertex:sigmaZ", sZ ); }
-    // TODO: add options for beamline constraint
+    /** @brief Use measured beamline from DB for track and vertex fitting.
+     * When enabled, StFcsDb beamline parameters (x0,y0,dxdz,dydz) are passed
+     * to the tracker each run. Default false (MC uses x=y=0 line).
+    */
+    void setUseBeamlineFromDB( bool use = true ) { mUseBeamlineFromDB = use; }
+
     /** @brief Set B-field to zero (for zero field running)
      * @param zeroB : if true, use Zero B field
     */
