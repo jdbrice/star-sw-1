@@ -608,7 +608,21 @@ class ForwardTrackMaker {
             }
         }
 
+        // Normal FST+FTT refit with full phi sigma (stable convergence)
         auto gtrGlobalRefit = fitTrack( gtrGlobal.mSeed, &gtrGlobal.mMomentum );
+
+        // Fix (Issue #24): warm-sigma refinement. If the refit converged, run a
+        // second pass with tight FST r+phi sigma (pitch/sqrt12 for both).
+        // warmFitFstTightSigma modifies mFitTrack in-place; refreshFromTrack()
+        // picks up the updated momentum, charge, covariance, and chi2. Applies to
+        // all five track types (Global/BLC/Primary/FwdVtx/BLCVtx) -- no
+        // track-type guard here.
+        if ( gtrGlobalRefit.mIsFitConvergedFully ){
+            bool warmOk = mTrackFitter->warmFitFstTightSigma( gtrGlobal.mSeed );
+            if ( warmOk )
+                gtrGlobalRefit.refreshFromTrack();
+        }
+
         gtrGlobalRefit.setDCA( mEventVertex );
 
         return gtrGlobalRefit;
@@ -1086,7 +1100,7 @@ class ForwardTrackMaker {
      */
     void doTrackFitting( const std::vector<Seed_t> &trackSeeds) {
         LOG_DEBUG << ">>doTrackFitting" << endm;
-        
+
         long long itStart = FwdTrackerUtils::nowNanoSecond();
 
         std::vector<GenfitTrackResult> globalTracks;

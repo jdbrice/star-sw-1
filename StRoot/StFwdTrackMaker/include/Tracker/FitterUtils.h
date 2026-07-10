@@ -136,17 +136,21 @@ class GenericFitSeeder : public FitSeedMaker {
             // Fix (Issue #17): this line was dead code -- immediately overwritten
             // two lines below by the proper SetXYZ call.
             //momSeed.SetXYZ(pt/sqrt(2.0),pt/sqrt(2.0),10);
-            // compute the seed's eta from seed points
+            // Fix (Issue #24, 2026-06-22 seed theta fix): use disk 0 and disk 2
+            // (outermost pair) for theta/phi estimation, not disk 0/disk 1. The
+            // wider baseline gives a better eta estimate and avoids the degenerate
+            // case where disk 0 and disk 1 rasterize to the same strip center
+            // (Rxy=0 -> tan(theta)=0 -> pz blows up).
             TVector3 p0 = TVector3(seed[0]->getX(), seed[0]->getY(), seed[0]->getZ());
-            TVector3 p1 = TVector3(seed[1]->getX(), seed[1]->getY(), seed[1]->getZ());
-            double dx = (p1.X() - p0.X());
-            double dy = (p1.Y() - p0.Y());
-            double dz = (p1.Z() - p0.Z());
+            TVector3 p2 = TVector3(seed[2]->getX(), seed[2]->getY(), seed[2]->getZ());
+            double dx = (p2.X() - p0.X());
+            double dy = (p2.Y() - p0.Y());
+            double dz = (p2.Z() - p0.Z());
             double phi = TMath::ATan2(dy, dx);
             double Rxy = sqrt(dx * dx + dy * dy);
             double theta = TMath::ATan2(Rxy, dz);
             if (abs(dx) < 1e-6 || abs(dy) < 1e-6){
-                phi = TMath::ATan2( p1.Y(), p1.X() );
+                phi = TMath::ATan2( p2.Y(), p2.X() );
             }
 
             // momSeed.SetPhi(phi);

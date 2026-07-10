@@ -199,6 +199,17 @@ class TrackFitter {
             }
         }
 
+        // Fix (Issue #24): warm-start KalmanFitter, a simple forward/backward
+        // Kalman with a small blowUpFactor. Used to refine an already-converged
+        // track with tight FST r+phi sigma (pitch/sqrt12) without the instability
+        // caused by blowing up the covariance 1e9x each iteration. Deliberately
+        // outside the kVerbose block above -- it must always be initialized, not
+        // only when verbose logging is on.
+        mWarmFitter = std::unique_ptr<genfit::KalmanFitter>(
+            new genfit::KalmanFitter(20, 1e-3, 1e3, true /*sqrt formalism*/)
+        );
+        mWarmFitter->setBlowUpFactor( 1e6 ); // large enough to reset, small enough vs RefTrack 1e9
+        mWarmFitter->setMaxFailedHits(-1);
 
     } // setupGenfitKalmanFitter
 
@@ -855,6 +866,89 @@ class TrackFitter {
         return duration;
     } // fitTrack
 
+    /**
+     * @brief Fix (Issue #24): warm-start refinement of mFitTrack using tight FST
+     *  sigma (pitch/sqrt12 for both r and phi).
+     *  Steps:
+     *   1. Re-seed mFitTrack with current fitted momentum (warm start).
+     *   2. Tighten FST U (radial) and V (phi) covariance in-place by factor 12.
+     *   3. Run mWarmFitter (KalmanFitter, blowUpFactor=1e6) on mFitTrack.
+     *  mFitTrack is left in the tight-sigma fitted state on success; caller calls
+     *  gtr.refreshFromTrack() to propagate updated momentum, charge, and covariance.
+     *  No restore: every subsequent fitTrack() creates a new shared_ptr<genfit::Track>.
+     *  @return true if warm fit converged
+     */
+    bool warmFitFstTightSigma( Seed_t &seed ) {
+        if ( !mFitTrack || !mWarmFitter ) return false;
+
+        // Step 1: re-seed from fitted state
+        try {
+            auto cr  = mFitTrack->getCardinalRep();
+            auto msp = mFitTrack->getFittedState(0, cr);
+            if ( msp.getMom().Mag() < 0.05 ) return false;
+            // set seed state = fitted pos+mom so warm fitter starts from good estimate
+            mFitTrack->setStateSeed( msp.getPos(), msp.getMom() );
+            TMatrixDSym warmCov(6); warmCov.Zero();
+            double p2 = msp.getMom().Mag2();
+            for(int i=0;i<3;i++) warmCov(i,i) = 0.01;       // 1mm pos uncertainty
+            for(int i=3;i<6;i++) warmCov(i,i) = 0.01 * p2;  // 10% mom uncertainty
+            mFitTrack->setCovSeed(warmCov);
+        } catch (...) { return false; }
+
+        // Step 2: tighten FST U (radial) and V (phi) covariance in-place.
+        // The 2x2 local plane covariance is stored as rawHitCov_ in each PlanarMeasurement.
+        // U = radial direction, V = azimuthal direction.
+        // Both start from full pitch in the initial fit (to keep the Kalman search window wide).
+        // Here, post-convergence, hits are already associated -- safe to tighten both to pitch/sqrt12.
+        // We divide all 4 elements by scale = 12 = (pitch_full/pitch_sqrt12)^2.
+        const float scale = 12.f;  // (full_pitch / (pitch/sqrt12))^2
+        std::vector<std::pair<genfit::AbsMeasurement*,TMatrixDSym>> savedMeas;
+        for (int ip = 0; ip < (int)mFitTrack->getNumPoints(); ip++) {
+            auto tp = mFitTrack->getPointWithMeasurement(ip);
+            if (!tp) continue;
+            for (int im = 0; im < (int)tp->getNumRawMeasurements(); im++) {
+                auto meas = tp->getRawMeasurement(im);
+                if (!meas) continue;
+                // Identify FST hits by their detId (kFstId) stored in AbsMeasurement.
+                // For PlanarMeasurements: detId = fh->_detid = kFstId or kFttId.
+                // For spacepoints (BLC): detId may be kTpcId (beamline/PV) or kFcsPresId.
+                // Only tighten phi on FST PlanarMeasurements.
+                if ( meas->getDetId() != kFstId ) continue; // skip non-FST (FTT, beamline, EPD)
+                TMatrixDSym origCov = meas->getRawHitCov(); // save
+                savedMeas.push_back({meas, origCov});
+                // Tighten both C_UU (radial) and C_VV (phi) -- and cross-terms -- by scale=12.
+                // This brings full-pitch sigma down to pitch/sqrt12 for both directions.
+                TMatrixDSym tightCov = origCov;
+                tightCov(0,0) /= scale;
+                tightCov(1,1) /= scale;
+                tightCov(0,1) /= scale;
+                tightCov(1,0) /= scale;
+                meas->setRawHitCov(tightCov);
+            }
+        }
+
+        // Step 3: run KalmanFitter on mFitTrack IN-PLACE with tight sigma.
+        // mFitTrack is left in the tight-sigma fitted state -- the caller (refitTrack)
+        // calls gtr.refreshFromTrack() to pick up the updated momentum, charge,
+        // covariance, and convergence flags. No restore is needed because every
+        // subsequent fitTrack() call creates a brand-new shared_ptr<genfit::Track>.
+        bool converged = false;
+        try {
+            mWarmFitter->processTrack(mFitTrack.get());
+            mFitTrack->checkConsistency();
+            mFitTrack->determineCardinalRep();
+            auto status = mFitTrack->getFitStatus();
+            converged = status && status->isFitConverged();
+        } catch (genfit::Exception &e) {
+            LOG_WARN << "warmFitFstTightSigma exception: " << e.what() << endm;
+            // Restore measurement covariances so mFitTrack is at least self-consistent
+            for (auto &sv : savedMeas) sv.first->setRawHitCov(sv.second);
+        } catch (...) {
+            for (auto &sv : savedMeas) sv.first->setRawHitCov(sv.second);
+        }
+        return converged;
+    }
+
     genfit::SharedPlanePtr getPlaneFor( FwdHit * fh ){
         
         // sTGC
@@ -892,6 +986,9 @@ class TrackFitter {
 
     // Main GenFit fitter instance
     std::unique_ptr<genfit::AbsKalmanFitter> mFitter = nullptr;
+    // Warm-start second-pass fitter (Issue #24) -- see setupGenfitKalmanFitter()
+    // and warmFitFstTightSigma().
+    std::unique_ptr<genfit::KalmanFitter> mWarmFitter = nullptr;
 
     // PDG codes for the default plc type for fits
     static const int mPdgPiPlus = 211;
