@@ -1003,3 +1003,7 @@ const std::vector<Seed_t> &StFwdTrackMaker::getTrackSeeds() const{
 const std::vector<GenfitTrackResult> &StFwdTrackMaker::getFitResults()const{
     return mForwardTracker->getTrackResults();
 }
+
+std::shared_ptr<ForwardTrackMaker> StFwdTrackMaker::GetForwardTrackerBase(){
+    return mForwardTracker; // implicit upcast: ForwardTracker publicly extends ForwardTrackMaker
+}
