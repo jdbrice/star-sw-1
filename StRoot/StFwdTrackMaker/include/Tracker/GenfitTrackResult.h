@@ -271,6 +271,31 @@ public:
 
         }
     }
+
+    /** @brief Fix (Issue #24): re-read scalar fields (momentum, charge,
+     *  convergence, chi2) from the current mTrack fitted state. Call after
+     *  in-place modification of mTrack (e.g. the tight-sigma warm fit) to
+     *  propagate the updated state without replacing the shared_ptr.
+     */
+    void refreshFromTrack() {
+        if ( !mTrack ) return;
+        try {
+            auto cr = mTrack->getCardinalRep();
+            auto fs = mTrack->getFitStatus(cr);
+            if ( !fs ) return;
+            mIsFitConverged          = fs->isFitConverged();
+            mIsFitConvergedFully     = fs->isFitConvergedFully();
+            mIsFitConvergedPartially = fs->isFitConvergedPartially();
+            mNFailedPoints           = fs->getNFailedPoints();
+            mCharge                  = fs->getCharge();
+            mChi2                    = fs->getChi2();
+            if ( mIsFitConverged )
+                mMomentum = cr->getMom( mTrack->getFittedState(0, cr) );
+        } catch ( genfit::Exception &e ) {
+            LOG_WARN << "refreshFromTrack: " << e.what() << endm;
+        } catch (...) {}
+    }
+
     size_t numFtt() const {
         size_t n = 0;
         for ( auto hit : mSeed ){
