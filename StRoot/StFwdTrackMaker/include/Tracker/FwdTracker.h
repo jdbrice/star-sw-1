@@ -107,6 +107,15 @@ class ForwardTrackMaker {
         mBeamlineHit._covmat(2,2) = 100*100;
     } //initialize
 
+    // Set measured beamline from DB (call each event from StFwdTrackMaker::Make).
+    // x0,y0 = beamline position at z=0 [cm]; dxdz,dydz = slopes.
+    // Default (0,0,0,0) matches MC convention and leaves covariance unchanged.
+    void setBeamline(double x0, double y0, double dxdz, double dydz) {
+        mBeamlineHit.setXYZDetId( (float)x0, (float)y0, 0, kTpcId );
+        mBeamlineDxDz = dxdz;
+        mBeamlineDyDz = dydz;
+    }
+
     /**
      * @brief Loads Criteria from XML configuration.
      * Utility function for loading criteria from XML config.
@@ -2153,6 +2162,8 @@ class ForwardTrackMaker {
     TVector3 mEventVertex;
     FwdHit mEventVertexHit;
     FwdHit mBeamlineHit;
+    double mBeamlineDxDz = 0.0; // dx/dz slope from DB (0 = MC default)
+    double mBeamlineDyDz = 0.0; // dy/dz slope from DB (0 = MC default)
     vector<FwdHit> mFwdVerticesAsHits;
     genfit::GFRaveVertexFactory mGFRVertexFactory;
 
