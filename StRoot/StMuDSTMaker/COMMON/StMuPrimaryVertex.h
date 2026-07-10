@@ -64,6 +64,7 @@ class StMuPrimaryVertex : public TObject {
    void          setIdTruth(Int_t idtru,Int_t qatru=0) {mIdTruth = (UShort_t) idtru; mQuality = (UShort_t) qatru;}
    void          setIdParent(Int_t id) {mIdParent = id;}
    Bool_t        isBeamConstrained() const {return TESTBIT(mFlag,kBEAMConstrVtxId);}
+   Bool_t        isBLCVtx()         const {return TESTBIT(mFlag,kBLCVtxId);}
    virtual void     Print(Option_t *option="") const; ///< Print essential vertex info
 
   ClassDef(StMuPrimaryVertex,8)
