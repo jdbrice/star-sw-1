@@ -401,7 +401,8 @@ enum StVertexId {kUndefinedVtxId   = kUndefinedVertexIdentifier,
                  kFtpcWestCalVtxId = kFtpcWestCalibrationVertexIdentifier,
 		         kBEAMConstrVtxId,
                  kRejectedVtxId,
-                 kFwdVtxId
+                 kFwdVtxId,
+                 kBLCVtxId
                  };
 
 /*!

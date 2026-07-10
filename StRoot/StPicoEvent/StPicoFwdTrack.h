@@ -20,7 +20,8 @@ class StPicoFwdTrack : public TObject {
     
 
 public:
-    enum StPicoFwdTrackType { kGlobal=0, kBeamlineConstrained=1, kPrimaryVertexConstrained=2, kForwardVertexConstrained=3 };
+    // kBLCVertexConstrained added; bit layout expanded to 5+3 (matches StFwdTrack)
+    enum StPicoFwdTrackType { kGlobal=0, kBeamlineConstrained=1, kPrimaryVertexConstrained=2, kForwardVertexConstrained=3, kBLCVertexConstrained=4 };
     /// Constructor
     StPicoFwdTrack(  );
     /// Copy constructor
@@ -66,12 +67,12 @@ public:
     Float_t dcaZ() const { return mDCAZ; }
     // Index of the primary vertex used in the fit
     UChar_t vertexIndex() const {
-        // extract bits 7…2:
-        return (mVtxIndex >> 2) & 0x3F;
+        // bits 7…3 (5 bits) — expanded from 6 bits
+        return (mVtxIndex >> 3) & 0x1F;
     }
     UChar_t trackType() const {
-        // extract bits 1…0:
-        return mVtxIndex & 0x03;
+        // bits 2…0 (3 bits) — expanded from 2 bits to hold kBLCVertexConstrained=4
+        return mVtxIndex & 0x07;
     }
     // Index of the corresponding Global Track if Primary, BLC, or FwdVertex constrained tracks
     UShort_t globalTrackIndex() const { return mGlobalTrackIndex; }
@@ -79,6 +80,7 @@ public:
     bool isBeamLineConstrainedTrack() const { return (trackType() == StPicoFwdTrack::kBeamlineConstrained); }
     bool isPrimaryTrack() const { return (trackType() == StPicoFwdTrack::kPrimaryVertexConstrained); }
     bool isFwdVertexConstrainedTrack() const { return (trackType() == StPicoFwdTrack::kForwardVertexConstrained); }
+    bool isBLCVertexConstrainedTrack() const { return (trackType() == StPicoFwdTrack::kBLCVertexConstrained); }
 
      // access ecal match indices
      UChar_t ecalMatchIndex( Int_t i ) const { return (i < (Int_t)mEcalMatchIndex.size()) ? mEcalMatchIndex[i] : 0; }

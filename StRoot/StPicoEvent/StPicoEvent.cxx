@@ -36,7 +36,8 @@ StPicoEvent::StPicoEvent(): TObject(),
   mZdcSumAdcEast(0), mZdcSumAdcWest(0),
   mZdcSmdEastHorizontal{}, mZdcSmdEastVertical{}, mZdcSmdWestHorizontal{}, mZdcSmdWestVertical{},
   mBbcAdcEast{}, mBbcAdcWest{}, mHighTowerThreshold{}, mJetPatchThreshold{},
-  mETofHitMultiplicity(0), mETofDigiMultiplicity(0), mETofGoodEventFlag{}, mNumberOfPrimaryTracks(0), mZdcUnAttenuated{} {
+  mETofHitMultiplicity(0), mETofDigiMultiplicity(0), mETofGoodEventFlag{}, mNumberOfPrimaryTracks(0), mZdcUnAttenuated{},
+  mBLCVtxX(0), mBLCVtxY(0), mBLCVtxZ(0), mBLCVtxSigmaZ(0), mBLCVtxNTracks(0) {
 
   // Default constructor
   if( !mTriggerIds.empty() ) {
@@ -153,6 +154,13 @@ StPicoEvent::StPicoEvent(const StPicoEvent &event) : TObject() {
   for(int iIter=0; iIter<108; iIter++) {
     mETofHasPulsersFlag[iIter] = event.mETofHasPulsersFlag[iIter];
   }
+
+  // BLC vertex
+  mBLCVtxX      = event.mBLCVtxX;
+  mBLCVtxY      = event.mBLCVtxY;
+  mBLCVtxZ      = event.mBLCVtxZ;
+  mBLCVtxSigmaZ = event.mBLCVtxSigmaZ;
+  mBLCVtxNTracks = event.mBLCVtxNTracks;
 }
 
 //_________________

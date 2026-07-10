@@ -54,6 +54,13 @@ class StPicoEvent : public TObject {
   /// Return primary vertex position error
   TVector3 primaryVertexError() const
   { return TVector3(mPrimaryVertexErrorX,mPrimaryVertexErrorY,mPrimaryVertexErrorZ); }
+  /// Return BLC vertex position (beam-line-constrained; zero if not found)
+  TVector3 blcVertex() const
+  { return TVector3(mBLCVtxX, mBLCVtxY, mBLCVtxZ); }
+  /// Return BLC vertex z sigma (cm)
+  Float_t  blcVertexSigmaZ()  const { return mBLCVtxSigmaZ; }
+  /// Return number of tracks used in BLC vertex fit (0 = not found)
+  UShort_t blcVertexNTracks() const { return mBLCVtxNTracks; }
   /// Return primary vertex ranking
   Float_t  ranking() const             { return mRanking; }
   /// Return number of tracks that matched BEMC
@@ -274,6 +281,13 @@ class StPicoEvent : public TObject {
   { mPrimaryVertexErrorX=vtxPosErr.X(); mPrimaryVertexErrorY=vtxPosErr.Y(); mPrimaryVertexErrorZ=vtxPosErr.Z(); }
   /// Set primary vertex ranking
   void setPrimaryVertexRanking(Float_t ranking) { mRanking = (Float_t)ranking; }
+  /// Set BLC vertex position (x,y,z) in cm
+  void setBLCVertexPosition(Float_t x, Float_t y, Float_t z)
+  { mBLCVtxX = x; mBLCVtxY = y; mBLCVtxZ = z; }
+  /// Set BLC vertex z sigma in cm
+  void setBLCVertexSigmaZ(Float_t s)  { mBLCVtxSigmaZ = s; }
+  /// Set number of tracks used in BLC vertex fit
+  void setBLCVertexNTracks(UShort_t n) { mBLCVtxNTracks = n; }
   /// Set number of BEMC-matched tracks
   void setNumberOfBEMCMatch(Int_t n)            { mNBEMCMatch = (UShort_t)n; }
   //// Set number of TOF-matched tracks
@@ -625,10 +639,21 @@ protected:
   /// ZDC unattenuated: 0 - east, 1 - west
   UShort_t mZdcUnAttenuated[2];
 
+  /// BLC vertex position x (cm); 0 if not found
+  Float_t  mBLCVtxX;
+  /// BLC vertex position y (cm); 0 if not found
+  Float_t  mBLCVtxY;
+  /// BLC vertex position z (cm); 0 if not found
+  Float_t  mBLCVtxZ;
+  /// BLC vertex z sigma (cm); 0 if not found
+  Float_t  mBLCVtxSigmaZ;
+  /// Number of tracks used in BLC vertex fit; 0 if not found
+  UShort_t mBLCVtxNTracks;
+
 #if defined (__TFG__VERSION__)
   ClassDef(StPicoEvent, 10)
 #else /* ! __TFG__VERSION__ */
-  ClassDef(StPicoEvent, 8)
+  ClassDef(StPicoEvent, 9)
 #endif
 };
 

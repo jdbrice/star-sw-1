@@ -858,6 +858,25 @@ void StFwdTrackMaker::FillEvent() {
     }
 
     // -------------------------------------------------------------------
+    // Add the BLC (beam-line-constrained) vertex, if found, so that
+    // kBLCVertexConstrained tracks below can be remapped to it.
+    int blcPvIndex = -1;
+    if ( mForwardTracker->getBLCVtxNTracks() > 0 ) {
+        StPrimaryVertex *bpv = new StPrimaryVertex();
+        TVector3 bp = mForwardTracker->getBLCVtxPos();
+        bpv->setPosition( StThreeVectorF( bp.X(), bp.Y(), bp.Z() ) );
+        float sigZ = (float)mForwardTracker->getBLCVtxSigmaZ();
+        float cov6[6] = { 0.01f, 0.f, 0.01f, 0.f, 0.f, sigZ*sigZ }; // sigmaXY=0.1cm
+        bpv->setCovariantMatrix( cov6 );
+        bpv->setNumTracksUsedInFinder( mForwardTracker->getBLCVtxNTracks() );
+        bpv->setBLCVertex();
+        stEvent->addPrimaryVertex( bpv );
+        blcPvIndex = static_cast<int>(stEvent->numberOfPrimaryVertices()) - 1;
+        LOG_DEBUG << "Added BLC vertex at z=" << bp.Z() << " sigmaZ=" << sigZ
+                  << " nTracks=" << mForwardTracker->getBLCVtxNTracks() << endm;
+    }
+
+    // -------------------------------------------------------------------
     // Add the tracks, remapping mVertexIndex to the StEvent PV collection.
     size_t indexTrack = 0;
     for ( auto &gtr : mForwardTracker->getTrackResults() ) {
@@ -868,9 +887,12 @@ void StFwdTrackMaker::FillEvent() {
             // Beamline, and PrimaryVertex-constrained tracks the relevant PV
             // is the event PV (and DCA is measured against it). For
             // ForwardVertex-constrained tracks the relevant PV is the RAVE
-            // forward vertex at offset + iVtx.
+            // forward vertex at offset + iVtx. For BLCVertex-constrained
+            // tracks the relevant PV is the BLC vertex added above.
             if ( gtr.mTrackType == StFwdTrack::kForwardVertexConstrained ) {
                 gtr.mVertexIndex = fwdRaveOffset + gtr.mVertexIndex;
+            } else if ( gtr.mTrackType == StFwdTrack::kBLCVertexConstrained && blcPvIndex >= 0 ) {
+                gtr.mVertexIndex = blcPvIndex;
             } else if ( eventPvIndex >= 0 ) {
                 gtr.mVertexIndex = eventPvIndex;
             } else {

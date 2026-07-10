@@ -86,10 +86,17 @@ class EventStats {
         mFailedSecondaryRefits = 0;
         mGoodSecondaryRefits = 0;
 
+        mAttemptedBLCVtxFits = 0;
+        mGoodBLCVtxFits = 0;
+        mFailedBLCVtxFits = 0;
+        mGoodBLCVtxRefits = 0;
+        mFailedBLCVtxRefits = 0;
+
         numGlobalFoundHits.clear();
         numBeamlineFoundHits.clear();
         numPrimaryFoundHits.clear();
         numSecondaryFoundHits.clear();
+        numBLCVtxFoundHits.clear();
 
         mGlobalNumEpdFoundHits.clear();
         mBeamlineNumEpdFoundHits.clear();
@@ -105,6 +112,7 @@ class EventStats {
         mBeamlineFitDuration.clear();
         mPrimaryFitDuration.clear();
         mSecondaryFitDuration.clear();
+        mBLCVtxFitDuration.clear();
     }
     int mNumSeeds = 0;
     int mNumEpdHits = 0; // across all track types, did we find an EPD hit?
@@ -139,10 +147,17 @@ class EventStats {
     int mFailedSecondaryRefits = 0;
     int mGoodSecondaryRefits = 0;
 
+    int mAttemptedBLCVtxFits = 0;
+    int mGoodBLCVtxFits = 0;
+    int mFailedBLCVtxFits = 0;
+    int mGoodBLCVtxRefits = 0;
+    int mFailedBLCVtxRefits = 0;
+
     vector<int> numGlobalFoundHits;
     vector<int> numBeamlineFoundHits;
     vector<int> numPrimaryFoundHits;
     vector<int> numSecondaryFoundHits;
+    vector<int> numBLCVtxFoundHits;
 
     vector<int> mGlobalNumEpdFoundHits;
     vector<int> mBeamlineNumEpdFoundHits;
@@ -158,6 +173,7 @@ class EventStats {
     vector<float> mBeamlineFitDuration;
     vector<float> mPrimaryFitDuration;
     vector<float> mSecondaryFitDuration;
+    vector<float> mBLCVtxFitDuration;
 };
 
 class GenfitTrackResult {
@@ -259,10 +275,12 @@ public:
                 // (extrapolateToPoint) instead of transverse-only extrapolateToLine.
                 // Fix (Issue #27): kForwardVertexConstrained is likewise fit through
                 // a literal 3D point (the found forward vertex), not a line -- same
-                // reasoning as Primary.
+                // reasoning as Primary. kBLCVertexConstrained is fit through the
+                // BLC-derived forward vertex point for the same reason.
                 TVector3 beamDirection = TVector3(0,0,1);
                 if ( mTrackType == StFwdTrack::kPrimaryVertexConstrained ||
-                     mTrackType == StFwdTrack::kForwardVertexConstrained ) {
+                     mTrackType == StFwdTrack::kForwardVertexConstrained ||
+                     mTrackType == StFwdTrack::kBLCVertexConstrained ) {
                     mTrack->getCardinalRep()->extrapolateToPoint( dcaState, mPV );
                 } else {
                     mTrack->getCardinalRep()->extrapolateToLine( dcaState, mPV, beamDirection );

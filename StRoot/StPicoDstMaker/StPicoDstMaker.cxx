@@ -2660,6 +2660,21 @@ void StPicoDstMaker::fillFwdTracks() {
     new((*(mPicoArrays[StPicoArrays::FwdVertex]))[counter]) StPicoFwdVertex(picoFwdVertex);
   } // for each primary vertex
 
+  // Fill BLC vertex into StPicoEvent (one per event, stored as scalar fields)
+  StPicoEvent *picoEvent = (StPicoEvent*)mPicoArrays[StPicoArrays::Event]->At(0);
+  if ( picoEvent ) {
+    for ( size_t i = 0; i < evt->numberOfPrimaryVertices(); i++ ){
+      StPrimaryVertex *evVertex = evt->primaryVertex(i);
+      if (!evVertex || !evVertex->isBLCVertex()) continue;
+      picoEvent->setBLCVertexPosition( evVertex->position().x(), evVertex->position().y(), evVertex->position().z() );
+      double blcCov[6]; evVertex->covarianceMatrix(blcCov);
+      picoEvent->setBLCVertexSigmaZ( (Float_t)sqrt(blcCov[5]) );  // cov[5] = sigZ^2
+      picoEvent->setBLCVertexNTracks( (UShort_t)evVertex->numTracksUsedInFinder() );
+      LOG_DEBUG << "Added BLC vertex to StPicoEvent z=" << evVertex->position().z() << endm;
+      break; // only one BLC vertex per event
+    }
+  }
+
 } //fillFwdTracks
 
 //_________________
