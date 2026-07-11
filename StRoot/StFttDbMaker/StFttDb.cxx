@@ -467,7 +467,9 @@ namespace {
         371.4f, 368.2f, 365.0f, 361.8f, 358.6f, 355.4f, 352.2f, 349.0f,
         345.8f, 342.6f, 339.4f, 336.2f, 333.0f, 329.8f, 326.6f, 323.4f,
         320.2f, 317.0f, 313.8f, 310.6f, 307.4f, 304.2f, 301.0f, 297.8f,
-        294.6f, 291.4f, 288.2f, 285.0f, 281.8f, 278.6f, 275.4f
+        294.6f, 291.4f, 288.2f, 285.0f, 281.8f, 278.6f, 275.4f,
+        272.2f // strip 151: missing from the original calibration data (debug#26);
+               // linearly extrapolated from strips 149 (278.6) & 150 (275.4), delta -3.2
     };
 
     // Row5_StripLength.txt: diagonal strip lengths for Row 4, 0..58

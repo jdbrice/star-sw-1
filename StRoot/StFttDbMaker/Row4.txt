@@ -1,3 +1,4 @@
+nStrip     Strip_Center
 0          25.14      
 1          28.34      
 2          31.54      
