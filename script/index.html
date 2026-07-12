@@ -302,7 +302,7 @@ root -l 'plotDilep.C()'
       <td><code>type= outdir= [option=] [submit|run|merge]</code></td>
       <td><a href="submit_ana.pl.txt">view</a></td></tr>
   <tr><td><code>submit_check.pl</code></td>
-      <td>Submit real-data afterburner (MuDst → picoDst), skipping runs whose picoDst already exists</td>
+      <td>Submit real-data afterburner (MuDst → picoDst), skipping individual files whose picoDst already exists (resumable) -- optional <code>align</code> arg also runs StFwdAlignmentMaker</td>
       <td><code>[submit|submitmerge]</code></td>
       <td><a href="submit_check.pl.txt">view</a></td></tr>
   <tr><td><code>merge_ana.pl</code></td>
@@ -317,6 +317,14 @@ root -l 'plotDilep.C()'
       <td>csh: pico analysis wrapper, all types (called by submit_ana.pl)</td>
       <td><code>TYPE RUN ISET OPTION WORKDIR OUTDIR</code></td>
       <td><a href="runpico_uni">view</a></td></tr>
+  <tr><td><code>running200.pl</code></td>
+      <td>Polls <code>condor_q</code> until this user's job count drops to/below a threshold; called by submit_ana.pl and submit_check.pl after <code>condor_submit</code> to block until a batch finishes</td>
+      <td><em>(no args, reads $ENV{'USER'})</em></td>
+      <td><a href="running200.pl">view</a></td></tr>
+  <tr><td><code>findmudst.pl</code></td>
+      <td>Builds/refreshes the raw production MuDst file list (writes <code>runs.txt</code>, backs up the previous one to <code>runs.txt.old</code>) that feeds <code>prod_mudst.txt</code></td>
+      <td><em>(edit $name glob at top for a different production path)</em></td>
+      <td><a href="findmudst.pl">view</a></td></tr>
 </table>
 
 <h3>Existing executables</h3>
@@ -328,6 +336,9 @@ root -l 'plotDilep.C()'
   <tr><td><code>runab</code></td>
       <td>csh: real-data afterburner (MuDst → picoDst)</td>
       <td><a href="runab">view</a></td></tr>
+  <tr><td><code>runab_wedge</code></td>
+      <td>csh: one-off variant of runab that also applies the FstWedgeAligner per-wedge FST phi correction (see computeWedgeCorrection.C below); used for a validation campaign, not routine production</td>
+      <td><a href="runab_wedge">view</a></td></tr>
   <tr><td><code>runpico3</code></td>
       <td>csh: pico analysis for data (superseded by runpico_uni)</td>
       <td><a href="runpico3">view</a></td></tr>
@@ -349,10 +360,10 @@ root -l 'plotDilep.C()'
       <td>FTT+FCS+FWD afterburner on production MuDst (DB-driven: run#/timestamp from 1st event); called by runab</td>
       <td><a href="../StRoot/StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C">view</a></td></tr>
   <tr><td><code>picoMatch.C</code></td>
-      <td>FCS cluster ↔ forward-track matching histograms</td>
+      <td>FCS cluster ↔ forward-track matching histograms (6 track types incl. FCSTRK), per-event BLC-vertex-quality QA</td>
       <td><a href="picoMatch.C">view</a></td></tr>
   <tr><td><code>picoDilepton.C</code></td>
-      <td>Dilepton candidate selection and histograms</td>
+      <td>Dilepton candidate selection, mass spectra, and z-vertex/charge-sign-binned like-sign-normalized mixed-event background subtraction (6 track types incl. FCSTRK; BLCVtx/FCSTRK use the fitted BLC vertex Z, other types intentionally fall back to 0 -- real TPC vertex is commonly unavailable for st_fwd stream data, and these types are deliberately independent vertex-hypothesis comparisons)</td>
       <td><a href="picoDilepton.C">view</a></td></tr>
   <tr><td><code>readpico3.C</code></td>
       <td>Unified pico reader (dispatches on run number)</td>
@@ -364,8 +375,53 @@ root -l 'plotDilep.C()'
       <td>Plot track–FCS matching histograms from .match.root</td>
       <td><a href="plotMatch.C">view</a></td></tr>
   <tr><td><code>plotDilep.C</code></td>
-      <td>Plot dilepton histograms from .dilep.root</td>
+      <td>Plot dilepton histograms from .dilep.root, incl. mixed-event-subtracted mass (dilep4) and BLC-vertex-Z QA panel (dilep3)</td>
       <td><a href="plotDilep.C">view</a></td></tr>
+</table>
+
+<h3>FST/FTT alignment &amp; residual macros</h3>
+<table>
+  <tr><th>Macro</th><th>Purpose</th><th>Source</th></tr>
+  <tr><td><code>plotFwdResidual.C</code></td>
+      <td>Plot FST/FTT per-plane tracking-detector alignment residuals from StFwdResidualMaker (biased — the fit that produced the hit also used it)</td>
+      <td><a href="plotFwdResidual.C">view</a></td></tr>
+  <tr><td><code>plotFwdAlignment.C</code></td>
+      <td>Plot unbiased (hit-removed, leave-one-out) FST/FTT residuals from StFwdAlignmentMaker's output ntuple</td>
+      <td><a href="plotFwdAlignment.C">view</a></td></tr>
+  <tr><td><code>plotFwdAlignmentResidual.C</code></td>
+      <td>Unbiased counterpart to plotFwdResidual.C — same r·dPhi-vs-x/y/r/phi quantities/binning, built from StFwdAlignmentMaker's leave-one-out ntuple instead</td>
+      <td><a href="plotFwdAlignmentResidual.C">view</a></td></tr>
+  <tr><td><code>computeWedgeCorrection.C</code></td>
+      <td>Computes the per-(disk, wedge-phi-bin) mean unbiased dphi correction table consumed by FstWedgeAligner (see bugreport_StFstHitMaker.txt)</td>
+      <td><a href="computeWedgeCorrection.C">view</a></td></tr>
+  <tr><td><code>compareCorrection15.C</code></td>
+      <td>15-file before/after comparison of the FstWedgeAligner per-wedge phi correction against the uncorrected baseline (run 23081015)</td>
+      <td><a href="compareCorrection15.C">view</a></td></tr>
+</table>
+
+<h3>FCSTRK QA macros</h3>
+<table>
+  <tr><th>Macro</th><th>Purpose</th><th>Source</th></tr>
+  <tr><td><code>plot_fcstrk_cond_eff.C</code></td>
+      <td>Conditional efficiency: given a BLCVtx track, fraction that become FCSTRK (trkType=5) — vs eta, phi, |p|, pT, and 2D eta-phi</td>
+      <td><a href="plot_fcstrk_cond_eff.C">view</a></td></tr>
+  <tr><td><code>plot_fcstrk_mom.C</code></td>
+      <td>FCSTRK momentum-resolution and charge-sign QA (q/pT residual BLCVtx vs FCSTRK, charge misID fraction) from a picoMatch match.root</td>
+      <td><a href="plot_fcstrk_mom.C">view</a></td></tr>
+</table>
+
+<h3>One-off debug macros</h3>
+<table>
+  <tr><th>Macro</th><th>Purpose</th><th>Source</th></tr>
+  <tr><td><code>test_blcvtx.C</code></td>
+      <td>Small-scale test: run the afterburner on a simulation MuDst and confirm BLC vertex fields are stored correctly in the resulting picoDst</td>
+      <td><a href="test_blcvtx.C">view</a></td></tr>
+  <tr><td><code>read_blcvtx.C</code></td>
+      <td>Read back a picoDst and print its BLC vertex fields</td>
+      <td><a href="read_blcvtx.C">view</a></td></tr>
+  <tr><td><code>check_fwd.C</code></td>
+      <td>Check for the presence/count of forward tracks in a picoDst</td>
+      <td><a href="check_fwd.C">view</a></td></tr>
 </table>
 
 <!-- NOTES -->
