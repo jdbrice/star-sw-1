@@ -18,10 +18,15 @@
 #include "StFcsDbMaker/StFcsDbMaker.h"
 #include "StFcsDbMaker/StFcsDb.h"
 
+// Pi0 (gamma-gamma) mass reconstruction -- self-contained addition, see
+// RunPi0() at the end of this file. Forward-declared here so RunDilepton()
+// (defined earlier in the file) can call it.
+void RunPi0(StPicoDst *dst, StFcsDb* fcsDb, double zVertex);
+
 enum {mNCut=7};
 const char* nameCut[mNCut] = {"All","ETOT","HTOT","Cone","SigmaMax","TrackMatch","ChargeSign"};
-static const int mNType=5;
-const char* TTYPE[mNType]={"Global","Beamline","Primary","FwdVtx","BLCVtx"};
+static const int mNType=6;
+const char* TTYPE[mNType]={"Global","Beamline","Primary","FwdVtx","BLCVtx","FCSTRK"};
 float mETCut=0.4;          //GeV for single electron
 float mETotCut=0.3;        //E_lepton/ETOT ratio cut
 float mHTotCut=0.5;        //E_lepton/HTOT ratio cut
@@ -39,7 +44,9 @@ float mRdphiCut=8.0;  // azimuthal arc Rdphi = R(fcs)*(phi(fcs)-phi(trk)) cut [c
 
 //float mDNHitCut=4;
 int mDNHitCut=4;
-int mDebug=1;
+int mDebug=0; // per-track/per-event printf is extremely verbose (multi-GB logs on
+              // real data with condor's Log=Output=Error all pointed at the same
+              // file); set to 1 only for interactive small-sample debugging.
 static long nEvt=0, nEvtBothClus=0;
 static long nEvtCut[mNType][7];
 static long nTrkAll=0, nTrkFailStatus=0, nTrkFailNHit=0, nTrkFailChi2=0;
@@ -47,13 +54,42 @@ static long nTrkPassDR[mNType][2];
 static long nTrkPassPT[mNType][2];
 
 //Mixed-event background: cut level at which an event's north/south FCS cluster
-//4-vectors are buffered and mixed with the previous qualifying event, per track
-//type. Adjustable; default matches the tightest existing cut (ChargeSign).
+//4-vectors are buffered and mixed with a pool of the last mMixPoolSize qualifying
+//events, per track type. Adjustable; default matches the tightest existing cut
+//(ChargeSign). Pool gives up to 2*mMixPoolSize mixed pairs per event (vs. 2 with
+//a single previous-event buffer), reducing the mixed-bg statistical error by
+//roughly sqrt(mMixPoolSize) relative to the old single-previous-event scheme.
+//
+//The pool is further split into mNZBin(z-vertex) x mNChBin(north-charge-sign)
+//bins, and mixing only draws from the bin matching the current event's own
+//zVertex and north-lepton charge sign. This fixes two real gaps in the
+//original flat pool: (1) mixing pairs used to combine 4-vectors reconstructed
+//with each event's own (possibly very different) zVertex, which is not a
+//physically consistent random pairing given the wide (~30-40cm sigma) z-vertex
+//spread in real data; (2) with only same-event pairs required to be
+//opposite-sign (cg[0]+cg[1]==0), the pool had no charge bookkeeping, so a
+//"north+" from this event could get mixed with a "south+" pulled from a past
+//event that itself was (north-,south+) -- silently contaminating the
+//OS-labeled mixed background with SS-equivalent pairs. Binning by north
+//charge sign and only mixing within the same bin ("current north charge
+//matches past north charge" -- south then matches automatically since both
+//sides passed the same-event OS cut) closes that gap.
+//nMixFilledBin/nSameFilledBin let plotDilep.C reweight+sum the 12 bins
+//correctly (mixed-pair fill count vs. real same-event pair count actually
+//landing in each bin) instead of assuming a uniform flat normalization.
 int mMixCut=6;
-static bool mPrevValid[mNType];
-static TLorentzVector mPrevLN[mNType];
-static TLorentzVector mPrevLS[mNType];
-static long nMixFilled[mNType];
+static const int mMixPoolSize=10; // number of past qualifying events kept per (type,zbin,chargebin)
+static const int mNZBin=6;                 // z-vertex bins, 25cm steps
+static const float mZBinLo=-50.0;          // bin edges: [-50,-25),...,[75,100)
+static const float mZBinWidth=25.0;
+static const int mNChBin=2;                // 0: north charge>=0, 1: north charge<0
+static int mPoolNext[mNType][mNZBin][mNChBin];                        // next slot to overwrite (circular)
+static bool mPoolValid[mNType][mNZBin][mNChBin][mMixPoolSize];
+static TLorentzVector mPoolLN[mNType][mNZBin][mNChBin][mMixPoolSize];
+static TLorentzVector mPoolLS[mNType][mNZBin][mNChBin][mMixPoolSize];
+static long nMixFilled[mNType];                          // total mixed-pair fills (all bins), for EndDilepton summary
+static long nMixFilledBin[mNType][mNZBin][mNChBin];       // mixed-pair fills per bin
+static long nSameFilledBin[mNType][mNZBin][mNChBin];      // same-event pairs landing in each bin
 
 char filenameD[200];
 TFile *mFileD;
@@ -72,6 +108,17 @@ TH1F *mET[mNType][mNCut];
 TH1F *mEZ[mNType][mNCut];
 TH1F *mM[mNType][mNCut];
 TH1F *mMmix[mNType];
+TH1F *mMmixBin[mNType][mNZBin][mNChBin];  // mixed-mass, per (type,zbin,chargebin)
+TH1F *mMsameBin[mNType][mNZBin][mNChBin]; // same-event (OS) mass, per (type,zbin,chargebin)
+// Same-event LIKE-sign mass, per (type,zbin,chargebin) -- chargebin here means
+// north-lepton charge sign of the LS pair (++ -> bin0, -- -> bin1), same key
+// as the OS pool. Real dileptons are essentially all opposite-sign, so LS
+// pairs are a signal-free measure of the combinatorial rate and make a better
+// mixed-event normalization anchor than the OS same-event count (which
+// includes true signal, biasing a full-range-integral normalization -- see
+// plotDilep.C).
+TH1F *mMLSameBin[mNType][mNZBin][mNChBin];
+TH1F *mBLCVtxZ[mNCut]; // event-level BLC vertex Z, filled per cut (BLCVtx track type only)
 TH1F *mZ[mNType][mNCut];
 TH1F *mCosT[mNType][mNCut];
 TH1F *mPhi[mNType][mNCut];
@@ -86,9 +133,28 @@ void InitDilepton(int run, int set=-1){
   printf("Opening %s\n",filenameD);
   mFileD=new TFile(filenameD,"RECREATE");
 
+  for(int cut=0; cut<mNCut; cut++){
+    mBLCVtxZ[cut] = new TH1F(Form("BLCVtxZ_%s",nameCut[cut]),Form("BLC vertex Z (event-level, cut=%s)",nameCut[cut]),100,-200,200);
+  }
+
   for(int tt=0; tt<mNType; tt++){
-    mPrevValid[tt] = false;
     nMixFilled[tt] = 0;
+    for(int zb=0; zb<mNZBin; zb++){
+      for(int cb=0; cb<mNChBin; cb++){
+        mPoolNext[tt][zb][cb] = 0;
+        for(int k=0; k<mMixPoolSize; k++) mPoolValid[tt][zb][cb][k] = false;
+        nMixFilledBin[tt][zb][cb] = 0;
+        nSameFilledBin[tt][zb][cb] = 0;
+        float zlo=mZBinLo+zb*mZBinWidth, zhi=zlo+mZBinWidth;
+        const char* cname = (cb==0) ? "Np" : "Nm";
+        mMmixBin[tt][zb][cb] = new TH1F(Form("MmixBin_%s_z%d_%s",TTYPE[tt],zb,cname),
+          Form("Mixed-Event Mass %s z=[%.0f,%.0f) north-chg=%s (cut=%s)",TTYPE[tt],zlo,zhi,cname,nameCut[mMixCut]),50,0.0,10.0);
+        mMsameBin[tt][zb][cb] = new TH1F(Form("MsameBin_%s_z%d_%s",TTYPE[tt],zb,cname),
+          Form("Same-Event Mass %s z=[%.0f,%.0f) north-chg=%s (cut=%s)",TTYPE[tt],zlo,zhi,cname,nameCut[mMixCut]),50,0.0,10.0);
+        mMLSameBin[tt][zb][cb] = new TH1F(Form("MLSameBin_%s_z%d_%s",TTYPE[tt],zb,cname),
+          Form("Same-Event Like-Sign Mass %s z=[%.0f,%.0f) north-chg=%s (cuts 0-5)",TTYPE[tt],zlo,zhi,cname),50,0.0,10.0);
+      }
+    }
     mMmix[tt] = new TH1F(Form("Mmix_%s",TTYPE[tt]),Form("Mixed-Event Mass %s (cut=%s)",TTYPE[tt],nameCut[mMixCut]),50,0.0,10.0);
     for(int cut=0; cut<mNCut; cut++){
       mETot[tt][cut]     = new TH1F(Form("RETot_%s_%s",    TTYPE[tt],nameCut[cut]),Form("Epair/ETOT %s %s",               TTYPE[tt],nameCut[cut]),50,0.0,1.1);
@@ -118,7 +184,33 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
   StPicoEvent *event = dst->event();
   nEvt++;
 
-  //loop over FCS clusters and find higest ET Ecal clusters
+  // This picoDst was written with setVtxMode(StPicoDstMaker::Vtxless), so
+  // event->primaryVertex() is never filled and always reads back as the
+  // (-999,-999,-999) sentinel, not a real vertex. Using -999 as zVertex in
+  // getLorentzVector() below nearly doubles the assumed cluster-to-vertex z
+  // distance (real ~710cm -> ~1709cm), which collimates every reconstructed
+  // direction toward pure z: ET (~sin theta) collapses while EZ (~E for a
+  // forward-peaked direction) barely changes -- exactly the symptom seen.
+  // MC (Pythia) events are generated at the nominal z=0 vertex, so substitute
+  // 0 for the sentinel here instead of a real measured vertex.
+  double zVertexPrimary = event->primaryVertex().Z();
+  if (zVertexPrimary < -900) zVertexPrimary = 0;
+
+  // BLCVtx (tt==4) and FCSTRK (tt==5, BLCVtx tracks refit with an FCS ECAL
+  // cluster constraint) are both downstream of the BLC (beamline-constrained)
+  // vertex fit, so their FCS cluster kinematics should use that fitted vertex
+  // instead of the general primary vertex -- it's a real per-event fit
+  // result (unaffected by the Vtxless sentinel above) and is the physically
+  // consistent vertex for tracks anchored to it. When the BLC fit didn't
+  // converge this event (haveBLCVtx=false), those two types are skipped
+  // entirely below (kinValid[1]=false).
+  bool haveBLCVtx = (event->blcVertexNTracks() > 0);
+  double zVertexBLC = haveBLCVtx ? event->blcVertex().Z() : 0;
+
+  //loop over FCS clusters and find higest ET Ecal clusters (selection uses
+  //the primary-vertex zVertex uniformly across types -- this only decides
+  //*which* 2 clusters are candidates, a choice only weakly sensitive to a
+  //vertex-position assumption at the cm level)
   float maxet[2]={mETCut,mETCut};
   StPicoFcsCluster* highest[2]={0,0};
   int nClusters = dst->numberOfFcsClusters();
@@ -131,7 +223,7 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
     //bug in pico dst fcs cluster fourMomentum() calc.... redo calc based on cluster xy
     //double et=c->fourMomentum().Et();
     StThreeVectorD xyz=fcsDb->getStarXYZfromColumnRow(det,c->x(),c->y());
-    StLorentzVectorD lv=fcsDb->getLorentzVector(xyz,c->energy(),event->primaryVertex().Z());
+    StLorentzVectorD lv=fcsDb->getLorentzVector(xyz,c->energy(),zVertexPrimary);
     double et=lv.perp();
     if(et>maxet[ns]) {maxet[ns]=et; highest[ns]=c;}
   }
@@ -145,7 +237,8 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
   FcsXyz[0] = fcsDb->getStarXYZfromColumnRow(highest[0]->detectorId(),highest[0]->x(),highest[0]->y());
   FcsXyz[1] = fcsDb->getStarXYZfromColumnRow(highest[1]->detectorId(),highest[1]->x(),highest[1]->y());
 
-  //Getting TOT & Cone for isolation cut
+  //Getting TOT & Cone for isolation cut (vertex-independent: raw hit energies
+  //in an eta/phi cone around the cluster's own position)
   float tot[2] = {0,0}; //eh
   float cone[2]= {0,0}; //ns
   double eta[2],phi[2];
@@ -172,61 +265,56 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
     if(dr < mConeR) cone[ns] += hit->energy();
   }
 
-  //2 body decay kinematics
-  //bug in pico dst fcs cluster fourMomentum() calc.... redo calc based on cluster xy
-  //TLorentzVector ln = highest[0]->fourMomentum();
-  //TLorentzVector ls = highest[1]->fourMomentum();
-  StLorentzVectorD stln=fcsDb->getLorentzVector(FcsXyz[0],highest[0]->energy(),event->primaryVertex().Z());
-  StLorentzVectorD stls=fcsDb->getLorentzVector(FcsXyz[1],highest[1]->energy(),event->primaryVertex().Z());
-  TLorentzVector ln(stln.px(),stln.py(),stln.pz(),stln.e());
-  TLorentzVector ls(stls.px(),stls.py(),stls.pz(),stls.e());
-  TLorentzVector di = ln + ls;
-  //lab-frame copies for mixed-event background (ln/ls get boosted to the pair CM frame below)
-  TLorentzVector lnLab = ln;
-  TLorentzVector lsLab = ls;
-  double EN  = ln.E();
-  double ES  = ls.E();
-  double E   = di.E();
-  double ETN = ln.Perp();
-  double ETS = ls.Perp();
-  double FcsET[2]={ETN,ETS};
-  double ET  = di.Perp();
-  double EZ  = di.Pz();
-  double M   = di.M();
-  double Z   = abs(EN-ES)/(EN+ES);
-  double Phi = di.Phi();
-  TVector3 boost=-di.BoostVector();
-  ln.Boost(boost);
-  ls.Boost(boost);
-  double CosTN = ln.CosTheta();
-  double CosTS = ls.CosTheta();
-  double CosT  = CosTN; //take north one for now... When we have tracking, take positive charged
+  //2-body decay kinematics, computed once per vertex source: v=0 uses
+  //zVertexPrimary (track types Global/Beamline/Primary/FwdVtx), v=1 uses
+  //zVertexBLC (BLCVtx/FCSTRK). kinValid[1]=false (BLC fit unavailable) means
+  //v=1's arrays are never read -- every downstream use is guarded by the
+  //per-track-type skip in the main cut loop below.
+  TLorentzVector lnLab[2], lsLab[2];
+  double EN[2],ES[2],E[2],ETN[2],ETS[2],ET[2],EZ[2],M[2],Z[2],Phi[2],CosT[2];
+  bool kinValid[2] = {true, haveBLCVtx};
+  double zv[2] = {zVertexPrimary, zVertexBLC};
+  for(int v=0; v<2; v++){
+    if(!kinValid[v]) continue;
+    StLorentzVectorD stln=fcsDb->getLorentzVector(FcsXyz[0],highest[0]->energy(),zv[v]);
+    StLorentzVectorD stls=fcsDb->getLorentzVector(FcsXyz[1],highest[1]->energy(),zv[v]);
+    TLorentzVector ln(stln.px(),stln.py(),stln.pz(),stln.e());
+    TLorentzVector ls(stls.px(),stls.py(),stls.pz(),stls.e());
+    TLorentzVector di = ln + ls;
+    lnLab[v]=ln; lsLab[v]=ls; //lab-frame copies for mixed-event background (ln/ls get boosted to the pair CM frame below)
+    EN[v]=ln.E(); ES[v]=ls.E(); E[v]=di.E();
+    ETN[v]=ln.Perp(); ETS[v]=ls.Perp();
+    ET[v]=di.Perp(); EZ[v]=di.Pz(); M[v]=di.M();
+    Z[v]=abs(EN[v]-ES[v])/(EN[v]+ES[v]);
+    Phi[v]=di.Phi();
+    TVector3 boost=-di.BoostVector();
+    ln.Boost(boost);
+    ls.Boost(boost);
+    CosT[v]=ln.CosTheta(); //take north one for now... When we have tracking, take positive charged
+  }
   if(mDebug>0){
-    printf("FCS VTX= %8.3f  %8.3f  %8.3f\n",event->primaryVertex().X(),event->primaryVertex().Y(),event->primaryVertex().Z());
-    printf("FCS EN %8.3f %8.3f %8.3f E=%8.3f M=%8.3f ET=%8.3f Phi=%8.3f\n",
-	   FcsXyz[0].x(),FcsXyz[0].y(),FcsXyz[0].z(),highest[0]->energy(),
-	   0.0,FcsXyz[0].perp(),FcsXyz[0].phi());
-    printf("FCS ES %8.3f %8.3f %8.3f E=%8.3f M=%8.3f ET=%8.3f Phi=%8.3f\n",
-	   FcsXyz[1].x(),FcsXyz[1].y(),FcsXyz[1].z(),highest[1]->energy(),0.0,
-	   FcsXyz[1].perp(),FcsXyz[1].phi());
-    //printf("BST EN %8.3f %8.3f %8.3f E=%8.3f M=%8.3f ET=%8.3f Phi=%8.3f\n",ln.Px(),ln.Py(),ln.Pz(),ln.E(),ln.M(),ln.Perp(),ln.Phi());
-    //printf("BST ES %8.3f %8.3f %8.3f E=%8.3f M=%8.3f ET=%8.3f Phi=%8.3f\n",ls.Px(),ls.Py(),ls.Pz(),ls.E(),ls.M(),ls.Perp(),ls.Phi());
-    //printf("Dilep  %8.3f %8.3f %8.3f E=%8.3f M=%8.3f ET=%8.3f Phi=%8.3f\n",di.Px(),di.Py(),di.Pz(),di.E(),di.M(),di.Perp(),di.Phi());
-    //printf("CosTheta N=%8.3f S=%8.3f\n",CosTN,CosTS);
+    printf("FCS VTX= %8.3f  %8.3f  %8.3f  BLCVTX=%8.3f (nTrk=%d)\n",
+           event->primaryVertex().X(),event->primaryVertex().Y(),event->primaryVertex().Z(),
+           event->blcVertex().Z(),event->blcVertexNTracks());
+    printf("FCS EN %8.3f %8.3f %8.3f E=%8.3f ET=%8.3f Phi=%8.3f\n",
+	   FcsXyz[0].x(),FcsXyz[0].y(),FcsXyz[0].z(),highest[0]->energy(),FcsXyz[0].perp(),FcsXyz[0].phi());
+    printf("FCS ES %8.3f %8.3f %8.3f E=%8.3f ET=%8.3f Phi=%8.3f\n",
+	   FcsXyz[1].x(),FcsXyz[1].y(),FcsXyz[1].z(),highest[1]->energy(),FcsXyz[1].perp(),FcsXyz[1].phi());
   }
 
-  //Ecal cluster SigmaMax
+  //Ecal cluster SigmaMax (vertex-independent, cluster shape only)
   double SigmaMaxN = highest[0]->sigmaMax();
   double SigmaMaxS = highest[1]->sigmaMax();
 
-  //Ratio of DiLepton candidate to TOT
-  double ratioETOT = E/tot[0];
-  double ratioHTOT = 9.99;
-  if(tot[1]>0) ratioHTOT=E/tot[1];
-
-  //Ratio of DiLepton candidates to cone
-  double ratioConeN = EN/cone[0];
-  double ratioConeS = ES/cone[1];
+  //Ratio of DiLepton candidate to TOT/Cone, per vertex source
+  double ratioETOT[2]={0,0}, ratioHTOT[2]={9.99,9.99}, ratioConeN[2]={0,0}, ratioConeS[2]={0,0};
+  for(int v=0; v<2; v++){
+    if(!kinValid[v]) continue;
+    ratioETOT[v] = E[v]/tot[0];
+    if(tot[1]>0) ratioHTOT[v]=E[v]/tot[1];
+    ratioConeN[v] = EN[v]/cone[0];
+    ratioConeS[v] = ES[v]/cone[1];
+  }
 
   //best-pT matched track per (trackType, north/south)
   StPicoFwdTrack *trk[mNType][2];
@@ -289,17 +377,25 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
       nTrkPassDR[tt][ns]++;
       if(pt > trkpt[tt][ns]) {
         nTrkPassPT[tt][ns]++;
-        trk[tt][ns]=t; trkpt[tt][ns]=pt; etpt[tt][ns]=FcsET[ns]/pt; cg[tt][ns]=t->charge();
+        trk[tt][ns]=t; trkpt[tt][ns]=pt; cg[tt][ns]=t->charge();
         dr[tt][ns]=dR; rdphi[tt][ns]=Rdphi;
       }
     }
+  }
+  //etpt depends on which vertex source this track type uses (ETN/ETS[v]) --
+  //fill after the track loop once trkpt[][] is finalized.
+  for(int tt=0; tt<mNType; tt++){
+    int v = (tt>=4) ? 1 : 0;
+    if(!kinValid[v]) continue;
+    if(trk[tt][0]) etpt[tt][0] = ETN[v]/trkpt[tt][0];
+    if(trk[tt][1]) etpt[tt][1] = ETS[v]/trkpt[tt][1];
   }
   if(mDebug>0){
     for(int tt=0; tt<mNType; tt++){
       for(int ns=0; ns<2; ns++){
         if(trk[tt][ns]){
-	  printf("trk NS=%1d TT=%1d(%s) et=%6.2f M=%6.2f ET/pT=%6.4f trkid=%2d pt=%12.2f cg=%2d DCA=%7.3f %7.1f dR=%7.2f Rdphi=%7.2f\n",
-	         ns,tt,TTYPE[tt],FcsET[ns],M,etpt[tt][ns],trk[tt][ns]->id(),trkpt[tt][ns],cg[tt][ns],
+	  printf("trk NS=%1d TT=%1d(%s) ET/pT=%6.4f trkid=%2d pt=%12.2f cg=%2d DCA=%7.3f %7.1f dR=%7.2f Rdphi=%7.2f\n",
+	         ns,tt,TTYPE[tt],etpt[tt][ns],trk[tt][ns]->id(),trkpt[tt][ns],cg[tt][ns],
                  trk[tt][ns]->dcaXY(),trk[tt][ns]->dcaZ(),dr[tt][ns],rdphi[tt][ns]);
         }
       }
@@ -308,53 +404,83 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
 
   //Apply cuts and fill histograms for each track type
   for(int tt=0; tt<mNType; tt++){
+    int v = (tt>=4) ? 1 : 0;
+    if(!kinValid[v]) continue; //no BLC vertex fit this event -- BLCVtx/FCSTRK skipped entirely
     for(int cut=0; cut<mNCut; cut++){
-      if(cut==1 && ratioETOT<mETotCut) break;
-      if(cut==2 && ratioHTOT<mHTotCut) break;
-      if(cut==3 && (ratioConeN<mConeCut || ratioConeS<mConeCut)) break;
+      if(cut==1 && ratioETOT[v]<mETotCut) break;
+      if(cut==2 && ratioHTOT[v]<mHTotCut) break;
+      if(cut==3 && (ratioConeN[v]<mConeCut || ratioConeS[v]<mConeCut)) break;
       if(cut==4 && (SigmaMaxN > mSigmaMaxCut || SigmaMaxS > mSigmaMaxCut) ) break;
       if(cut==5 && (etpt[tt][0] < mETPTCutLow || etpt[tt][1] < mETPTCutLow || etpt[tt][0] > mETPTCutHigh || etpt[tt][1] > mETPTCutHigh )) break;
-      if(cut==6 && cg[tt][0] + cg[tt][1] != 0) break;
+      if(cut==6 && cg[tt][0] + cg[tt][1] != 0){
+        //Like-sign pair (both cuts 0-5 passed): record as a signal-free
+        //combinatorial-rate reference for plotDilep.C's mixed-event
+        //normalization, binned the same way as the OS mixing pool.
+        double zVtxForBin = (v==1) ? zVertexBLC : zVertexPrimary;
+        int zbin = (int)floor((zVtxForBin - mZBinLo)/mZBinWidth);
+        int chbin = (cg[tt][0] >= 0) ? 0 : 1;
+        if(zbin>=0 && zbin<mNZBin) mMLSameBin[tt][zbin][chbin]->Fill(M[v]);
+        break;
+      }
       nEvtCut[tt][cut]++;
 
-      mETot[tt][cut]->Fill(ratioETOT);
-      mHTot[tt][cut]->Fill(ratioHTOT);
-      mCone[tt][cut]->Fill(ratioConeN);
-      mCone[tt][cut]->Fill(ratioConeS);
+      mETot[tt][cut]->Fill(ratioETOT[v]);
+      mHTot[tt][cut]->Fill(ratioHTOT[v]);
+      mCone[tt][cut]->Fill(ratioConeN[v]);
+      mCone[tt][cut]->Fill(ratioConeS[v]);
       mSigmax[tt][cut]->Fill(SigmaMaxN);
       mSigmax[tt][cut]->Fill(SigmaMaxS);
       if(trk[tt][0]) mPToverET[tt][cut]->Fill(etpt[tt][0]);
       if(trk[tt][1]) mPToverET[tt][cut]->Fill(etpt[tt][1]);
       if(trk[tt][0] && trk[tt][1]) mChargeSum[tt][cut]->Fill(cg[tt][0] + cg[tt][1]);
 
-      mET  [tt][cut]->Fill(ET);
-      mEZ  [tt][cut]->Fill(EZ);
-      mM   [tt][cut]->Fill(M);
-      mZ   [tt][cut]->Fill(Z);
-      mCosT[tt][cut]->Fill(CosT);
-      mPhi [tt][cut]->Fill(Phi);
+      mET  [tt][cut]->Fill(ET[v]);
+      mEZ  [tt][cut]->Fill(EZ[v]);
+      mM   [tt][cut]->Fill(M[v]);
+      mZ   [tt][cut]->Fill(Z[v]);
+      mCosT[tt][cut]->Fill(CosT[v]);
+      mPhi [tt][cut]->Fill(Phi[v]);
 
       //Mixed-event background: at the chosen cut level, pair this event's north/south
-      //FCS cluster candidates with the previous event's (opposite side), then buffer
-      //this event's candidates for the next one.
+      //FCS cluster candidates with every qualifying event currently in the pool
+      //*within the same (zVertex, north-charge-sign) bin* (opposite side), then
+      //buffer this event's candidates into that bin's pool for future events --
+      //always done AFTER mixing, so an event is never mixed with itself. Events
+      //with |zVertex|>=150 (outside the binned range) are skipped entirely for
+      //mixing purposes.
       if(cut==mMixCut){
-        if(mPrevValid[tt]){
-          mMmix[tt]->Fill( (lnLab + mPrevLS[tt]).M() ); //this-North + previous-South
-          mMmix[tt]->Fill( (mPrevLN[tt] + lsLab).M() ); //previous-North + this-South
-          nMixFilled[tt] += 2;
+        double zVtxForBin = (v==1) ? zVertexBLC : zVertexPrimary;
+        int zbin = (int)floor((zVtxForBin - mZBinLo)/mZBinWidth);
+        int chbin = (cg[tt][0] >= 0) ? 0 : 1;
+        if(zbin>=0 && zbin<mNZBin){
+          for(int k=0; k<mMixPoolSize; k++){
+            if(!mPoolValid[tt][zbin][chbin][k]) continue;
+            double m1 = (lnLab[v] + mPoolLS[tt][zbin][chbin][k]).M(); //this-North + pool-South
+            double m2 = (mPoolLN[tt][zbin][chbin][k] + lsLab[v]).M(); //pool-North + this-South
+            mMmix[tt]->Fill(m1);
+            mMmix[tt]->Fill(m2);
+            mMmixBin[tt][zbin][chbin]->Fill(m1);
+            mMmixBin[tt][zbin][chbin]->Fill(m2);
+            nMixFilled[tt] += 2;
+            nMixFilledBin[tt][zbin][chbin] += 2;
+          }
+          mMsameBin[tt][zbin][chbin]->Fill(M[v]);
+          nSameFilledBin[tt][zbin][chbin]++;
+          int slot = mPoolNext[tt][zbin][chbin];
+          mPoolLN[tt][zbin][chbin][slot] = lnLab[v];
+          mPoolLS[tt][zbin][chbin][slot] = lsLab[v];
+          mPoolValid[tt][zbin][chbin][slot] = true;
+          mPoolNext[tt][zbin][chbin] = (slot + 1) % mMixPoolSize;
         }
-        mPrevLN[tt] = lnLab;
-        mPrevLS[tt] = lsLab;
-        mPrevValid[tt] = true;
       }
 
-      mET12[tt][cut]->Fill(ETN,ETS);
-      mXFPT[tt][cut]->Fill(EN/255.0,ETN);
-      mXFPT[tt][cut]->Fill(ES/255.0,ETS);
+      mET12[tt][cut]->Fill(ETN[v],ETS[v]);
+      mXFPT[tt][cut]->Fill(EN[v]/255.0,ETN[v]);
+      mXFPT[tt][cut]->Fill(ES[v]/255.0,ETS[v]);
       mXY[tt][cut]->Fill(FcsXyz[0].x(),FcsXyz[0].y());
       mXY[tt][cut]->Fill(FcsXyz[1].x(),FcsXyz[1].y());
-      if(trk[tt][0]) mPTET[tt][cut]->Fill(ETN,trkpt[tt][0]);
-      if(trk[tt][1]) mPTET[tt][cut]->Fill(ETS,trkpt[tt][1]);
+      if(trk[tt][0]) mPTET[tt][cut]->Fill(ETN[v],trkpt[tt][0]);
+      if(trk[tt][1]) mPTET[tt][cut]->Fill(ETS[v],trkpt[tt][1]);
 
       if(trk[tt][0]) mZVTX[tt][cut]->Fill(trk[tt][0]->dcaZ());
       if(trk[tt][1]) mZVTX[tt][cut]->Fill(trk[tt][1]->dcaZ());
@@ -362,8 +488,17 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
         mZVTXA[tt][cut]->Fill((trk[tt][0]->dcaZ()+trk[tt][1]->dcaZ())/2.0);
         mZVTXD[tt][cut]->Fill(trk[tt][0]->dcaZ()-trk[tt][1]->dcaZ());
       }
+
+      // Event-level BLC vertex Z (not track-type dependent, but only makes
+      // sense to fill once per event -- piggyback on the BLCVtx (tt==4) pass
+      // through this cut chain, same cut boundaries as everything else here).
+      if(tt==4 && haveBLCVtx) mBLCVtxZ[cut]->Fill(event->blcVertex().Z());
     }
   }
+
+  // Independent pi0 (gamma-gamma) mass reconstruction -- not tied to any
+  // track type or cut chain above, so just called once per event here.
+  RunPi0(dst, fcsDb, zVertexPrimary);
 }
 
 void EndDilepton(){
@@ -378,6 +513,13 @@ void EndDilepton(){
     printf("  PassDR  ns=0:%ld  ns=1:%ld\n", nTrkPassDR[tt][0], nTrkPassDR[tt][1]);
     printf("  Mixed-event entries filled (cut=%s) : %ld\n", nameCut[mMixCut], nMixFilled[tt]);
     printf("  BestPT  ns=0:%ld  ns=1:%ld\n", nTrkPassPT[tt][0], nTrkPassPT[tt][1]);
+    for(int zb=0; zb<mNZBin; zb++){
+      for(int cb=0; cb<mNChBin; cb++){
+        printf("    zbin=[%4.0f,%4.0f) north-chg=%s : same=%-6ld mixed=%-6ld\n",
+               mZBinLo+zb*mZBinWidth, mZBinLo+(zb+1)*mZBinWidth, (cb==0)?"+":"-",
+               nSameFilledBin[tt][zb][cb], nMixFilledBin[tt][zb][cb]);
+      }
+    }
   }
   printf("=== Track Selection Statistics ===\n");
   printf("Total tracks seen             : %ld\n", nTrkAll);
@@ -387,4 +529,44 @@ void EndDilepton(){
   printf("Writing and closing %s\n",filenameD);
   mFileD->Write();
   mFileD->Close();
+}
+
+//=====================================================================
+// Pi0 (gamma-gamma) mass reconstruction from FCS ECAL clusters.
+// Simple inclusive combinatorial pairing: every ECAL cluster pair in
+// the event (both N/S sides, no track match needed -- photons don't
+// leave tracks), each cluster required only to pass a minimum energy
+// cut. No isolation/shower-shape cuts, unlike the electron-candidate
+// selection above -- deliberately loose to keep low-energy pi0 decays
+// in the sample. Real pi0 signal shows up as a peak on top of
+// combinatorial background; no background subtraction done here.
+//=====================================================================
+float mPi0MinClusterE = 0.5; //GeV, minimum FCS ECAL cluster energy for pi0 pairing
+TH1F *mPi0Mass = 0; //lazily created on first call below
+
+void RunPi0(StPicoDst *dst, StFcsDb* fcsDb, double zVertex){
+  if(!mPi0Mass){
+    mPi0Mass = new TH1F("Pi0Mass",
+      "FCS ECAL cluster-pair mass (all pairs, E>0.5 GeV each, no N/S or track requirement);M_{#gamma#gamma} [GeV];Counts",
+      100,0.0,1.0);
+  }
+
+  int nClusters = dst->numberOfFcsClusters();
+  for(int i=0; i<nClusters; i++){
+    StPicoFcsCluster* ci = dst->fcsCluster(i);
+    if(fcsDb->ecalHcalPres(ci->detectorId())!=0) continue; //only Ecal
+    if(ci->energy() < mPi0MinClusterE) continue;
+    StThreeVectorD xyzi = fcsDb->getStarXYZfromColumnRow(ci->detectorId(),ci->x(),ci->y());
+    StLorentzVectorD stlvi = fcsDb->getLorentzVector(xyzi,ci->energy(),zVertex);
+    TLorentzVector lvi(stlvi.px(),stlvi.py(),stlvi.pz(),stlvi.e());
+    for(int j=i+1; j<nClusters; j++){
+      StPicoFcsCluster* cj = dst->fcsCluster(j);
+      if(fcsDb->ecalHcalPres(cj->detectorId())!=0) continue; //only Ecal
+      if(cj->energy() < mPi0MinClusterE) continue;
+      StThreeVectorD xyzj = fcsDb->getStarXYZfromColumnRow(cj->detectorId(),cj->x(),cj->y());
+      StLorentzVectorD stlvj = fcsDb->getLorentzVector(xyzj,cj->energy(),zVertex);
+      TLorentzVector lvj(stlvj.px(),stlvj.py(),stlvj.pz(),stlvj.e());
+      mPi0Mass->Fill((lvi+lvj).M());
+    }
+  }
 }

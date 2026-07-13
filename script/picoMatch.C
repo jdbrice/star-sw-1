@@ -480,7 +480,13 @@ void RunMatch(StPicoDst *dst, StFcsDb* fcsDb, int iEvent){
       double zsum = 0; for(double z : perEvtBLCdcaZ) zsum += z;
       double zavg = zsum / nBLC;
       hBLCVtxZ->Fill(zavg);
-      hBLCVtxZres->Fill(zavg - event->primaryVertex().Z());
+      // Vtxless-mode picoDsts (e.g. this Pythia sample) leave primaryVertex()
+      // at the (-999,-999,-999) sentinel; substitute the MC-generation z=0
+      // vertex instead, same as picoDilepton.C, so this stays a meaningful
+      // resolution check instead of comparing against -999.
+      double trueZ = event->primaryVertex().Z();
+      if (trueZ < -900) trueZ = 0;
+      hBLCVtxZres->Fill(zavg - trueZ);
     }
     for(int ii=0; ii<nBLC; ii++)
       for(int jj=ii+1; jj<nBLC; jj++)
