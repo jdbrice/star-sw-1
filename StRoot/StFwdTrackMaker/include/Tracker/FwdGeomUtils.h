@@ -89,6 +89,16 @@ class FwdGeomUtils {
             return 0.0;
         }
 
+        double fstDiskZ( int index, double defaultZ = 0.0 ) {
+            stringstream spath;
+            spath << "/HALL_1/CAVE_1/FSTM_1/FSTD_" << (index + 4) << "/";
+            bool can = cd( spath.str().c_str() );
+            if ( can && _matrix != nullptr ){
+                return _matrix->GetTranslation()[2];
+            }
+            return defaultZ;
+        }
+
         TVector3 getFttQuadrant( int index, TVector3 &u, TVector3 &v){
             // 0 - 15 is the front face
             // 16 - 31 is the back face
@@ -113,6 +123,92 @@ class FwdGeomUtils {
             }
             std ::cerr << "Failed to get FTT quadrant origin for index " << index << std::endl;
             return TVector3(0,0,0);
+        }
+
+        TVector3 getFstWedgeOrigin( int index, TVector3 &u, TVector3 &v ) {
+            static const int kElecToGeantWedge[12] =
+                {2, 7, 1, 12, 6, 11, 5, 10, 4, 9, 3, 8};
+            static const int kElecToGeantWedgeDisk2[12] =
+                {7, 1, 12, 6, 11, 5, 10, 4, 9, 3, 8, 2};
+
+            const int disk = index / kFstNumWedgePerDisk;
+            const int electronicWedge = index % kFstNumWedgePerDisk;
+            const int planeIndex = disk + 4;
+            const int *wedgeMap = (planeIndex == 5)
+                ? kElecToGeantWedgeDisk2
+                : kElecToGeantWedge;
+
+            stringstream spath;
+            spath << "/HALL_1/CAVE_1/FSTM_1/FSTD_" << planeIndex
+                  << "/FSTW_" << wedgeMap[electronicWedge];
+
+            bool can = cd( spath.str().c_str() );
+            if ( can && _matrix != nullptr ) {
+                const double x = _matrix->GetTranslation()[0];
+                const double y = _matrix->GetTranslation()[1];
+                const double wedgeZ = _matrix->GetTranslation()[2];
+                const Double_t *rotation = _matrix->GetRotationMatrix();
+
+                u.SetXYZ(rotation[0], rotation[3], rotation[6]);
+                v.SetXYZ(rotation[1], rotation[4], rotation[7]);
+                if (u.Cross(v).Z() < 0)
+                    v = -v;
+
+                // FSTW is the mechanical parent volume.  Put the measurement origin
+                // at the disk's flat hit z while retaining the wedge x/y and axes.
+                const double z = fstDiskZ(disk, wedgeZ);
+                return TVector3(x, y, z);
+            }
+
+            std::cerr << "Failed to get FST wedge origin for index " << index << std::endl;
+            return TVector3(0, 0, 0);
+        }
+
+        double getFstMeasurementZ( int index, double defaultZ = 0.0 ) {
+            static const int kElecToGeantWedge[12] =
+                {2, 7, 1, 12, 6, 11, 5, 10, 4, 9, 3, 8};
+            static const int kElecToGeantWedgeDisk2[12] =
+                {7, 1, 12, 6, 11, 5, 10, 4, 9, 3, 8, 2};
+            static const int kEventSensorToFtusCopy[3] = {3, 1, 2};
+
+            const int globalWedge = index / kFstNumSensorsPerWedge;
+            const int disk = globalWedge / kFstNumWedgePerDisk;
+            const int electronicWedge = globalWedge % kFstNumWedgePerDisk;
+            const int planeIndex = disk + 4;
+            const int *wedgeMap = (planeIndex == 5)
+                ? kElecToGeantWedgeDisk2
+                : kElecToGeantWedge;
+            const int ftusCopy = kEventSensorToFtusCopy[index % kFstNumSensorsPerWedge];
+
+            stringstream spath;
+            spath << "/HALL_1/CAVE_1/FSTM_1/FSTD_" << planeIndex
+                  << "/FSTW_" << wedgeMap[electronicWedge]
+                  << "/FTUS_" << ftusCopy;
+
+            bool can = cd( spath.str().c_str() );
+            if ( can && _matrix != nullptr ) {
+                Double_t activeLocal[3] = {0.0, 0.0, 0.0};
+                TGeoShape *shape = (_volume ? _volume->GetShape() : nullptr);
+                if (auto tube = dynamic_cast<TGeoTubeSeg*>(shape)) {
+                    const double rCenter = 0.5 * (tube->GetRmin() + tube->GetRmax());
+                    const double phiCenter =
+                        0.5 * (tube->GetPhi1() + tube->GetPhi2()) * TMath::DegToRad();
+                    activeLocal[0] = rCenter * TMath::Cos(phiCenter);
+                    activeLocal[1] = rCenter * TMath::Sin(phiCenter);
+                } else if (auto box = dynamic_cast<TGeoBBox*>(shape)) {
+                    const Double_t *boxOrigin = box->GetOrigin();
+                    activeLocal[0] = boxOrigin[0];
+                    activeLocal[1] = boxOrigin[1];
+                    activeLocal[2] = boxOrigin[2];
+                }
+
+                Double_t activeMaster[3] = {0.0, 0.0, 0.0};
+                _matrix->LocalToMaster(activeLocal, activeMaster);
+                return activeMaster[2];
+            }
+
+            std::cerr << "Failed to get FST measurement z for index " << index << std::endl;
+            return defaultZ;
         }
 
         TVector3 getFstSensorOrigin (int index, TVector3 &u, TVector3 &v) {
@@ -190,6 +286,7 @@ class FwdGeomUtils {
                 // point counterclockwise so that hitOnPlane[1] = r·sin(dphi) is consistent
                 // across all sensors.  Test: (U × V)·ẑ < 0 means V is clockwise.
                 if (u.Cross(v).Z() < 0) v = -v;
+
                 if ( _verbose ){
                     LOG_INFO << "FST Sensor " << index << " origin: " << origin.X() << ", " << origin.Y() << ", " << origin.Z() << endm;
                     LOG_INFO << "\tSensor " << index << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;

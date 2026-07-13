@@ -31,7 +31,7 @@ bool runFwdChain = true;
 bool refillMuDst = false;
 bool runFwdQa = false;
 bool runFitQa = false;
-bool runPico = true;
+bool runPico = false;
 
 
 // Memory Baseline
@@ -49,12 +49,13 @@ bool runPico = true;
 
 void loadLibs();
 void fwd_afterburner( 	const Char_t * fileList = "pp500.MuDst.root",
-						size_t nEvents = 1000 ){
+						size_t nEvents = 1100 ){
 	cout << "FileList: " << fileList << endl;
 	cout << "nEvents: " << nEvents << endl;
 
 	// First load some shared libraries we need
 	loadLibs();
+
 
 	// create the chain
 	StChain *chain  = new StChain("StChain");
@@ -205,9 +206,9 @@ void fwd_afterburner( 	const Char_t * fileList = "pp500.MuDst.root",
 
 	/*******************************************************************************************/
 	// Initialize chain
-	chain->SetDebug(1);
+	chain->SetDebug(0);
 	Int_t iInit = chain->Init();
-	chain->SetDebug(1);
+	chain->SetDebug(0);
 	cout << "CHAIN INIT DONE? (good==0): " << iInit << endl;
 	// ensure that the chain initializes
 
@@ -215,7 +216,7 @@ void fwd_afterburner( 	const Char_t * fileList = "pp500.MuDst.root",
 		chain->Fatal(iInit,"on init");
 	
 	// print the chain status
-	chain->PrintInfo();
+	// chain->PrintInfo();
 
 	StMemStat stmem;
 	stmem.PrintMem("BEFORE Event Loop");

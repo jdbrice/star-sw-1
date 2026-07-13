@@ -72,8 +72,8 @@
 
 #include <cstdlib>
 
-// #define LOG_DEBUG if(false) std::cerr
-// #define LOG_INFO if(false) std::cerr
+#define LOG_DEBUG if(false) std::cerr
+#define LOG_INFO if(false) std::cerr
 
 #include "StFwdTrackMaker/StFwdTrackMaker.h"
 #include "StFwdTrackMaker/include/Tracker/FwdHit.h"
@@ -392,6 +392,7 @@ int StFwdTrackMaker::Init() {
         mAlignmentTree->Branch("fitConverged", &mAlignFitConverged, "fitConverged/I");
         mAlignmentTree->Branch("fitConvergedFully", &mAlignFitConvergedFully, "fitConvergedFully/I");
         mAlignmentTree->Branch("fitConvergedPartially", &mAlignFitConvergedPartially, "fitConvergedPartially/I");
+        mAlignmentTree->Branch("trackType", &mAlignTrackType, "trackType/I");
         mAlignmentTree->Branch("trackNHitsFit", &mAlignTrackNHitsFit, "trackNHitsFit/I");
         mAlignmentTree->Branch("trackNFstHits", &mAlignTrackNFstHits, "trackNFstHits/I");
         mAlignmentTree->Branch("trackPx", &mAlignTrackPx, "trackPx/F");
@@ -960,6 +961,7 @@ void StFwdTrackMaker::FillAlignment() {
         mAlignFitConverged = gtr.mIsFitConverged ? 1 : 0;
         mAlignFitConvergedFully = gtr.mIsFitConvergedFully ? 1 : 0;
         mAlignFitConvergedPartially = gtr.mIsFitConvergedPartially ? 1 : 0;
+        mAlignTrackType = gtr.mTrackType;
         mAlignTrackNHitsFit = gtr.mNumFitPoints;
         mAlignTrackNFstHits = 0;
         setAlignmentTrackKinematics(
@@ -1085,7 +1087,11 @@ void StFwdTrackMaker::FillAlignment() {
                             mAlignMeas1 > kInvalidAlignValue) {
                             TVector3 u(1, 0, 0);
                             TVector3 v(0, 1, 0);
-                            TVector3 o = alignmentGeo->getFstSensorOrigin(mAlignFstGlobalSensor, u, v);
+                            const int globalWedge =
+                                mAlignFstDisk * kFstNumWedgePerDisk + mAlignFstWedge;
+                            TVector3 o = alignmentGeo->getFstWedgeOrigin(globalWedge, u, v);
+                            o.SetZ(alignmentGeo->getFstMeasurementZ(
+                                mAlignFstGlobalSensor, o.Z()));
                             TVector3 measGlobal = o + mAlignMeas0 * u + mAlignMeas1 * v;
                             TVector3 hitGlobal(fwdHit->getX(), fwdHit->getY(), fwdHit->getZ());
                             TVector3 closure = measGlobal - hitGlobal;

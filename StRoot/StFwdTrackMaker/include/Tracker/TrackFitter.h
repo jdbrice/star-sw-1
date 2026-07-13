@@ -125,7 +125,7 @@ class TrackFitter {
         // FwdGeomUtils looks into the loaded geometry and gets detector z locations if present
         FwdGeomUtils fwdGeoUtils( gMan );
 
-        // Create the genfit Planes for the FST sensors
+        // Create FST wedge reference planes and physical-z measurement planes.
         createAllFstPlanes( fwdGeoUtils );
         createAllFttPlanes( fwdGeoUtils );
         // create the EPD plane at z=375
@@ -318,19 +318,20 @@ class TrackFitter {
     }
 
     /**
-     * @brief Get projection to given FST plane
+     * @brief Get projection to a representative wedge plane on an FST disk
      *
-     * @param fstPlane : plane index
+     * @param fstDiskIndex : zero-based disk index
      * @param fitTrack : track to project
      * @return genfit::MeasuredStateOnPlane
      */
-    genfit::MeasuredStateOnPlane projectToFst(size_t fstSensorPlaneIndex, std::shared_ptr<genfit::Track> fitTrack) {
-        if (fstSensorPlaneIndex > mFstSensorPlanes.size()) {
+    genfit::MeasuredStateOnPlane projectToFst(size_t fstDiskIndex, std::shared_ptr<genfit::Track> fitTrack) {
+        const size_t fstWedgePlaneIndex = fstDiskIndex * kFstNumWedgePerDisk;
+        if (fstWedgePlaneIndex >= mFstWedgePlanes.size()) {
             genfit::MeasuredStateOnPlane nil;
-            LOG_ERROR << "FST plane index out of range: " << fstSensorPlaneIndex << endm;
+            LOG_ERROR << "FST disk index out of range: " << fstDiskIndex << endm;
             return nil;
         }
-        return projectToPlane(mFstSensorPlanes[fstSensorPlaneIndex], fitTrack);
+        return projectToPlane(mFstWedgePlanes[fstWedgePlaneIndex], fitTrack);
     }
 
     /**
@@ -458,24 +459,23 @@ class TrackFitter {
                  << endm;
         }
 
-        // Compute the hit position in the plane's local (u,v) Cartesian frame.
+        // Compute the hit position in the wedge-local (u,v) Cartesian frame.
         // FST _localPosition stores strip-native polar coordinates:
         //   r        = radial strip center
         //   stripPhi = meanPhiStrip * pitch
-        // Convert those directly to the FTUS sensor-local Cartesian frame.  In the
-        // GenFit DetPlane from FwdGeomUtils, U is radial at the wedge center and V is
-        // the counterclockwise phi-like direction.  The measurement coordinates are
-        // therefore independent of the plane's current global placement:
-        //   hitOnPlane[0] = r*cos(dphi) - centerU
-        //   hitOnPlane[1] = r*sin(dphi) - centerV
+        // The inner/outer region and outer half are decoded from r and stripPhi.  No
+        // sensor origin or sensor basis is used.  The resulting coordinates are
+        // measured from the wedge origin with U radial and V counterclockwise:
+        //   hitOnPlane[0] = r*cos(dphi)
+        //   hitOnPlane[1] = r*sin(dphi)
         // where dphi is the hit angle relative to the wedge-center radial axis.
         // For FTT, the stored global position is projected directly onto the plane.
         TVectorD hitOnPlane(2);
         if (fh->isFst() && fh->_localPosition[0] >= 0.f) {
-            const int globalSensor = static_cast<int>(fh->_genfit_plane_index);
-            const int disk = globalSensor / (kFstNumWedgePerDisk * kFstNumSensorsPerWedge);
-            const int electronicWedge = (globalSensor / kFstNumSensorsPerWedge) % kFstNumWedgePerDisk;
-            const int sensor = globalSensor % kFstNumSensorsPerWedge;
+            const int globalWedge =
+                static_cast<int>(fh->_genfit_plane_index) / kFstNumSensorsPerWedge;
+            const int disk = globalWedge / kFstNumWedgePerDisk;
+            const int electronicWedge = globalWedge % kFstNumWedgePerDisk;
 
             const double r = fh->_localPosition[0];
             const double stripPhi = fh->_localPosition[1];
@@ -484,35 +484,23 @@ class TrackFitter {
             const double edgeToCenterPhi = halfWedgePhi - 0.5 * kFstStripPitchPhi;
 
             double dphi = stripSign * (stripPhi - edgeToCenterPhi);
-            if (sensor == 1) {
-                dphi = stripSign * (edgeToCenterPhi - stripPhi - 0.5 * kFstStripGapPhi);
-            } else if (sensor == 2) {
-                dphi = stripSign * (edgeToCenterPhi - stripPhi + 0.5 * kFstStripGapPhi);
+            if (r >= kFstrStart[kFstNumRStripsPerWedge / 2]) {
+                const double gapOffset = (stripPhi < halfWedgePhi)
+                    ? -0.5 * kFstStripGapPhi
+                    :  0.5 * kFstStripGapPhi;
+                dphi = stripSign * (edgeToCenterPhi - stripPhi + gapOffset);
             }
 
-            const double sensorRSpan = 0.5 * kFstNumRStripsPerWedge * kFstStripPitchR;
-            const double centerR = (sensor == 0)
-                ? kFstrStart[0] + 0.5 * sensorRSpan
-                : kFstrStart[kFstNumRStripsPerWedge / 2] + 0.5 * sensorRSpan;
-            const double outerCenterDphi = 0.5 * (halfWedgePhi + kFstStripGapPhi);
-            double centerDphi = 0.0;
-            if (sensor == 1) {
-                centerDphi = stripSign * outerCenterDphi;
-            } else if (sensor == 2) {
-                centerDphi = -stripSign * outerCenterDphi;
-            }
-
-            hitOnPlane[0] = r * TMath::Cos(dphi) - centerR * TMath::Cos(centerDphi);
-            hitOnPlane[1] = r * TMath::Sin(dphi) - centerR * TMath::Sin(centerDphi);
+            hitOnPlane[0] = r * TMath::Cos(dphi);
+            hitOnPlane[1] = r * TMath::Sin(dphi);
         } else {
             TVector3 diff = TVector3(fh->getX(), fh->getY(), fh->getZ()) - plane->getO();
             hitOnPlane[0] = diff.Dot(plane->getU());
             hitOnPlane[1] = diff.Dot(plane->getV());
         }
 
-        // Debug: compare the FwdHit global position (from ideal geometry at hit loading)
-        // with the global position GenFit derives from the local measurement on the
-        // realistic GEANT plane.  Any difference reflects sensor misalignment.
+        // Debug: compare the FwdHit global position with the position GenFit derives
+        // from the wedge-local measurement and wedge plane.
         TVector3 measGlobal = plane->toLab(TVector2(hitOnPlane[0], hitOnPlane[1]));
         if (kVerbose >= 1) {
             LOG_INFO << "PlanarMeasurement pos check (detid=" << fh->_detid << "):"
@@ -794,19 +782,32 @@ class TrackFitter {
     void createAllFstPlanes( FwdGeomUtils &fwdGeoUtils )
     {
         // create FWD GeomUtils to get the plane locations
-        for (int globalSensorIndex = 0; globalSensorIndex < kFstNumSensors; globalSensorIndex++)
+        for (int globalWedgeIndex = 0; globalWedgeIndex < kFstNumWedges; globalWedgeIndex++)
         {
             TVector3 u(1, 0, 0); 
             TVector3 v(0, 1, 0);
-            TVector3 o = fwdGeoUtils.getFstSensorOrigin(globalSensorIndex, u, v);
+            TVector3 o = fwdGeoUtils.getFstWedgeOrigin(globalWedgeIndex, u, v);
             if (kVerbose > 1) {
-                LOG_INFO << "Adding FST Sensor " << globalSensorIndex << " at " << o.X() << ", " << o.Y() << ", " << o.Z() << endm;
-                LOG_INFO << "\tSensor " << globalSensorIndex << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;
-                LOG_INFO << "\tSensor " << globalSensorIndex << " V = " << v.X() << ", " << v.Y() << ", " << v.Z() << endm;
+                LOG_INFO << "Adding FST Wedge " << globalWedgeIndex << " at " << o.X() << ", " << o.Y() << ", " << o.Z() << endm;
+                LOG_INFO << "\tWedge " << globalWedgeIndex << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;
+                LOG_INFO << "\tWedge " << globalWedgeIndex << " V = " << v.X() << ", " << v.Y() << ", " << v.Z() << endm;
             }
-            mFstSensorPlanes.push_back(
+            mFstWedgePlanes.push_back(
                 genfit::SharedPlanePtr(
                     new genfit::DetPlane(o, u, v)));
+
+            for (int measurementSurface = 0;
+                 measurementSurface < kFstNumSensorsPerWedge;
+                 ++measurementSurface) {
+                const int globalMeasurementSurface =
+                    globalWedgeIndex * kFstNumSensorsPerWedge + measurementSurface;
+                TVector3 measurementOrigin = o;
+                measurementOrigin.SetZ(
+                    fwdGeoUtils.getFstMeasurementZ(globalMeasurementSurface, o.Z()));
+                mFstMeasurementPlanes.push_back(
+                    genfit::SharedPlanePtr(
+                        new genfit::DetPlane(measurementOrigin, u, v)));
+            }
         }
     }
 
@@ -887,11 +888,13 @@ class TrackFitter {
 
         // FST
         if ( fh->isFst() ){
-            if ( fh->_genfit_plane_index > mFstSensorPlanes.size() ) {
-                LOG_ERROR << "Invalid FST sensor genfit plane index: " << fh->_genfit_plane_index << endm;
+            const size_t fstMeasurementPlaneIndex = fh->_genfit_plane_index;
+            if ( fstMeasurementPlaneIndex >= mFstMeasurementPlanes.size() ) {
+                LOG_ERROR << "Invalid FST measurement plane index: "
+                          << fstMeasurementPlaneIndex << endm;
                 return nullptr;
             }
-            return mFstSensorPlanes[ fh->_genfit_plane_index ];
+            return mFstMeasurementPlanes[fstMeasurementPlaneIndex];
         }
         LOG_ERROR << "Unknown FwdHit type, cannot get plane - if this is a PV then use an abs measurement" << endm;
         return nullptr;
@@ -899,7 +902,8 @@ class TrackFitter {
 
     // Store the planes for FTT and FST
     vector<genfit::SharedPlanePtr> mFttPlanes;
-    vector<genfit::SharedPlanePtr> mFstSensorPlanes; // 108 planes, one for each sensor
+    vector<genfit::SharedPlanePtr> mFstWedgePlanes; // 36 flat reference planes
+    vector<genfit::SharedPlanePtr> mFstMeasurementPlanes; // wedge frame, physical z
 
     genfit::SharedPlanePtr mEpdPlane; // EPD plane
 

@@ -146,6 +146,7 @@ class StFwdTrackMaker : public StMaker {
     int mAlignFitConverged = 0;
     int mAlignFitConvergedFully = 0;
     int mAlignFitConvergedPartially = 0;
+    int mAlignTrackType = 0;
     int mAlignTrackNHitsFit = 0;
     int mAlignTrackNFstHits = 0;
     float mAlignChi2 = 0;
