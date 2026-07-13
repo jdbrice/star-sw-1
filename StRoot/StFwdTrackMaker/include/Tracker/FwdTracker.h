@@ -999,7 +999,7 @@ class ForwardTrackMaker {
         // --- Config ---
         const int    minNFit    = mConfig.get<int>   ("TrackFitter:blcVtxMinNFitHits",  4);
         const double maxChi2Ndf = mConfig.get<double>("TrackFitter:blcVtxMaxChi2Ndf",  10.0);
-        const double looseDcaZ  = mConfig.get<double>("TrackFitter:blcVtxLooseDcaZ",  100.0);
+        const double looseDcaZ  = mConfig.get<double>("TrackFitter:blcVtxLooseDcaZ",  150.0);
         const double maxDcaXY   = mConfig.get<double>("TrackFitter:blcVtxMaxDcaXY",    10.0); // rejects sentinel (99,99,99) from failed extrapolateToLine; valid BLC tracks have DCA-XY~0
         const double outlierN   = mConfig.get<double>("TrackFitter:blcVtxOutlierNSigma", 3.0);
         const double sigmaXY    = mConfig.get<double>("TrackFitter:blcVtxSigmaXY",       0.1);
