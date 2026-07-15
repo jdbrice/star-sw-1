@@ -51,7 +51,9 @@
 
 #include "TROOT.h"
 #include "TFile.h"
+#include "TTree.h"
 #include "TVectorD.h"
+#include "TVector2.h"
 #include "TVector3.h"
 #include "TLorentzVector.h"
 
@@ -61,6 +63,7 @@
 
 #include "StEvent/StFwdTrack.h"
 #include "GenFit/AbsMeasurement.h"
+#include "GenFit/Exception.h"
 #include "GenFit/KalmanFitterInfo.h"
 #include "GenFit/MeasurementOnPlane.h"
 
@@ -82,97 +85,17 @@
 #include "StFwdTrackMaker/include/Tracker/FwdGeomUtils.h"
 #include "StFwdTrackMaker/include/Tracker/ObjExporter.h"
 
-#include <algorithm>
 #include <cmath>
 
 FwdSystem* FwdSystem::sInstance = nullptr;
 
 namespace {
-    constexpr float kInvalidAlignValue = -99999.0f;
-
-    void setAlignmentVector(const TVectorD &source, float &x0, float &x1, float &x2) {
-        x0 = source.GetNrows() > 0 ? source[0] : kInvalidAlignValue;
-        x1 = source.GetNrows() > 1 ? source[1] : kInvalidAlignValue;
-        x2 = source.GetNrows() > 2 ? source[2] : kInvalidAlignValue;
-    }
-
-    void setAlignmentPrediction(
-        const TVectorD &measurement,
-        const TVectorD &residual,
-        float &x0, float &x1, float &x2
-    ) {
-        x0 = kInvalidAlignValue;
-        x1 = kInvalidAlignValue;
-        x2 = kInvalidAlignValue;
-
-        float *prediction[] = {&x0, &x1, &x2};
-        const int n = std::min(measurement.GetNrows(), residual.GetNrows());
-        for (int i = 0; i < 3 && i < n; ++i) {
-            // GenFit residuals are stored as measurement minus fitted prediction.
-            *prediction[i] = measurement[i] - residual[i];
-        }
-    }
-
-    void setAlignmentTrackKinematics(
-        const TVector3 &momentum,
-        float &px, float &py, float &pz,
-        float &p, float &pt,
-        float &eta
-    ) {
-        px = momentum.X();
-        py = momentum.Y();
-        pz = momentum.Z();
-        pt = momentum.Perp();
-        p = momentum.Mag();
-        eta = kInvalidAlignValue;
-
-        if (p > std::abs(static_cast<double>(pz))) {
-            eta = 0.5 * std::log((p + pz) / (p - pz));
-        }
-    }
-
-    void setAlignmentPulls(
-        const genfit::MeasurementOnPlane &residual,
-        float &sigma0, float &sigma1, float &sigma2,
-        float &pull0, float &pull1, float &pull2
-    ) {
-        sigma0 = kInvalidAlignValue;
-        sigma1 = kInvalidAlignValue;
-        sigma2 = kInvalidAlignValue;
-        pull0 = kInvalidAlignValue;
-        pull1 = kInvalidAlignValue;
-        pull2 = kInvalidAlignValue;
-
-        const TVectorD &state = residual.getState();
-        const TMatrixDSym &cov = residual.getCov();
-        const int nState = state.GetNrows();
-        const int nCov = cov.GetNrows();
-
-        float *sigmas[] = {&sigma0, &sigma1, &sigma2};
-        float *pulls[] = {&pull0, &pull1, &pull2};
-        for (int i = 0; i < 3 && i < nState && i < nCov; ++i) {
-            const double variance = cov(i, i);
-            if (variance > 0 && std::isfinite(variance)) {
-                const double sigma = std::sqrt(variance);
-                *sigmas[i] = sigma;
-                *pulls[i] = state[i] / sigma;
-            }
-        }
-    }
-
-    const FwdHit *findFstSeedHit(const GenfitTrackResult &gtr, int globalSensor) {
-        if (globalSensor < 0)
-            return nullptr;
-
-        for (auto hit : gtr.mSeed) {
-            const FwdHit *fwdHit = dynamic_cast<const FwdHit*>(hit);
-            if (!fwdHit || !fwdHit->isFst())
-                continue;
-            if (static_cast<int>(fwdHit->_genfit_plane_index) == globalSensor)
-                return fwdHit;
-        }
-
-        return nullptr;
+    float alignmentEta(const TVector3 &momentum) {
+        const double p = momentum.Mag();
+        const double pz = momentum.Z();
+        if (p <= std::abs(pz))
+            return 0;
+        return 0.5 * std::log((p + pz) / (p - pz));
     }
 }
 
@@ -337,6 +260,43 @@ void StFwdTrackMaker::LoadConfiguration() {
     configLoaded = true;
 }
 
+void StFwdTrackMaker::BookAlignmentTree() {
+    mAlignmentTree = new TTree("fwdAlign", "Planar FST alignment rows");
+    AlignmentRow &r = mAlignmentRow;
+
+    mAlignmentTree->Branch("run", &r.run, "run/I");
+    mAlignmentTree->Branch("event", &r.event, "event/I");
+    mAlignmentTree->Branch("trackIndex", &r.trackIndex, "trackIndex/I");
+    mAlignmentTree->Branch("planeId", &r.planeId, "planeId/I");
+    mAlignmentTree->Branch("disk", &r.disk, "disk/I");
+    mAlignmentTree->Branch("wedge", &r.wedge, "wedge/I");
+    mAlignmentTree->Branch("surface", &r.surface, "surface/I");
+    mAlignmentTree->Branch("trackType", &r.trackType, "trackType/I");
+    mAlignmentTree->Branch("nHitsFit", &r.nHitsFit, "nHitsFit/I");
+    mAlignmentTree->Branch("nFstHits", &r.nFstHits, "nFstHits/I");
+    mAlignmentTree->Branch("fullyConverged", &r.fullyConverged,
+                           "fullyConverged/I");
+
+    mAlignmentTree->Branch("chi2Ndf", &r.chi2Ndf, "chi2Ndf/F");
+    mAlignmentTree->Branch("trackP", &r.trackP, "trackP/F");
+    mAlignmentTree->Branch("trackPt", &r.trackPt, "trackPt/F");
+    mAlignmentTree->Branch("trackEta", &r.trackEta, "trackEta/F");
+
+    mAlignmentTree->Branch("measU", &r.measU, "measU/F");
+    mAlignmentTree->Branch("measV", &r.measV, "measV/F");
+    mAlignmentTree->Branch("globalX", &r.globalX, "globalX/F");
+    mAlignmentTree->Branch("globalY", &r.globalY, "globalY/F");
+    mAlignmentTree->Branch("globalZ", &r.globalZ, "globalZ/F");
+
+    mAlignmentTree->Branch("resU", &r.resU, "resU/F");
+    mAlignmentTree->Branch("resV", &r.resV, "resV/F");
+    mAlignmentTree->Branch("covUU", &r.covUU, "covUU/F");
+    mAlignmentTree->Branch("covUV", &r.covUV, "covUV/F");
+    mAlignmentTree->Branch("covVV", &r.covVV, "covVV/F");
+    mAlignmentTree->Branch("slopeU", &r.slopeU, "slopeU/F");
+    mAlignmentTree->Branch("slopeV", &r.slopeV, "slopeV/F");
+}
+
 //________________________________________________________________________
 int StFwdTrackMaker::Init() {
     if ( mGeoCache == "" ){
@@ -369,87 +329,7 @@ int StFwdTrackMaker::Init() {
 
     if ( IAttr("fillAlignment") ) {
         mAlignmentFile = new TFile(mAlignmentOutputFilename.c_str(), "RECREATE");
-        mAlignmentTree = new TTree("fwdAlign", "Forward alignment diagnostics");
-        mAlignmentTree->Branch("run", &mAlignRun, "run/I");
-        mAlignmentTree->Branch("event", &mAlignEvent, "event/I");
-        mAlignmentTree->Branch("trackIndex", &mAlignTrackIndex, "trackIndex/I");
-        mAlignmentTree->Branch("pointIndex", &mAlignPointIndex, "pointIndex/I");
-        mAlignmentTree->Branch("measurementIndex", &mAlignMeasurementIndex, "measurementIndex/I");
-        mAlignmentTree->Branch("detId", &mAlignDetId, "detId/I");
-        mAlignmentTree->Branch("hitId", &mAlignHitId, "hitId/I");
-        mAlignmentTree->Branch("fstGlobalSensor", &mAlignFstGlobalSensor, "fstGlobalSensor/I");
-        mAlignmentTree->Branch("fstDisk", &mAlignFstDisk, "fstDisk/I");
-        mAlignmentTree->Branch("fstWedge", &mAlignFstWedge, "fstWedge/I");
-        mAlignmentTree->Branch("fstSensor", &mAlignFstSensor, "fstSensor/I");
-        mAlignmentTree->Branch("measurementDim", &mAlignMeasurementDim, "measurementDim/I");
-        mAlignmentTree->Branch("residualDim", &mAlignResidualDim, "residualDim/I");
-        mAlignmentTree->Branch("hasResidual", &mAlignHasResidual, "hasResidual/I");
-        mAlignmentTree->Branch("nSeeds", &mAlignNSeeds, "nSeeds/I");
-        mAlignmentTree->Branch("nFitTracks", &mAlignNFitTracks, "nFitTracks/I");
-        mAlignmentTree->Branch("chi2", &mAlignChi2, "chi2/F");
-        mAlignmentTree->Branch("ndf", &mAlignNdf, "ndf/I");
-        mAlignmentTree->Branch("pval", &mAlignPval, "pval/F");
-        mAlignmentTree->Branch("fitConverged", &mAlignFitConverged, "fitConverged/I");
-        mAlignmentTree->Branch("fitConvergedFully", &mAlignFitConvergedFully, "fitConvergedFully/I");
-        mAlignmentTree->Branch("fitConvergedPartially", &mAlignFitConvergedPartially, "fitConvergedPartially/I");
-        mAlignmentTree->Branch("trackType", &mAlignTrackType, "trackType/I");
-        mAlignmentTree->Branch("trackNHitsFit", &mAlignTrackNHitsFit, "trackNHitsFit/I");
-        mAlignmentTree->Branch("trackNFstHits", &mAlignTrackNFstHits, "trackNFstHits/I");
-        mAlignmentTree->Branch("trackPx", &mAlignTrackPx, "trackPx/F");
-        mAlignmentTree->Branch("trackPy", &mAlignTrackPy, "trackPy/F");
-        mAlignmentTree->Branch("trackPz", &mAlignTrackPz, "trackPz/F");
-        mAlignmentTree->Branch("trackP", &mAlignTrackP, "trackP/F");
-        mAlignmentTree->Branch("trackPt", &mAlignTrackPt, "trackPt/F");
-        mAlignmentTree->Branch("trackEta", &mAlignTrackEta, "trackEta/F");
-        mAlignmentTree->Branch("sorting", &mAlignSorting, "sorting/F");
-        mAlignmentTree->Branch("meas0", &mAlignMeas0, "meas0/F");
-        mAlignmentTree->Branch("meas1", &mAlignMeas1, "meas1/F");
-        mAlignmentTree->Branch("meas2", &mAlignMeas2, "meas2/F");
-        mAlignmentTree->Branch("trackPred0", &mAlignTrackPred0, "trackPred0/F");
-        mAlignmentTree->Branch("trackPred1", &mAlignTrackPred1, "trackPred1/F");
-        mAlignmentTree->Branch("trackPred2", &mAlignTrackPred2, "trackPred2/F");
-        mAlignmentTree->Branch("fstRawR", &mAlignFstRawR, "fstRawR/F");
-        mAlignmentTree->Branch("fstRawStripPhi", &mAlignFstRawStripPhi, "fstRawStripPhi/F");
-        mAlignmentTree->Branch("fstMeanPhiStrip", &mAlignFstMeanPhiStrip, "fstMeanPhiStrip/F");
-        mAlignmentTree->Branch("fstHitGlobalX", &mAlignFstHitGlobalX, "fstHitGlobalX/F");
-        mAlignmentTree->Branch("fstHitGlobalY", &mAlignFstHitGlobalY, "fstHitGlobalY/F");
-        mAlignmentTree->Branch("fstHitGlobalZ", &mAlignFstHitGlobalZ, "fstHitGlobalZ/F");
-        mAlignmentTree->Branch("fstPlaneOriginX", &mAlignFstPlaneOriginX, "fstPlaneOriginX/F");
-        mAlignmentTree->Branch("fstPlaneOriginY", &mAlignFstPlaneOriginY, "fstPlaneOriginY/F");
-        mAlignmentTree->Branch("fstPlaneOriginZ", &mAlignFstPlaneOriginZ, "fstPlaneOriginZ/F");
-        mAlignmentTree->Branch("fstPlaneUX", &mAlignFstPlaneUX, "fstPlaneUX/F");
-        mAlignmentTree->Branch("fstPlaneUY", &mAlignFstPlaneUY, "fstPlaneUY/F");
-        mAlignmentTree->Branch("fstPlaneUZ", &mAlignFstPlaneUZ, "fstPlaneUZ/F");
-        mAlignmentTree->Branch("fstPlaneVX", &mAlignFstPlaneVX, "fstPlaneVX/F");
-        mAlignmentTree->Branch("fstPlaneVY", &mAlignFstPlaneVY, "fstPlaneVY/F");
-        mAlignmentTree->Branch("fstPlaneVZ", &mAlignFstPlaneVZ, "fstPlaneVZ/F");
-        mAlignmentTree->Branch("fstMeasGlobalX", &mAlignFstMeasGlobalX, "fstMeasGlobalX/F");
-        mAlignmentTree->Branch("fstMeasGlobalY", &mAlignFstMeasGlobalY, "fstMeasGlobalY/F");
-        mAlignmentTree->Branch("fstMeasGlobalZ", &mAlignFstMeasGlobalZ, "fstMeasGlobalZ/F");
-        mAlignmentTree->Branch("fstClosureX", &mAlignFstClosureX, "fstClosureX/F");
-        mAlignmentTree->Branch("fstClosureY", &mAlignFstClosureY, "fstClosureY/F");
-        mAlignmentTree->Branch("fstClosureZ", &mAlignFstClosureZ, "fstClosureZ/F");
-        mAlignmentTree->Branch("fstClosureU", &mAlignFstClosureU, "fstClosureU/F");
-        mAlignmentTree->Branch("fstClosureV", &mAlignFstClosureV, "fstClosureV/F");
-        mAlignmentTree->Branch("fstClosureMag", &mAlignFstClosureMag, "fstClosureMag/F");
-        mAlignmentTree->Branch("resBiased0", &mAlignResBiased0, "resBiased0/F");
-        mAlignmentTree->Branch("resBiased1", &mAlignResBiased1, "resBiased1/F");
-        mAlignmentTree->Branch("resBiased2", &mAlignResBiased2, "resBiased2/F");
-        mAlignmentTree->Branch("resBiasedSigma0", &mAlignResBiasedSigma0, "resBiasedSigma0/F");
-        mAlignmentTree->Branch("resBiasedSigma1", &mAlignResBiasedSigma1, "resBiasedSigma1/F");
-        mAlignmentTree->Branch("resBiasedSigma2", &mAlignResBiasedSigma2, "resBiasedSigma2/F");
-        mAlignmentTree->Branch("pullBiased0", &mAlignPullBiased0, "pullBiased0/F");
-        mAlignmentTree->Branch("pullBiased1", &mAlignPullBiased1, "pullBiased1/F");
-        mAlignmentTree->Branch("pullBiased2", &mAlignPullBiased2, "pullBiased2/F");
-        mAlignmentTree->Branch("resUnbiased0", &mAlignResUnbiased0, "resUnbiased0/F");
-        mAlignmentTree->Branch("resUnbiased1", &mAlignResUnbiased1, "resUnbiased1/F");
-        mAlignmentTree->Branch("resUnbiased2", &mAlignResUnbiased2, "resUnbiased2/F");
-        mAlignmentTree->Branch("resUnbiasedSigma0", &mAlignResUnbiasedSigma0, "resUnbiasedSigma0/F");
-        mAlignmentTree->Branch("resUnbiasedSigma1", &mAlignResUnbiasedSigma1, "resUnbiasedSigma1/F");
-        mAlignmentTree->Branch("resUnbiasedSigma2", &mAlignResUnbiasedSigma2, "resUnbiasedSigma2/F");
-        mAlignmentTree->Branch("pullUnbiased0", &mAlignPullUnbiased0, "pullUnbiased0/F");
-        mAlignmentTree->Branch("pullUnbiased1", &mAlignPullUnbiased1, "pullUnbiased1/F");
-        mAlignmentTree->Branch("pullUnbiased2", &mAlignPullUnbiased2, "pullUnbiased2/F");
+        BookAlignmentTree();
     }
 
     // Setup the mFwdHitLoader
@@ -943,38 +823,19 @@ void StFwdTrackMaker::FillAlignment() {
         return;
 
     StEvent *stEvent = static_cast<StEvent *>(GetInputDS("StEvent"));
-    mAlignRun = stEvent ? stEvent->runId() : 0;
-    mAlignEvent = stEvent ? stEvent->id() : 0;
-    mAlignNSeeds = static_cast<int>(mForwardTracker->getTrackSeeds().size());
-    mAlignNFitTracks = static_cast<int>(mForwardTracker->getTrackResults().size());
-
-    FwdGeomUtils *alignmentGeo = nullptr;
-    if (gGeoManager)
-        alignmentGeo = new FwdGeomUtils(gGeoManager);
+    AlignmentRow &row = mAlignmentRow;
+    row.run = stEvent ? stEvent->runId() : 0;
+    row.event = stEvent ? stEvent->id() : 0;
 
     int trackIndex = 0;
     for ( const auto &gtr : mForwardTracker->getTrackResults() ) {
-        mAlignTrackIndex = trackIndex++;
-        mAlignChi2 = gtr.mChi2;
-        mAlignNdf = gtr.mNdf;
-        mAlignPval = gtr.mPval;
-        mAlignFitConverged = gtr.mIsFitConverged ? 1 : 0;
-        mAlignFitConvergedFully = gtr.mIsFitConvergedFully ? 1 : 0;
-        mAlignFitConvergedPartially = gtr.mIsFitConvergedPartially ? 1 : 0;
-        mAlignTrackType = gtr.mTrackType;
-        mAlignTrackNHitsFit = gtr.mNumFitPoints;
-        mAlignTrackNFstHits = 0;
-        setAlignmentTrackKinematics(
-            gtr.mMomentum,
-            mAlignTrackPx, mAlignTrackPy, mAlignTrackPz,
-            mAlignTrackP, mAlignTrackPt,
-            mAlignTrackEta
-        );
+        row.trackIndex = trackIndex++;
 
         if (!gtr.mTrack)
             continue;
 
         auto rep = gtr.mTrack->getCardinalRep();
+        int nFstHits = 0;
         for ( auto point : gtr.mTrack->getPoints() ) {
             if (!point)
                 continue;
@@ -982,177 +843,96 @@ void StFwdTrackMaker::FillAlignment() {
             for ( unsigned int iMeas = 0; iMeas < nRawMeasurements; ++iMeas ) {
                 auto rawMeasurement = point->getRawMeasurement(iMeas);
                 if (rawMeasurement && rawMeasurement->getDetId() == kFstId)
-                    ++mAlignTrackNFstHits;
+                    ++nFstHits;
             }
         }
 
-        int pointIndex = 0;
         for ( auto point : gtr.mTrack->getPoints() ) {
-            mAlignPointIndex = pointIndex++;
             if (!point || point->getNumRawMeasurements() == 0)
                 continue;
 
             genfit::KalmanFitterInfo *kfi = nullptr;
-            if (rep && point->hasFitterInfo(rep)) {
+            if (rep && point->hasFitterInfo(rep))
                 kfi = dynamic_cast<genfit::KalmanFitterInfo*>(point->getFitterInfo(rep));
-            }
+            if (!kfi)
+                continue;
 
             const unsigned int nRawMeasurements = point->getNumRawMeasurements();
             for ( unsigned int iMeas = 0; iMeas < nRawMeasurements; ++iMeas ) {
                 auto rawMeasurement = point->getRawMeasurement(iMeas);
-                if (!rawMeasurement)
+                if (!rawMeasurement || rawMeasurement->getDetId() != kFstId ||
+                    rawMeasurement->getDim() != 2 ||
+                    iMeas >= kfi->getNumMeasurements())
                     continue;
 
-                mAlignMeasurementIndex = static_cast<int>(iMeas);
-                mAlignDetId = rawMeasurement->getDetId();
-                mAlignHitId = rawMeasurement->getHitId();
-                mAlignMeasurementDim = static_cast<int>(rawMeasurement->getDim());
-                mAlignResidualDim = 0;
-                mAlignHasResidual = 0;
-                const double sortingParameter = point->getSortingParameter();
-                mAlignSorting = sortingParameter;
-                mAlignFstGlobalSensor = -1;
-                mAlignFstDisk = -1;
-                mAlignFstWedge = -1;
-                mAlignFstSensor = -1;
-                if (mAlignDetId == kFstId) {
-                    int globalSensor = static_cast<int>(sortingParameter) - 1;
-                    if (globalSensor >= 0 && globalSensor < kFstNumSensors) {
-                        mAlignFstGlobalSensor = globalSensor;
-                        FwdHit::fstSensorWedgeDiskFromGlobalIndex(globalSensor, mAlignFstDisk, mAlignFstWedge, mAlignFstSensor);
-                    }
+                const int planeId = static_cast<int>(point->getSortingParameter()) - 1;
+                if (planeId < 0 || planeId >= kFstNumSensors)
+                    continue;
+
+                try {
+                    // false selects the Kalman state predicted without this hit.
+                    // false includes both measurement and prediction covariance.
+                    genfit::MeasurementOnPlane residual =
+                        kfi->getResidual(iMeas, false, false);
+                    const TVectorD &measurement = rawMeasurement->getRawHitCoords();
+                    const TVectorD &residualState = residual.getState();
+                    const TMatrixDSym &residualCov = residual.getCov();
+                    if (measurement.GetNrows() != 2 || residualState.GetNrows() != 2 ||
+                        residualCov.GetNrows() != 2)
+                        continue;
+
+                    const genfit::MeasuredStateOnPlane &unbiasedState =
+                        kfi->getFittedState(false);
+                    genfit::SharedPlanePtr plane = residual.getPlane();
+                    if (!plane)
+                        continue;
+
+                    const TVector3 planeU = plane->getU();
+                    const TVector3 planeV = plane->getV();
+                    TVector3 planeNormal = planeU.Cross(planeV);
+                    if (planeNormal.Mag2() == 0)
+                        continue;
+                    planeNormal = planeNormal.Unit();
+
+                    const TVector3 localMomentum = unbiasedState.getMom();
+                    const double normalMomentum = localMomentum.Dot(planeNormal);
+                    if (std::abs(normalMomentum) < 1e-12)
+                        continue;
+
+                    TVector3 measuredGlobal =
+                        plane->toLab(TVector2(measurement[0], measurement[1]));
+                    FwdHit::fstSensorWedgeDiskFromGlobalIndex(
+                        planeId, row.disk, row.wedge, row.surface);
+
+                    row.planeId = planeId;
+                    row.trackType = gtr.mTrackType;
+                    row.nHitsFit = gtr.mNumFitPoints;
+                    row.nFstHits = nFstHits;
+                    row.fullyConverged = gtr.mIsFitConvergedFully ? 1 : 0;
+                    row.chi2Ndf = gtr.mNdf > 0 ? gtr.mChi2 / gtr.mNdf : 0;
+                    row.trackP = gtr.mMomentum.Mag();
+                    row.trackPt = gtr.mMomentum.Perp();
+                    row.trackEta = alignmentEta(gtr.mMomentum);
+
+                    row.measU = measurement[0];
+                    row.measV = measurement[1];
+                    row.globalX = measuredGlobal.X();
+                    row.globalY = measuredGlobal.Y();
+                    row.globalZ = measuredGlobal.Z();
+                    row.resU = residualState[0];
+                    row.resV = residualState[1];
+                    row.covUU = residualCov(0, 0);
+                    row.covUV = residualCov(0, 1);
+                    row.covVV = residualCov(1, 1);
+                    row.slopeU = localMomentum.Dot(planeU) / normalMomentum;
+                    row.slopeV = localMomentum.Dot(planeV) / normalMomentum;
+                    mAlignmentTree->Fill();
+                } catch (genfit::Exception &e) {
+                    LOG_DEBUG << "Skipping FST alignment row: " << e.what() << endm;
                 }
-                mAlignResBiased0 = kInvalidAlignValue;
-                mAlignResBiased1 = kInvalidAlignValue;
-                mAlignResBiased2 = kInvalidAlignValue;
-                mAlignResBiasedSigma0 = kInvalidAlignValue;
-                mAlignResBiasedSigma1 = kInvalidAlignValue;
-                mAlignResBiasedSigma2 = kInvalidAlignValue;
-                mAlignPullBiased0 = kInvalidAlignValue;
-                mAlignPullBiased1 = kInvalidAlignValue;
-                mAlignPullBiased2 = kInvalidAlignValue;
-                mAlignResUnbiased0 = kInvalidAlignValue;
-                mAlignResUnbiased1 = kInvalidAlignValue;
-                mAlignResUnbiased2 = kInvalidAlignValue;
-                mAlignResUnbiasedSigma0 = kInvalidAlignValue;
-                mAlignResUnbiasedSigma1 = kInvalidAlignValue;
-                mAlignResUnbiasedSigma2 = kInvalidAlignValue;
-                mAlignPullUnbiased0 = kInvalidAlignValue;
-                mAlignPullUnbiased1 = kInvalidAlignValue;
-                mAlignPullUnbiased2 = kInvalidAlignValue;
-                mAlignTrackPred0 = kInvalidAlignValue;
-                mAlignTrackPred1 = kInvalidAlignValue;
-                mAlignTrackPred2 = kInvalidAlignValue;
-                mAlignFstRawR = kInvalidAlignValue;
-                mAlignFstRawStripPhi = kInvalidAlignValue;
-                mAlignFstMeanPhiStrip = kInvalidAlignValue;
-                mAlignFstHitGlobalX = kInvalidAlignValue;
-                mAlignFstHitGlobalY = kInvalidAlignValue;
-                mAlignFstHitGlobalZ = kInvalidAlignValue;
-                mAlignFstPlaneOriginX = kInvalidAlignValue;
-                mAlignFstPlaneOriginY = kInvalidAlignValue;
-                mAlignFstPlaneOriginZ = kInvalidAlignValue;
-                mAlignFstPlaneUX = kInvalidAlignValue;
-                mAlignFstPlaneUY = kInvalidAlignValue;
-                mAlignFstPlaneUZ = kInvalidAlignValue;
-                mAlignFstPlaneVX = kInvalidAlignValue;
-                mAlignFstPlaneVY = kInvalidAlignValue;
-                mAlignFstPlaneVZ = kInvalidAlignValue;
-                mAlignFstMeasGlobalX = kInvalidAlignValue;
-                mAlignFstMeasGlobalY = kInvalidAlignValue;
-                mAlignFstMeasGlobalZ = kInvalidAlignValue;
-                mAlignFstClosureX = kInvalidAlignValue;
-                mAlignFstClosureY = kInvalidAlignValue;
-                mAlignFstClosureZ = kInvalidAlignValue;
-                mAlignFstClosureU = kInvalidAlignValue;
-                mAlignFstClosureV = kInvalidAlignValue;
-                mAlignFstClosureMag = kInvalidAlignValue;
-
-                setAlignmentVector(rawMeasurement->getRawHitCoords(), mAlignMeas0, mAlignMeas1, mAlignMeas2);
-                if (mAlignDetId == kFstId && mAlignFstGlobalSensor >= 0) {
-                    const FwdHit *fwdHit = findFstSeedHit(gtr, mAlignFstGlobalSensor);
-                    if (fwdHit) {
-                        mAlignFstHitGlobalX = fwdHit->getX();
-                        mAlignFstHitGlobalY = fwdHit->getY();
-                        mAlignFstHitGlobalZ = fwdHit->getZ();
-
-                        if (fwdHit->_localPosition[0] >= 0.f && fwdHit->_localPosition[1] >= 0.f) {
-                            mAlignFstRawR = fwdHit->_localPosition[0];
-                            mAlignFstRawStripPhi = fwdHit->_localPosition[1];
-                            mAlignFstMeanPhiStrip = fwdHit->_localPosition[1] / kFstStripPitchPhi;
-                        }
-
-                        if (alignmentGeo && mAlignMeasurementDim >= 2 &&
-                            mAlignMeas0 > kInvalidAlignValue &&
-                            mAlignMeas1 > kInvalidAlignValue) {
-                            TVector3 u(1, 0, 0);
-                            TVector3 v(0, 1, 0);
-                            const int globalWedge =
-                                mAlignFstDisk * kFstNumWedgePerDisk + mAlignFstWedge;
-                            TVector3 o = alignmentGeo->getFstWedgeOrigin(globalWedge, u, v);
-                            o.SetZ(alignmentGeo->getFstMeasurementZ(
-                                mAlignFstGlobalSensor, o.Z()));
-                            TVector3 measGlobal = o + mAlignMeas0 * u + mAlignMeas1 * v;
-                            TVector3 hitGlobal(fwdHit->getX(), fwdHit->getY(), fwdHit->getZ());
-                            TVector3 closure = measGlobal - hitGlobal;
-
-                            mAlignFstPlaneOriginX = o.X();
-                            mAlignFstPlaneOriginY = o.Y();
-                            mAlignFstPlaneOriginZ = o.Z();
-                            mAlignFstPlaneUX = u.X();
-                            mAlignFstPlaneUY = u.Y();
-                            mAlignFstPlaneUZ = u.Z();
-                            mAlignFstPlaneVX = v.X();
-                            mAlignFstPlaneVY = v.Y();
-                            mAlignFstPlaneVZ = v.Z();
-                            mAlignFstMeasGlobalX = measGlobal.X();
-                            mAlignFstMeasGlobalY = measGlobal.Y();
-                            mAlignFstMeasGlobalZ = measGlobal.Z();
-                            mAlignFstClosureX = closure.X();
-                            mAlignFstClosureY = closure.Y();
-                            mAlignFstClosureZ = closure.Z();
-                            mAlignFstClosureU = closure.Dot(u);
-                            mAlignFstClosureV = closure.Dot(v);
-                            mAlignFstClosureMag = closure.Mag();
-                        }
-                    }
-                }
-
-                if (kfi && iMeas < kfi->getNumMeasurements()) {
-                    try {
-                        genfit::MeasurementOnPlane biasedResidual = kfi->getResidual(iMeas, true, true);
-                        genfit::MeasurementOnPlane unbiasedResidual = kfi->getResidual(iMeas, false, true);
-                        mAlignResidualDim = static_cast<int>(unbiasedResidual.getState().GetNrows());
-                        setAlignmentVector(biasedResidual.getState(), mAlignResBiased0, mAlignResBiased1, mAlignResBiased2);
-                        setAlignmentVector(unbiasedResidual.getState(), mAlignResUnbiased0, mAlignResUnbiased1, mAlignResUnbiased2);
-                        setAlignmentPrediction(
-                            rawMeasurement->getRawHitCoords(),
-                            unbiasedResidual.getState(),
-                            mAlignTrackPred0, mAlignTrackPred1, mAlignTrackPred2
-                        );
-                        setAlignmentPulls(
-                            biasedResidual,
-                            mAlignResBiasedSigma0, mAlignResBiasedSigma1, mAlignResBiasedSigma2,
-                            mAlignPullBiased0, mAlignPullBiased1, mAlignPullBiased2
-                        );
-                        setAlignmentPulls(
-                            unbiasedResidual,
-                            mAlignResUnbiasedSigma0, mAlignResUnbiasedSigma1, mAlignResUnbiasedSigma2,
-                            mAlignPullUnbiased0, mAlignPullUnbiased1, mAlignPullUnbiased2
-                        );
-                        mAlignHasResidual = 1;
-                    } catch (...) {
-                        mAlignHasResidual = 0;
-                    }
-                }
-
-                mAlignmentTree->Fill();
             }
         }
     }
-
-    if (alignmentGeo)
-        delete alignmentGeo;
 }
 
 void StFwdTrackMaker::FillEvent() {

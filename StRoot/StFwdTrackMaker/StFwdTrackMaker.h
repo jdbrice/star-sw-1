@@ -39,10 +39,8 @@ class McTrack;
 
 class StFcsDb;
 class TFile;
+class TTree;
 
-// ROOT includes
-#include "TNtuple.h"
-#include "TTree.h"
 // STL includes
 #include <vector>
 #include <memory>
@@ -100,6 +98,7 @@ class StFwdTrackMaker : public StMaker {
     void ProcessFwdTracks();
     void FillEvent();
     void FillTrackDeltas();
+    void BookAlignmentTree();
     void FillAlignment();
     bool SkipEvent();
 
@@ -126,86 +125,41 @@ class StFwdTrackMaker : public StMaker {
     TTree *mAlignmentTree = nullptr;
     std::string mAlignmentOutputFilename = "StFwdAlignment.root";
 
-    int mAlignRun = 0;
-    int mAlignEvent = 0;
-    int mAlignTrackIndex = 0;
-    int mAlignPointIndex = 0;
-    int mAlignMeasurementIndex = 0;
-    int mAlignDetId = 0;
-    int mAlignHitId = 0;
-    int mAlignFstGlobalSensor = -1;
-    int mAlignFstDisk = -1;
-    int mAlignFstWedge = -1;
-    int mAlignFstSensor = -1;
-    int mAlignMeasurementDim = 0;
-    int mAlignResidualDim = 0;
-    int mAlignHasResidual = 0;
-    int mAlignNSeeds = 0;
-    int mAlignNFitTracks = 0;
-    int mAlignNdf = 0;
-    int mAlignFitConverged = 0;
-    int mAlignFitConvergedFully = 0;
-    int mAlignFitConvergedPartially = 0;
-    int mAlignTrackType = 0;
-    int mAlignTrackNHitsFit = 0;
-    int mAlignTrackNFstHits = 0;
-    float mAlignChi2 = 0;
-    float mAlignPval = 0;
-    float mAlignTrackPx = 0;
-    float mAlignTrackPy = 0;
-    float mAlignTrackPz = 0;
-    float mAlignTrackP = 0;
-    float mAlignTrackPt = 0;
-    float mAlignTrackEta = 0;
-    float mAlignSorting = 0;
-    float mAlignMeas0 = 0;
-    float mAlignMeas1 = 0;
-    float mAlignMeas2 = 0;
-    float mAlignTrackPred0 = 0;
-    float mAlignTrackPred1 = 0;
-    float mAlignTrackPred2 = 0;
-    float mAlignFstRawR = 0;
-    float mAlignFstRawStripPhi = 0;
-    float mAlignFstMeanPhiStrip = 0;
-    float mAlignFstHitGlobalX = 0;
-    float mAlignFstHitGlobalY = 0;
-    float mAlignFstHitGlobalZ = 0;
-    float mAlignFstPlaneOriginX = 0;
-    float mAlignFstPlaneOriginY = 0;
-    float mAlignFstPlaneOriginZ = 0;
-    float mAlignFstPlaneUX = 0;
-    float mAlignFstPlaneUY = 0;
-    float mAlignFstPlaneUZ = 0;
-    float mAlignFstPlaneVX = 0;
-    float mAlignFstPlaneVY = 0;
-    float mAlignFstPlaneVZ = 0;
-    float mAlignFstMeasGlobalX = 0;
-    float mAlignFstMeasGlobalY = 0;
-    float mAlignFstMeasGlobalZ = 0;
-    float mAlignFstClosureX = 0;
-    float mAlignFstClosureY = 0;
-    float mAlignFstClosureZ = 0;
-    float mAlignFstClosureU = 0;
-    float mAlignFstClosureV = 0;
-    float mAlignFstClosureMag = 0;
-    float mAlignResBiased0 = 0;
-    float mAlignResBiased1 = 0;
-    float mAlignResBiased2 = 0;
-    float mAlignResBiasedSigma0 = 0;
-    float mAlignResBiasedSigma1 = 0;
-    float mAlignResBiasedSigma2 = 0;
-    float mAlignPullBiased0 = 0;
-    float mAlignPullBiased1 = 0;
-    float mAlignPullBiased2 = 0;
-    float mAlignResUnbiased0 = 0;
-    float mAlignResUnbiased1 = 0;
-    float mAlignResUnbiased2 = 0;
-    float mAlignResUnbiasedSigma0 = 0;
-    float mAlignResUnbiasedSigma1 = 0;
-    float mAlignResUnbiasedSigma2 = 0;
-    float mAlignPullUnbiased0 = 0;
-    float mAlignPullUnbiased1 = 0;
-    float mAlignPullUnbiased2 = 0;
+    // One row per valid 2D FST planar measurement. The measurement surface
+    // distinguishes the three physical z surfaces in a wedge; the alignment
+    // object remains the 12-fold wedge.
+    struct AlignmentRow {
+        int run = 0;
+        int event = 0;
+        int trackIndex = 0;
+        int planeId = -1;
+        int disk = -1;
+        int wedge = -1;
+        int surface = -1;
+        int trackType = 0;
+        int nHitsFit = 0;
+        int nFstHits = 0;
+        int fullyConverged = 0;
+
+        float chi2Ndf = 0;
+        float trackP = 0;
+        float trackPt = 0;
+        float trackEta = 0;
+
+        float measU = 0;
+        float measV = 0;
+        float globalX = 0;
+        float globalY = 0;
+        float globalZ = 0;
+
+        float resU = 0;
+        float resV = 0;
+        float covUU = 0;
+        float covUV = 0;
+        float covVV = 0;
+        float slopeU = 0;
+        float slopeV = 0;
+    } mAlignmentRow;
 
     // Helper functions for modifying configuration
     public:

@@ -18,6 +18,7 @@
 #include "StEvent/StFwdTrackCollection.h"
 #include "StEvent/StFwdTrack.h"
 #include "TPad.h"
+#include "TNtuple.h"
 
 #include "StMuDSTMaker/COMMON/StMuDstMaker.h"
 #include "StMuDSTMaker/COMMON/StMuDst.h"
