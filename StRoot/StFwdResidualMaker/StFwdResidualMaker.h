@@ -77,6 +77,34 @@ private:
     // 16:EPD(not impl.), 17:FCSEcal, 18:FCSHcal, 19:AllTrk (always filled)
     TH1F* hPlaneUsage[6];
 
+    // Same 20-bin scheme as hPlaneUsage, but split by quadrant and charge sign,
+    // mResidualTrackType only (keeps the count reasonable -- this is meant for a
+    // targeted look at the FTT disk2 south-half dead-zone / charge-asymmetry
+    // question, not routine per-type bookkeeping like hPlaneUsage above).
+    // quadrant: 0=N-top(x<0,y>0) 1=N-bottom(x<0,y<=0) 2=S-top(x>=0,y>0) 3=S-bottom(x>=0,y<=0)
+    // charge:   0=positive(q>=0) 1=negative(q<0)
+    // Quadrant is from the mean (x,y) of all FST+FTT seed points used by the track.
+    TH1F* hPlaneUsageQC[4][2];
+
+    // XY of the hit actually used in the fit, at each disk/orientation, split by
+    // charge sign, mResidualTrackType only. FST: disk 0-2, no orientation split
+    // (single 2D-strip measurement per disk). FTT: disk 0-3 x orientation
+    // (0=x/vertical-strip, 1=y/horizontal-strip, 2=uv/diagonal).
+    // 3 FST + 4*3 FTT = 15 plots x 2 charges = 30 total.
+    TH2F* h2FstHitXY[3][2];
+    TH2F* h2FttHitXY[4][3][2];
+
+    // Same gating (a hit at that disk/orientation was actually used in the fit)
+    // and same binning as h2Fst/FttHitXY above, but filled with the track's
+    // continuous projected (x,y) at that disk/plane (fstProjs[disk]/fttProjs
+    // [plane], already computed for findClosestZ matching) instead of the hit's
+    // own position. An FTT strip only measures one coordinate precisely; the
+    // hit's stored position along the strip's long axis is a fixed/quantized
+    // placeholder, which made h2Fst/FttHitXY show banding along that axis
+    // instead of the real, continuous track footprint. This is the fix.
+    TH2F* h2FstProjXY[3][2];
+    TH2F* h2FttProjXY[4][3][2];
+
     void bookHistos();
 
     void fillFst(int disk, float res, float hx, float hy);
@@ -94,7 +122,7 @@ private:
     Int_t makeFromStEvent();
     Int_t makeFromMuDst();
 
-    void processTrack(UChar_t trackType, bool hasEcal, bool hasHcal,
+    void processTrack(UChar_t trackType, char charge, bool hasEcal, bool hasHcal,
                        const std::vector<FwdSeedPt>& fstPts,
                        const std::vector<FwdSeedPt>& fttPts,
                        const std::vector<FwdProj>& fstProjs,
@@ -105,7 +133,7 @@ private:
     void processFttPoints(const std::vector<FwdSeedPt>& fttPts,
                           const std::vector<FwdProj>& fttProjs);
     int  findClosestZ(float hz, const std::vector<FwdProj>& projs, int maxIdx);
-    void fillPlaneUsage(UChar_t trackType, bool hasEcal, bool hasHcal,
+    void fillPlaneUsage(UChar_t trackType, char charge, bool hasEcal, bool hasHcal,
                         const std::vector<FwdSeedPt>& fstPts,
                         const std::vector<FwdSeedPt>& fttPts,
                         const std::vector<FwdProj>& fstProjs,

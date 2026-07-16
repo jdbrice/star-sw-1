@@ -115,6 +115,71 @@ void StFwdResidualMaker::bookHistos() {
         for (int b = 0; b < 20; b++) hPlaneUsage[t]->GetXaxis()->SetBinLabel(b+1, binLbl[b]);
     }
 
+    // Quadrant+charge split of plane usage, and per-disk/orientation hit-position
+    // maps, mResidualTrackType only -- see header comments for the binning.
+    const char* quadName[4]  = {"Ntop", "Nbot", "Stop", "Sbot"};
+    const char* chargeName[2] = {"Pos", "Neg"};
+    const char* fttOriName[3] = {"x", "y", "uv"};
+
+    TDirectory* dUseQC = mFout->mkdir("PlaneUsageQuadCharge");
+    dUseQC->cd();
+    for (int q = 0; q < 4; q++) {
+        for (int c = 0; c < 2; c++) {
+            hPlaneUsageQC[q][c] = new TH1F(
+                Form("hPlaneUsage_%s_%s", quadName[q], chargeName[c]),
+                Form("Plane usage, quadrant=%s charge=%s;;tracks", quadName[q], chargeName[c]),
+                20, 0, 20);
+            for (int b = 0; b < 20; b++) hPlaneUsageQC[q][c]->GetXaxis()->SetBinLabel(b+1, binLbl[b]);
+        }
+    }
+
+    TDirectory* dHitXY = mFout->mkdir("HitXYByCharge");
+    dHitXY->cd();
+    for (int d = 0; d < 3; d++) {
+        for (int c = 0; c < 2; c++) {
+            h2FstHitXY[d][c] = new TH2F(
+                Form("h2FstHitXY_disk%d_%s", d, chargeName[c]),
+                Form("FST disk %d hit position, charge=%s;x [cm];y [cm]", d, chargeName[c]),
+                NP, -RPOS, RPOS, NP, -RPOS, RPOS);
+        }
+    }
+    for (int d = 0; d < 4; d++) {
+        for (int o = 0; o < 3; o++) {
+            for (int c = 0; c < 2; c++) {
+                h2FttHitXY[d][o][c] = new TH2F(
+                    Form("h2FttHitXY_disk%d_%s_%s", d, fttOriName[o], chargeName[c]),
+                    Form("FTT disk %d (%s) hit position, charge=%s;x [cm];y [cm]",
+                         d, fttOriName[o], chargeName[c]),
+                    NP, -RPOS, RPOS, NP, -RPOS, RPOS);
+            }
+        }
+    }
+
+    // Same gating/binning as above, but filled with the track's continuous
+    // projected position at that disk/plane instead of the (strip-quantized)
+    // hit position -- see header comment.
+    TDirectory* dProjXY = mFout->mkdir("ProjXYByCharge");
+    dProjXY->cd();
+    for (int d = 0; d < 3; d++) {
+        for (int c = 0; c < 2; c++) {
+            h2FstProjXY[d][c] = new TH2F(
+                Form("h2FstProjXY_disk%d_%s", d, chargeName[c]),
+                Form("FST disk %d track projection, charge=%s;x [cm];y [cm]", d, chargeName[c]),
+                NP, -RPOS, RPOS, NP, -RPOS, RPOS);
+        }
+    }
+    for (int d = 0; d < 4; d++) {
+        for (int o = 0; o < 3; o++) {
+            for (int c = 0; c < 2; c++) {
+                h2FttProjXY[d][o][c] = new TH2F(
+                    Form("h2FttProjXY_disk%d_%s_%s", d, fttOriName[o], chargeName[c]),
+                    Form("FTT disk %d (%s) track projection, charge=%s;x [cm];y [cm]",
+                         d, fttOriName[o], chargeName[c]),
+                    NP, -RPOS, RPOS, NP, -RPOS, RPOS);
+            }
+        }
+    }
+
     mFout->cd();
 }
 
@@ -235,7 +300,7 @@ int StFwdResidualMaker::findClosestZ(
 }
 
 void StFwdResidualMaker::fillPlaneUsage(
-        UChar_t trackType, bool hasEcal, bool hasHcal,
+        UChar_t trackType, char charge, bool hasEcal, bool hasHcal,
         const std::vector<FwdSeedPt>& fstPts,
         const std::vector<FwdSeedPt>& fttPts,
         const std::vector<FwdProj>& fstProjs,
@@ -271,16 +336,60 @@ void StFwdResidualMaker::fillPlaneUsage(
     if (hasHcal) h->Fill(18);
 
     h->Fill(19);
+
+    // --- Quadrant+charge split and per-disk hit-position maps -----------------
+    // mResidualTrackType only, to keep the histogram count bounded (see header).
+    if (trackType != mResidualTrackType) return;
+
+    // Quadrant from the mean (x,y) of every FST+FTT seed point this track used.
+    // North = x<0, South = x>=0 (matches StFcsDb::getDetectorOffset convention,
+    // verified earlier this investigation); top = y>0, bottom = y<=0.
+    double sx = 0, sy = 0; int nPts = 0;
+    for (auto& sp : fstPts) { sx += sp.x; sy += sp.y; nPts++; }
+    for (auto& sp : fttPts) { sx += sp.x; sy += sp.y; nPts++; }
+    if (nPts == 0) return;
+    double mx = sx / nPts, my = sy / nPts;
+    int quad = (mx < 0) ? (my > 0 ? 0 : 1)   // North: 0=top, 1=bottom
+                         : (my > 0 ? 2 : 3);  // South: 2=top, 3=bottom
+    int cq = (charge >= 0) ? 0 : 1;
+
+    TH1F* hqc = hPlaneUsageQC[quad][cq];
+    if (trackType != 0) hqc->Fill(0);
+
+    for (unsigned int is = 0; is < fstPts.size(); is++) {
+        int disk = findClosestZ(fstPts[is].z, fstProjs, 3);
+        if (disk < 0) continue;
+        hqc->Fill(1 + disk);
+        h2FstHitXY[disk][cq]->Fill(fstPts[is].x, fstPts[is].y);
+        h2FstProjXY[disk][cq]->Fill(fstProjs[disk].x, fstProjs[disk].y);
+    }
+
+    for (unsigned int is = 0; is < fttPts.size(); is++) {
+        const FwdSeedPt& sp = fttPts[is];
+        int plane = findClosestZ(sp.z, fttProjs, 4);
+        if (plane < 0) continue;
+        int base = 4 + 3*plane;
+        float sigX = sqrt(fabs(sp.cov[0]));
+        float sigY = sqrt(fabs(sp.cov[4]));
+        int ori = (sigY > sigX + 0.01f) ? 0 : (sigX > sigY + 0.01f ? 1 : 2);
+        hqc->Fill(base + ori);
+        h2FttHitXY[plane][ori][cq]->Fill(sp.x, sp.y);
+        h2FttProjXY[plane][ori][cq]->Fill(fttProjs[plane].x, fttProjs[plane].y);
+    }
+
+    if (hasEcal) hqc->Fill(17);
+    if (hasHcal) hqc->Fill(18);
+    hqc->Fill(19);
 }
 
 void StFwdResidualMaker::processTrack(
-        UChar_t trackType, bool hasEcal, bool hasHcal,
+        UChar_t trackType, char charge, bool hasEcal, bool hasHcal,
         const std::vector<FwdSeedPt>& fstPts,
         const std::vector<FwdSeedPt>& fttPts,
         const std::vector<FwdProj>& fstProjs,
         const std::vector<FwdProj>& fttProjs)
 {
-    fillPlaneUsage(trackType, hasEcal, hasHcal, fstPts, fttPts, fstProjs, fttProjs);
+    fillPlaneUsage(trackType, charge, hasEcal, hasHcal, fstPts, fttPts, fstProjs, fttProjs);
 
     if (trackType != mResidualTrackType) return;  // residuals: selected track type only
     mNGoodTracks++;
@@ -329,7 +438,7 @@ Int_t StFwdResidualMaker::makeFromStEvent() {
             fttPts.push_back(s);
         }
 
-        processTrack(trk->trackType(),
+        processTrack(trk->trackType(), trk->charge(),
                      trk->ecalClusters().size() > 0,
                      trk->hcalClusters().size() > 0,
                      fstPts, fttPts, fstProjs, fttProjs);
@@ -378,7 +487,7 @@ Int_t StFwdResidualMaker::makeFromMuDst() {
             fttPts.push_back(s);
         }
 
-        processTrack(trk->trackType(),
+        processTrack(trk->trackType(), trk->charge(),
                      trk->mEcalClusters.GetEntriesFast() > 0,
                      trk->mHcalClusters.GetEntriesFast() > 0,
                      fstPts, fttPts, fstProjs, fttProjs);
