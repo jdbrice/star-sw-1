@@ -5,12 +5,14 @@ TCanvas* c1;
 
 void plotDilep(int plt=-1, int cut=6, char* data=".", int run=1, int log=1, int trkType=1){
   if(plt==-1) {
+    plotDilepX(1,4,data,run,log,trkType);
     plotDilepX(1,6,data,run,log,trkType);
     plotDilepX(2,6,data,run,log,trkType);
     plotDilepX(3,6,data,run,log,trkType);
     plotDilepX(4,6,data,run,log,trkType);
-    plotDilepX(1,4,data,run,log,trkType);
     plotDilepX(5,6,data,run,log,trkType);
+    plotDilepX(6,6,data,run,log,trkType);
+    plotDilepX(7,6,data,run,log,trkType);
   }else{
     plotDilepX(plt,cut,data,run,log,trkType);
   }
@@ -44,10 +46,10 @@ void plotDilepX(int plt=0, int cut=6, char* data=".", int run=-1, int log=1, int
     c1->Clear();
     c1->Divide(2,2);
 
-    c1->cd(1); h2=(TH2F*)F->Get(Form("XFPT_%s_%s",ttag,nameCut[cut]));   if(h2) h2->Draw("colz");
-    c1->cd(2); h2=(TH2F*)F->Get(Form("ET12_%s_%s",ttag,nameCut[cut]));   if(h2) h2->Draw("colz");
+    c1->cd(1); gPad->SetLogz(); h2=(TH2F*)F->Get(Form("XFPT_%s_%s",ttag,nameCut[cut]));   if(h2) h2->Draw("colz");
+    c1->cd(2); gPad->SetLogz(); h2=(TH2F*)F->Get(Form("ET12_%s_%s",ttag,nameCut[cut]));   if(h2) h2->Draw("colz");
     c1->cd(3); h2=(TH2F*)F->Get(Form("XY_%s_%s",  ttag,nameCut[cut]));   if(h2) h2->Draw("colz");
-    c1->cd(4); h2=(TH2F*)F->Get(Form("PTET_%s_%s",ttag,nameCut[cut]));   if(h2) h2->Draw("colz");
+    c1->cd(4); gPad->SetLogz(); h2=(TH2F*)F->Get(Form("PTET_%s_%s",ttag,nameCut[cut]));   if(h2) h2->Draw("colz");
     c1->cd(0); TText *t = new TText(0.4,0.95,Form("%s Cut=%s",ttag,nameCut[cut])); t->Draw();
 
     c1->SaveAs(Form("dilep.cut%d.%s.%s.%d.png",cut,ttag,tag,run));
@@ -175,16 +177,13 @@ void plotDilepX(int plt=0, int cut=6, char* data=".", int run=-1, int log=1, int
   }
 
   if(plt==0 || plt==5) {
-    //Mixed-event background subtraction, z-vertex x north-charge-sign binned:
-    //picoDilepton.C only mixes an event's candidates with pool entries from
-    //the same (zbin,chargebin) bin (6 z-vertex bins x 2 north-charge bins =
-    //12 bins), and fills a per-bin mixed histogram (MmixBin) alongside a
-    //per-bin same-event LIKE-SIGN histogram (MLSameBin). Each bin's mixed
-    //spectrum is normalized independently -- weight =
-    //Integral(MLSameBin)/Integral(MmixBin) -- before summing across bins, so
-    //bins with different acceptance/statistics (e.g. very-forward vs.
-    //very-backward z-vertex) each get their own correct normalization instead
-    //of one flat pool-size-based factor.
+    //Mixed-event background subtraction, z-vertex x exact-charge-combo
+    //binned: picoDilepton.C mixes within (zbin, combo) bins (3 z-vertex bins
+    //x 4 exact charge combos -- N+S-, N-S+, N+S+, N-S-). The 2 OS combos
+    //(N+S-, N-S+) are the physics channel; each is normalized against its
+    //LS counterpart's same-event count (N+S- <-> N+S+, N-S+ <-> N-S-) before
+    //summing across z-bins, so bins with different acceptance/statistics
+    //each get their own correct normalization instead of one flat factor.
     //Normalizing to the LIKE-SIGN same-event count (not the OS same-event
     //count, and not a mass-window sideband) avoids a real bias: the OS
     //same-event count includes true dilepton signal on top of its own
@@ -197,10 +196,10 @@ void plotDilepX(int plt=0, int cut=6, char* data=".", int run=-1, int log=1, int
     //where the signal isn't.
     //Bins with zero mixed or zero like-sign entries are skipped -- no
     //background estimate is available from them.
-    const int mNZBin=6;
-    const int mNChBin=2;
-    const char* zbinName[mNZBin]={"z0","z1","z2","z3","z4","z5"};
-    const char* chbinName[mNChBin]={"Np","Nm"};
+    const int mNZBin=3;
+    const char* zbinName[mNZBin]={"z0","z1","z2"};
+    const char* osCombo[2] = {"NpSm","NmSp"}; //physics-channel combos
+    const char* lsCombo[2] = {"NpSp","NmSm"}; //their LS normalization reference
     TH1F* hM = (TH1F*)F->Get(Form("M_%s_%s",ttag,nameCut[6]));
     if(hM){
       hM->Sumw2();
@@ -209,16 +208,16 @@ void plotDilepX(int plt=0, int cut=6, char* data=".", int run=-1, int log=1, int
       hMixWeighted->Sumw2();
       double totalWeightedMix=0;
       for(int zb=0; zb<mNZBin; zb++){
-        for(int cb=0; cb<mNChBin; cb++){
-          TH1F* hMixBin  = (TH1F*)F->Get(Form("MmixBin_%s_%s_%s",  ttag,zbinName[zb],chbinName[cb]));
-          TH1F* hLSameBin= (TH1F*)F->Get(Form("MLSameBin_%s_%s_%s",ttag,zbinName[zb],chbinName[cb]));
+        for(int o=0; o<2; o++){
+          TH1F* hMixBin  = (TH1F*)F->Get(Form("MmixBin_%s_%s_%s", ttag,zbinName[zb],osCombo[o]));
+          TH1F* hLSameBin= (TH1F*)F->Get(Form("MsameBin_%s_%s_%s",ttag,zbinName[zb],lsCombo[o]));
           if(!hMixBin || !hLSameBin) continue;
           double nMix  = hMixBin->Integral();
           double nLS   = hLSameBin->Integral();
           if(nMix<=0 || nLS<=0) continue;
           double w = nLS/nMix;
           hMixBin->Sumw2();
-          TH1F* hMixBinScaled=(TH1F*)hMixBin->Clone(Form("MmixBinScaled_%s_%s_%s",ttag,zbinName[zb],chbinName[cb]));
+          TH1F* hMixBinScaled=(TH1F*)hMixBin->Clone(Form("MmixBinScaled_%s_%s_%s",ttag,zbinName[zb],osCombo[o]));
           hMixBinScaled->Scale(w);
           hMixWeighted->Add(hMixBinScaled);
           totalWeightedMix += nLS;
@@ -253,5 +252,116 @@ void plotDilepX(int plt=0, int cut=6, char* data=".", int run=-1, int log=1, int
     }
 
     c1->SaveAs(Form("dilep4.%s.%s.%d.png",ttag,tag,run));
+  }
+
+  if(plt==0 || plt==6) {
+    //Pi0 (gamma-gamma) mass from FCS ECAL cluster pairs (RunPi0() in
+    //picoDilepton.C) -- NOT track-type dependent (photons, no tracking
+    //involved), so this panel is identical regardless of the trkType
+    //argument. Simple inclusive combinatorial pairing, no background
+    //subtraction; the true pi0 mass (0.135 GeV) is marked for
+    //reference as an independent FCS ECAL calibration check.
+    c1->Clear();
+    c1->Divide(1,1);
+    TH1F* hPi0 = (TH1F*)F->Get("Pi0Mass");
+    if(hPi0){
+      //c1->cd(1)->SetLogy(log);
+      c1->cd(1);
+      hPi0->SetMinimum(0.2);
+      hPi0->SetLineColor(kBlack);
+      hPi0->Draw("E");
+      TLine *lPi0=new TLine(0.135,hPi0->GetMinimum(),0.135,hPi0->GetMaximum());
+      lPi0->SetLineStyle(2);
+      lPi0->SetLineColor(kRed);
+      lPi0->Draw();
+      TLegend *legPi0=new TLegend(0.5,0.55,0.88,0.68);
+      legPi0->AddEntry(hPi0,"Cluster pairs (cuts in title above)","le");
+      legPi0->AddEntry(lPi0,"True #pi^{0} mass (0.135 GeV)","l");
+      legPi0->Draw();
+    }
+    c1->SaveAs(Form("pi0.%s.%d.png",tag,run));
+  }
+
+  if(plt==0 || plt==7) {
+    //Per-(zbin,combo) mixed-event-subtracted mass, NOT summed across bins
+    //like plt=5's dilep4 -- shows each of the 12 (3 z-vertex bins x 4 exact
+    //charge combos) cells' own subtracted spectrum separately.
+    //OS combo columns (N+S-, N-S+) directly test whether the negative-dip/
+    //positive-bump structure seen in the summed spectrum (todo.txt #6) is
+    //uniform across z-vertex (would argue against a vertex-position-
+    //dependent acceptance effect) or concentrated in specific bins (would
+    //support the #15 double-arm acceptance-vs-z-vertex hypothesis) --
+    //normalized the same cross-referenced way as plt=5.
+    //LS combo columns (N+S+, N-S-) are the null test: self-normalized (own
+    //same-event count vs own mixed count), so with no real dilepton signal
+    //in like-sign, these should come out flat if mixing is behaving. If they
+    //show the same shape as the OS columns, that points at a mixing-
+    //methodology artifact rather than physics near the OS mass features.
+    const int mNZBin=3;
+    const int mNCombo=4;
+    const char* zbinName[mNZBin]={"z0","z1","z2"};
+    const float zBinEdges[mNZBin+1]={-50.0,30.0,70.0,120.0}; //must match picoDilepton.C's mZBinEdges
+    const char* comboName[mNCombo]={"NpSm","NmSp","NpSp","NmSm"};
+    //normalization reference for each combo: OS combos (0,1) cross-reference
+    //their LS counterpart's same-event count; LS combos (2,3) self-reference.
+    const char* normCombo[mNCombo]={"NpSp","NmSm","NpSp","NmSm"};
+
+    c1->Clear();
+    c1->Divide(4,3);
+
+    printf("=== plt=7 per-(zbin,combo) event counts (%s, cut=%s) ===\n",ttag,nameCut[6]);
+    double sumSame[mNCombo]={0,0,0,0};
+    for(int zb=0; zb<mNZBin; zb++){
+      for(int c=0; c<mNCombo; c++){
+        int pad = zb*mNCombo + c + 1;
+        TH1F* hSameBin  = (TH1F*)F->Get(Form("MsameBin_%s_%s_%s", ttag,zbinName[zb],comboName[c]));
+        TH1F* hMixBin   = (TH1F*)F->Get(Form("MmixBin_%s_%s_%s",  ttag,zbinName[zb],comboName[c]));
+        TH1F* hNormBin  = (TH1F*)F->Get(Form("MsameBin_%s_%s_%s", ttag,zbinName[zb],normCombo[c]));
+        c1->cd(pad);
+        TString label = Form("z=[%.0f,%.0f) %s",zBinEdges[zb],zBinEdges[zb+1],comboName[c]);
+        if(!hSameBin || !hMixBin || !hNormBin){
+          printf("  %-22s : no histo\n",label.Data());
+          TText *tmiss=new TText(0.5,0.5,"no histo"); tmiss->SetNDC(); tmiss->SetTextAlign(22); tmiss->Draw();
+          continue;
+        }
+        double nSame = hSameBin->Integral();
+        double nMix  = hMixBin->Integral();
+        double nNorm = hNormBin->Integral();
+        sumSame[c] += nSame;
+        printf("  %-22s : same=%-8.0f mixed=%-8.0f norm(%s)=%-8.0f\n",
+               label.Data(),nSame,nMix,normCombo[c],nNorm);
+        if(nMix<=0 || nNorm<=0){
+          TText *tempty=new TText(0.5,0.5,Form("%s: no bg",label.Data())); tempty->SetNDC(); tempty->SetTextAlign(22); tempty->Draw();
+          continue;
+        }
+        double w = nNorm/nMix;
+        hSameBin->Sumw2();
+        hMixBin->Sumw2();
+        TH1F* hMixBinScaled=(TH1F*)hMixBin->Clone(Form("MmixBinScaled7_%s_%s_%s",ttag,zbinName[zb],comboName[c]));
+        hMixBinScaled->Scale(w);
+        TH1F* hSubBin=(TH1F*)hSameBin->Clone(Form("MSubBin_%s_%s_%s",ttag,zbinName[zb],comboName[c]));
+        hSubBin->Add(hSameBin,hMixBinScaled,1.0,-1.0);
+        // Auto stat box (Entries/Mean/RMS) is misleading here: this is a
+        // difference of two histograms that's *designed* to sum close to
+        // zero net integral, so GetMean()=sum(x*w)/sum(w) divides by a
+        // near-zero denominator and blows up to a meaningless value. Bin
+        // content/errors are still correct -- just suppress the box and
+        // show the (meaningful) same/mixed/norm counts instead.
+        hSubBin->SetStats(0);
+        hSubBin->SetTitle(Form("%s;M [GeV];Counts",label.Data()));
+        hSubBin->SetLineColor(kBlack);
+        hSubBin->Draw("E");
+        TText *tcounts=new TText(0.15,0.85,Form("same=%.0f mix=%.0f norm=%.0f",nSame,nMix,nNorm));
+        tcounts->SetNDC(); tcounts->SetTextSize(0.06); tcounts->Draw();
+        TLine *lSub0=new TLine(hSubBin->GetXaxis()->GetXmin(),0,hSubBin->GetXaxis()->GetXmax(),0);
+        lSub0->SetLineStyle(2);
+        lSub0->Draw();
+      }
+    }
+    printf("=== plt=7 charge-combo event counts, summed over all %d z bins (%s, cut=%s) ===\n",
+           mNZBin,ttag,nameCut[6]);
+    printf("  %s=%.0f  %s=%.0f  %s=%.0f  %s=%.0f\n",
+           comboName[0],sumSame[0],comboName[1],sumSame[1],comboName[2],sumSame[2],comboName[3],sumSame[3]);
+    c1->SaveAs(Form("dilep5.%s.%s.%d.png",ttag,tag,run));
   }
 }

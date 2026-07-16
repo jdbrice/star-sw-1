@@ -27,7 +27,7 @@ enum {mNCut=7};
 const char* nameCut[mNCut] = {"All","ETOT","HTOT","Cone","SigmaMax","TrackMatch","ChargeSign"};
 static const int mNType=6;
 const char* TTYPE[mNType]={"Global","Beamline","Primary","FwdVtx","BLCVtx","FCSTRK"};
-float mETCut=0.4;          //GeV for single electron
+float mETCut=0.8;          //GeV for single electron (real-data trigger threshold is ~1-1.1 GeV; dybg MC's generator-level filter cuts ET on any stable particle incl. hadrons, which only leave partial MIP energy in ECAL, so too loose a cut here lets sub-trigger-threshold hadronic clusters into the analysis)
 float mETotCut=0.3;        //E_lepton/ETOT ratio cut
 float mHTotCut=0.5;        //E_lepton/HTOT ratio cut
 float mConeR=0.5;          //Isolation Cone Radius
@@ -60,36 +60,57 @@ static long nTrkPassPT[mNType][2];
 //a single previous-event buffer), reducing the mixed-bg statistical error by
 //roughly sqrt(mMixPoolSize) relative to the old single-previous-event scheme.
 //
-//The pool is further split into mNZBin(z-vertex) x mNChBin(north-charge-sign)
-//bins, and mixing only draws from the bin matching the current event's own
-//zVertex and north-lepton charge sign. This fixes two real gaps in the
-//original flat pool: (1) mixing pairs used to combine 4-vectors reconstructed
-//with each event's own (possibly very different) zVertex, which is not a
-//physically consistent random pairing given the wide (~30-40cm sigma) z-vertex
-//spread in real data; (2) with only same-event pairs required to be
-//opposite-sign (cg[0]+cg[1]==0), the pool had no charge bookkeeping, so a
-//"north+" from this event could get mixed with a "south+" pulled from a past
-//event that itself was (north-,south+) -- silently contaminating the
-//OS-labeled mixed background with SS-equivalent pairs. Binning by north
-//charge sign and only mixing within the same bin ("current north charge
-//matches past north charge" -- south then matches automatically since both
-//sides passed the same-event OS cut) closes that gap.
-//nMixFilledBin/nSameFilledBin let plotDilep.C reweight+sum the 12 bins
-//correctly (mixed-pair fill count vs. real same-event pair count actually
-//landing in each bin) instead of assuming a uniform flat normalization.
+//The pool is further split into mNZBin(z-vertex, non-uniform edges -- see
+//mZBinEdges) x mNCombo(exact north/south charge combination) bins, and mixing
+//only draws from the bin matching the current event's own zVertex and charge
+//combo. This fixes real gaps in the original flat pool: (1) mixing pairs used
+//to combine 4-vectors reconstructed with each event's own (possibly very
+//different) zVertex, not a physically consistent random pairing given the
+//wide z-vertex spread in real data; (2) charge bookkeeping -- rather than
+//just splitting opposite-sign (OS) pairs by north-charge-sign and treating
+//like-sign (LS) pairs as a single flat reference, all 4 exact charge
+//combinations (N+S-, N-S+, N+S+, N-S-) get their own pool and their own
+//Same/Mixed mass histograms. The 2 OS combos (N+S-, N-S+) are the physics
+//channel; plotDilep.C normalizes each against its LS counterpart's same-event
+//count (N+S- <-> N+S+, N-S+ <-> N-S-), since LS has no real-signal
+//contamination to bias that reference. The 2 LS combos (N+S+, N-S-) can also
+//be mixed-event-subtracted in their own right (self-normalized) as a null
+//test: real dileptons are essentially all OS, so a properly-behaving mixed
+//background should leave LS's own subtracted spectrum flat -- if it isn't,
+//that points at a mixing-methodology artifact rather than physics near the
+//OS spectrum's mass features.
+//nMixFilledBin/nSameFilledBin let plotDilep.C reweight+sum bins correctly
+//(mixed-pair fill count vs. real same-event pair count actually landing in
+//each bin) instead of assuming a uniform flat normalization.
 int mMixCut=6;
-static const int mMixPoolSize=10; // number of past qualifying events kept per (type,zbin,chargebin)
-static const int mNZBin=6;                 // z-vertex bins, 25cm steps
-static const float mZBinLo=-50.0;          // bin edges: [-50,-25),...,[75,100)
-static const float mZBinWidth=25.0;
-static const int mNChBin=2;                // 0: north charge>=0, 1: north charge<0
-static int mPoolNext[mNType][mNZBin][mNChBin];                        // next slot to overwrite (circular)
-static bool mPoolValid[mNType][mNZBin][mNChBin][mMixPoolSize];
-static TLorentzVector mPoolLN[mNType][mNZBin][mNChBin][mMixPoolSize];
-static TLorentzVector mPoolLS[mNType][mNZBin][mNChBin][mMixPoolSize];
-static long nMixFilled[mNType];                          // total mixed-pair fills (all bins), for EndDilepton summary
-static long nMixFilledBin[mNType][mNZBin][mNChBin];       // mixed-pair fills per bin
-static long nSameFilledBin[mNType][mNZBin][mNChBin];      // same-event pairs landing in each bin
+static const int mMixPoolSize=10; // number of past qualifying events kept per (type,zbin,combo)
+static const int mNZBin=3;                 // z-vertex bins, non-uniform (sized for roughly even statistics)
+static const float mZBinEdges[mNZBin+1] = {-50.0, 30.0, 70.0, 120.0}; // [-50,30),[30,70),[70,120)
+static const int mNCombo=4;                // 0:N+S- 1:N-S+ 2:N+S+ 3:N-S-  (0,1=OS physics channels; 2,3=LS null-test channels)
+const char* comboName[mNCombo] = {"NpSm","NmSp","NpSp","NmSm"};
+
+//Find which of the mNZBin non-uniform z-bins z falls in, or -1 if outside all of them.
+int findZBin(double z){
+  for(int zb=0; zb<mNZBin; zb++) if(z>=mZBinEdges[zb] && z<mZBinEdges[zb+1]) return zb;
+  return -1;
+}
+//Classify a pair's exact charge combination (north charge cgN, south charge cgS)
+//into one of the 4 combos above.
+int findCombo(int cgN, int cgS){
+  bool nPos = (cgN>=0), sPos = (cgS>=0);
+  if(nPos && !sPos) return 0; //N+S- (OS)
+  if(!nPos && sPos) return 1; //N-S+ (OS)
+  if(nPos && sPos)  return 2; //N+S+ (LS)
+  return 3;                   //N-S- (LS)
+}
+
+static int mPoolNext[mNType][mNZBin][mNCombo];                        // next slot to overwrite (circular)
+static bool mPoolValid[mNType][mNZBin][mNCombo][mMixPoolSize];
+static TLorentzVector mPoolLN[mNType][mNZBin][mNCombo][mMixPoolSize];
+static TLorentzVector mPoolLS[mNType][mNZBin][mNCombo][mMixPoolSize];
+static long nMixFilled[mNType];                        // total OS mixed-pair fills (all bins), for EndDilepton summary
+static long nMixFilledBin[mNType][mNZBin][mNCombo];    // mixed-pair fills per bin
+static long nSameFilledBin[mNType][mNZBin][mNCombo];   // same-event pairs landing in each bin
 
 char filenameD[200];
 TFile *mFileD;
@@ -107,17 +128,9 @@ TH1F *mChargeSum[mNType][mNCut];
 TH1F *mET[mNType][mNCut];
 TH1F *mEZ[mNType][mNCut];
 TH1F *mM[mNType][mNCut];
-TH1F *mMmix[mNType];
-TH1F *mMmixBin[mNType][mNZBin][mNChBin];  // mixed-mass, per (type,zbin,chargebin)
-TH1F *mMsameBin[mNType][mNZBin][mNChBin]; // same-event (OS) mass, per (type,zbin,chargebin)
-// Same-event LIKE-sign mass, per (type,zbin,chargebin) -- chargebin here means
-// north-lepton charge sign of the LS pair (++ -> bin0, -- -> bin1), same key
-// as the OS pool. Real dileptons are essentially all opposite-sign, so LS
-// pairs are a signal-free measure of the combinatorial rate and make a better
-// mixed-event normalization anchor than the OS same-event count (which
-// includes true signal, biasing a full-range-integral normalization -- see
-// plotDilep.C).
-TH1F *mMLSameBin[mNType][mNZBin][mNChBin];
+TH1F *mMmix[mNType]; // inclusive OS-only (combo 0,1) mixed mass, all bins summed -- quick sanity check only
+TH1F *mMmixBin[mNType][mNZBin][mNCombo];  // mixed-mass, per (type,zbin,combo)
+TH1F *mMsameBin[mNType][mNZBin][mNCombo]; // same-event mass, per (type,zbin,combo)
 TH1F *mBLCVtxZ[mNCut]; // event-level BLC vertex Z, filled per cut (BLCVtx track type only)
 TH1F *mZ[mNType][mNCut];
 TH1F *mCosT[mNType][mNCut];
@@ -140,22 +153,19 @@ void InitDilepton(int run, int set=-1){
   for(int tt=0; tt<mNType; tt++){
     nMixFilled[tt] = 0;
     for(int zb=0; zb<mNZBin; zb++){
-      for(int cb=0; cb<mNChBin; cb++){
-        mPoolNext[tt][zb][cb] = 0;
-        for(int k=0; k<mMixPoolSize; k++) mPoolValid[tt][zb][cb][k] = false;
-        nMixFilledBin[tt][zb][cb] = 0;
-        nSameFilledBin[tt][zb][cb] = 0;
-        float zlo=mZBinLo+zb*mZBinWidth, zhi=zlo+mZBinWidth;
-        const char* cname = (cb==0) ? "Np" : "Nm";
-        mMmixBin[tt][zb][cb] = new TH1F(Form("MmixBin_%s_z%d_%s",TTYPE[tt],zb,cname),
-          Form("Mixed-Event Mass %s z=[%.0f,%.0f) north-chg=%s (cut=%s)",TTYPE[tt],zlo,zhi,cname,nameCut[mMixCut]),50,0.0,10.0);
-        mMsameBin[tt][zb][cb] = new TH1F(Form("MsameBin_%s_z%d_%s",TTYPE[tt],zb,cname),
-          Form("Same-Event Mass %s z=[%.0f,%.0f) north-chg=%s (cut=%s)",TTYPE[tt],zlo,zhi,cname,nameCut[mMixCut]),50,0.0,10.0);
-        mMLSameBin[tt][zb][cb] = new TH1F(Form("MLSameBin_%s_z%d_%s",TTYPE[tt],zb,cname),
-          Form("Same-Event Like-Sign Mass %s z=[%.0f,%.0f) north-chg=%s (cuts 0-5)",TTYPE[tt],zlo,zhi,cname),50,0.0,10.0);
+      for(int c=0; c<mNCombo; c++){
+        mPoolNext[tt][zb][c] = 0;
+        for(int k=0; k<mMixPoolSize; k++) mPoolValid[tt][zb][c][k] = false;
+        nMixFilledBin[tt][zb][c] = 0;
+        nSameFilledBin[tt][zb][c] = 0;
+        float zlo=mZBinEdges[zb], zhi=mZBinEdges[zb+1];
+        mMmixBin[tt][zb][c] = new TH1F(Form("MmixBin_%s_z%d_%s",TTYPE[tt],zb,comboName[c]),
+          Form("Mixed-Event Mass %s z=[%.0f,%.0f) %s (cut=%s)",TTYPE[tt],zlo,zhi,comboName[c],nameCut[mMixCut]),50,0.0,10.0);
+        mMsameBin[tt][zb][c] = new TH1F(Form("MsameBin_%s_z%d_%s",TTYPE[tt],zb,comboName[c]),
+          Form("Same-Event Mass %s z=[%.0f,%.0f) %s (cut=%s)",TTYPE[tt],zlo,zhi,comboName[c],nameCut[mMixCut]),50,0.0,10.0);
       }
     }
-    mMmix[tt] = new TH1F(Form("Mmix_%s",TTYPE[tt]),Form("Mixed-Event Mass %s (cut=%s)",TTYPE[tt],nameCut[mMixCut]),50,0.0,10.0);
+    mMmix[tt] = new TH1F(Form("Mmix_%s",TTYPE[tt]),Form("Mixed-Event Mass %s (cut=%s, OS only)",TTYPE[tt],nameCut[mMixCut]),50,0.0,10.0);
     for(int cut=0; cut<mNCut; cut++){
       mETot[tt][cut]     = new TH1F(Form("RETot_%s_%s",    TTYPE[tt],nameCut[cut]),Form("Epair/ETOT %s %s",               TTYPE[tt],nameCut[cut]),50,0.0,1.1);
       mHTot[tt][cut]     = new TH1F(Form("RHTot_%s_%s",    TTYPE[tt],nameCut[cut]),Form("Epair/HTOT %s %s",               TTYPE[tt],nameCut[cut]),50,0.0,3.0);
@@ -412,16 +422,45 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
       if(cut==3 && (ratioConeN[v]<mConeCut || ratioConeS[v]<mConeCut)) break;
       if(cut==4 && (SigmaMaxN > mSigmaMaxCut || SigmaMaxS > mSigmaMaxCut) ) break;
       if(cut==5 && (etpt[tt][0] < mETPTCutLow || etpt[tt][1] < mETPTCutLow || etpt[tt][0] > mETPTCutHigh || etpt[tt][1] > mETPTCutHigh )) break;
-      if(cut==6 && cg[tt][0] + cg[tt][1] != 0){
-        //Like-sign pair (both cuts 0-5 passed): record as a signal-free
-        //combinatorial-rate reference for plotDilep.C's mixed-event
-        //normalization, binned the same way as the OS mixing pool.
+
+      //Mixed-event background: runs unconditionally at the mix-cut level for
+      //BOTH opposite-sign (OS) and like-sign (LS) pairs alike (cuts 0-5 have
+      //already passed at this point) -- pairs this event's north/south FCS
+      //cluster candidates with every qualifying event currently in the pool
+      //*within the same (zVertex, exact charge combo) bin*, then buffers this
+      //event's candidates into that bin's pool for future events -- always
+      //done AFTER mixing, so an event is never mixed with itself. Events
+      //outside the binned z-vertex range are skipped entirely for mixing
+      //purposes. This must come BEFORE the OS-only ChargeSign cut below, since
+      //LS pairs (combo 2,3) need their own pool/histograms too -- deliberately
+      //placed ahead of the break that would otherwise stop LS pairs here.
+      if(cut==mMixCut){
         double zVtxForBin = (v==1) ? zVertexBLC : zVertexPrimary;
-        int zbin = (int)floor((zVtxForBin - mZBinLo)/mZBinWidth);
-        int chbin = (cg[tt][0] >= 0) ? 0 : 1;
-        if(zbin>=0 && zbin<mNZBin) mMLSameBin[tt][zbin][chbin]->Fill(M[v]);
-        break;
+        int zbin = findZBin(zVtxForBin);
+        int combo = findCombo(cg[tt][0], cg[tt][1]);
+        if(zbin>=0){
+          for(int k=0; k<mMixPoolSize; k++){
+            if(!mPoolValid[tt][zbin][combo][k]) continue;
+            double m1 = (lnLab[v] + mPoolLS[tt][zbin][combo][k]).M(); //this-North + pool-South
+            double m2 = (mPoolLN[tt][zbin][combo][k] + lsLab[v]).M(); //pool-North + this-South
+            if(combo==0 || combo==1){ mMmix[tt]->Fill(m1); mMmix[tt]->Fill(m2); nMixFilled[tt] += 2; }
+            mMmixBin[tt][zbin][combo]->Fill(m1);
+            mMmixBin[tt][zbin][combo]->Fill(m2);
+            nMixFilledBin[tt][zbin][combo] += 2;
+          }
+          mMsameBin[tt][zbin][combo]->Fill(M[v]);
+          nSameFilledBin[tt][zbin][combo]++;
+          int slot = mPoolNext[tt][zbin][combo];
+          mPoolLN[tt][zbin][combo][slot] = lnLab[v];
+          mPoolLS[tt][zbin][combo][slot] = lsLab[v];
+          mPoolValid[tt][zbin][combo][slot] = true;
+          mPoolNext[tt][zbin][combo] = (slot + 1) % mMixPoolSize;
+        }
       }
+
+      //ChargeSign cut: OS only from here on, same as before -- gates the
+      //standard per-cut histogram suite below (unchanged meaning/behavior).
+      if(cut==6 && cg[tt][0] + cg[tt][1] != 0) break;
       nEvtCut[tt][cut]++;
 
       mETot[tt][cut]->Fill(ratioETOT[v]);
@@ -440,39 +479,6 @@ void RunDilepton(StPicoDst *dst, StFcsDb* fcsDb){
       mZ   [tt][cut]->Fill(Z[v]);
       mCosT[tt][cut]->Fill(CosT[v]);
       mPhi [tt][cut]->Fill(Phi[v]);
-
-      //Mixed-event background: at the chosen cut level, pair this event's north/south
-      //FCS cluster candidates with every qualifying event currently in the pool
-      //*within the same (zVertex, north-charge-sign) bin* (opposite side), then
-      //buffer this event's candidates into that bin's pool for future events --
-      //always done AFTER mixing, so an event is never mixed with itself. Events
-      //with |zVertex|>=150 (outside the binned range) are skipped entirely for
-      //mixing purposes.
-      if(cut==mMixCut){
-        double zVtxForBin = (v==1) ? zVertexBLC : zVertexPrimary;
-        int zbin = (int)floor((zVtxForBin - mZBinLo)/mZBinWidth);
-        int chbin = (cg[tt][0] >= 0) ? 0 : 1;
-        if(zbin>=0 && zbin<mNZBin){
-          for(int k=0; k<mMixPoolSize; k++){
-            if(!mPoolValid[tt][zbin][chbin][k]) continue;
-            double m1 = (lnLab[v] + mPoolLS[tt][zbin][chbin][k]).M(); //this-North + pool-South
-            double m2 = (mPoolLN[tt][zbin][chbin][k] + lsLab[v]).M(); //pool-North + this-South
-            mMmix[tt]->Fill(m1);
-            mMmix[tt]->Fill(m2);
-            mMmixBin[tt][zbin][chbin]->Fill(m1);
-            mMmixBin[tt][zbin][chbin]->Fill(m2);
-            nMixFilled[tt] += 2;
-            nMixFilledBin[tt][zbin][chbin] += 2;
-          }
-          mMsameBin[tt][zbin][chbin]->Fill(M[v]);
-          nSameFilledBin[tt][zbin][chbin]++;
-          int slot = mPoolNext[tt][zbin][chbin];
-          mPoolLN[tt][zbin][chbin][slot] = lnLab[v];
-          mPoolLS[tt][zbin][chbin][slot] = lsLab[v];
-          mPoolValid[tt][zbin][chbin][slot] = true;
-          mPoolNext[tt][zbin][chbin] = (slot + 1) % mMixPoolSize;
-        }
-      }
 
       mET12[tt][cut]->Fill(ETN[v],ETS[v]);
       mXFPT[tt][cut]->Fill(EN[v]/255.0,ETN[v]);
@@ -514,10 +520,10 @@ void EndDilepton(){
     printf("  Mixed-event entries filled (cut=%s) : %ld\n", nameCut[mMixCut], nMixFilled[tt]);
     printf("  BestPT  ns=0:%ld  ns=1:%ld\n", nTrkPassPT[tt][0], nTrkPassPT[tt][1]);
     for(int zb=0; zb<mNZBin; zb++){
-      for(int cb=0; cb<mNChBin; cb++){
-        printf("    zbin=[%4.0f,%4.0f) north-chg=%s : same=%-6ld mixed=%-6ld\n",
-               mZBinLo+zb*mZBinWidth, mZBinLo+(zb+1)*mZBinWidth, (cb==0)?"+":"-",
-               nSameFilledBin[tt][zb][cb], nMixFilledBin[tt][zb][cb]);
+      for(int c=0; c<mNCombo; c++){
+        printf("    z=[%4.0f,%4.0f) %s : same=%-6ld mixed=%-6ld\n",
+               mZBinEdges[zb], mZBinEdges[zb+1], comboName[c],
+               nSameFilledBin[tt][zb][c], nMixFilledBin[tt][zb][c]);
       }
     }
   }
@@ -533,29 +539,50 @@ void EndDilepton(){
 
 //=====================================================================
 // Pi0 (gamma-gamma) mass reconstruction from FCS ECAL clusters.
-// Simple inclusive combinatorial pairing: every ECAL cluster pair in
-// the event (both N/S sides, no track match needed -- photons don't
-// leave tracks), each cluster required only to pass a minimum energy
-// cut. No isolation/shower-shape cuts, unlike the electron-candidate
-// selection above -- deliberately loose to keep low-energy pi0 decays
-// in the sample. Real pi0 signal shows up as a peak on top of
-// combinatorial background; no background subtraction done here.
+// Modeled after StRoot/StFcsPi0FinderForEcal (StEvent-level pi0
+// calibration maker, Xilin Liang) with two changes ported over after
+// an initial all-pairs version showed no visible peak against a huge
+// combinatorial background:
+//   - Same N/S side required for a pair -- real pi0 photons essentially
+//     never land on opposite sides of the forward calorimeter, so
+//     cross-side pairs are pure noise with zero signal chance.
+//   - Only the single highest-(E1+E2) pair per side per event gets
+//     filled (not every combinatorial pair) -- matches the reference
+//     maker's "best pair" selection, which is a large combinatorics
+//     reduction on top of the same-side requirement.
+// zgg (=|Ei-Ej|/(Ei+Ej)) cut matches the reference's 0.7. No track
+// match needed (photons don't leave tracks), no isolation/shower-shape
+// cuts. The reference maker's TOF-multiplicity and total-hit-count
+// event vetoes are AuAu-era busy-event cuts, not used here (pp500 FCS
+// events are typically far below those thresholds anyway). Reference
+// maker also processes StFcsPoint (finer-grained peak-finder that can
+// split overlapping showers a cluster merges) in parallel to clusters;
+// no picoDst equivalent exists, so that's skipped entirely here -- a
+// structural limitation of doing this at the pico level.
+// No background subtraction done here; real pi0 signal shows up as a
+// peak on top of remaining combinatorial background.
 //=====================================================================
-float mPi0MinClusterE = 0.5; //GeV, minimum FCS ECAL cluster energy for pi0 pairing
+float mPi0MinClusterE = 1.0; //GeV, minimum FCS ECAL cluster energy for pi0 pairing
+float mPi0MaxZgg = 0.7;      //max |Ei-Ej|/(Ei+Ej) energy asymmetry for pi0 pairing
 TH1F *mPi0Mass = 0; //lazily created on first call below
 
 void RunPi0(StPicoDst *dst, StFcsDb* fcsDb, double zVertex){
   if(!mPi0Mass){
     mPi0Mass = new TH1F("Pi0Mass",
-      "FCS ECAL cluster-pair mass (all pairs, E>0.5 GeV each, no N/S or track requirement);M_{#gamma#gamma} [GeV];Counts",
+      "FCS ECAL cluster-pair mass (best pair/side/event, E>1 GeV each, zgg<0.7, same N/S side, no track requirement);M_{#gamma#gamma} [GeV];Counts",
       100,0.0,1.0);
   }
 
   int nClusters = dst->numberOfFcsClusters();
+  double bestE[2]      = {-1,-1};       // highest E1+E2 pair total energy found so far, per side
+  double bestMass[2]   = {-1,-1};       // corresponding pair mass, per side
+  bool   bestValid[2]  = {false,false};
+
   for(int i=0; i<nClusters; i++){
     StPicoFcsCluster* ci = dst->fcsCluster(i);
     if(fcsDb->ecalHcalPres(ci->detectorId())!=0) continue; //only Ecal
     if(ci->energy() < mPi0MinClusterE) continue;
+    int nsi = fcsDb->northSouth(ci->detectorId());
     StThreeVectorD xyzi = fcsDb->getStarXYZfromColumnRow(ci->detectorId(),ci->x(),ci->y());
     StLorentzVectorD stlvi = fcsDb->getLorentzVector(xyzi,ci->energy(),zVertex);
     TLorentzVector lvi(stlvi.px(),stlvi.py(),stlvi.pz(),stlvi.e());
@@ -563,10 +590,20 @@ void RunPi0(StPicoDst *dst, StFcsDb* fcsDb, double zVertex){
       StPicoFcsCluster* cj = dst->fcsCluster(j);
       if(fcsDb->ecalHcalPres(cj->detectorId())!=0) continue; //only Ecal
       if(cj->energy() < mPi0MinClusterE) continue;
+      if(fcsDb->northSouth(cj->detectorId()) != nsi) continue; //same side only
+      double zgg = fabs(ci->energy()-cj->energy())/(ci->energy()+cj->energy());
+      if(zgg > mPi0MaxZgg) continue;
+      double esum = ci->energy()+cj->energy();
+      if(esum <= bestE[nsi]) continue; //keep only the highest-energy pair per side
       StThreeVectorD xyzj = fcsDb->getStarXYZfromColumnRow(cj->detectorId(),cj->x(),cj->y());
       StLorentzVectorD stlvj = fcsDb->getLorentzVector(xyzj,cj->energy(),zVertex);
       TLorentzVector lvj(stlvj.px(),stlvj.py(),stlvj.pz(),stlvj.e());
-      mPi0Mass->Fill((lvi+lvj).M());
+      bestE[nsi]     = esum;
+      bestMass[nsi]  = (lvi+lvj).M();
+      bestValid[nsi] = true;
     }
+  }
+  for(int ns=0; ns<2; ns++){
+    if(bestValid[ns]) mPi0Mass->Fill(bestMass[ns]);
   }
 }
