@@ -395,18 +395,22 @@ int StFcsDb::InitRun(int runNumber) {
         }
     }    
 
-    // Get beamline 
-    TDataSet* dbDataSet = StMaker::GetChain()->GetDataBase("Calibrations/rhic/vertexSeed");
-    //TDataSet* dbDataSet = 0;
-    if(dbDataSet){
-      vertexSeed_st* vSeed = ((St_vertexSeed*) (dbDataSet->FindObject("vertexSeed")))->GetTable();
-      if(vSeed){
-	mVx    = vSeed->x0;
-	mVy    = vSeed->y0;
-	mVdxdz = vSeed->dxdz;
-	mVdydz = vSeed->dydz;
-	mThetaX = TMath::ATan( mVdxdz );
-	mThetaY = TMath::ATan( mVdydz );
+    // Get beamline -- gated by mDbAccess like getDetectorOffset() above, so
+    // setDbAccess(0) (used by MC/particle-gun analysis, e.g. readpico3.C) keeps
+    // mVx/mVy/mVdxdz/mVdydz at their zero defaults instead of picking up a real,
+    // undated DB beamline record and corrupting getLorentzVector() for MC.
+    if(mDbAccess!=0){
+      TDataSet* dbDataSet = StMaker::GetChain()->GetDataBase("Calibrations/rhic/vertexSeed");
+      if(dbDataSet){
+        vertexSeed_st* vSeed = ((St_vertexSeed*) (dbDataSet->FindObject("vertexSeed")))->GetTable();
+        if(vSeed){
+          mVx    = vSeed->x0;
+          mVy    = vSeed->y0;
+          mVdxdz = vSeed->dxdz;
+          mVdydz = vSeed->dydz;
+          mThetaX = TMath::ATan( mVdxdz );
+          mThetaY = TMath::ATan( mVdydz );
+        }
       }
     }
 
