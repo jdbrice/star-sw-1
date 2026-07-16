@@ -554,9 +554,9 @@ class ForwardTrackMaker {
             LOG_DEBUG << "--FitTrack is valid, setting seed and track" << endm;
             gtr.set( seed, mTrackFitter->getTrack() );
 
-            LOG_INFO << "--isFitConvergedPartially() = " << gtr.mIsFitConvergedPartially << endm;
-            LOG_INFO << "--isFitConverged() = " << gtr.mIsFitConverged << endm;
-            LOG_INFO << "--isFitConvergedFully() = " << gtr.mIsFitConvergedFully << endm;
+            LOG_DEBUG << "--isFitConvergedPartially() = " << gtr.mIsFitConvergedPartially << endm;
+            LOG_DEBUG << "--isFitConverged() = " << gtr.mIsFitConverged << endm;
+            LOG_DEBUG << "--isFitConvergedFully() = " << gtr.mIsFitConvergedFully << endm;
 
             if (kProfile){
                 if (gtr.mIsFitConvergedFully) {
@@ -670,7 +670,7 @@ class ForwardTrackMaker {
             double qual = 0;
             //  Get the quality and MC truth id
             idt = MCTruthUtils::dominantContribution(t, qual);
-            LOG_INFO << "\t\tMc Match idTruth=" << idt << ", quality = " << qual << endm;
+            LOG_DEBUG << "\t\tMc Match idTruth=" << idt << ", quality = " << qual << endm;
             
             // Fit the track seed and get the GenfitTrackResult
             GenfitTrackResult gtrGlobal = fitTrack(t);
@@ -694,7 +694,7 @@ class ForwardTrackMaker {
             }
             if (kProfile) mEventStats.mGoodGlobalFits++;
             if (doRefit == false) {
-                LOG_INFO << "\tRefit is disabled, saving the seed and initial fit" << endm;
+                LOG_DEBUG << "\tRefit is disabled, saving the seed and initial fit" << endm;
                 globalTracks.push_back( gtrGlobal );
                 index++;
                 continue;
@@ -770,10 +770,10 @@ class ForwardTrackMaker {
         for (auto &gtr : globalTracks) {
             if (kProfile) mEventStats.mAttemptedPrimaryFits ++;
             if (verbose){
-                LOG_INFO << "Refitting Track " << index << ", McId=" << gtr.mIdTruth << " with Primary Vertex, seed already has: " << gtr.mSeed.size() << " hits" << endm;
-                LOG_INFO << "mEventVertexHit: " << mEventVertexHit.getX() << ", " << mEventVertexHit.getY() << ", " << mEventVertexHit.getZ() << endm;
+                LOG_DEBUG << "Refitting Track " << index << ", McId=" << gtr.mIdTruth << " with Primary Vertex, seed already has: " << gtr.mSeed.size() << " hits" << endm;
+                LOG_DEBUG << "mEventVertexHit: " << mEventVertexHit.getX() << ", " << mEventVertexHit.getY() << ", " << mEventVertexHit.getZ() << endm;
 
-                LOG_INFO << "This fit is for a global that converged? = " << gtr.mIsFitConvergedFully << endm;
+                LOG_DEBUG << "This fit is for a global that converged? = " << gtr.mIsFitConvergedFully << endm;
             }
             // just use the global track to build the track that will use the PV also
             Seed_t seedWithPV = gtr.mSeed;
@@ -803,7 +803,7 @@ class ForwardTrackMaker {
             // only do this for a track the converges -> that we can project
             gtrPV.setDCA( mEventVertex );
 
-            LOG_INFO << "\tInitial fit complete, now refitting with additional points" << endm;
+            LOG_DEBUG << "\tInitial fit complete, now refitting with additional points" << endm;
             // refit the track with additional points
             GenfitTrackResult gtrPVRefit = refitTrack( gtrPV, mEventVertex );
             gtrPVRefit.mIndex = index;
@@ -868,10 +868,10 @@ class ForwardTrackMaker {
         for (auto &gtr : globalTracks) {
             if (kProfile) mEventStats.mAttemptedBeamlineFits ++;
             if (verbose){
-                LOG_INFO << "doBeamlineTrackFitting>>" << index << " McId=" << gtr.mIdTruth << " with Beamline, seed already has: " << gtr.mSeed.size() << " hits" << endm;
-                LOG_INFO << "mBeamlineHit: " << mBeamlineHit.getX() << ", " << mBeamlineHit.getY() << ", " << mBeamlineHit.getZ() << endm;
+                LOG_DEBUG << "doBeamlineTrackFitting>>" << index << " McId=" << gtr.mIdTruth << " with Beamline, seed already has: " << gtr.mSeed.size() << " hits" << endm;
+                LOG_DEBUG << "mBeamlineHit: " << mBeamlineHit.getX() << ", " << mBeamlineHit.getY() << ", " << mBeamlineHit.getZ() << endm;
 
-                LOG_INFO << "This fit is for a global that converged? = " << gtr.mIsFitConvergedFully << endm;
+                LOG_DEBUG << "This fit is for a global that converged? = " << gtr.mIsFitConvergedFully << endm;
             }
             // just use the global track to build the track that will use the PV also
             Seed_t seedWithPV = gtr.mSeed;
@@ -890,7 +890,7 @@ class ForwardTrackMaker {
             gtrPV.mTrackType = StFwdTrack::kBeamlineConstrained;
             gtrPV.mGlobalTrackIndex = gtr.mIndex;
             gtrPV.mVertexIndex = 0;
-            LOG_INFO << "SEED momentum:" << gtr.mMomentum.X() << ", " << gtr.mMomentum.Y() << ", " << gtr.mMomentum.Z() << endm;
+            LOG_DEBUG << "SEED momentum:" << gtr.mMomentum.X() << ", " << gtr.mMomentum.Y() << ", " << gtr.mMomentum.Z() << endm;
 
             if ( gtrPV.mIsFitConvergedFully ) {
                 if (kProfile) mEventStats.mGoodBeamlineFits++;
@@ -909,7 +909,7 @@ class ForwardTrackMaker {
             }
             gtrPV.setDCA( mEventVertex );
 
-            LOG_INFO << "\tInitial Beamline fit completed, now refitting with additional hits" << endm;
+            LOG_DEBUG << "\tInitial Beamline fit completed, now refitting with additional hits" << endm;
             // refit the track with additional points
             GenfitTrackResult gtrPVRefit = refitTrack( gtrPV, mEventVertex );
             gtrPVRefit.mIndex = index;
@@ -981,7 +981,7 @@ class ForwardTrackMaker {
         // --- Config ---
         const int    minNFit    = mConfig.get<int>   ("TrackFitter:blcVtxMinNFitHits",  4);
         const double maxChi2Ndf = mConfig.get<double>("TrackFitter:blcVtxMaxChi2Ndf",  10.0);
-        const double looseDcaZ  = mConfig.get<double>("TrackFitter:blcVtxLooseDcaZ",  100.0);
+        const double looseDcaZ  = mConfig.get<double>("TrackFitter:blcVtxLooseDcaZ",  150.0);
         const double maxDcaXY   = mConfig.get<double>("TrackFitter:blcVtxMaxDcaXY",    10.0); // BBB: rejects sentinel (99,99,99) from failed extrapolateToLine; valid BLC tracks have DCA-XY~0
         const double outlierN   = mConfig.get<double>("TrackFitter:blcVtxOutlierNSigma", 3.0);
         const double sigmaXY    = mConfig.get<double>("TrackFitter:blcVtxSigmaXY",       0.1);
@@ -1207,7 +1207,7 @@ class ForwardTrackMaker {
 
             if (bestIc < 0) { nNoCluster++; index++; continue; }
             const auto& cl = mFcsClusters[bestIc];
-            LOG_INFO << "FCSTRK: trk " << index << " matched ECAL cluster at ("
+            LOG_DEBUG << "FCSTRK: trk " << index << " matched ECAL cluster at ("
                       << cl.x << "," << cl.y << "," << cl.z << ") E=" << cl.e
                       << " dr=" << bestDr << " E/p=" << (pMag>0?cl.e/pMag:0) << endm;
 
@@ -1262,10 +1262,10 @@ class ForwardTrackMaker {
 
         size_t index = 0;
         for (auto vtx : mFwdVertices){
-            LOG_INFO << "FwdVertex: " << vtx->getId() << ", " << vtx->getPos().X() << ", " << vtx->getPos().Y() << ", " << vtx->getPos().Z() << endm;
-            LOG_INFO << "\tnTracks: " << vtx->getNTracks() << endm;
-            LOG_INFO << "\tChi2: " << vtx->getChi2() << endm;
-            LOG_INFO << "\tNdf: " << vtx->getNdf() << endm;
+            LOG_DEBUG << "FwdVertex: " << vtx->getId() << ", " << vtx->getPos().X() << ", " << vtx->getPos().Y() << ", " << vtx->getPos().Z() << endm;
+            LOG_DEBUG << "\tnTracks: " << vtx->getNTracks() << endm;
+            LOG_DEBUG << "\tChi2: " << vtx->getChi2() << endm;
+            LOG_DEBUG << "\tNdf: " << vtx->getNdf() << endm;
 
             TDecompChol decomp( vtx->getCov() );
             if ( !decomp.Decompose() ){
@@ -1297,7 +1297,7 @@ class ForwardTrackMaker {
                     LOG_WARN << "FwdVertex: " << vtx->getId() << ", iVtxTrack = " << iVtxTrack << ", gtr == globalTracks.end()" << endm;
                     continue;
                 }
-                LOG_INFO << "FOUND global track for vertex " << vtx->getId() << ", iVtxTrack = " << iVtxTrack << endm;
+                LOG_DEBUG << "FOUND global track for vertex " << vtx->getId() << ", iVtxTrack = " << iVtxTrack << endm;
                 
                 Seed_t seedWithVtx = gtr->mSeed;
                 seedWithVtx.push_back( &mFwdVerticesAsHits.back() );
@@ -1317,7 +1317,7 @@ class ForwardTrackMaker {
                 gtrPV.mGlobalTrackIndex = gtr->mIndex;
                 gtrPV.mVertexIndex = vtx->getId();
 
-                LOG_INFO << "\tInitial fit complete, now refitting with additional points" << endm;
+                LOG_DEBUG << "\tInitial fit complete, now refitting with additional points" << endm;
                 // refit the track with additional points
                 GenfitTrackResult gtrPVRefit = refitTrack( gtrPV, fwdVtxPos );
                 gtrPVRefit.mIndex = index;
@@ -1922,24 +1922,24 @@ class ForwardTrackMaker {
 
             // now look for Ftt hits near the specified state
             // hits_near_plane = findFttHitsNearProjectedState(hitmap.at(disk), msp);
-            LOG_INFO << "Looking for FTT strips near projected state on disk " << disk << endm;
-            LOG_INFO << "There are " << hitmap.at(disk).size() << " available FTT strips on this disk" << endm;
+            LOG_DEBUG << "Looking for FTT strips near projected state on disk " << disk << endm;
+            LOG_DEBUG << "There are " << hitmap.at(disk).size() << " available FTT strips on this disk" << endm;
             hits_near_plane = findFttStripsNearProjectedState(hitmap.at(disk), msp);
-            LOG_INFO << " Found #FTT strips on plane #" << disk << TString::Format( " = [%ld]", hits_near_plane.size() ) << endm;
+            LOG_DEBUG << " Found #FTT strips on plane #" << disk << TString::Format( " = [%ld]", hits_near_plane.size() ) << endm;
         } catch (genfit::Exception &e) {
             // Failed to project
             LOG_WARN << "Unable to get Ftt projections: " << e.what() << endm;
         }
 
-        LOG_INFO << "Found " << gtr.mSeed.size() << " existing seed points" << endm;
+        LOG_DEBUG << "Found " << gtr.mSeed.size() << " existing seed points" << endm;
 
         if ( hits_near_plane.size() > 0 ){
-            LOG_INFO << "Adding " << hits_near_plane.size() << " new FTT seed points" << endm;
+            LOG_DEBUG << "Adding " << hits_near_plane.size() << " new FTT seed points" << endm;
             // check to make sure we dont add duplicates
             std::set<KiTrack::IHit *> hitSet( gtr.mSeed.begin(), gtr.mSeed.end() );
             for ( auto h : hits_near_plane ){
                 if ( hitSet.find( h ) != hitSet.end() ){
-                    LOG_INFO << "Hit already in seed, skipping" << endm;
+                    LOG_DEBUG << "Hit already in seed, skipping" << endm;
                     continue;
                 } else {
                     gtr.mSeed.push_back( h );
@@ -2161,7 +2161,7 @@ class ForwardTrackMaker {
         }
         
 
-        LOG_INFO << "Closest FTT hit to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", mindr, mindp, mindx, mindy, dynamic_cast<FwdHit*>(closest)->_tid ) << endm;;
+        LOG_DEBUG << "Closest FTT hit to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", mindr, mindp, mindx, mindy, dynamic_cast<FwdHit*>(closest)->_tid ) << endm;;
 
         return found_hits;
     } // findFttHitsNearProjectedState
@@ -2265,24 +2265,24 @@ class ForwardTrackMaker {
         // coordinate happened to pass while the other was far off (up to ~16 cm).
         if ( horizontalMin_dy < thresholdY && fabs(horizontalMin_dr) < thresholdR ) {
             found_hits.push_back(horizontalClosest);
-            LOG_INFO << "Adding horizontal strip hit with dPhi = " << horizontalMin_dp << ", dR = " << horizontalMin_dr << ", dx = " << horizontalMin_dx << ", dy = " << horizontalMin_dy << endm;
+            LOG_DEBUG << "Adding horizontal strip hit with dPhi = " << horizontalMin_dp << ", dR = " << horizontalMin_dr << ", dx = " << horizontalMin_dx << ", dy = " << horizontalMin_dy << endm;
         }
 
         // check threshold and add the closest vertical strip hit
         if ( verticalMin_dx < thresholdX && fabs(verticalMin_dr) < thresholdR ) {
             found_hits.push_back(verticalClosest);
-            LOG_INFO << "Adding vertical strip hit with dPhi = " << verticalMin_dp << ", dR = " << verticalMin_dr << ", dx = " << verticalMin_dx << ", dy = " << verticalMin_dy << endm;
+            LOG_DEBUG << "Adding vertical strip hit with dPhi = " << verticalMin_dp << ", dR = " << verticalMin_dr << ", dx = " << verticalMin_dx << ", dy = " << verticalMin_dy << endm;
         }
-        
+
 
         if ( horizontalClosest )
-            LOG_INFO << "Closest horizontal FTT strip to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", horizontalMin_dr, horizontalMin_dp, horizontalMin_dx, horizontalMin_dy, dynamic_cast<FwdHit*>(horizontalClosest)->_tid ) << endm;
+            LOG_DEBUG << "Closest horizontal FTT strip to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", horizontalMin_dr, horizontalMin_dp, horizontalMin_dx, horizontalMin_dy, dynamic_cast<FwdHit*>(horizontalClosest)->_tid ) << endm;
         else
-            LOG_INFO << "No horizontal FTT strip found near projected state" << endm;
+            LOG_DEBUG << "No horizontal FTT strip found near projected state" << endm;
         if ( verticalClosest )
-            LOG_INFO << "Closest vertical FTT strip to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", verticalMin_dr, verticalMin_dp, verticalMin_dx, verticalMin_dy, dynamic_cast<FwdHit*>(verticalClosest)->_tid ) << endm;
+            LOG_DEBUG << "Closest vertical FTT strip to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", verticalMin_dr, verticalMin_dp, verticalMin_dx, verticalMin_dy, dynamic_cast<FwdHit*>(verticalClosest)->_tid ) << endm;
         else
-            LOG_INFO << "No vertical FTT strip found near projected state" << endm;
+            LOG_DEBUG << "No vertical FTT strip found near projected state" << endm;
 
         return found_hits;
     } // findFttStripsNearProjectedState
@@ -2387,7 +2387,7 @@ class ForwardTrackMaker {
 
         } // loop h
 
-        LOG_INFO << "Closest EPD hit to state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f", mindr, mindp, mindx, mindy ) << endm;;
+        LOG_DEBUG << "Closest EPD hit to state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f", mindr, mindp, mindx, mindy ) << endm;;
         // add the hit if it is close enough
         if (  fabs(mindp) < dphi && fabs(mindr) < dr && fabs(mindx) < dx && fabs(mindy) < dy ) {
             LOG_DEBUG << "Adding EPD hit to track" << endm;
@@ -2416,7 +2416,7 @@ class ForwardTrackMaker {
   protected:
     static constexpr bool kSaveFailedFits = true; // max number of track seeds to keep in memory
     static constexpr bool kProfile = false; // set to true to profile the tracking steps
-    static constexpr int verbose = 1; // Extra logging at INFO level
+    static constexpr int verbose = 0; // was 1 -- extra logging at INFO level, contributed to MC log bloat
     unsigned long long int nEvents;
 
     bool mDoTrackFitting = true;

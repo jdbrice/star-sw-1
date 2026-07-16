@@ -134,20 +134,20 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
         fcsdb->setDbAccess(0);
 	fcsdb->InitRun(0);
 	for(int det=0; det<4; det++){
-	  StThreeVectorD off = fcsdb->getDetectorOffset(det);	  	  
+	  StThreeVectorD off = fcsdb->getDetectorOffset(det);
 	  printf("AAA FCSDB Det=%1d OFF = %6.2f %6.2f %6.2f\n",det,off.x(),off.y(),off.z());
 	}
 
         // Configure FCS simulator
         StFcsFastSimulatorMaker *fcssim = (StFcsFastSimulatorMaker*) chain->GetMaker("fcsSim");
-        fcssim->setDebug(1);
+        fcssim->setDebug(0); // was 1 -- per-hit ECAL/HCAL/Pres LOG_INFO dump, ~500k lines/run
         //fcssim->setLeakyHcal(0);
 
         StFcsWaveformFitMaker *fcsWFF= (StFcsWaveformFitMaker*) chain->GetMaker("StFcsWaveformFitMaker");
         fcsWFF->setEnergySelect(0);
 
         StFcsClusterMaker *fcsclu = (StFcsClusterMaker*) chain->GetMaker("StFcsClusterMaker");
-        fcsclu->setDebug(1);
+        fcsclu->setDebug(0); // was 1 -- triggers full hit/cluster/point dump (mFcsCollection->print(3)) every event
     }
 
     gSystem->Load("StFwdUtils.so");
@@ -174,7 +174,7 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
     gSystem->Load( "libStFttClusterPointMaker" );
     // make an StFttClusterPointMaker
     StFttClusterPointMaker * fttClusterPointMaker = new StFttClusterPointMaker("fttClusterPointMaker");
-    fttClusterPointMaker->SetDebug(1);
+    fttClusterPointMaker->SetDebug(0); // was 1 -- extra per-hit debug prints
     fttClusterPointMaker->setUseGeantData( true );
     chain->AddBefore("fwdTrack", fttClusterPointMaker);
         

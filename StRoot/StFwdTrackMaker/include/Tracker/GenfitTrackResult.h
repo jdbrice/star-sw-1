@@ -202,7 +202,7 @@ public:
     void setSeed( Seed_t &seed, TVector3 seedP = TVector3(0,0,0), double seedQ = 0 ) {
         mSeed = seed;
         mIdTruth = MCTruthUtils::dominantContribution( seed, mQaTruth );
-        LOG_INFO << "GenFitTrackResult::mIdTruth = " << mIdTruth << ", QaTruth = " << mQaTruth << endm;
+        LOG_DEBUG << "GenFitTrackResult::mIdTruth = " << mIdTruth << ", QaTruth = " << mQaTruth << endm;
 
         this->mIsFitConverged           = false;
         this->mIsFitConvergedFully      = false;
@@ -250,7 +250,7 @@ public:
             mChi2                    = mTrack->getFitStatus()->getChi2();
 
             if ( mIsFitConverged ){
-                LOG_INFO << "GTR Setting momentum from track" << endm;
+                LOG_DEBUG << "GTR Setting momentum from track" << endm;
                 mMomentum = mTrack->getCardinalRep()->getMom( mTrack->getFittedState(0, mTrack->getCardinalRep()) );
             }
             LOG_DEBUG << "GenfitTrackResult::set Track successful" << endm;

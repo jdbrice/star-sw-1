@@ -786,11 +786,7 @@ StFwdTrack * StFwdTrackMaker::makeStFwdTrack( GenfitTrackResult &gtr, size_t ind
             float xyzdet[3] = { (float)xyzoff.x(), (float)xyzoff.y(), (float)xyzoff.z() };
             float detnorm[3] = { (float)planenormal.x(), (float)planenormal.y(), (float)planenormal.z() };
             LOG_DEBUG << "Projecting to: " << detIndex << endm;
-            cout << "AAA FCS StraightLine: det=" << det
-                     << " xyzdet=(" << xyzdet[0] << "," << xyzdet[1] << "," << xyzdet[2] << ")"
-                     << " norm=(" << detnorm[0] << "," << detnorm[1] << "," << detnorm[2] << ")" << endl;
             tv3 = ObjExporter::projectAsStraightLine( gtr.mTrack.get(), xyz0, xyz1, xyzdet, detnorm, cov, mom );
-            cout << "AAA FCS StraightLine result: tv3=(" << tv3.X() << "," << tv3.Y() << "," << tv3.Z() << ")" << endl;
         }
         fwdTrack->mProjections.push_back( StFwdTrackProjection( detIndex, StThreeVectorF( tv3.X(), tv3.Y(), tv3.Z() ), StThreeVectorF( mom.X(), mom.Y(), mom.Z() ), cov) );
         // LOG_INFO << "Projection added for " << detIndex << " at z=" << z << endm;
@@ -819,7 +815,7 @@ void StFwdTrackMaker::FillEvent() {
 
     size_t indexTrack = 0;
     for ( auto &gtr : mForwardTracker->getTrackResults() ) {
-            LOG_INFO << "Processing GenfitTrackResult(type=" << gtr.mTrackType << "): " << indexTrack << " mIsFitConverged=" << gtr.mIsFitConverged << ", mIsFitConvergedPartially=" << gtr.mIsFitConvergedPartially << ", mNumFitPoints=" << gtr.mNumFitPoints << endm;
+            LOG_DEBUG << "Processing GenfitTrackResult(type=" << gtr.mTrackType << "): " << indexTrack << " mIsFitConverged=" << gtr.mIsFitConverged << ", mIsFitConvergedPartially=" << gtr.mIsFitConvergedPartially << ", mNumFitPoints=" << gtr.mNumFitPoints << endm;
             StFwdTrack* fwdTrack = makeStFwdTrack( gtr, indexTrack );
             indexTrack++;
             if (nullptr == fwdTrack)

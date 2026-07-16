@@ -5,6 +5,7 @@
 #include "GenFit/EventDisplay.h"
 #include "GenFit/Exception.h"
 #include "GenFit/FieldManager.h"
+#include "GenFit/IO.h"
 #include "GenFit/KalmanFitStatus.h"
 #include "GenFit/KalmanFitter.h"
 #include "GenFit/GblFitter.h"
@@ -19,6 +20,7 @@
 
 #include <vector>
 #include <memory>
+#include <fstream>
 #include "malloc.h"
 
 #include "StFwdTrackMaker/Common.h"
@@ -46,7 +48,7 @@ class TrackFitter {
 
     // this is used rarely for debugging purposes, especially to check/compare plane misalignment
     static constexpr bool kUseSpacePoints = true; // use spacepoints instead of planar measurements
-    static constexpr int kVerbose = 1; // verbosity level for debugging
+    static constexpr int kVerbose = 0; // was 1 -- unconditional per-track-fit LOG_INFO spam, dominant source of MC log bloat (~4M lines/run in QCD bg sample)
 
     void clear(){
         LOG_DEBUG << "TrackFitter::clear() called" << endm;
@@ -86,6 +88,19 @@ class TrackFitter {
         LOG_INFO << "StFwdTrackMaker is loading the geometry cache: " << mConfig.get<string>("Geometry", mGeoCache.Data()).c_str() << endm;
         TGeoManager::Import(mConfig.get<string>("Geometry", mGeoCache.Data()).c_str());
         gMan = gGeoManager;
+
+        // Low-pT/looper tracks routinely fail RKTrackRep propagation. GenFit's own
+        // catch sites (e.g. KalmanFitterRefTrack.cc: "errorOut << e.what();") print
+        // the full RKutta diagnostic to errorOut (== std::cerr by default) on every
+        // single occurrence, unconditionally -- with the volume of looper tracks in
+        // a QCD background sample this alone produced 500+ MB log files per MC run.
+        // genfit::Exception::quiet(true) only silences the separate info() dump
+        // (numbers/matrices), not this -- errorOut itself must be redirected.
+        // The exception handling/fit-failure bookkeeping is unaffected; only the
+        // stderr spam is suppressed. (static ofstream: must outlive the rdbuf link)
+        genfit::Exception::quiet(true);
+        static std::ofstream sGenfitErrNull("/dev/null");
+        genfit::errorOut.rdbuf(sGenfitErrNull.rdbuf());
         // Set up the material interface and set material effects on/off from the config
         genfit::MaterialEffects::getInstance()->init(new genfit::TGeoMaterialInterface());
 
@@ -635,7 +650,7 @@ class TrackFitter {
         }
 
         if ( externalSeedMom != nullptr ) {
-            LOG_INFO << "Note: Using externally provided seed momentum" << endm;
+            LOG_DEBUG << "Note: Using externally provided seed momentum" << endm;
             mCurrentSeedMomentum = *externalSeedMom;
         }
 
@@ -644,7 +659,7 @@ class TrackFitter {
         //         forward tracks (curvature ≈ 0) the signed curvature is numerically unstable
         //         and flips the charge sign ~20% of the time.
         if ( externalCharge != 0 ) {
-            LOG_INFO << "Note: Using externally provided seed charge = " << externalCharge << endm;
+            LOG_DEBUG << "Note: Using externally provided seed charge = " << externalCharge << endm;
             mCurrentSeedCharge = externalCharge;
         }
 

@@ -64,11 +64,9 @@ class GenericFitSeeder : public FitSeedMaker {
             double area = std::abs(det) / 2.0;
 
             if (area == 0) {
-                std::cerr << "The points are collinear, curvature is undefined." << std::endl;
-                // Show each point:
-                std::cout << "p1 = " << p1.x << ", " << p1.y << std::endl;
-                std::cout << "p2 = " << p2.x << ", " << p2.y << std::endl;
-                std::cout << "p3 = " << p3.x << ", " << p3.y << std::endl;
+                // Collinear seed triple (routine for low-pT/straight tracks) -- handled via
+                // the sentinel return below, not logged (used to print every occurrence,
+                // which alone produced ~660k lines/run in dense MC samples).
                 return kCollinearCurvature; // Curvature is undefined for collinear points
             }
 
@@ -127,7 +125,7 @@ class GenericFitSeeder : public FitSeedMaker {
         }
         virtual void makeSeed(Seed_t seed, TVector3 &posSeed, TVector3 &momSeed, int &q ) {
             const double qc = averageCurvature(seed);
-            LOG_INFO << "GenericFitSeeder::makeSeed::Curvature: " << qc << endm;
+            LOG_DEBUG << "GenericFitSeeder::makeSeed::Curvature: " << qc << endm;
             // posSeed.SetXYZ(seed[0]->getX(), seed[0]->getY(), seed[0]->getZ());
             momSeed.SetXYZ(0,0,10);
         
@@ -145,7 +143,7 @@ class GenericFitSeeder : public FitSeedMaker {
             // with a NaN assertion (StarMagField::Search).
             bool curvatureKnown = (qc != -1.0);
             double pt = curvatureKnown ? fabs((K*5)/qc) : 10.0; // pT from average measured curv
-            LOG_INFO << "GenericFitSeeder::makeSeed::pt = " << pt << endm;
+            LOG_DEBUG << "GenericFitSeeder::makeSeed::pt = " << pt << endm;
             // set the momentum seed's transverse momentum
             //AAA fix: this line is dead code — overwritten two lines below by the proper SetXYZ call.
             //momSeed.SetXYZ(pt/sqrt(2.0),pt/sqrt(2.0),10);

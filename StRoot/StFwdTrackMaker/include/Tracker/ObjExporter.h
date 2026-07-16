@@ -205,7 +205,13 @@ public:
 
       return TVector3( x, y, _z );
     } catch ( genfit::Exception &e ){
-      LOG_INFO << "Track projection Failed from trackPoint " << iPoint  << " E: " << e.what() << endm;
+      // Routine/expected for low-pT and looper tracks (handled via the sentinel
+      // return below) -- only log at all when verbose, and skip the full
+      // multi-line e.what() dump (this alone produced ~1M lines/run in dense
+      // MC samples when unconditional).
+      if (verbose){
+        LOG_INFO << "Track projection Failed from trackPoint " << iPoint << endm;
+      }
       return TVector3( -990, -990, -990 );
     }
 
