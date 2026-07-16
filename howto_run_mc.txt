@@ -1,0 +1,24 @@
+  # 1. Running PYTHIA+GEANT
+  ./script/submit_sim.pl type=pythia.JPsi.vz40 nev=200 r1=1 r2=200   submit
+  ./script/submit_sim.pl type=pythia.dybg.vz40 nev=500 r1=1 r2=20000 submit
+  ./script/submit_sim.pl type=pythia.dybg.vz40 nev=2000 r1=20001 r2=40000 submit
+
+  # 2. Check for/resubmit any runs that failed to produce a picoDst.root:
+  ./script/check_missing.pl type=pythia.JPsi.vz40 r1=1 r2=200 nev=200 resubmit
+  ./script/check_missing.pl type=pythia.dybg.vz40 r1=1 r2=20000 nev=500 resubmit
+
+  # 3. Catalog the new MC picoDst output into list shards
+  ./script/find_pico.pl type=pythia.JPsi.vz40
+  ./script/find_pico.pl type=pythia.dybg.vz40
+
+  # 4. Submit pico analysis (picoMatch + picoDilepton) jobs for each
+  ./script/submit_ana.pl type=pythia.JPsi.vz40 outdir=pythia.JPsi.vz40 submit
+  ./script/submit_ana.pl type=pythia.dybg.vz40 outdir=pythia.dybg.vz40 submit
+
+  # 5. Merging histograms  DataDisk/{OUTDIR}/hist_match/all.match.root & hist_dilep/all.dilep.root
+  ./script/merge_ana.pl outdir=pythia.JPsi.vz40
+  ./script/merge_ana.pl outdir=pythia.dybg.vz40
+
+  # 6. Plotting
+  root -b -q 'plotDilep.C(-1,6,"DataDisk/pythia.JPsi.vz40",-1,1)'
+  root -b -q 'plotDilep.C(-1,6,"DataDisk/pythia.dybg.vz40",-1,1)'

@@ -58,7 +58,9 @@ sub find_sim {
 
     my $srcdir = "$DATADIR/$subdir";
     printf "Searching %s/*.picoDst.root\n", $srcdir;
-    my $lsdata = `ls $srcdir/*.picoDst.root 2>/dev/null`;
+    # Use find (not a shell glob) -- large MC sets (10000s of runs) can blow
+    # past the shell's argument-list limit and silently return nothing.
+    my $lsdata = `find $srcdir -maxdepth 1 -name '*.picoDst.root' 2>/dev/null`;
     my @files = sort split(/\n/, $lsdata);
     my $nfile = scalar @files;
     if ($nfile == 0) {

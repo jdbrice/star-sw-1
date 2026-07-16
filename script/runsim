@@ -59,6 +59,8 @@ if ( ! -e .${STAR_HOST_SYS} && -e $workdir/.${STAR_HOST_SYS} ) then
 endif
 
 mkdir -p $outdir
+mkdir -p $outdir/fzd
+mkdir -p $outdir/mudst
 
 pwd
 ls -la
@@ -80,8 +82,8 @@ set geant_status=$status
 echo "runsim: GEANT exit status=$geant_status"
 
 if ( -e $fzdname ) then
-    echo "runsim: copying $fzdname -> $outdir/"
-    /bin/cp $fzdname $outdir/
+    echo "runsim: copying $fzdname -> $outdir/fzd/"
+    /bin/cp $fzdname $outdir/fzd/
 else
     echo "ERROR: FZD not found: $fzdname"
     ls *.fzd
@@ -99,13 +101,13 @@ ls -la
 
 # === Move outputs to destination ===
 if ( -e $mudstname ) then
-    echo "runsim: moving $mudstname -> $outdir/"
-    /bin/mv $mudstname $outdir/
+    echo "runsim: moving $mudstname -> $outdir/mudst/"
+    /bin/mv $mudstname $outdir/mudst/
 else
     set mudst_found=`ls *.MuDst.root 2>/dev/null | head -1`
     if ( "$mudst_found" != "" ) then
-        echo "runsim: moving $mudst_found -> $outdir/$mudstname"
-        /bin/mv $mudst_found $outdir/$mudstname
+        echo "runsim: moving $mudst_found -> $outdir/mudst/$mudstname"
+        /bin/mv $mudst_found $outdir/mudst/$mudstname
     else
         echo "WARNING: no MuDst.root found"
     endif

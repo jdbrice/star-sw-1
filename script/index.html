@@ -66,6 +66,7 @@ a     { color: #0055aa; }
 <div id="toc">
   <h4>Contents</h4>
   <a href="#overview">Overview</a>
+  <a href="#datafiles">Data Files</a>
   <a href="#pass1">Particle Gun</a>
   <a href="#pass2">Pythia MC</a>
   <a href="#pass3">Real Data</a>
@@ -75,6 +76,7 @@ a     { color: #0055aa; }
   <a href="#scripts">Script Reference</a>
   <a href="#notes">Notes</a>
   <a href="howto.txt" style="margin-top:8px;color:#667;">&#128196; howto.txt (plain text)</a>
+  <a href="prod_mudst.txt" style="color:#667;">&#128196; prod_mudst.txt (raw MuDst file list)</a>
 </div>
 
 <!-- OVERVIEW -->
@@ -112,6 +114,36 @@ a     { color: #0055aa; }
    <code>type=data</code> → real data &nbsp;|&nbsp;
    <code>type=pythia.*</code> → Pythia MC &nbsp;|&nbsp;
    anything else → particle gun.</p>
+
+<!-- DATA FILES -->
+<h2 id="datafiles">Available Data Files</h2>
+
+<h3>Run22 Fwd Stream Test Production</h3>
+<table>
+  <tr><th>What</th><th>Path</th></tr>
+  <tr><td>MuDst file list</td>
+      <td><code>/star/data14/GRID/NFS_FileList/production_pp500_2022_DEV_st_fwd_test_mudst.txt</code><br>
+          <code>/star/u/akio/fcstrk11/star-sw-fwd/prod_mudst.txt</code> <br>
+          <a href="prod_mudst.txt">prod_mudst.txt</a></td></tr>
+  <tr><td>Afterburner picoDst (current)</td>
+      <td><code>/gpfs01/star/pwg_tasks/FwdCalib/akio/pico/</code> — Akio's code as of 2026-07-12</td></tr>
+  <tr><td>Afterburner picoDst (2026-07-04)</td>
+      <td><code>/gpfs01/star/pwg_tasks/FwdCalib/akio/pico_20260704/</code> — Akio's code as of 2026-07-04</td></tr>
+  <tr><td>Afterburner picoDst (2026-04-30)</td>
+      <td><code>/gpfs01/star/pwg_tasks/FwdCalib/akio/pico_20260430/</code> — Daniel's code as of 2026-04-30</td></tr>
+  <tr><td>FwdAlignment NTuple</td>
+      <td><code>/gpfs01/star/pwg_tasks/FwdCalib/akio/pico_20260704/alignment/st_fwd_*.FwdAlignment_BLCVtx.root</code> (2026-07-04)<br>
+          see <a href="../residual/index.html">FwdAlignment residual</a></td></tr>
+</table>
+
+<h3>Pythia MC Samples (fzd, MuDst, picoDst)</h3>
+<table>
+  <tr><th>Directory</th><th>&sigma;<sub>zvtx</sub></th><th>nev/file</th><th>Runs</th></tr>
+  <tr><td><code>/gpfs01/star/pwg_tasks/FwdCalib/akio/pythia/pythia.JPsi.vz0</code></td><td>0</td><td>200</td><td>1 ~ 100</td></tr>
+  <tr><td><code>/gpfs01/star/pwg_tasks/FwdCalib/akio/pythia/pythia.JPsi.vz40</code></td><td>40 cm</td><td>200</td><td>1 ~ 200</td></tr>
+  <tr><td><code>/gpfs01/star/pwg_tasks/FwdCalib/akio/pythia/pythia.dybg.vz40</code></td><td>40 cm</td><td>500</td><td>1 ~ 20000</td></tr>
+  <tr><td><code>/gpfs01/star/pwg_tasks/FwdCalib/akio/pythia/pythia.dybg.vz40</code></td><td>40 cm</td><td>2000</td><td>20001 ~ 40000</td></tr>
+</table>
 
 <!-- PARTICLE GUN -->
 <h2 id="pass1">Single Particle Gun</h2>
@@ -160,7 +192,39 @@ root -b -q 'plotMatch.C("DataDisk/ele.pt1.5.vz0")'
 ./script/find_pico.pl  type=pythia.JPsi.vz0
 ./script/submit_ana.pl type=pythia.JPsi.vz0 outdir=pythia.JPsi.vz0 submit
 ./script/merge_ana.pl  outdir=pythia.JPsi.vz0
-root -b -q 'plotDilep.C(-1,6,"DataDisk/pythia.JPsi.vz0",-1,1)'
+root -b -q 'plotDilep.C(-1,6,"DataDisk/pythia.JPsi.vz0",-1,1,4)'
+</pre>
+
+<h3>Step 3 — High-statistics example (vz40, with missing-run recovery)</h3>
+<p>Realistic-vertex (&sigma;<sub>zvtx</sub>=40cm) J/&psi; and Drell-Yan+background samples, run at much
+   larger scale (dybg: 20000 runs — see <a href="#datafiles">Data Files</a>). In batches this large a handful
+   of condor jobs can get evicted/killed before finishing (low-acceptance filters like the J/&psi; generator
+   filter mean some runs need far more wall time than average to reach the target event count) — check for
+   and resubmit any missing runs before cataloging.</p>
+<pre>
+<span class="c"># 1. Submit simulation</span>
+./script/submit_sim.pl type=pythia.JPsi.vz40 nev=200 r1=1 r2=200   submit
+./script/submit_sim.pl type=pythia.dybg.vz40 nev=500 r1=1 r2=20000 submit
+
+<span class="c"># 2. Check for/resubmit any runs that failed to produce a picoDst.root</span>
+./script/check_missing.pl type=pythia.JPsi.vz40 r1=1 r2=200   nev=200 resubmit
+./script/check_missing.pl type=pythia.dybg.vz40 r1=1 r2=20000 nev=500 resubmit
+
+<span class="c"># 3. Catalog picoDst output into list shards</span>
+./script/find_pico.pl type=pythia.JPsi.vz40
+./script/find_pico.pl type=pythia.dybg.vz40
+
+<span class="c"># 4. Submit pico analysis (picoMatch + picoDilepton)</span>
+./script/submit_ana.pl type=pythia.JPsi.vz40 outdir=pythia.JPsi.vz40 submit
+./script/submit_ana.pl type=pythia.dybg.vz40 outdir=pythia.dybg.vz40 submit
+
+<span class="c"># 5. Merge</span>
+./script/merge_ana.pl outdir=pythia.JPsi.vz40
+./script/merge_ana.pl outdir=pythia.dybg.vz40
+
+<span class="c"># 6. Plot</span>
+root -b -q 'plotDilep.C(-1,6,"DataDisk/pythia.JPsi.vz40",-1,1,4)'
+root -b -q 'plotDilep.C(-1,6,"DataDisk/pythia.dybg.vz40",-1,1,4)'
 </pre>
 
 <!-- REAL DATA -->
@@ -185,7 +249,7 @@ ln -sf /star/data14/GRID/NFS_FileList/{your_file_list} prod_mudst.txt
 ./script/find_pico.pl  type=data
 ./script/submit_ana.pl type=data outdir=202606 submit merge
 root -b -q 'plotMatch.C("DataDisk/202606")'
-root -b -q 'plotDilep.C(-1,6,"DataDisk/202606",-1,1)'
+root -b -q 'plotDilep.C(-1,6,"DataDisk/202606",-1,1,4)'
 </pre>
 
 <!-- PICO ANALYSIS -->
@@ -221,7 +285,7 @@ root -b -q 'plotDilep.C(-1,6,"DataDisk/202606",-1,1)'
 <pre>
 <span class="c"># Merged (all files):</span>
 root -b -q 'plotMatch.C("DataDisk/202606")'
-root -b -q 'plotDilep.C(-1,6,"DataDisk/202606",-1,1)'
+root -b -q 'plotDilep.C(-1,6,"DataDisk/202606",-1,1,4)'
 
 <span class="c"># Single shard — data (run=23081004, shard=0):</span>
 root -b -q 'plotMatch.C("DataDisk/202606",23081004,0)'
@@ -229,6 +293,10 @@ root -b -q 'plotMatch.C("DataDisk/202606",23081004,0)'
 <span class="c"># Single shard — particle/Pythia (run=1, shard=0):</span>
 root -b -q 'plotMatch.C("DataDisk/ele.pt1.5.vz0",1,0)'
 </pre>
+<p><code>plotDilep.C(plt,cut,data,run,log,trkType)</code> — <code>trkType</code> selects which of the 6
+   track types (<code>0</code>=Global <code>1</code>=Beamline <code>2</code>=Primary <code>3</code>=FwdVtx
+   <code>4</code>=BLCVtx <code>5</code>=FCSTRK) to plot; default is <code>1</code>=Beamline, but most of the
+   dilepton mixed-event-background work uses <code>4</code>=BLCVtx.</p>
 
 <!-- INTERACTIVE -->
 <h2 id="interactive">Interactive Quick Test (no condor)</h2>
@@ -293,6 +361,11 @@ root -l 'plotDilep.C()'
       <td>Submit simulation jobs (particle or Pythia)</td>
       <td><code>type= nev= r1= r2= [submit]</code></td>
       <td><a href="submit_sim.pl.txt">view</a></td></tr>
+  <tr><td><code>check_missing.pl</code></td>
+      <td>Check a submit_sim.pl run range for runs whose picoDst.root was never produced (jobs evicted/killed
+          mid-run, common in large batches) and optionally resubmit just those runs</td>
+      <td><code>type= r1= r2= [nev=] [resubmit]</code></td>
+      <td><a href="check_missing.pl.txt">view</a></td></tr>
   <tr><td><code>find_pico.pl</code></td>
       <td>Catalog picoDst files into list shards</td>
       <td><code>type= [maxfile=]</code></td>

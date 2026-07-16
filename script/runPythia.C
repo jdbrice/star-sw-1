@@ -221,14 +221,14 @@ void runPythia( Int_t nevents=10, Int_t run=1, char* particle="JPsi", float vz=0
   //                    phimin phimax
   primaryMaker->SetPhiRange ( 0., TMath::TwoPi() );
   
-    // Setup a realistic z-vertex distribution:
+  // Setup a realistic z-vertex distribution:
   //   x = 0 gauss width = 1mm
   //   y = 0 gauss width = 1mm
   //   z = 0 gauss width = 30cm
   // 
-  primaryMaker->SetVertex( 0., 0., vz );
-  //primaryMaker->SetSigma( 0.1, 0.1, 30.0 );
-  primaryMaker->SetSigma( 0., 0., 0. );
+  primaryMaker->SetVertex( 0., 0., 0. );
+  primaryMaker->SetSigma( 0.1, 0.1, vz );
+  //primaryMaker->SetSigma( 0., 0., 0. );
 
   //
   // Initialize primary event generator and all sub makers

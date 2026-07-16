@@ -19,8 +19,14 @@ if ( ! -e $tmpdir ) then
 endif
 cd $tmpdir
 
-if ( ! -e $dir/$outdir ) then
-    mkdir $dir/$outdir
+if ( ! -e $outdir ) then
+    mkdir $outdir
+endif
+if ( ! -e $outdir/fzd ) then
+    mkdir $outdir/fzd
+endif
+if ( ! -e $outdir/mudst ) then
+    mkdir $outdir/mudst
 endif
 
 if ( ! -e .$sys ) then
@@ -53,13 +59,13 @@ ls -ltra
 set name=pythia.$particle.vz$vz.run$run
 echo name=$name 
 
-if ( $rungeant == 1 ) then 
-    echo root4star -b -q 'runPythia.C('$nev','$run',"'$particle'",'$vz')' 
-    root4star -b -q 'runPythia.C('$nev','$run',"'$particle'",'$vz')' 
-    /bin/cp $name.fzd $dir/$outdir/
+if ( $rungeant == 1 ) then
+    echo root4star -b -q 'runPythia.C('$nev','$run',"'$particle'",'$vz')'
+    root4star -b -q 'runPythia.C('$nev','$run',"'$particle'",'$vz')'
+    /bin/cp $name.fzd $outdir/fzd/
 else
-    echo /bin/cp $dir/$outdir/$name.fzd $tmpdir/
-    /bin/cp $dir/$outdir/$name.fzd $tmpdir/
+    echo /bin/cp $outdir/fzd/$name.fzd $tmpdir/
+    /bin/cp $outdir/fzd/$name.fzd $tmpdir/
 endif
 
 if ( $runbfc == 1 ) then
@@ -67,10 +73,10 @@ if ( $runbfc == 1 ) then
     root4star -b -q 'sim.C('$nev','$run',"'$particle'",'$vz')'
 endif
 
-echo moving $tmpdir/ to $dir/$outdir/
+echo moving $tmpdir/ to $outdir/
 ls -ltra  *.root
-/bin/mv pythia.MuDst.root $dir/$outdir/$name.MuDst.root
-/bin/mv $name.picoDst.root $dir/$outdir/
+/bin/mv pythia.MuDst.root $outdir/mudst/$name.MuDst.root
+/bin/mv $name.picoDst.root $outdir/
 
 #/bin/rm {$name}.*
 
