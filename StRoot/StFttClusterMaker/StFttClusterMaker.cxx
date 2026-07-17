@@ -441,6 +441,15 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
         clu->setQuadrant    ( maxAdcHit->quadrant    ( ) );
         clu->setRow         ( maxAdcHit->row         ( ) );
         clu->setOrientation ( maxAdcHit->orientation ( ) );
+        // Fix (2026-07-17): this was the only max-ADC-hit field never copied onto the
+        // cluster, so StFttCluster::maxStripLength() stayed at its -999 default forever.
+        // That -999 flows into StFttClusterPointMaker's row-position formula
+        // (YX_StripGroupEdge[row] + maxStripLength()/2), producing a huge negative local
+        // value that -- combined with the per-quadrant sign flips -- swaps which end of
+        // each row lands near vs. far from y=0. See fttgeom/index.html for the
+        // derivation (this single line explains the top/bottom+north/south swap and the
+        // bowtie shape both).
+        clu->setMaxStripLength( maxAdcHit->stripLength( ) );
 
         // Now find the cluster edges
         size_t left = anchor, right = anchor;

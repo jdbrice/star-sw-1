@@ -25,6 +25,37 @@ const int qcPlaneBin[15] = {1,2,3, 4,5,6,7,8,9, 10,11,12,13,14,15}; // 0-indexed
 
 void mkdirp(const char* dir) { gSystem->mkdir(dir, kTRUE); }
 
+// Sequential blue->green->red palette for the Pos/Neg count maps (panels
+// 1-2). No white midpoint -- white-in-the-middle reads as "diverging /
+// centered on zero", which is confusing for a plain event-count map.
+// Deliberately NOT factored into a helper function: CreateGradientColorTable
+// apparently doesn't reliably survive its local stops/red/green/blue arrays
+// going out of scope when called from a separate function that returns
+// before the subsequent Draw("colz") -- observed the diverging (asymmetry)
+// palette bleeding into the Pos/Neg panels even after refactoring this into
+// setSequentialPalette()/setDivergingPalette() helpers. Inlined directly at
+// each call site instead (matching the original, empirically-working
+// pattern) so the arrays stay in scope for the whole of plotXYAsymmetry().
+#define SET_SEQUENTIAL_PALETTE() { \
+    const int nStops = 3; \
+    double stops[nStops] = {0.0, 0.5, 1.0}; \
+    double red[nStops]   = {0.0, 0.0, 1.0}; \
+    double green[nStops] = {0.0, 1.0, 0.0}; \
+    double blue[nStops]  = {1.0, 0.0, 0.0}; \
+    TColor::CreateGradientColorTable(nStops, stops, red, green, blue, 255); \
+}
+
+// Diverging red(-1)/white(0)/blue(+1) palette for the asymmetry panel --
+// kLightTemperature/kBird enums don't exist in ROOT5.
+#define SET_DIVERGING_PALETTE() { \
+    const int nStops = 3; \
+    double stops[nStops] = {0.0, 0.5, 1.0}; \
+    double red[nStops]   = {0.0, 1.0, 1.0}; \
+    double green[nStops] = {0.0, 1.0, 0.0}; \
+    double blue[nStops]  = {1.0, 1.0, 0.0}; \
+    TColor::CreateGradientColorTable(nStops, stops, red, green, blue, 255); \
+}
+
 // One canvas: 2x2 pads (quadrants), each pad = usage fraction vs plane for
 // Pos (blue) and Neg (red) overlaid. Directly shows which quadrant+plane has
 // a charge-dependent usage deficit.
@@ -118,6 +149,12 @@ void plotXYAsymmetry(TFile* f, const char* outdir, const char* tag,
         if (!hPos || !hNeg) { printf("WARN: missing %s histos for %s\n", dirName, names[i].Data()); continue; }
         if (hPos->GetEntries() < 20 && hNeg->GetEntries() < 20) continue; // skip empty (e.g. unused seed source)
 
+        // FST (i<3) is a much smaller detector than FTT (i>=3) -- zoom the
+        // displayed axis range accordingly. This only changes the drawn
+        // range, not the underlying binning/data (booked out to +-65cm in
+        // StFwdResidualMaker.cxx for both).
+        double range = (i < 3) ? 30.0 : 75.0;
+
         TH2F* hAsym = (TH2F*)hPos->Clone(Form("hAsym_%s_%s", tag, names[i].Data()));
         hAsym->Reset();
         int nbx = hPos->GetNbinsX(), nby = hPos->GetNbinsY();
@@ -130,37 +167,62 @@ void plotXYAsymmetry(TFile* f, const char* outdir, const char* tag,
             }
         }
 
-        TCanvas* c = new TCanvas(Form("c_%s_%s", tag, names[i].Data()), "", 1500, 500);
-        c->Divide(3, 1);
         gStyle->SetOptStat(0);
 
-        c->cd(1); gPad->SetRightMargin(0.15);
-        gStyle->SetPalette(1); // default "pretty" (blue->red) palette, ROOT5-safe
+        // ROOT only has ONE active global colz palette at a time -- with a
+        // single TCanvas::Divide() and multiple pads, the LAST
+        // CreateGradientColorTable() call before Print() silently wins for
+        // EVERY pad's colz rendering, regardless of which palette was
+        // "current" when each pad's Draw() was called (confirmed with a
+        // minimal reproducer: the palette applied at TCanvas::Print()'s
+        // final paint pass, not at each pad's own Draw() time -- TExec
+        // per-histogram doesn't help either, since TExec only fires on
+        // interactive mouse events, never during batch Print()). So the
+        // Pos/Neg panels were always silently getting the diverging
+        // asymmetry-panel palette. Work around this by rendering each panel
+        // to its own canvas/PNG (each gets an uncontested Print() with the
+        // correct palette already set) and stitching the three side by side
+        // with ImageMagick.
+        int W = 500, H = 500;
+        TString tmpPos = Form("%s_%s_%s_tmpPos.png", outdir, pngTag, names[i].Data());
+        TString tmpNeg = Form("%s_%s_%s_tmpNeg.png", outdir, pngTag, names[i].Data());
+        TString tmpAsym = Form("%s_%s_%s_tmpAsym.png", outdir, pngTag, names[i].Data());
+
+        TCanvas* cPos = new TCanvas(Form("cPos_%s_%s", tag, names[i].Data()), "", W, H);
+        gPad->SetRightMargin(0.15);
+        SET_SEQUENTIAL_PALETTE();
+        hPos->GetXaxis()->SetRangeUser(-range, range);
+        hPos->GetYaxis()->SetRangeUser(-range, range);
         hPos->SetTitle(Form("%s q>0;x [cm];y [cm]", names[i].Data()));
         hPos->Draw("colz");
+        cPos->Print(tmpPos);
+        delete cPos;
 
-        c->cd(2); gPad->SetRightMargin(0.15);
-        gStyle->SetPalette(1);
+        TCanvas* cNeg = new TCanvas(Form("cNeg_%s_%s", tag, names[i].Data()), "", W, H);
+        gPad->SetRightMargin(0.15);
+        SET_SEQUENTIAL_PALETTE();
+        hNeg->GetXaxis()->SetRangeUser(-range, range);
+        hNeg->GetYaxis()->SetRangeUser(-range, range);
         hNeg->SetTitle(Form("%s q<0;x [cm];y [cm]", names[i].Data()));
         hNeg->Draw("colz");
+        cNeg->Print(tmpNeg);
+        delete cNeg;
 
-        c->cd(3); gPad->SetRightMargin(0.15);
-        // Diverging red(-1)/white(0)/blue(+1) palette, built manually --
-        // kLightTemperature/kBird enums don't exist in ROOT5.
-        {
-            const int nStops = 3;
-            double stops[nStops] = {0.0, 0.5, 1.0};
-            double red[nStops]   = {0.0, 1.0, 1.0};
-            double green[nStops] = {0.0, 1.0, 0.0};
-            double blue[nStops]  = {1.0, 1.0, 0.0};
-            TColor::CreateGradientColorTable(nStops, stops, red, green, blue, 255);
-        }
+        TCanvas* cAsym = new TCanvas(Form("cAsym_%s_%s", tag, names[i].Data()), "", W, H);
+        gPad->SetRightMargin(0.15);
+        SET_DIVERGING_PALETTE();
+        hAsym->GetXaxis()->SetRangeUser(-range, range);
+        hAsym->GetYaxis()->SetRangeUser(-range, range);
         hAsym->SetMinimum(-1); hAsym->SetMaximum(1);
         hAsym->SetTitle(Form("%s asymmetry (P-N)/(P+N);x [cm];y [cm]", names[i].Data()));
         hAsym->Draw("colz");
+        cAsym->Print(tmpAsym);
+        delete cAsym;
 
-        c->Print(Form("%s_%s_%s.png", outdir, pngTag, names[i].Data()));
-        delete c;
+        TString finalPng = Form("%s_%s_%s.png", outdir, pngTag, names[i].Data());
+        gSystem->Exec(Form("convert +append %s %s %s %s", tmpPos.Data(), tmpNeg.Data(), tmpAsym.Data(), finalPng.Data()));
+        gSystem->Exec(Form("rm -f %s %s %s", tmpPos.Data(), tmpNeg.Data(), tmpAsym.Data()));
+
         delete hAsym;
     }
 }

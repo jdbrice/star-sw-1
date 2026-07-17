@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>StFttSimHitMaker -- FTT GEANT-to-hit simulation maker (proposal)</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>StFttSimHitMaker: a real-geometry FTT simulation maker (proposal / in progress)</H1>
+<p>Landing page for a separate, ongoing piece of work: a new maker that would let a
+GEANT particle-gun or Pythia MC event drive the <i>real</i> FTT reconstruction code path
+(<tt>StFttClusterMaker</tt> &rarr; <tt>StFttClusterPointMaker</tt> &rarr;
+<tt>StFttDb::getGloablOffset_ClusterPoint()</tt>) instead of the fast-sim shortcuts that
+bypass <tt>StFttDb</tt> entirely. Full design in
+<a href="../proposal_ftt_sim_maker.txt">proposal_ftt_sim_maker.txt</a> at the repo root.
+Being worked on in a separate Claude session from the one that found and fixed the
+<tt>maxStripLength</tt> bug below -- this page is the shared reference point between the two.</p>
+
+<HR>
+<H2>Motivation</H2>
+<p>Directly motivated by the <a href="../jpsi/electron_45.html">single-electron gun @
+45&deg; page</a>: that page set out to test the FTT geometry transform with a controlled,
+known-kinematics single track, and found that <b>no MC-compatible code path in this repo
+actually reaches <tt>StFttDb</tt></b> --</p>
+<ul>
+  <li><tt>StFttClusterPointMaker::MakeGeantPoints()</tt> (what <tt>script/sim.C</tt> and
+      therefore <i>all</i> particle-gun/Pythia MC uses) reads GEANT truth directly in global
+      coordinates and never calls <tt>StFttDb</tt> at all.
+  <li><tt>StFttFastSimMaker</tt> (the <tt>"fttSim"</tt> BFC tag) also reads GEANT truth, but
+      writes into an unrelated <tt>StRnDHit</tt> collection using its own standalone
+      geometry, independent of <tt>StFttDb</tt>, and unused by anything downstream.
+  <li><tt>StFttRawHitMaker</tt> -- the true entry point to the real cluster-making chain --
+      never reads GEANT truth at all; it only unpacks real raw DAQ data or an
+      already-existing <tt>MuDst</tt>.
+</ul>
+<p>So the actual bug that turned out to explain the swapped/bowtie-shaped FTT footprint
+(<tt>StFttCluster::maxStripLength()</tt> defaulting to <tt>-999</tt>, full writeup at
+<a href="../fttgeom/index.html">fttgeom/index.html</a>) was found and fixed by reading the
+code and computing the <tt>StFttDb</tt> transform by hand against real data -- not by a
+controlled single-track test, because no such test was possible. <tt>StFttSimHitMaker</tt>
+is meant to close that gap for the next one.</p>
+
+<HR>
+<H2>Status</H2>
+<p>Proposal only as of 2026-07-17 -- not started, not urgent (the bug it would have helped
+find is already found and fixed by hand). See
+<a href="../proposal_ftt_sim_maker.txt">proposal_ftt_sim_maker.txt</a> for the full design:
+two candidate approaches (inject synthetic <tt>StFttCluster</tt> objects directly, or the
+preferred option, inject synthetic <tt>StFttRawHit</tt> objects and let the real
+<tt>StFttClusterMaker</tt> do the clustering, reusing
+<tt>StFttDb::reverseHardwareMap()</tt>/<tt>hardwareMap()</tt> to avoid needing any new
+<tt>StFttDb</tt> code), rough scope (half a day to a day), and the reasoning for doing this
+in a separate session rather than folded into the bug-hunting one.</p>
+
+<HR>
+<a href="../proposal_ftt_sim_maker.txt">Full proposal</a> |
+<a href="../jpsi/electron_45.html">Electron gun @ 45&deg; page (motivation)</a> |
+<a href="../fttgeom/index.html">The maxStripLength bug (found without this maker)</a> |
+<a href="../jpsi/index.html">Back to main DiLepton page</a>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>
