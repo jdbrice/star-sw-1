@@ -15,6 +15,7 @@
 #include "StEvent/StEnumerations.h"
 #include <stdint.h>
 #include <map>
+#include <vector>
 
 
 class StFttRawHit;
@@ -174,7 +175,7 @@ public:
   int mTimeCutLow, mTimeCutHigh;
 
   std :: map< uint16_t , uint16_t > mMap;
-  std :: map< uint16_t , uint16_t > rMap; // reverse map 
+  std :: map< uint16_t , std::vector<uint16_t> > rMap; // reverse map -- a given (row,strip) has one channel per orientation (H and V both exist at the same row/strip in the real hardware map, confirmed by scanning the forward map), so this must hold all of them, not just the last one loaded
   //  data windows map
   std :: map< uint16_t , FttDataWindow > dwMap;
   std :: map< int , Float_t > scMapXY; // strip center map 
