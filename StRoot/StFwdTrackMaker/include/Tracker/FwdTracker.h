@@ -2235,12 +2235,14 @@ class ForwardTrackMaker {
         double horizontalMin_dy = 99;
         double horizontalMin_dr = 99;
         double horizontalMin_dp = 99;
+        double horizontalMin_hsx = 0; // matched hit's own along-strip (x) uncertainty
         KiTrack::IHit *horizontalClosest = nullptr;
 
         double verticalMin_dx = 99;
         double verticalMin_dy = 99;
         double verticalMin_dr = 99;
         double verticalMin_dp = 99;
+        double verticalMin_hsy = 0; // matched hit's own along-strip (y) uncertainty
         KiTrack::IHit *verticalClosest = nullptr;
 
         for (auto h : available_hits) {
@@ -2280,6 +2282,7 @@ class ForwardTrackMaker {
                     horizontalMin_dx = sx;
                     horizontalMin_dy = sy;
                     horizontalMin_dr = sr;
+                    horizontalMin_hsx = hsx;
                 }
             } else if ( hsy > hsx ){ // vertical strip
                 if ( sx < verticalMin_dx ){
@@ -2288,6 +2291,7 @@ class ForwardTrackMaker {
                     verticalMin_dx = sx;
                     verticalMin_dy = sy;
                     verticalMin_dr = sr;
+                    verticalMin_hsy = hsy;
                 }
             } else {
                 LOG_WARN << "Hit with equal covariance in x and y, skipping" << endm;
@@ -2297,16 +2301,31 @@ class ForwardTrackMaker {
         } // loop h
 
         // check threshold and add the closest horizontal strip hit
-        // Fix (Issue #3/4/7): gate on the precision coordinate (|dy|) instead of
-        // dPhi, and use && instead of || so a hit isn't accepted just because one
-        // coordinate happened to pass while the other was far off (up to ~16 cm).
-        if ( horizontalMin_dy < thresholdY && fabs(horizontalMin_dr) < thresholdR ) {
+        // Fix (Issue #3/4/7, 2026-07-10): gate on the precision coordinate (|dy|)
+        // instead of dPhi, and use && instead of || so a hit isn't accepted just
+        // because one coordinate happened to pass while the other was far off.
+        //
+        // Fix (2026-07-18): that 2026-07-10 fix removed the dPhi gate (it was too
+        // tight for wide strips) but never replaced it with anything constraining
+        // the off-axis coordinate (dx for H strips, dy for V strips) -- it was left
+        // completely free, gated only by thresholdR, which is a difference of
+        // R=sqrt(x^2+y^2) from the beamline, not a 2D distance, and is blind to
+        // azimuthal (phi) separation entirely. Gate the off-axis coordinate against
+        // that specific hit's own reported along-strip uncertainty (hsx/hsy,
+        // already computed above for orientation classification, just never used
+        // for gating) instead -- a hit's own sigma is the physically correct scale
+        // for "how far off-axis is still plausible for this strip", unlike a fixed
+        // global angular or radial constant.
+        const double kOffAxisNSigma = 3.0;
+        if ( horizontalMin_dy < thresholdY && fabs(horizontalMin_dr) < thresholdR
+             && horizontalMin_dx < kOffAxisNSigma * horizontalMin_hsx ) {
             found_hits.push_back(horizontalClosest);
             LOG_INFO << "Adding horizontal strip hit with dPhi = " << horizontalMin_dp << ", dR = " << horizontalMin_dr << ", dx = " << horizontalMin_dx << ", dy = " << horizontalMin_dy << endm;
         }
 
         // check threshold and add the closest vertical strip hit
-        if ( verticalMin_dx < thresholdX && fabs(verticalMin_dr) < thresholdR ) {
+        if ( verticalMin_dx < thresholdX && fabs(verticalMin_dr) < thresholdR
+             && verticalMin_dy < kOffAxisNSigma * verticalMin_hsy ) {
             found_hits.push_back(verticalClosest);
             LOG_INFO << "Adding vertical strip hit with dPhi = " << verticalMin_dp << ", dR = " << verticalMin_dr << ", dx = " << verticalMin_dx << ", dy = " << verticalMin_dy << endm;
         }

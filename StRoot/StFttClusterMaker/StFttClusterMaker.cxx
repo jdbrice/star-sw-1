@@ -462,6 +462,25 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
         clu->setQuadrant    ( maxAdcHit->quadrant    ( ) );
         clu->setRow         ( maxAdcHit->row         ( ) );
         clu->setOrientation ( maxAdcHit->orientation ( ) );
+        // Fix (2026-07-17): this was the only max-ADC-hit field never copied onto the
+        // cluster, so StFttCluster::maxStripLength() stayed at its -999 default forever.
+        // That -999 flows into StFttClusterPointMaker's row-position formula
+        // (YX_StripGroupEdge[row] + maxStripLength()/2), producing a huge negative local
+        // value that -- combined with the per-quadrant sign flips -- swaps which end of
+        // each row lands near vs. far from y=0. See jpsi/electron_45.html for the
+        // derivation (this single line explains the top/bottom+north/south swap and the
+        // bowtie shape both).
+        clu->setMaxStripLength( maxAdcHit->stripLength( ) );
+        // Fix (2026-07-18): same bug shape as maxStripLength above -- setMaxStripCenter
+        // was also never called, so StFttCluster::maxStripCenter() stayed at its -999
+        // default forever. StFttClusterPointMaker used a row-averaged fallback
+        // (YX_StripGroupEdge[row]+maxStripLength/2) for the off-axis coordinate instead,
+        // which collapses the off-axis coordinate to one constant value for the ~92% of
+        // same-row hits sharing an identical maxStripLength, discarding real per-strip
+        // resolution. maxAdcHit->stripCenter() comes from the same scMapXY table already
+        // used (correctly) for the precision coordinate via cluster x()/y() -- no row
+        // dependence in that lookup, so this is safe for all rows, not just row 0.
+        clu->setMaxStripCenter( maxAdcHit->stripCenter( ) );
 
         // Now find the cluster edges
         size_t left = anchor, right = anchor;
