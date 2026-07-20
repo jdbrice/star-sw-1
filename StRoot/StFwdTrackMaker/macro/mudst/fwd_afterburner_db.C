@@ -166,7 +166,9 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		
 		StFcsWaveformFitMaker *fcsWFF = new StFcsWaveformFitMaker();
 		// This should only be used for simulated data, for real data this done in the database
-		// fcsWFF->setEnergySelect(0);
+		//fcsWFF->setEnergySelect(0);
+		// This skips waveform analysis, and only apply new gain from DB
+		fcsWFF->setAnaWaveform(false);
 		StFcsClusterMaker *fcsclu = new StFcsClusterMaker();
 	}
 	/*******************************************************************************************/
