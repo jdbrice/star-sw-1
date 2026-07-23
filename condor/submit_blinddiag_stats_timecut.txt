@@ -1,0 +1,617 @@
+Executable   = /bin/env
+Universe     = vanilla
+notification = never
+getenv       = True
+Initialdir   = /star/u/akio/fcstrk11/star-sw-fwd
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081004 st_fwd_23081004_raw_6000003.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081004_raw_6000003.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081004_raw_6000003.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081004_raw_6000003.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_5500033.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_5500033.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_5500033.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_5500033.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_2000001.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2000001.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2000001.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2000001.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_2500059.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2500059.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2500059.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2500059.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_7500042.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_7500042.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_7500042.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_7500042.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_5000046.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_5000046.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_5000046.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_5000046.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_7000047.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7000047.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7000047.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7000047.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_7000060.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7000060.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7000060.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7000060.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_adc_23081019_raw_1000009.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081019_raw_1000009.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081019_raw_1000009.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081019_raw_1000009.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1500030.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_1500030.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_1500030.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_1500030.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_3500022.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3500022.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3500022.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3500022.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_2500032.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_2500032.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_2500032.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_2500032.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_4500007.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_4500007.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_4500007.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_4500007.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_adc_23081027_raw_4500006.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081027_raw_4500006.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081027_raw_4500006.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081027_raw_4500006.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_7000030.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7000030.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7000030.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7000030.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_2500021.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_2500021.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_2500021.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_2500021.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_4000024.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4000024.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4000024.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4000024.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_7000008.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_7000008.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_7000008.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_7000008.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000060.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_1000060.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_1000060.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_1000060.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_3000053.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3000053.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3000053.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3000053.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_2500042.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500042.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500042.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500042.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_7000023.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_7000023.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_7000023.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_7000023.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_5500058.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500058.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500058.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500058.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_4500058.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_4500058.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_4500058.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_4500058.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_5500041.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500041.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500041.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500041.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_adc_23081008_raw_6000010.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081008_raw_6000010.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081008_raw_6000010.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081008_raw_6000010.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000026.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_1000026.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_1000026.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_1000026.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_7500001.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_7500001.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_7500001.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_7500001.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_2000048.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2000048.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2000048.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_2000048.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_6000055.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081015_raw_6000055.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081015_raw_6000055.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081015_raw_6000055.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_3500053.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_3500053.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_3500053.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_3500053.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_7500002.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500002.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500002.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500002.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_4000029.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_4000029.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_4000029.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_4000029.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_6000041.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_6000041.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_6000041.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_6000041.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_4000039.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4000039.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4000039.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4000039.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_adc_23081019_raw_2500006.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081019_raw_2500006.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081019_raw_2500006.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081019_raw_2500006.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_7000068.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_7000068.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_7000068.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_7000068.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_5500017.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_5500017.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_5500017.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_5500017.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1500028.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_1500028.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_1500028.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_1500028.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_4500050.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_4500050.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_4500050.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_4500050.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_5000036.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_5000036.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_5000036.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_5000036.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_3000047.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3000047.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3000047.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3000047.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_4500035.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500035.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500035.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500035.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_4500056.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500056.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500056.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500056.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_3000049.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3000049.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3000049.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3000049.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_6000062.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6000062.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6000062.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6000062.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_3500030.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3500030.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3500030.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3500030.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_3500008.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3500008.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3500008.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_3500008.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_6500021.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6500021.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6500021.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6500021.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_3000058.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_3000058.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_3000058.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_3000058.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_5000020.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5000020.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5000020.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5000020.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data21/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_4500050.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_4500050.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_4500050.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_4500050.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_3000043.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3000043.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3000043.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3000043.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_4500046.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4500046.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4500046.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4500046.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_5500001.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_5500001.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_5500001.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_5500001.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_5000020.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081015_raw_5000020.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081015_raw_5000020.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081015_raw_5000020.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_3500021.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_3500021.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_3500021.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_3500021.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_7500015.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500015.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500015.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500015.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_4000031.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_4000031.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_4000031.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_4000031.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_6000013.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_6000013.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_6000013.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_6000013.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_6500069.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6500069.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6500069.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6500069.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000054.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_1000054.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_1000054.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_1000054.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_6500046.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6500046.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6500046.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6500046.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_7500016.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7500016.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7500016.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7500016.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000058.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_1000058.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_1000058.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_1000058.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_adc_23081049_raw_4000005.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081049_raw_4000005.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081049_raw_4000005.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_adc_23081049_raw_4000005.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_2500020.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500020.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500020.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500020.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_6500035.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6500035.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6500035.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6500035.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_3500054.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3500054.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3500054.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_3500054.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_6500044.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6500044.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6500044.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6500044.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_5000059.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_5000059.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_5000059.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_5000059.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_2000035.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_2000035.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_2000035.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_2000035.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_5500006.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500006.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500006.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500006.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_6000042.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6000042.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6000042.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6000042.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data22/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_6000032.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6000032.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6000032.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_6000032.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_3500064.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_3500064.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_3500064.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_3500064.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_4000074.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_4000074.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_4000074.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_4000074.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_6000018.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6000018.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6000018.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_6000018.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_3500054.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_3500054.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_3500054.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081008_raw_3500054.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_3000053.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3000053.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3000053.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_3000053.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_4000070.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4000070.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4000070.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_4000070.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_6500042.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_6500042.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_6500042.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_6500042.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000080.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_1000080.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_1000080.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081019_raw_1000080.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_2500031.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_2500031.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_2500031.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_2500031.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1500026.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_1500026.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_1500026.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_1500026.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_7500016.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500016.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500016.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_7500016.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_6000017.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_6000017.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_6000017.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081023_raw_6000017.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_2500053.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_2500053.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_2500053.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_2500053.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_6500071.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_6500071.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_6500071.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_6500071.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_7500040.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7500040.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7500040.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081027_raw_7500040.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_1000015.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_1000015.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_1000015.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081031_raw_1000015.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_2500040.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500040.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500040.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_2500040.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_7000046.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_7000046.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_7000046.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_7000046.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_6000037.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6000037.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6000037.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081049_raw_6000037.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_6000067.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6000067.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6000067.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6000067.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_6000051.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6000051.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6000051.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_6000051.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_4500058.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500058.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500058.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081045_raw_4500058.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081053 st_fwd_23081053_raw_3000001.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081053_raw_3000001.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081053_raw_3000001.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081053_raw_3000001.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_5000022.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5000022.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5000022.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5000022.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_2000008.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_2000008.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_2000008.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_2000008.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1000059.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_1000059.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_1000059.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_1000059.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runBlindDiag /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_5500054.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500054.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500054.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/log/st_fwd_23081063_raw_5500054.log
+Queue

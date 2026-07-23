@@ -23,6 +23,7 @@
 #include <numeric>
 
 #include "StFwdTrackMaker/include/Tracker/FwdHit.h"
+#include "StFttDbMaker/StFttDb.h" // for the X<->Y mirror diagnostic test (2026-07-22) -- public static per-quadrant offset/sign tables only, no instance needed
 #include "StFwdTrackMaker/include/Tracker/FwdDataSource.h"
 #include "StFwdTrackMaker/include/Tracker/TrackFitter.h"
 
@@ -1924,7 +1925,7 @@ class ForwardTrackMaker {
             // hits_near_plane = findFttHitsNearProjectedState(hitmap.at(disk), msp);
             LOG_DEBUG << "Looking for FTT strips near projected state on disk " << disk << endm;
             LOG_DEBUG << "There are " << hitmap.at(disk).size() << " available FTT strips on this disk" << endm;
-            hits_near_plane = findFttStripsNearProjectedState(hitmap.at(disk), msp);
+            hits_near_plane = findFttStripsNearProjectedState(hitmap.at(disk), disk, msp);
             LOG_DEBUG << " Found #FTT strips on plane #" << disk << TString::Format( " = [%ld]", hits_near_plane.size() ) << endm;
         } catch (genfit::Exception &e) {
             // Failed to project
@@ -2177,14 +2178,20 @@ class ForwardTrackMaker {
      *
      * @return compatible FTT hits
     */
-    Seed_t findFttStripsNearProjectedState(const Seed_t &available_hits, genfit::MeasuredStateOnPlane &msp, double thresholdPhi = 0.004 * 30 , double thresholdR = 30, double thresholdX = 7.5, double thresholdY = 7.5) {
+    Seed_t findFttStripsNearProjectedState(const Seed_t &available_hits, size_t disk, genfit::MeasuredStateOnPlane &msp, double thresholdPhi = 0.004 * 30 , double thresholdR = 30, double thresholdX = 7.5, double thresholdY = 7.5) {
 
         Seed_t found_hits;
         if (available_hits.size() == 0) {
             LOG_WARN << "No FTT hits available to search for near projected state" << endm;
             return found_hits;
         }
-        
+
+        initBlindDiagHistograms();
+        // Moved up from just above the accept-gate below (2026-07-19) so the
+        // "All candidates, cross-conditioned" debug histograms can use the same
+        // value during the loop over available_hits.
+        const double kOffAxisNSigma = 3.0;
+
         // we will find the closest horizontal and vertical strip hits
         // and add them to the found_hits if they pass the threshold
         TLorentzVector lv1, lv2;
@@ -2198,16 +2205,20 @@ class ForwardTrackMaker {
         double horizontalMin_dy = 99;
         double horizontalMin_dr = 99;
         double horizontalMin_dp = 99;
+        double horizontalMin_dxs = 0, horizontalMin_dys = 0; // signed, for diagnostic histos
+        double horizontalMin_hsx = 0; // matched hit's own along-strip (x) uncertainty
         KiTrack::IHit *horizontalClosest = nullptr;
 
         double verticalMin_dx = 99;
         double verticalMin_dy = 99;
         double verticalMin_dr = 99;
         double verticalMin_dp = 99;
+        double verticalMin_dxs = 0, verticalMin_dys = 0; // signed, for diagnostic histos
+        double verticalMin_hsy = 0; // matched hit's own along-strip (y) uncertainty
         KiTrack::IHit *verticalClosest = nullptr;
 
         for (auto h : available_hits) {
-            
+
             double hsx = sqrt(dynamic_cast<FwdHit*>(h)->_covmat(0, 0));
             double hsy = sqrt(dynamic_cast<FwdHit*>(h)->_covmat(1, 1));
 
@@ -2216,6 +2227,102 @@ class ForwardTrackMaker {
             double sp = fabs(lv1.DeltaPhi( lv2 ));
             double sx = fabs(h->getX() - msp.getPos().X());
             double sy = fabs(h->getY() - msp.getPos().Y());
+            double sxs = h->getX() - msp.getPos().X(); // signed
+            double sys = h->getY() - msp.getPos().Y(); // signed
+
+            // Debug diagnostic (2D): every candidate on this disk, regardless of
+            // whether it ends up matched -- shows the full occupancy/background
+            // landscape around the FTT-blind (FST-only) projection, unconditioned.
+            //
+            // Debug diagnostic (1D, cross-conditioned -- 2026-07-19): the 1D
+            // Dx/Dy "all candidates" histograms are DIFFERENT from the 2D ones and
+            // from a plain per-coordinate projection of them: each is filled only
+            // for candidates that already pass the gate on the OTHER coordinate,
+            // then plotted with NO cut on the coordinate actually shown. This
+            // removes the wrong-quadrant/wrong-row combinatoric background that
+            // dominates the fully-unconditioned landscape (visible as the "X" in
+            // the 2D plots) while staying genuinely unbiased on the coordinate
+            // being histogrammed -- neither "All" (no cuts, mostly background) nor
+            // "Matched" (both cuts already applied, can't see what's just outside
+            // the cut) answers "what does this coordinate's natural spread look
+            // like among plausible same-row/strip candidates".
+            // Bug fix (2026-07-20): this block's V/H labeling was backwards relative
+            // to the "closest"-selection block below (and the verbose debug print
+            // right after it) -- hsx>hsy means the hit's X-uncertainty is LARGER
+            // than its Y-uncertainty, i.e. Y is the precisely-measured coordinate,
+            // which is a HORIZONTAL strip, not vertical. The "All" histograms were
+            // being filled with the wrong orientation's candidates relative to the
+            // "Matched" histograms (which use the correct convention via
+            // horizontalMin_*/verticalMin_*), breaking the expected Matched-is-a-
+            // subset-of-All relationship per bin.
+            // Quadrant index for the quadrant-split excess check (2026-07-21):
+            // A=0(x>0,y>0) B=1(x>0,y<0) C=2(x<0,y<0) D=3(x<0,y>0), matching
+            // StFttDb::getGloablOffset's quad==0 A convention. From the hit's
+            // own position -- quadrants are large, well-separated regions.
+            int qidx = -1;
+            if ( h->getX() > 0 && h->getY() > 0 ) qidx = 0;
+            else if ( h->getX() > 0 && h->getY() < 0 ) qidx = 1;
+            else if ( h->getX() < 0 && h->getY() < 0 ) qidx = 2;
+            else if ( h->getX() < 0 && h->getY() > 0 ) qidx = 3;
+
+            if ( hsx > hsy ) { // H strip: y precise, x off-axis
+                if ( sy < thresholdY )           hBlindDxAll_H[disk]->Fill(sxs); // dx, dy-conditioned
+                if ( sx < kOffAxisNSigma * hsx ) hBlindDyAll_H[disk]->Fill(sys); // dy, dx-conditioned
+                if ( sx < kOffAxisNSigma * hsx && qidx >= 0 ) hBlindDyAll_H_q[disk][qidx]->Fill(sys);
+                hBlindXYAll_H[disk]->Fill(sxs, sys);
+            } else if ( hsy > hsx ) { // V strip: x precise, y off-axis
+                if ( sy < kOffAxisNSigma * hsy ) hBlindDxAll_V[disk]->Fill(sxs); // dx, dy-conditioned
+                if ( sy < kOffAxisNSigma * hsy && qidx >= 0 ) hBlindDxAll_V_q[disk][qidx]->Fill(sxs);
+                if ( sx < thresholdX )           hBlindDyAll_V[disk]->Fill(sys); // dy, dx-conditioned
+                hBlindXYAll_V[disk]->Fill(sxs, sys);
+            }
+
+            // X<->Y MIRROR test (2026-07-22) -- purely additive, does not touch
+            // found_hits/matching. Cannot just swap the already-transformed
+            // global (h->getX(),h->getY()): the quadrant offset/sign transform
+            // (StFttDb::getGloablOffset_ClusterPoint) is asymmetric between X
+            // and Y (different dx/dy shift tables, different sx/sy sign rules
+            // per quadrant) -- swapping global values directly would compare
+            // each axis against the WRONG quadrant calibration, testing a
+            // physically incoherent quantity, not "is the axis mislabeled"
+            // (caught before being built, akio 2026-07-22). Instead: invert
+            // the known global transform back to LOCAL (mm) coordinates, swap
+            // those, then RE-APPLY the correct (asymmetric, per-axis)
+            // transform to the swapped local values -- this is what a genuine
+            // local x<->y mislabeling downstream of clustering would actually
+            // produce. qidx (already computed above from the hit's own
+            // global-position sign) selects the same quadrant table
+            // getGloablOffset_ClusterPoint would have used; disk (function
+            // parameter) is the plane index into the same per-disk arrays.
+            if ( qidx >= 0 ) {
+                double dxQ = 0, dyQ = 6.0, sxQ = 1, syQ = 1; // StFttDb defaults
+                if ( qidx == 0 ) { dxQ = StFttDb::X_shift_QuadA[disk]; dyQ = StFttDb::Y_shift_QuadA[disk]; sxQ = 1;  syQ = 1;  }
+                else if ( qidx == 1 ) { dxQ = StFttDb::X_shift_QuadB[disk]; dyQ = StFttDb::Y_shift_QuadB[disk]; sxQ = 1;  syQ = -1; }
+                else if ( qidx == 2 ) { dxQ = StFttDb::X_shift_QuadC[disk]; dyQ = StFttDb::Y_shift_QuadC[disk]; sxQ = -1; syQ = -1; }
+                else if ( qidx == 3 ) { dxQ = StFttDb::X_shift_QuadD[disk]; dyQ = StFttDb::Y_shift_QuadD[disk]; sxQ = -1; syQ = 1;  }
+
+                // invert: global_cm = ((local_mm*s)+d)/10  =>  local_mm = (global_cm*10 - d) / s
+                double xLocal = (h->getX() * 10.0 - dxQ) / sxQ;
+                double yLocal = (h->getY() * 10.0 - dyQ) / syQ;
+                // swap local, then re-apply the SAME (asymmetric) per-axis transform
+                double xMirror = ((yLocal * sxQ) + dxQ) / 10.0;
+                double yMirror = ((xLocal * syQ) + dyQ) / 10.0;
+
+                double sxM  = fabs(xMirror - msp.getPos().X());
+                double syM  = fabs(yMirror - msp.getPos().Y());
+                double sxsM = xMirror - msp.getPos().X();
+                double sysM = yMirror - msp.getPos().Y();
+                // covariance role swap: if local axes are mislabeled, the
+                // precision (small-sigma) axis mislabeling goes with it
+                double hsxM = hsy;
+                double hsyM = hsx;
+
+                if ( hsxM > hsyM ) { // mirror-H: y precise, x off-axis
+                    if ( sxM < kOffAxisNSigma * hsxM ) hBlindDyAll_H_mirror[disk]->Fill(sysM); // dy, dx-conditioned
+                } else if ( hsyM > hsxM ) { // mirror-V: x precise, y off-axis
+                    if ( syM < kOffAxisNSigma * hsyM ) hBlindDxAll_V_mirror[disk]->Fill(sxsM); // dx, dy-conditioned
+                }
+            }
 
             // Show the comparison of the projected state to the hit position, including the hit covariances, for debugging
             // if the hit is within 5x the thresholds in both phi and R, print out the details for debugging
@@ -2243,6 +2350,9 @@ class ForwardTrackMaker {
                     horizontalMin_dx = sx;
                     horizontalMin_dy = sy;
                     horizontalMin_dr = sr;
+                    horizontalMin_dxs = sxs;
+                    horizontalMin_dys = sys;
+                    horizontalMin_hsx = hsx;
                 }
             } else if ( hsy > hsx ){ // vertical strip
                 if ( sx < verticalMin_dx ){
@@ -2251,6 +2361,9 @@ class ForwardTrackMaker {
                     verticalMin_dx = sx;
                     verticalMin_dy = sy;
                     verticalMin_dr = sr;
+                    verticalMin_dxs = sxs;
+                    verticalMin_dys = sys;
+                    verticalMin_hsy = hsy;
                 }
             } else {
                 LOG_WARN << "Hit with equal covariance in x and y, skipping" << endm;
@@ -2259,19 +2372,55 @@ class ForwardTrackMaker {
 
         } // loop h
 
+        // Empirical off-axis width measurement (2026-07-18): using ONLY the
+        // sensitive-coordinate cut (not the off-axis acceptance gate itself, to
+        // avoid measuring a distribution that's already been shaped by the cut
+        // we're trying to validate). horizontalClosest/verticalClosest are the
+        // nearest-by-sensitive-coordinate candidates found in the loop above,
+        // independent of whether they'd pass the full acceptance gate below.
+        if ( horizontalClosest && horizontalMin_dy < kTightSensitiveCut ) {
+            hTightOffAxisX[disk]->Fill(horizontalMin_dxs);
+        }
+        if ( verticalClosest && verticalMin_dx < kTightSensitiveCut ) {
+            hTightOffAxisY[disk]->Fill(verticalMin_dys);
+        }
+
         // check threshold and add the closest horizontal strip hit
-        // Fix (Issue #3/4/7): gate on the precision coordinate (|dy|) instead of
-        // dPhi, and use && instead of || so a hit isn't accepted just because one
-        // coordinate happened to pass while the other was far off (up to ~16 cm).
-        if ( horizontalMin_dy < thresholdY && fabs(horizontalMin_dr) < thresholdR ) {
+        // Fix (Issue #3/4/7, 2026-07-10): gate on the precision coordinate (|dy|)
+        // instead of dPhi, and use && instead of || so a hit isn't accepted just
+        // because one coordinate happened to pass while the other was far off.
+        //
+        // Fix (2026-07-18): that 2026-07-10 fix removed the dPhi gate (it was too
+        // tight for wide strips) but never replaced it with anything constraining
+        // the off-axis coordinate (dx for H strips, dy for V strips) -- it was left
+        // completely free, gated only by thresholdR, which is a difference of
+        // R=sqrt(x^2+y^2) from the beamline, not a 2D distance, and is blind to
+        // azimuthal (phi) separation entirely. Verified via the FTT-blind matching
+        // diagnostic (fwd_blind_diag.root, see jpsi/ftt_search_window.html) that
+        // ~40% of "matched" hits were tens of cm off in the unconstrained
+        // coordinate, picked up via same-radius-different-phi coincidence. Gate the
+        // off-axis coordinate against that specific hit's OWN reported along-strip
+        // uncertainty (hsx/hsy, already computed above for orientation
+        // classification, just never used for gating) instead -- a hit's own sigma
+        // is the physically correct scale for "how far off-axis is still plausible
+        // for this strip", unlike a fixed global angular or radial constant.
+        if ( horizontalMin_dy < thresholdY && fabs(horizontalMin_dr) < thresholdR
+             && fabs(horizontalMin_dxs) < kOffAxisNSigma * horizontalMin_hsx ) {
             found_hits.push_back(horizontalClosest);
             LOG_DEBUG << "Adding horizontal strip hit with dPhi = " << horizontalMin_dp << ", dR = " << horizontalMin_dr << ", dx = " << horizontalMin_dx << ", dy = " << horizontalMin_dy << endm;
+            hBlindDxMatched_H[disk]->Fill(horizontalMin_dxs);
+            hBlindDyMatched_H[disk]->Fill(horizontalMin_dys);
+            hBlindXYMatched_H[disk]->Fill(horizontalMin_dxs, horizontalMin_dys);
         }
 
         // check threshold and add the closest vertical strip hit
-        if ( verticalMin_dx < thresholdX && fabs(verticalMin_dr) < thresholdR ) {
+        if ( verticalMin_dx < thresholdX && fabs(verticalMin_dr) < thresholdR
+             && fabs(verticalMin_dys) < kOffAxisNSigma * verticalMin_hsy ) {
             found_hits.push_back(verticalClosest);
             LOG_DEBUG << "Adding vertical strip hit with dPhi = " << verticalMin_dp << ", dR = " << verticalMin_dr << ", dx = " << verticalMin_dx << ", dy = " << verticalMin_dy << endm;
+            hBlindDxMatched_V[disk]->Fill(verticalMin_dxs);
+            hBlindDyMatched_V[disk]->Fill(verticalMin_dys);
+            hBlindXYMatched_V[disk]->Fill(verticalMin_dxs, verticalMin_dys);
         }
 
 
@@ -2423,6 +2572,149 @@ class ForwardTrackMaker {
     bool mSaveCriteriaValues = false;
     enum SeedSource { kFstSeed = 0, kFttSeed, kSimSeed, kSeqSeed };
     int mSeedSource = 1; // 0 = FST, 1 = FTT, 2 = FST+FTT simultaneous, 3 = FST+FTT sequential
+
+    // Debug diagnostic (2026-07-17): FTT-blind residual histograms. "Blind proj" is
+    // the msp used by findFttStripsNearProjectedState -- i.e. the FST+vertex-only
+    // fit's projection to the FTT plane, computed BEFORE any FTT hit has ever been
+    // added to this track's seed. "All" histograms fill every candidate hit on the
+    // disk (occupancy/background landscape); "Matched" histograms fill only the hit
+    // that was actually accepted into the track. Purpose: distinguish "the fix
+    // recovered real matches" from "we were already matching coincidental/background
+    // hits before the fix, and still are." Written out in finish(); not part of any
+    // production output (own file, no StEvent/StFwdTrack schema change).
+    // Split by orientation (V = vertical strip = measures X precisely, "x plane";
+    // H = horizontal strip = measures Y precisely, "y plane") -- 2026-07-18 fix.
+    // The original single hBlindDxAll/hBlindDxMatched etc. mixed both orientations
+    // into one histogram: for V-strip hits dx is the tight/precise coordinate and
+    // dy is off-axis, for H-strip hits it's the other way around, so overlaying
+    // them made both the 1D and 2D plots look like a confusing blend (a "cross" in
+    // 2D) instead of two separately-interpretable distributions.
+    TFile *mBlindDiagFile = nullptr;
+    TH1F  *hBlindDxAll_V[4]     = {nullptr,nullptr,nullptr,nullptr};
+    TH1F  *hBlindDyAll_V[4]     = {nullptr,nullptr,nullptr,nullptr};
+    TH1F  *hBlindDxAll_H[4]     = {nullptr,nullptr,nullptr,nullptr};
+    TH1F  *hBlindDyAll_H[4]     = {nullptr,nullptr,nullptr,nullptr};
+    // Quadrant-split versions of the two "All" precise-coordinate histograms
+    // above (2026-07-21) -- for the online-QA-vs-offline-map H/V-swap check
+    // (disk1/quadA specifically): [disk][quad], quad index 0=A(x>0,y>0)
+    // 1=B(x>0,y<0) 2=C(x<0,y<0) 3=D(x<0,y>0), matching StFttDb::getGloablOffset's
+    // quad==0 A convention. Quadrant determined directly from the candidate
+    // hit's own (x,y) sign -- simple and reliable since quadrants are large,
+    // well-separated regions.
+    TH1F  *hBlindDxAll_V_q[4][4] = {{nullptr}};
+    TH1F  *hBlindDyAll_H_q[4][4] = {{nullptr}};
+    // Post-hoc X<->Y MIRROR test (2026-07-22) -- purely additive, does NOT
+    // touch found_hits/production matching at all. An earlier test tried
+    // swapping the kFttHorizontal<->kFttVertical LABEL in
+    // StFttDb::getOrientation() and found it did NOT cleanly relocate signal
+    // between the diagnostic's V/H populations (traced the full chain --
+    // clustering is symmetric between streams, MakeLocalPoints assigns the
+    // same orientation-agnostic clu->x() to whichever axis the label picks
+    // -- a clean label swap SHOULD have caused a clean population trade, and
+    // didn't). This tests a DIFFERENT, more surgical hypothesis: what if the
+    // ALREADY-COMPUTED, ALREADY-CORRECT-PER-CURRENT-CODE global X/Y of a hit
+    // are simply mirrored relative to reality (e.g. a coordinate-convention
+    // mismatch downstream of all the clustering/orientation machinery)? Swap
+    // (h->getX(),h->getY()) <-> (h->getY(),h->getX()) when comparing against
+    // msp, and swap hsx<->hsy for classification, filling PARALLEL
+    // histograms in the same event loop as the unmirrored ones -- a single
+    // run gives both views, no separate production/condor batch needed.
+    TH1F  *hBlindDxAll_V_mirror[4] = {nullptr,nullptr,nullptr,nullptr};
+    TH1F  *hBlindDyAll_H_mirror[4] = {nullptr,nullptr,nullptr,nullptr};
+    TH1F  *hBlindDxMatched_V[4] = {nullptr,nullptr,nullptr,nullptr};
+    TH1F  *hBlindDyMatched_V[4] = {nullptr,nullptr,nullptr,nullptr};
+    TH1F  *hBlindDxMatched_H[4] = {nullptr,nullptr,nullptr,nullptr};
+    TH1F  *hBlindDyMatched_H[4] = {nullptr,nullptr,nullptr,nullptr};
+    TH2F  *hBlindXYAll_V[4]     = {nullptr,nullptr,nullptr,nullptr};
+    TH2F  *hBlindXYAll_H[4]     = {nullptr,nullptr,nullptr,nullptr};
+    TH2F  *hBlindXYMatched_V[4] = {nullptr,nullptr,nullptr,nullptr};
+    TH2F  *hBlindXYMatched_H[4] = {nullptr,nullptr,nullptr,nullptr};
+
+    // Added 2026-07-18, alongside the MakeGlobalPoints() mm->cm covariance fix:
+    // isolate HIGH-CONFIDENCE real matches via a tight cut on the sensitive
+    // coordinate ONLY (independent of the actual off-axis acceptance gate, so
+    // this measurement isn't circular), then histogram the OFF-AXIS coordinate
+    // for those. kTightSensitiveCut=1cm is ~100x the strip's own sigma_y~0.01cm
+    // (see the Issue #3/4/7 fix comment above), so a hit passing this is about
+    // as sure a real match as this data can give without MC truth. Purpose:
+    // measure the TRUE off-axis width empirically, to check whether
+    // stripLength/sqrt(12) (the uniform-distribution assumption used for
+    // kOffAxisNSigma in the acceptance gate) is actually the right scale, or
+    // whether real clusters are more (or less) precise than that in the
+    // direction they don't measure well.
+    static constexpr double kTightSensitiveCut = 1.0; // cm
+    TH1F *hTightOffAxisX[4] = {nullptr,nullptr,nullptr,nullptr}; // H strips: dx, given |dy|<kTightSensitiveCut
+    TH1F *hTightOffAxisY[4] = {nullptr,nullptr,nullptr,nullptr}; // V strips: dy, given |dx|<kTightSensitiveCut
+
+    void initBlindDiagHistograms() {
+        if (mBlindDiagFile) return;
+        mBlindDiagFile = new TFile("fwd_blind_diag.root", "RECREATE");
+        // range +/-100cm: pre-fix row0 shifts measured up to ~58cm, leave headroom
+        for (int d = 0; d < 4; d++) {
+            // 2026-07-19: these "All" 1D histograms are now cross-conditioned (see
+            // fill-site comment) -- dy-conditioned dx range +/-15cm (precise
+            // coordinate, tight), dx-conditioned dy range +/-35cm (off-axis
+            // coordinate, wider -- widened from +/-26cm 2026-07-20) -- and
+            // mirrored for H strips.
+            hBlindDxAll_V[d]     = new TH1F(Form("hBlindDxAll_V_disk%d", d),
+                Form("disk%d: V-strip, x_{hit}-x_{blind proj} (precise), |dy|-conditioned;dx [cm];strips", d), 150, -15, 15);
+            hBlindDyAll_V[d]     = new TH1F(Form("hBlindDyAll_V_disk%d", d),
+                Form("disk%d: V-strip, y_{hit}-y_{blind proj} (off-axis), |dx|-conditioned;dy [cm];strips", d), 350, -35, 35);
+            hBlindDxAll_H[d]     = new TH1F(Form("hBlindDxAll_H_disk%d", d),
+                Form("disk%d: H-strip, x_{hit}-x_{blind proj} (off-axis), |dy|-conditioned;dx [cm];strips", d), 350, -35, 35);
+            hBlindDyAll_H[d]     = new TH1F(Form("hBlindDyAll_H_disk%d", d),
+                Form("disk%d: H-strip, y_{hit}-y_{blind proj} (precise), |dx|-conditioned;dy [cm];strips", d), 150, -15, 15);
+            {
+                const char* qName[4] = {"A", "B", "C", "D"};
+                for (int q = 0; q < 4; q++) {
+                    hBlindDxAll_V_q[d][q] = new TH1F(Form("hBlindDxAll_V_disk%d_quad%s", d, qName[q]),
+                        Form("disk%d quad%s: V-strip, x_{hit}-x_{blind proj} (precise), |dy|-conditioned;dx [cm];strips", d, qName[q]), 150, -15, 15);
+                    hBlindDyAll_H_q[d][q] = new TH1F(Form("hBlindDyAll_H_disk%d_quad%s", d, qName[q]),
+                        Form("disk%d quad%s: H-strip, y_{hit}-y_{blind proj} (precise), |dx|-conditioned;dy [cm];strips", d, qName[q]), 150, -15, 15);
+                }
+            }
+            hBlindDxAll_V_mirror[d] = new TH1F(Form("hBlindDxAll_V_mirror_disk%d", d),
+                Form("disk%d: MIRROR V-strip, y_{hit}-x_{blind proj} (precise), |dx|-conditioned;dx_mirror [cm];strips", d), 150, -15, 15);
+            hBlindDyAll_H_mirror[d] = new TH1F(Form("hBlindDyAll_H_mirror_disk%d", d),
+                Form("disk%d: MIRROR H-strip, x_{hit}-y_{blind proj} (precise), |dy|-conditioned;dy_mirror [cm];strips", d), 150, -15, 15);
+            // 2026-07-20: bin width matched to the corresponding "All" histogram
+            // (same range too) -- overlaying histograms with different bin widths
+            // made "Matched" bars look taller than "All" bars at the same
+            // underlying point density purely because each Matched bar spanned a
+            // wider dx/dy slice (was 400 bins/-100..100 = 0.5cm/bin vs All's
+            // 0.2cm/bin), which looked like Matched exceeding All -- a plotting
+            // artifact, not Matched actually containing more entries than All in
+            // the same physical interval (verified: it never did).
+            hBlindDxMatched_V[d] = new TH1F(Form("hBlindDxMatched_V_disk%d", d),
+                Form("disk%d: MATCHED V-strip, x_{hit}-x_{blind proj} (precise);dx [cm];tracks", d), 150, -15, 15);
+            hBlindDyMatched_V[d] = new TH1F(Form("hBlindDyMatched_V_disk%d", d),
+                Form("disk%d: MATCHED V-strip, y_{hit}-y_{blind proj} (off-axis);dy [cm];tracks", d), 350, -35, 35);
+            hBlindDxMatched_H[d] = new TH1F(Form("hBlindDxMatched_H_disk%d", d),
+                Form("disk%d: MATCHED H-strip, x_{hit}-x_{blind proj} (off-axis);dx [cm];tracks", d), 350, -35, 35);
+            hBlindDyMatched_H[d] = new TH1F(Form("hBlindDyMatched_H_disk%d", d),
+                Form("disk%d: MATCHED H-strip, y_{hit}-y_{blind proj} (precise);dy [cm];tracks", d), 150, -15, 15);
+            hBlindXYAll_V[d]     = new TH2F(Form("hBlindXYAll_V_disk%d", d),
+                Form("disk%d: V-strip candidates, hit-blind proj;dx [cm];dy [cm]", d), 200, -100, 100, 200, -100, 100);
+            hBlindXYAll_H[d]     = new TH2F(Form("hBlindXYAll_H_disk%d", d),
+                Form("disk%d: H-strip candidates, hit-blind proj;dx [cm];dy [cm]", d), 200, -100, 100, 200, -100, 100);
+            hBlindXYMatched_V[d] = new TH2F(Form("hBlindXYMatched_V_disk%d", d),
+                Form("disk%d: MATCHED V-strip, hit-blind proj;dx [cm];dy [cm]", d), 200, -100, 100, 200, -100, 100);
+            hBlindXYMatched_H[d] = new TH2F(Form("hBlindXYMatched_H_disk%d", d),
+                Form("disk%d: MATCHED H-strip, hit-blind proj;dx [cm];dy [cm]", d), 200, -100, 100, 200, -100, 100);
+            hTightOffAxisX[d]  = new TH1F(Form("hTightOffAxisX_disk%d", d),
+                Form("disk%d: H strips, |dy|<%.1fcm, off-axis dx;dx [cm];strips", d, kTightSensitiveCut), 240, -30, 30);
+            hTightOffAxisY[d]  = new TH1F(Form("hTightOffAxisY_disk%d", d),
+                Form("disk%d: V strips, |dx|<%.1fcm, off-axis dy;dy [cm];strips", d, kTightSensitiveCut), 240, -30, 30);
+        }
+    }
+
+    void writeBlindDiagHistograms() {
+        if (!mBlindDiagFile) return;
+        mBlindDiagFile->cd();
+        mBlindDiagFile->Write();
+        mBlindDiagFile->Close();
+        mBlindDiagFile = nullptr;
+    }
 
     FwdTrackerConfig mConfig;
     std::string mConfigFile;

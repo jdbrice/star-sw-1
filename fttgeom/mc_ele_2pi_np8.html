@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>FTT hit-matching MC: 2pi, 8 e-/event</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffe8d5" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>Electron-gun MC: full 2&pi;, 8 electrons/event, 4000 events</H1>
+<p><a href="ftt_search_window.html">&larr; Back to FST-blind projection study</a> |
+Other MC samples:
+<a href="mc_ele_45deg.html">single e- @ 45&deg;</a> |
+<a href="mc_ele_2pi_np1.html">2&pi;, 1 e-/event</a></p>
+
+<HR>
+<H2>Setup</H2>
+<ul>
+  <li>8 electrons/event, full azimuth (0&lt;&phi;&lt;2&pi;), pt=1.5GeV,
+      2.5&lt;&eta;&lt;4.0, vz=0, 4000 events total -- split into 8 condor jobs of 500 events
+      each (<tt>condor/submit_ele2pi_np8.txt</tt>, <tt>script/runElectronFttReal</tt>),
+      merged with <tt>hadd</tt>.
+  <li>Same real reconstruction chain and FST-blind diagnostic as the other MC pages --
+      <tt>StFttDbMaker &rarr; StFttSimHitMaker &rarr; StFttClusterMaker &rarr;
+      StFttClusterPointMaker(mUseGeantData=false) &rarr; fwdTrack</tt>
+      (<tt>script/simFttResidualTest.C</tt>).
+  <li>Purpose: 8 tracks/event gives real combinatoric background/occupancy, closer to real
+      data than the single-track samples -- built specifically to test whether real data's
+      narrow peak is a genuine correlation or an artifact of always picking the closest
+      candidate.
+</ul>
+
+<HR>
+<H2>Findings</H2>
+<ul>
+  <li><b>"All candidates" is now a genuine flat combinatoric background</b> (~500-600
+      entries/bin), similar occupancy character to real data -- unlike the single-track
+      samples, where "All" was itself already a tight cluster.
+  <li><b>A real peak sits on top of that background, in the raw "All candidates" population
+      itself, before any nearest-hit selection is applied.</b> The precise coordinate (V:dx)
+      rises from a ~500-600/bin flat background to ~13,000 at dx&asymp;0 -- about 20x above
+      background, visible directly in the unconditioned candidate population. A flat/uniform
+      underlying distribution cannot produce that on its own; this is direct evidence the
+      correlation is physical, not a selection artifact.
+  <li>2D maps make this explicit: a genuine flat background landscape (&plusmn;60-80cm) with
+      a separate, tight vertical/horizontal spike at the true hit location, clearly
+      distinguishable by eye from the background.
+  <li>Off-axis coordinate (V:dy, H:dx) is now a broad hump for <i>both</i> orientations,
+      similar in character to real data's V behavior -- the sharp V-vs-H asymmetry seen in
+      real data (H flat, V peaked) is not obviously reproduced here; both look more alike
+      in this MC sample.
+  <li><b>Relevant to the real-data page's conclusion:</b> this sample directly tests the
+      "narrow peak is an artifact of picking the closest candidate at ~20% true efficiency"
+      hypothesis from the real-data page under comparable occupancy, and does not support it
+      -- the peak here is real and present before selection. Real data may still differ (this
+      is a single-species, single-pt gun, not real event topology/pileup), but the base
+      mechanism proposed for real data is not reproduced under matched occupancy in MC.
+</ul>
+
+<HR>
+<H2>Plots (all 4 disks, split by orientation)</H2>
+<p>Gray filled = every candidate hit on that disk. Red line = the hit actually matched into
+a track's seed. Log-y throughout. 2D maps: log-z, left = all candidates, right = matched
+only. V = vertical strip (x plane), H = horizontal strip (y plane).</p>
+<table border=1>
+  <tr><td>Disk</td><td align=center>V: dx (precise)</td><td align=center>V: dy (off-axis)</td>
+      <td align=center>H: dx (off-axis)</td><td align=center>H: dy (precise)</td>
+      <td align=center>V: 2D</td><td align=center>H: 2D</td></tr>
+  <tr><td>0</td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dx_V_disk0.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dx_V_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dy_V_disk0.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dy_V_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dx_H_disk0.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dx_H_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dy_H_disk0.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dy_H_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_XY_V_disk0.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_XY_V_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_XY_H_disk0.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_XY_H_disk0.png" height=160></a></td></tr>
+  <tr><td>1</td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dx_V_disk1.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dx_V_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dy_V_disk1.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dy_V_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dx_H_disk1.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dx_H_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dy_H_disk1.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dy_H_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_XY_V_disk1.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_XY_V_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_XY_H_disk1.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_XY_H_disk1.png" height=160></a></td></tr>
+  <tr><td>2</td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dx_V_disk2.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dx_V_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dy_V_disk2.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dy_V_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dx_H_disk2.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dx_H_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dy_H_disk2.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dy_H_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_XY_V_disk2.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_XY_V_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_XY_H_disk2.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_XY_H_disk2.png" height=160></a></td></tr>
+  <tr><td>3</td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dx_V_disk3.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dx_V_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dy_V_disk3.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dy_V_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dx_H_disk3.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dx_H_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_Dy_H_disk3.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_Dy_H_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_XY_V_disk3.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_XY_V_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np8_blinddiag_crosscond/blind_XY_H_disk3.png"><img src="ele2pi_np8_blinddiag_crosscond/blind_XY_H_disk3.png" height=160></a></td></tr>
+</table>
+
+<HR>
+<p><a href="ftt_search_window.html">&larr; Back to FST-blind projection study</a> |
+<a href="index.html">FTT geometry page</a> |
+<a href="../jpsi/index.html">Back to main DiLepton page</a></p>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

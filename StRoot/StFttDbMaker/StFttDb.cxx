@@ -225,7 +225,7 @@ void StFttDb::loadHardwareMapFromDb( St_fttHardwareMap * dataset ) {
                 uint16_t key = packKey( table[i].feb[j], table[i].vmm[j], table[i].vmm_ch[j] );
                 uint16_t val = packVal( table[i].row[j], table[i].strip[j] );
                 mMap[ key ] = val;
-                rMap[ val ] = key;
+                rMap[ val ].push_back( key ); // a given (row,strip) has one channel per orientation -- keep all of them
             }
             // sample output of first member variable
         }
@@ -262,7 +262,7 @@ void StFttDb::loadHardwareMapFromFile( std::string fn ){
         uint16_t key = packKey( feb, vmm, ch );
         uint16_t val = packVal( row, strip );
         mMap[ key ] = val;
-        rMap[ val ] = key;
+        rMap[ val ].push_back( key ); // a given (row,strip) has one channel per orientation -- keep all of them
         if ( mDebug ){
             printf( "key=%d", key );
             printf( "in=(feb=%d, vmm=%d, ch=%d)\n", feb, vmm, ch );
@@ -594,13 +594,32 @@ bool StFttDb::loadStripLengthFromFile( std::string fn ){
 
 // same for all planes
 // we have quadrants like:
-// 
+//
 // D | A
 // ------
 // C | B
 // Row 3 and 4 are always diagonal
 // odd (even) FOB are horizontal (vertical) for A and C (B and D)
 // even (odd) FOB are vertical (horizontal) for A and C (B and D)
+//
+// REVERTED to original (2026-07-22, akio+Claude): a full H<->V swap of this
+// formula was tested at big statistics (script/checkAllExcessQuad.C,
+// fttgeom/real_data_excess_check.html) and found NOT to produce a clean
+// signal relocation -- traced the full chain (StFttClusterMaker's
+// hStripsPerRob/vStripsPerRob bucketing -> FindClusters, identical
+// algorithm on both streams -> StFttClusterPointMaker::MakeLocalPoints,
+// which assigns the SAME orientation-agnostic clu->x() [=strip*3.2-1.6,
+// StFttClusterMaker.cxx CalculateClusterInfo] to global X for kFttVertical
+// or global Y for kFttHorizontal) -- a clean swap of this formula SHOULD
+// have caused the FST-blind diagnostic's V and H populations to trade
+// places entirely (same physical hits, relabeled). They didn't -- both
+// states show real but somewhat weaker peaks in the SAME slots, not a
+// trade. This means either the real bug isn't a clean global parity-based
+// mislabeling (this formula may need per-FEB correction, not a blanket
+// flip), or something else not yet traced explains the mismatch. See
+// script/testXYMirror.C (2026-07-22) for a cleaner, isolated test that
+// mirrors X<->Y purely in the FST-blind diagnostic, without touching this
+// formula/clustering/real point objects at all.
 UChar_t StFttDb::getOrientation( int rob, int feb, int vmm, int row ) const {
     if ( mDebug ) {
         printf( "getOrientation( %d, %d, %d, %d )", rob, feb, vmm, row ); puts("");
@@ -610,7 +629,7 @@ UChar_t StFttDb::getOrientation( int rob, int feb, int vmm, int row ) const {
         if ( feb % 2 == 0 ) { // even feb
             // row 3 and 4 are always diagonal
             if ( 3 == row || 4 == row )
-                return kFttDiagonalH;    
+                return kFttDiagonalH;
             return kFttHorizontal;
         }
         // row 3 and 4 are always diagonal
@@ -619,7 +638,7 @@ UChar_t StFttDb::getOrientation( int rob, int feb, int vmm, int row ) const {
         // even
         return kFttVertical;
     } else { // odd rob
-        
+
         if ( feb % 2 == 0 ) { // even feb
             // row 3 and 4 are always diagonal
             if ( 3 == row || 4 == row )
@@ -739,15 +758,26 @@ bool StFttDb::hardwareMap( StFttRawHit * hit ) const{
 // plane, quad, row and strip can be calculated from the simulation maker
 // the key issue if to figure out which feb, row, and strip is for the selected channel
 bool StFttDb::reverseHardwareMap( int &rob, int &feb, int &vmm, int &ch, int plane, int quad, int row, int strip, UChar_t &orientation ) const {
-    // uint16_t key = packKey( feb, vmm, ch );
     uint16_t val = packVal( row, strip );
-    if ( rMap.count( val ) ){
-        uint16_t key = rMap.at( val );
-        unpackKey( key, feb, vmm, ch );//get the feb, vmm and channel information
-        rob = quad + ( plane *nQuadPerPlane ) + 1;// input plane and quad should start from 0;
-        
-        orientation = getOrientation( rob, feb, vmm, row );
-        return true;
+    if ( !rMap.count( val ) ) return false;
+
+    rob = quad + ( plane *nQuadPerPlane ) + 1;// input plane and quad should start from 0;
+
+    // (row,strip) alone is ambiguous -- both an H and a V (or DiagonalH/DiagonalV
+    // for row 3/4) channel exist there in the real hardware map. If the caller
+    // pre-set orientation to a specific value, return the channel matching it;
+    // if left at kFttUnknownOrientation, return whichever comes first (matches
+    // the old, pre-multi-channel behavior for callers that don't care).
+    UChar_t wantOrientation = orientation;
+    for ( uint16_t key : rMap.at( val ) ) {
+        int f, v, c;
+        unpackKey( key, f, v, c );
+        UChar_t o = getOrientation( rob, f, v, row );
+        if ( wantOrientation == kFttUnknownOrientation || o == wantOrientation ) {
+            feb = f; vmm = v; ch = c;
+            orientation = o;
+            return true;
+        }
     }
     return false;
 }
@@ -755,10 +785,12 @@ bool StFttDb::reverseHardwareMap( int &rob, int &feb, int &vmm, int &ch, int pla
 // plane, quad, row and strip can be calculated from the simulation maker
 // the key issue if to figure out which feb, row, and strip is for the selected channel
 bool StFttDb::reverseHardwareMap( int &feb, int &vmm, int &ch, int row, int strip ) const{
-    // uint16_t key = packKey( feb, vmm, ch );
+    // No rob/orientation available here to disambiguate which of the (row,strip)
+    // channels (H vs V, or DiagonalH vs DiagonalV) is wanted -- returns the first
+    // one on record. Prefer the 9-arg overload when orientation matters.
     uint16_t val = packVal( row, strip );
-    if ( rMap.count( val ) ){
-        uint16_t key = rMap.at( val );
+    if ( rMap.count( val ) && !rMap.at( val ).empty() ){
+        uint16_t key = rMap.at( val ).front();
         unpackKey( key, feb, vmm, ch );//get the feb, vmm and channel information
         return true;
     }
@@ -772,7 +804,17 @@ UChar_t StFttDb::plane( StFttRawHit * hit ){
 }
 
 UChar_t StFttDb::quadrant( StFttRawHit * hit ){
-    if ( hit->quadrant() < nQuad )
+    // Bug (found 2026-07-22): was checking against nQuad (=16, total
+    // quadrants across all 4 planes) instead of nQuadPerPlane (=4). Since
+    // the "unset" sentinel kFttUnknownQuadrant=4 is < 16, the check always
+    // passed and the rdo()-1 fallback below never fired for a hit whose
+    // StFttRawHit::mQuadrant hadn't been mapped yet (e.g. anything read
+    // before StFttClusterMaker::ApplyHardwareMap() runs this event --
+    // notably StFttHitCalibMaker::Make(), which calls StFttDb::fob(),
+    // which calls this, and runs earlier in the chain than
+    // ApplyHardwareMap in production). Matches StFttDb::plane()'s
+    // (correct) use of nPlane just above.
+    if ( hit->quadrant() < nQuadPerPlane )
         return hit->quadrant();
     return hit->rdo() - 1;
 }

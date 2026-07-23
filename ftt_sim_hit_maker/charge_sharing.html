@@ -1,0 +1,231 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>FTT real charge-sharing measurement</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>Real FTT charge-sharing measurement</H1>
+<p><a href="index.html">&larr; back to StFttSimHitMaker main page</a></p>
+
+<H2>Goal</H2>
+<ul>
+  <li>Replace <tt>StFttSimHitMaker</tt>'s flat 1:8:1 3-strip model with a real, measured profile.
+  <li>Source: production p+p 500GeV MuDst, run 23081015, 2463 events.
+</ul>
+
+<H2>Method</H2>
+<ul>
+  <li>No existing FTT cluster QA tool found; <tt>StMuFttCluster</tt> has no <tt>row()</tt>,
+      and the cluster&harr;rawhit link (<tt>StMuFttUtil::rebuildRelationships()</tt>) is an
+      empty stub &mdash; so re-clustering from raw hits directly, in a new
+      <tt>StRoot/StFttChargeSharingMaker</tt>.
+  <li>Time cut: real per-VMM anchor learned online from each VMM's <tt>dbcid</tt> mode
+      (same algorithm as <tt>StFttHitCalibMaker</tt>, 200-sample threshold), window
+      [-65,100] (confirmed from DB, constant for every VMM this run).
+  <li>Re-clustering: same algorithm as <tt>StFttClusterMaker</tt> (max-ADC anchor, expand
+      while adjacent + non-increasing ADC). Note: real threshold is currently unset
+      (<tt>GetThresholdFor()</tt> stub returns 0) &mdash; any nonzero ADC, including noise,
+      can join a cluster.
+  <li>57.9% of raw hits pass the time cut; 5,634,704 clusters from 2443 analyzed events.
+</ul>
+
+<H2>Key numbers</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>nStrips</TH><TH>fraction</TH></TR>
+<TR><TD>1</TD><TD>19.4%</TD></TR>
+<TR><TD>2</TD><TD>32.7%</TD></TR>
+<TR><TD>3</TD><TD>27.1%</TD></TR>
+<TR><TD>4</TD><TD>12.8%</TD></TR>
+<TR><TD>5</TD><TD>5.2%</TD></TR>
+<TR><TD>6-10</TD><TD>2.8% (tail)</TD></TR>
+</TABLE>
+
+<p><b>3-strip cluster charge ratio: 25 : 48 : 25 (&asymp;1:2:1), not 1:8:1.</b> Center strip
+carries far less of the charge than the current model assumes.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>offset from peak</TH><TH>-4</TH><TH>-3</TH><TH>-2</TH><TH>-1</TH><TH>0</TH><TH>+1</TH><TH>+2</TH><TH>+3</TH><TH>+4</TH></TR>
+<TR><TD>mean ADC fraction (all clusters)</TD>
+    <TD>5.6%</TD><TD>7.8%</TD><TD>11.7%</TD><TD>26.4%</TD><TD>58.3%</TD><TD>26.7%</TD><TD>12.4%</TD><TD>8.0%</TD><TD>5.5%</TD></TR>
+</TABLE>
+
+<p>sumAdc: mean=431.5, RMS=453.5. peakAdc: mean=226.3, RMS=195.8.</p>
+
+<H2>First peak in cluster total ADC (sumAdc&asymp;50-100)</H2>
+<ul>
+  <li>That peak is essentially <b>all nStrips==1 clusters</b> (split sumAdc by
+      multiplicity: n=1 peaks at sumAdc&asymp;90 and is nearly gone by 300; n&ge;2
+      peaks at sumAdc&asymp;220 and dominates above that).
+  <li>Per-channel raw ADC (before any clustering, straight from MuDst) has a hard
+      floor: <b>zero hits below ADC&asymp;15</b>, sharp rise, broad hump &asymp;60-90, then
+      smooth decline. This is a real hardware/DAQ zero-suppression threshold already
+      in the data &mdash; not from our clustering (whose own threshold is off/0).
+  <li>So the low-sumAdc peak = real single-strip hits whose only one strip (and no
+      neighbor) cleared that hardware threshold. Not an artifact of this analysis.
+  <li>Real hit vs. noise: can't fully separate without a pedestal run, but the shape
+      argues for real hits &mdash; the n==1 decline spans ~300 ADC counts, much broader
+      than a narrow noise excess sitting just above threshold would give; looks more
+      like the natural low-charge tail of real hits being clipped by the threshold.
+  <li>Comb/moir&eacute; pattern in the ADC plots is a binning artifact (200 bins over
+      0-1024 vs. integer ADC values), not physical.
+</ul>
+
+<H2>Caveat</H2>
+<ul>
+  <li>Falloff vs. offset is much heavier-tailed than a clean Gaussian (roughly &times;2 drop
+      per strip out to &plusmn;4, tail out to 10 strips).
+  <li>Zero threshold means noise and unrelated pileup (busy p+p event, wide time window) can
+      inflate the tails &mdash; not separated from genuine single-hit charge spread.
+  <li>Decided: full deconvolution (threshold + pileup jointly) is more than a tracking
+      detector sim needs. Model scope limited to center strip &plusmn;1 (below).
+</ul>
+
+<H2>Model implemented in StFttSimHitMaker</H2>
+<ul>
+  <li>Gaussian(&sigma;) charge response, split over center strip &plusmn;1 only (far tail
+      dropped &mdash; small, 2.8% of clusters, likely pileup/noise contaminated here).
+  <li>&sigma;=2.4mm (pitch=3.2mm), fit to the clean nStrips==3 ratio 25:48:25.
+  <li>Split uses the TRUE sub-strip hit position (previously discarded by rounding) &mdash;
+      asymmetric per hit, not a fixed ratio; restores the real charge-division resolution
+      benefit.
+  <li>Total charge/hit: exponential draw, mean=431.5 (measured sumAdc mean=RMS), drawn ONCE
+      per truth hit and shared between the intended + diagonal orientation (same foil, same
+      physical charge deposit &mdash; see X-U/Y-V correlation check below).
+  <li>~70 ADC threshold applied once, after summing all contributions per channel, to
+      neighbor strips only. <b>Center strip is always kept</b> (floored to threshold if the
+      draw came in low) &mdash; a naive all-3-strips threshold silently dropped ~30% of truth
+      hits entirely, an unintended efficiency loss (this project keeps efficiency at 100%
+      for now, see TODO on main page).
+</ul>
+
+<p>Validated: 300-event single e<sup>-</sup> gun (45&deg;) through the full chain, no errors.
+Cluster nStrips fractions, sim vs. real:</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>nStrips</TH><TH>sim</TH><TH>real</TH></TR>
+<TR><TD>1</TD><TD>34.7%</TD><TD>19.4%</TD></TR>
+<TR><TD>2</TD><TD>25.6%</TD><TD>32.7%</TD></TR>
+<TR><TD>3</TD><TD>35.6%</TD><TD>27.1%</TD></TR>
+<TR><TD>4</TD><TD>3.3%</TD><TD>12.8%</TD></TR>
+<TR><TD>5+</TD><TD>0.8%</TD><TD>8.0%</TD></TR>
+</TABLE>
+<ul>
+  <li>Scanned both &sigma; (1.6-5.8mm) and mean charge (300-2100 ADC) separately: neither
+      knob can reach the real 1:2:3 shape (renormalized: 24%:41%:34%). 2-strip stays stuck
+      around 25-27% regardless &mdash; a structural limit of a symmetric-Gaussian +
+      hard-threshold model, not a tuning problem. Likely needs a smeared/noisy threshold or
+      non-Gaussian response to fix properly &mdash; judged out of scope (same call as the
+      deconvolution decision above).
+  <li>Kept &sigma;=2.4mm, mean=431.5 as-is (both anchored to real measurements). The two
+      things that matter for tracking -- position-dependent resolution benefit, 100%
+      baseline efficiency -- are in place; the multiplicity mix is approximate.
+  <li>nStrips&gt;3 can only come from nearby-track cluster merges in this model (one hit is
+      capped at 3 strips by construction) &mdash; real data's 4+ tail includes genuine
+      wide single-hit spread, so this is a structural, accepted difference, not a bug.
+</ul>
+
+<H2>Plots</H2>
+<p>Click any thumbnail for full size.</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>nStrips</TH><TH>sumAdc</TH><TH>peakAdc</TH></TR>
+<TR>
+<TD><a href="plots_cs/hNStrips.png"><img src="plots_cs/hNStrips.png" height=180></a></TD>
+<TD><a href="plots_cs/hSumAdc.png"><img src="plots_cs/hSumAdc.png" height=180></a></TD>
+<TD><a href="plots_cs/hPeakAdc.png"><img src="plots_cs/hPeakAdc.png" height=180></a></TD>
+</TR>
+<TR BGCOLOR="#c0c0f0"><TH>sumAdc by nStrips (1=red,&ge;2=blue)</TH><TH>raw per-channel ADC (pre-cluster)</TH><TH></TH></TR>
+<TR>
+<TD><a href="plots_cs/hSumAdcByMult.png"><img src="plots_cs/hSumAdcByMult.png" height=180></a></TD>
+<TD><a href="plots_cs/hRawAdcInTime.png"><img src="plots_cs/hRawAdcInTime.png" height=180></a></TD>
+<TD></TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>ADC fraction vs offset: all</TH><TH>nStrips=2</TH><TH>nStrips=3</TH></TR>
+<TR>
+<TD><a href="plots_cs/pProfileAll.png"><img src="plots_cs/pProfileAll.png" height=180></a></TD>
+<TD><a href="plots_cs/pProfile_nStrips2.png"><img src="plots_cs/pProfile_nStrips2.png" height=180></a></TD>
+<TD><a href="plots_cs/pProfile_nStrips3.png"><img src="plots_cs/pProfile_nStrips3.png" height=180></a></TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>nStrips=4</TH><TH>nStrips=5+</TH></TR>
+<TR>
+<TD><a href="plots_cs/pProfile_nStrips4.png"><img src="plots_cs/pProfile_nStrips4.png" height=180></a></TD>
+<TD><a href="plots_cs/pProfile_nStrips5p.png"><img src="plots_cs/pProfile_nStrips5p.png" height=180></a></TD>
+</TR>
+</TABLE>
+
+<HR>
+<H2>Same-foil charge correlation (X-U, Y-V)</H2>
+<p>Vertical(X)+DiagonalV(U) share the front foil; Horizontal(Y)+DiagonalH(V) share the back
+foil &mdash; same physical charge deposit, two differently-angled strip layers. Checked
+whether that shows up as a real correlation.</p>
+
+<H3>1st pass: sum of all hits in the event (too easy)</H3>
+<ul>
+  <li>Total in-time ADC per plane/quad/event, one layer vs. the other &mdash; NOT per-cluster,
+      just aggregate occupancy.
+  <li>Both show a clear diagonal ridge: correlation coefficient <b>0.60 (X-U)</b>,
+      <b>0.81 (Y-V)</b>.
+  <li>Diagonal layer consistently collects less total charge: U/X mean ratio 0.59, V/Y mean
+      ratio 0.60 &mdash; same ratio on both foils, looks systematic (diagonal-strip
+      geometry/gain), not noise.
+  <li>But: this correlates almost trivially just from occupancy (more hits &rArr; more charge
+      on both layers together) &mdash; doesn't test whether individual CLUSTERS match.
+</ul>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>X (Vertical) vs U (DiagonalV), event sums</TH><TH>Y (Horizontal) vs V (DiagonalH), event sums</TH></TR>
+<TR>
+<TD><a href="plots_cs/h2XvsU.png"><img src="plots_cs/h2XvsU.png" height=200></a></TD>
+<TD><a href="plots_cs/h2YvsV.png"><img src="plots_cs/h2YvsV.png" height=200></a></TD>
+</TR>
+</TABLE>
+
+<H3>2nd pass: cluster-by-cluster, all combinations</H3>
+<ul>
+  <li>Every (X-cluster,U-cluster) combination within the same plane/quad/event (same for
+      Y/V) &mdash; true matches should sit on top of the combinatorial background from
+      unrelated pairings.
+  <li>No peak survives: correlation coefficient drops to <b>0.017 (X-U)</b>,
+      <b>0.028 (Y-V)</b> at full statistics (51M / 55M combinations). The ratio histograms
+      (U/X, V/Y) are smooth and featureless, no bump near 0.6-0.8 &mdash; pure combinatorial
+      background swamps any real signal.
+  <li>Why: ~144 clusters per (disk,quad) per event combining all 4 orientations (~36 per
+      single orientation) &mdash; a p+p event doesn't have that many real particles per
+      quadrant. Cross-checked against PRODUCTION's own already-reconstructed
+      <tt>StMuFttCluster</tt> count (not just this re-clustering) for the same 40 real
+      events: production shows the SAME order of magnitude (~1000-2700 clusters/event).
+      Not a bug in this analysis &mdash; <tt>StFttClusterMaker::GetThresholdFor()</tt> is a
+      real, still-unimplemented stub (returns 0) in production too, so real reconstruction
+      is currently just as noise/pileup-dominated as this re-clustering.
+  <li>Tried requiring EXACTLY 1 X-cluster + 1 U-cluster (no combinatorial ambiguity at all)
+      to isolate clean pairs: zero such plane/quad/events exist anywhere in the full
+      2463-event file. Occupancy is uniformly too high, everywhere, all the time, in this
+      sample &mdash; there's no quiet corner to exploit.
+</ul>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>X vs U, all cluster combinations</TH><TH>Y vs V, all cluster combinations</TH></TR>
+<TR>
+<TD><a href="plots_cs/h2ClusterXvsU.png"><img src="plots_cs/h2ClusterXvsU.png" height=200></a></TD>
+<TD><a href="plots_cs/h2ClusterYvsV.png"><img src="plots_cs/h2ClusterYvsV.png" height=200></a></TD>
+</TR>
+<TR BGCOLOR="#c0c0f0"><TH>ratio U/X, all combinations</TH><TH>ratio V/Y, all combinations</TH></TR>
+<TR>
+<TD><a href="plots_cs/hRatioUX.png"><img src="plots_cs/hRatioUX.png" height=200></a></TD>
+<TD><a href="plots_cs/hRatioVY.png"><img src="plots_cs/hRatioVY.png" height=200></a></TD>
+</TR>
+</TABLE>
+<p><b>Conclusion: a ratio cut can't identify correlated cluster pairs in this dataset as-is</b>
+&mdash; the real fix is upstream (implement <tt>GetThresholdFor()</tt> to cut noise/pileup
+clusters before combinatorics gets tried at all), not a downstream ratio cut fighting an
+already-overwhelming background.</p>
+
+<HR>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

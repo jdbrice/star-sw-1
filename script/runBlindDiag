@@ -1,0 +1,48 @@
+#!/bin/csh
+# Per-file condor job: MuDst -> fwd_blind_diag.root only (the FST-blind FTT
+# matching diagnostic, see fttgeom/ftt_search_window.html and
+# fttgeom/real_data_excess_check.html). Modeled on script/runab but skips the
+# picoDst/residual copy-back -- this job only needs the blind-diagnostic
+# histograms, moved out with a unique per-file name so many parallel condor
+# jobs can write into the same output directory without clobbering each
+# other (to be hadd'ed together afterward).
+#
+# Usage: runBlindDiag INPUTDIR BASE OUTDIR
+
+set nonomatch
+
+set inputdir=$1
+set base=$2
+set outdir=$3
+set dir=$cwd
+
+echo dir=$dir inputdir=$inputdir base=$base outdir=$outdir
+
+set mudst = $base
+set diagname = $mudst:s/.MuDst.root/.fwd_blind_diag.root/
+
+cd $SCRATCH
+
+/bin/cp $dir/fwd_afterburner_db.C .
+/bin/cp $dir/fGeom.root .
+ln -s $dir/.$STAR_HOST_SYS
+ln -s $dir/StRoot
+
+echo copying $inputdir/$base
+/bin/cp $inputdir/$base ./
+
+pwd
+ls -la
+
+root4star -l -b -q fwd_afterburner_db.C'("'$base'",10000000)' >& /dev/null
+
+pwd
+ls -la
+
+mkdir -p $outdir
+if ( -e fwd_blind_diag.root ) then
+    echo /bin/mv fwd_blind_diag.root $outdir/$diagname
+    /bin/mv fwd_blind_diag.root $outdir/$diagname
+else
+    echo "WARNING: fwd_blind_diag.root not found -- job produced nothing"
+endif

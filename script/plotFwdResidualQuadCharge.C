@@ -190,6 +190,7 @@ void plotXYAsymmetry(TFile* f, const char* outdir, const char* tag,
 
         TCanvas* cPos = new TCanvas(Form("cPos_%s_%s", tag, names[i].Data()), "", W, H);
         gPad->SetRightMargin(0.15);
+        gPad->SetLogz();
         SET_SEQUENTIAL_PALETTE();
         hPos->GetXaxis()->SetRangeUser(-range, range);
         hPos->GetYaxis()->SetRangeUser(-range, range);
@@ -200,6 +201,7 @@ void plotXYAsymmetry(TFile* f, const char* outdir, const char* tag,
 
         TCanvas* cNeg = new TCanvas(Form("cNeg_%s_%s", tag, names[i].Data()), "", W, H);
         gPad->SetRightMargin(0.15);
+        gPad->SetLogz();
         SET_SEQUENTIAL_PALETTE();
         hNeg->GetXaxis()->SetRangeUser(-range, range);
         hNeg->GetYaxis()->SetRangeUser(-range, range);
@@ -208,6 +210,8 @@ void plotXYAsymmetry(TFile* f, const char* outdir, const char* tag,
         cNeg->Print(tmpNeg);
         delete cNeg;
 
+        // NOTE: no SetLogz() here -- asymmetry spans [-1,1] including 0/negative,
+        // a log scale doesn't apply to it.
         TCanvas* cAsym = new TCanvas(Form("cAsym_%s_%s", tag, names[i].Data()), "", W, H);
         gPad->SetRightMargin(0.15);
         SET_DIVERGING_PALETTE();

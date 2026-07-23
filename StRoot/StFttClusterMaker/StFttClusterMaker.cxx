@@ -450,6 +450,16 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
         // derivation (this single line explains the top/bottom+north/south swap and the
         // bowtie shape both).
         clu->setMaxStripLength( maxAdcHit->stripLength( ) );
+        // Fix (2026-07-18): same bug shape as maxStripLength above -- setMaxStripCenter
+        // was also never called, so StFttCluster::maxStripCenter() stayed at its -999
+        // default forever. StFttClusterPointMaker used a row-averaged fallback
+        // (YX_StripGroupEdge[row]+maxStripLength/2) for the off-axis coordinate instead,
+        // which collapses ~92% of same-row hits (identical maxStripLength) to one
+        // constant position, discarding real per-strip resolution. maxAdcHit->stripCenter()
+        // comes from the same scMapXY table already used (correctly, verified against
+        // real data) for the precision coordinate via cluster x()/y() -- no row dependence
+        // in that lookup, so this is safe for all rows, not just row 0.
+        clu->setMaxStripCenter( maxAdcHit->stripCenter( ) );
 
         // Now find the cluster edges
         size_t left = anchor, right = anchor;

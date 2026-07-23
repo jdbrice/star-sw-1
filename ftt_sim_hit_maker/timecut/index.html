@@ -1,0 +1,155 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>FTT per-VMM uuid vs. time diagnostic</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>FTT per-VMM uuid vs. time diagnostic</H1>
+<p><a href="../index.html">&larr; back to StFttSimHitMaker main page</a></p>
+
+<H2>Goal / Method</H2>
+<ul>
+  <li>Source: production p+p 500GeV MuDst, run 23081004, 2000 events
+      (<tt>st_fwd_23081004_raw_6000003.MuDst.root</tt>).
+  <li>Driver: <tt>script/checkFttTimeVsUuid.C</tt> (chain: <tt>StMuDstMaker + St_db_Maker +
+      StMuDst2StEventMaker + StFttDbMaker + StFttHitCalibMaker</tt>, no
+      <tt>StFttClusterMaker</tt> -- every raw hit is inspected, not just ones surviving a
+      time-cut-gated clustering pass).
+  <li>X axis = per-(VMM,FOB) <tt>uuid</tt>, computed exactly as
+      <tt>StFttHitCalibMaker::Make()</tt> computes it internally:
+      <pre>UShort_t fob  = (UShort_t)mFttDb-&gt;fob( rawHit );
+UShort_t uuid = rawHit-&gt;vmm() + ( StFttDb::nVMMPerFob * fob );</pre>
+      confirmed identical, line for line, to what's actually used to key the real
+      per-channel calibration (<tt>StRoot/StFttHitCalibMaker/StFttHitCalibMaker.cxx:103-104</tt>)
+      -- not a separate/approximate indexing scheme.
+  <li>"RAW" = <tt>hit-&gt;dbcid()</tt> as unpacked, before any per-channel anchor subtraction.
+      Plotted over its full measured range [0,4096) (a 12-bit counter), not an arbitrary
+      window.
+  <li>"CORRECTED" = <tt>StFttHitCalibMaker</tt>'s own <tt>hit-&gt;time()</tt>
+      (<tt>dbcid - dbcidAnchor[uuid]</tt>), only filled once that channel's helper is
+      <tt>ready()</tt> (&gt;200 samples) so cold-start sentinel (-4097) hits are excluded.
+      Plotted over &plusmn;1000 to see the whole pedestal shape, not clip it.
+  <li>Both 2D plots use <tt>SetLogz</tt> so the sharp per-VMM peak and the much lower-rate
+      surrounding structure are both visible together.
+</ul>
+
+<p style="color:darkred"><b>Bug found and fixed (2026-07-22):</b>
+<tt>StFttDb::quadrant()</tt> checked its "already mapped" sentinel against the wrong constant,
+so the fallback to the real quadrant never fired -- the per-VMM time-calibration anchor
+(computed earlier in the chain than hardware mapping runs) silently merged all 4 quadrants
+sharing a (plane,feb,vmm) into one shared anchor:</p>
+<pre>-    if ( hit-&gt;quadrant() &lt; nQuad )        // nQuad=16 (total, all 4 planes) -- wrong bound
++    if ( hit-&gt;quadrant() &lt; nQuadPerPlane ) // =4, matches StFttDb::plane()'s own check
+         return hit-&gt;quadrant();
+     return hit-&gt;rdo() - 1;</pre>
+<p>Separately found and also fixed: <tt>HitCalibHelper::time()</tt> did
+<tt>dbcid - dbcidAnchor[uuid]</tt> with no handling for dbcid's 12-bit (4096) rollover -- a
+channel whose true peak sits near the 0/4095 edge got split into two disconnected sub-peaks by
+the naive subtraction. Now wraps to the shortest signed distance. The 3rd row below shows this
+fix on top of the quadrant fix.</p>
+
+<H2>Plots: buggy vs. fixed, side by side</H2>
+<p>Same file, same 2000 events, same code otherwise -- only <tt>StFttDb::quadrant()</tt>
+differs between the two rows.</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH></TH><TH>RAW dbcid vs uuid (2D)</TH><TH>RAW dbcid, Y-proj (1D)</TH>
+    <TH>CORRECTED time vs uuid (2D)</TH><TH>CORRECTED time, Y-proj (1D)</TH></TR>
+<TR>
+<TD BGCOLOR="#f0d0d0"><b>BUG</b><br>(quadrants merged)</TD>
+<TD><a href="plots/raw2D_buggy.png"><img src="plots/raw2D_buggy.png" height=220></a></TD>
+<TD><a href="plots/rawProjY_buggy.png"><img src="plots/rawProjY_buggy.png" height=220></a></TD>
+<TD><a href="plots/corrected2D_buggy.png"><img src="plots/corrected2D_buggy.png" height=220></a></TD>
+<TD><a href="plots/correctedProjY_buggy.png"><img src="plots/correctedProjY_buggy.png" height=220></a></TD>
+</TR>
+<TR>
+<TD BGCOLOR="#d0f0d0"><b>FIXED</b><br>(real quadrants)</TD>
+<TD><a href="plots/raw2D.png"><img src="plots/raw2D.png" height=220></a></TD>
+<TD><a href="plots/rawProjY.png"><img src="plots/rawProjY.png" height=220></a></TD>
+<TD><a href="plots/corrected2D.png"><img src="plots/corrected2D.png" height=220></a></TD>
+<TD><a href="plots/correctedProjY.png"><img src="plots/correctedProjY.png" height=220></a></TD>
+</TR>
+<TR>
+<TD BGCOLOR="#d0e0f0"><b>FIXED +<br>WRAP-FIXED</b></TD>
+<TD align=center>(raw dbcid unaffected --<br>same as FIXED row)</TD>
+<TD align=center>(same as FIXED row)</TD>
+<TD><a href="plots/corrected2D_wrapped.png"><img src="plots/corrected2D_wrapped.png" height=220></a></TD>
+<TD><a href="plots/correctedProjY_wrapped.png"><img src="plots/correctedProjY_wrapped.png" height=220></a></TD>
+</TR>
+</TABLE>
+
+<H2>Mechanism: the merged "anchor" is just whichever quadrant is loudest</H2>
+<p><tt>HitCalibHelper</tt>'s self-calibrating anchor is <tt>dbcidAnchor[uuid] =
+mode-of-histogram</tt>. Under the bug, that histogram was the SUM of up to 4 real quadrants'
+distributions sharing a (plane,feb,vmm). Checked directly (<tt>script/checkQuadrantMergeEffect.C</tt>,
+feb=0/vmm=0, all 4 planes, bypassing the bug by using <tt>hit-&gt;sector()</tt>/<tt>rdo()</tt>
+directly for ground truth):</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>plane</TH><TH>quadA peak (n)</TH><TH>quadB peak (n)</TH>
+    <TH>quadC peak (n)</TH><TH>quadD peak (n)</TH><TH>buggy merged peak (n)</TH><TH>winner</TH></TR>
+<TR><TD>0</TD><TD>1218 (23,036)</TD><TD>468 (20,969)</TD><TD style="color:darkred"><b>2287 (29,672)</b></TD>
+    <TD>2674 (26,199)</TD><TD>2287 (99,876)</TD><TD style="color:darkred"><b>C</b></TD></TR>
+<TR><TD>1</TD><TD>658 (21,999)</TD><TD>866 (17,922)</TD><TD style="color:darkred"><b>3247 (24,573)</b></TD>
+    <TD>1307 (23,033)</TD><TD>3247 (87,527)</TD><TD style="color:darkred"><b>C</b></TD></TR>
+<TR><TD>2</TD><TD>262 (23,107)</TD><TD>3713 (22,902)</TD><TD style="color:darkred"><b>2939 (29,760)</b></TD>
+    <TD>2272 (24,010)</TD><TD>2939 (99,779)</TD><TD style="color:darkred"><b>C</b></TD></TR>
+<TR><TD>3</TD><TD>3511 (12,102)</TD><TD>1398 (26,970)</TD><TD style="color:darkred"><b>99 (27,794)</b></TD>
+    <TD>1982 (26,206)</TD><TD>99 (93,072)</TD><TD style="color:darkred"><b>C</b></TD></TR>
+</TABLE>
+<p>Not random pickup -- deterministic "highest-occupancy quadrant wins." Quadrant C has the
+most raw hits of the 4 in all 4 planes for this feb/vmm, and the merged anchor lands exactly on
+quadC's own peak every time. Quadrants A/B/D silently get corrected against quadC's anchor
+instead of their own, offset by anywhere from a few hundred to ~2000 dbcid units -- the direct
+source of the secondary bumps around &plusmn;700-800 in the buggy 1D plot above (the aggregate,
+across all feb/vmm/plane slices, of many individual offsets like these). Caveat: dbcid is a
+bounded 12-bit counter, so very large naive peak differences near the 0/4095 edge could in
+principle reflect wraparound rather than a true offset -- doesn't change the qualitative
+conclusion.</p>
+
+<H2 style="color:darkred">Did this cost us anything in production?</H2>
+<p>Checked directly: <tt>hit-&gt;time()</tt> (the value this bug corrupts) is read in exactly
+two places in the whole repo, both inside <tt>StFttClusterMaker::PassTimeCut()</tt>'s
+<tt>kTimeCutModeDB</tt>/<tt>kTimeCutModeCalibratedTime</tt> branches -- both unreachable when
+<tt>mTimeCutMode == kTimeCutModeAcceptAll</tt>, which returns <tt>true</tt> immediately without
+ever touching <tt>hit-&gt;time()</tt>. Since production defaulted to AcceptAll until this
+session's time-cut investigation changed it, <b>this bug was silently dormant in all prior
+production running -- no real signal was ever lost to it, because nothing was ever cut on the
+value it corrupts.</b></p>
+
+<H2>Findings</H2>
+<ul>
+  <li>18,380,903 raw hits total; 98.4% had a ready, non-sentinel corrected time by the time
+      this 2000-event sample finished (cold-start warm-up is a negligible effect at this
+      statistics -- occupancy is high enough that every active VMM clears the 200-sample
+      threshold almost immediately).
+  <li><b>Coverage, post-fix:</b> 372 of 384 possible uuids (VMMs) show real hits. Broken down
+      by (plane,quad), every single one of the 16 combinations is fully populated (24/24 =
+      6 febs &times; 4 vmm) EXCEPT disk1/quadA, which is exactly half-populated (12/24, feb
+      0,2,4 only) -- matching this session's earlier, independent, direct
+      <tt>sector()</tt>/<tt>rdo()</tt>-based check of that one region exactly. Before the fix,
+      the buggy <tt>quadrant()</tt> merged all 4 quadrants into 1 slot per (plane,feb,vmm),
+      making it look like only ~96 uuids (4 disks &times; 1 merged "quadrant") had any data at
+      all -- the detector is essentially fully instrumented in this file; that was a software
+      artifact, not a hardware coverage problem.
+  <li><b>CORRECTED time pedestal is narrower than it first appeared:</b> with the quadrant bug
+      merging up to 4 different real per-quadrant timing offsets into one shared anchor, the
+      pre-fix pedestal looked broad and nearly flat out past &plusmn;800-1000. Post-fix, each
+      VMM's anchor is computed from its own genuine (single-quadrant) dbcid distribution, and
+      the resulting pedestal is visibly bounded, falling to ~0 by roughly &plusmn;300 -- a real
+      calibration-quality improvement, not just a coverage one. The sharp peak at time=0 is
+      still only a few &times; the local background at its base, so the core finding (current
+      production's AcceptAll time-cut mode lets substantial out-of-time noise into clustering)
+      still stands, just with the noise now more precisely characterized as bounded rather than
+      unbounded.
+  <li>A handful of individual uuids (visible as thin near-vertical lines spanning the entire
+      dbcid/time range in both 2D plots) look like isolated bad/noise channels with flat,
+      structureless dbcid distributions -- plausibly related to the "ffff! FFFF!" corrupted-word
+      warnings seen in every run's stderr this session. Not investigated further yet.
+</ul>
+
+<HR>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

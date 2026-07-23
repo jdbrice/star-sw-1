@@ -1,19 +1,57 @@
 <HTML>
 <HEAD>
    <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
-   <TITLE>FTT geometry bug: StFttCluster::maxStripLength() (2026-07-17)</TITLE>
+   <TITLE>FTT geometry</TITLE>
 </HEAD>
 <BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
 
-<H1>FTT geometry bug: <tt>StFttCluster::maxStripLength()</tt> defaults to -999, never set</H1>
-<p>Found and fixed while investigating why the FTT hit-position maps on the
-<a href="../jpsi/ftt_quadrant_charge.html">quadrant &times; charge page</a> showed a
+<H1>FTT geometry: 6 fixes, and the follow-on matching investigation</H1>
+<p>Starting point was the FTT hit-position maps on the
+<a href="../jpsi/ftt_quadrant_charge.html">quadrant &times; charge page</a> showing a
 top/bottom + north/south swapped, bowtie-shaped footprint instead of the expected octagon.
-Full derivation of the diagnosis (including the single-electron particle-gun test that ended
-up motivating a separate FTT sim-hit-maker proposal) is on the
-<a href="../jpsi/electron_45.html">electron gun @ 45&deg; page</a>. This page is just the bug
-writeup itself, split out for its own reference.</p>
+Tracing that down led to 4 real fixes in the FTT reconstruction/matching chain, then to a
+follow-on question: even past these fixes, is the FTT hit a track picks up actually the
+right one? That investigation turned up 2 more real bugs, in the per-VMM time calibration.</p>
 
+<HR>
+<H2>The 6 fixes</H2>
+<ul>
+  <li><b><a href="maxStripLength.html">maxStripLength</a>:</b>
+      <tt>StFttCluster::maxStripLength()</tt> defaulted to -999 and was never set --
+      explains the full top/bottom + north/south swap and the bowtie shape, not just a
+      shift. Full writeup on its own page.
+  <li><b>maxStripCenter:</b> the off-axis strip position is now set per-strip. It used to
+      default to one row-averaged constant, shared by ~92% of same-row strips.
+  <li><b>Off-axis search gate, three stages:</b>
+    <ul>
+      <li>Originally: gated on a wide dPhi &amp; dR only -- dR is a 1D difference of
+          <tt>R=sqrt(x&sup2;+y&sup2;)</tt> from the beamline, not a real 2D distance, and
+          blind to azimuthal separation.
+      <li>Then: gated on the precise coordinate (dx) only, with no dy gate at all -- a bug
+          introduced earlier that left the off-axis coordinate completely unconstrained.
+      <li>Now: gates on both -- precise coordinate within &plusmn;7.5cm, off-axis coordinate
+          within &plusmn;3&sigma; of the hit's own reported off-axis uncertainty, typically
+          &plusmn;13cm.
+    </ul>
+  <li><b>Covariance unit:</b> hit covariance stayed in mm&sup2; while position had already
+      been converted to cm -- a 10x error in reported sigma, since fixed by rescaling by
+      1/100.
+  <li><b><a href="../ftt_sim_hit_maker/timecut/index.html">Per-VMM time calibration, 2 bugs</a>:</b>
+      <tt>StFttDb::quadrant()</tt> was silently merging all 4 real quadrants sharing a
+      (plane,feb,vmm) into one shared timing anchor (wrong sentinel bounds check); separately,
+      the anchor-subtraction had no handling for dbcid's 12-bit rollover, splitting some
+      channels' true peak in two. Found while building the diagnostics for the 6th fix below.
+  <li><b><a href="real_data_excess_check_timecut.html">Afterburner time cut: AcceptAll &rarr; real cut</a>:</b>
+      production's <tt>StFttClusterMaker</tt> had used <tt>kTimeCutModeAcceptAll</tt> (no
+      time-based filtering at all) for this whole analysis; switched on a real cut
+      (<tt>SetTimeCut(2,-40,100)</tt>) after fixing the 2 calibration bugs above. Resolves the
+      long-standing disk0/V dip anomaly and gives a modest overall purity improvement
+      (14.9%&rarr;15.6%), though the effect is not uniform across disks -- see the page for
+      the honest, mixed per-disk picture.
+</ul>
+
+<HR>
+<H2>Related pages</H2>
 <ul>
   <li><a href="../jpsi/ftt_quadrant_charge.html">Original (pre-fix) quadrant &times; charge page</a>
       -- where the swap/bowtie was first noticed
@@ -22,109 +60,25 @@ writeup itself, split out for its own reference.</p>
   <li><a href="../jpsi/electron_45.html">Electron gun @ 45&deg; page</a>
       -- full diagnostic derivation, MC-path-vs-real-data-path tracing, and the negative
       result from a mistaken additional "fix" that was tried and reverted along the way
+  <li><a href="../ftt_sim_hit_maker/index.html">StFttSimHitMaker status page</a>
+      -- the GEANT-truth-to-real-raw-hit injector motivated by the electron-gun page above,
+      later used to validate the 4 fixes on MC (see the electron-gun MC sub-pages linked
+      below)
+  <li><a href="ftt_search_window.html">FTT hit-matching purity -- FST-blind projection study</a>
+      -- follow-on investigation into whether the FTT hit a track picks up is actually the
+      right one, once past the 4 fixes above. Links out to the electron-gun MC comparison
+      sub-pages (single e- @ 45&deg;, 2&pi;/1 e-/event, 2&pi;/8 e-/event).
+  <li><a href="real_data_excess_check.html">Real-data "All candidates" excess check</a>
+      -- does real data show a real correlation before hit selection, and the online-QA
+      H/V-swap cross-check for disk1/quadrant A.
+  <li><a href="../ftt_sim_hit_maker/timecut/index.html">Per-VMM uuid-vs-time diagnostic</a>
+      -- the 2 time-calibration bugs (5th fix above), buggy-vs-fixed comparison plots.
+  <li><a href="real_data_excess_check_timecut.html">Real-data excess/purity check, with the
+      time cut on</a> -- repeats the excess/purity checks above after the 5th and 6th fixes;
+      disk0/V dip resolved, modest overall purity gain, mixed per-disk picture.
 </ul>
 
 <HR>
-<H2>The bug</H2>
-<p>Tracing <tt>StFttClusterPointMaker::MakeLocalPoints()</tt>
-(<tt>StFttClusterPointMaker.cxx:184,209</tt>) found the row-position formula:</p>
-<pre style="background:#f0f0f0;padding:8px;overflow-x:auto">
-point-&gt;setY( mFttDb-&gt;YX_StripGroupEdge[clu_x-&gt;row()] + clu_x-&gt;maxStripLength()/2. );
-</pre>
-<p><tt>StFttCluster::maxStripLength()</tt> reads a member that defaults to
-<b><tt>-999</tt></b> (<tt>StEvent/StFttCluster.h:92</tt>, comment: "Strip center of strip with
-maximum ADC") and <b><tt>StFttClusterMaker.cxx</tt> never calls
-<tt>setMaxStripLength()</tt></b> -- confirmed by grepping the entire maker for every
-<tt>set*()</tt> call: <tt>setPlane</tt>, <tt>setQuadrant</tt>, <tt>setRow</tt>,
-<tt>setOrientation</tt> are all there in the max-ADC-hit copy block
-(<tt>StFttClusterMaker.cxx:461-464</tt>), <tt>setMaxStripLength</tt> is simply missing from
-that list. So every real cluster's row-position term evaluates to
-<tt>YX_StripGroupEdge[row] + (-999)/2 = YX_StripGroupEdge[row] - 499.5mm</tt> -- a large
-negative garbage value instead of a small positive row-center offset. The same field also
-poisons the covariance (<tt>maxStripLength()&sup2;/12</tt>) and the diagonal-cluster
-formulas (<tt>StFttClusterPointMaker.cxx:230,235,270,275</tt>).</p>
-
-<p>Combined with the (correct, unmodified) per-quadrant <tt>sy</tt>/<tt>sx</tt> sign flips
-in <tt>StFttDb::getGloablOffset_ClusterPoint()</tt>
-(<tt>global.set(((x*sx)+dx)/10, ((y*sy)+dy)/10, z+dz)</tt>), this large negative local value
-doesn't just shift the result -- it flips which side of zero a whole quadrant lands on:</p>
-<table border=1 cellpadding=6 style="border-collapse:collapse">
-<tr bgcolor="#c0c0f0"><td>Quad</td><td>row0 y, broken (<tt>maxStripLength=-999</tt>)</td>
-    <td>row0 y, fixed (real strip length)</td></tr>
-<tr><td>A (south-top)</td><td style="color:darkred">-39.27 cm</td><td>+18.72 cm</td></tr>
-<tr><td>B (south-bottom)</td><td style="color:darkred">+57.22 cm</td><td>-0.77 cm</td></tr>
-<tr><td>C (north-bottom)</td><td style="color:darkred">+57.16 cm</td><td>-0.83 cm</td></tr>
-<tr><td>D (north-top)</td><td style="color:darkred">-39.23 cm</td><td>+18.76 cm</td></tr>
-</table>
-<p><b>This one bug explains the full swap, not just a shift.</b> Every quadrant flips which
-side of y=0 it lands on -- quads A/D (top) land negative instead of positive, quads B/C
-(bottom) land positive instead of negative. This exactly matches the real bands seen on the
-<a href="../jpsi/ftt_quadrant_charge.html">quadrant &times; charge page</a> before the fix
-(y&asymp;-40,-23,-4 for quads A/D and +22,+42,+58 for quads B/C) and exactly matches what was
-flagged early in this investigation: <i>"not only top 1/2 and bottom 1/2 is swapped... plus
-north and south is also swapped as well."</i></p>
-
-<p>Side effect: since <tt>maxStripLength()&sup2;</tt> also feeds the covariance
-(<tt>StFttClusterPointMaker.cxx:186,199</tt>), every real point gets an enormous, unphysical
-uncertainty (&sigma;&asymp;29cm) in the long-strip direction. GenFit would heavily down-weight
-such points in the fit -- plausibly why real-data tracks still fit and matched FCS reasonably
-despite hit positions being this badly wrong.</p>
-
-<h3>Bowtie shape: also explained, by the same bug</h3>
-<p>The bug is a rigid per-row constant -- it doesn't stretch anything, so it can't directly
-distort a shape. But it does something just as effective: it <b>reverses the row order</b>.
-Correctly, row0 (nearest the beampipe) should land nearest y=0 and row2 (farthest) should
-land farthest from y=0; under the bug this is exactly backwards (row0 lands farthest, row2
-lands nearest). Since each row has its own <i>row-intrinsic</i> x-extent (unrelated to the
-bug -- it's set by <tt>clu_x-&gt;x()</tt>, the real, continuous, untouched strip-index
-coordinate), swapping which row sits near vs. far from y=0 also swaps which x-extent shows
-up there. Checking the real data for <tt>disk0_x</tt> directly: row0 (appearing at the
-observed y=-40cm band, pre-fix) has max|x|=54.4cm (wide); row2 (observed y=-4cm band) has
-max|x|=30.1cm (narrow). Under the <i>fixed</i> mapping, row0's 54.4cm-wide data sits at
-y=+18.7cm (near zero) and row2's 30.1cm-narrow data sits at y=+54.8cm (far from zero) --
-<b>wide near the middle, narrow at the extremes: a proper octagon.</b> The observed bowtie
-(narrow near the middle, wide at the extremes) is exactly this octagon with the row order
-reversed. No second bug needed -- both observed shape anomalies (the top/bottom+north/south
-swap, and the bowtie) come from this same single missing <tt>setMaxStripLength()</tt> call.</p>
-
-<h3>Checked against Daniel's dev branch (<tt>origin/dev</tt>, upstream <tt>jdbrice/star-sw-1</tt>)</h3>
-<p>Confirmed <b>the bug is still present, unfixed</b>, in Daniel's current dev branch
-(commit <tt>c7c187e00d</tt>, 2026-07-13) -- this is not a fork-local issue:
-<tt>setMaxStripLength()</tt> is still never called in dev's <tt>StFttClusterMaker.cxx</tt>
-either.</p>
-<p>Also confirmed (per a question about the text file) commit <tt>58c67e52fe</tt>
-("StFttDb: embed strip geometry tables instead of reading Row*.txt", 2026-05-17): the FTT
-hardware was retired with a static geometry, so <tt>Row1.txt</tt>, <tt>Row4.txt</tt>,
-<tt>Row4_edge.txt</tt>, <tt>Row{1..5}_StripLength.txt</tt> are now compiled in as constexpr
-arrays in <tt>StFttDb.cxx</tt> instead of being read at runtime. Unrelated to the bug above,
-but explains why those <tt>.txt</tt> files no longer matter.</p>
-
-<p>Tracing this further found the real strip-length data <i>does</i> exist and is wired up
-correctly one layer down -- it just never gets carried through to the cluster.
-<tt>StFttDb::hardwareMap(StFttRawHit*)</tt> (<tt>StFttDb.cxx:606-639</tt> in dev) correctly
-looks up the (now-embedded) <tt>slMapRow1..5</tt> tables and calls
-<tt>hit-&gt;setStripLength(stripLength)</tt> on every raw hit, so
-<tt>StFttRawHit::stripLength()</tt> genuinely holds the real per-strip length. The fix is one
-missing line in <tt>StFttClusterMaker::CalculateClusterInfo()</tt>
-(<tt>StFttClusterMaker.cxx:461-464</tt> in dev, same in this repo), right next to the other
-max-ADC-hit field copies:</p>
-<pre style="background:#f0f0f0;padding:8px;overflow-x:auto">
-clu-&gt;setPlane       ( maxAdcHit-&gt;plane       ( ) );
-clu-&gt;setQuadrant    ( maxAdcHit-&gt;quadrant    ( ) );
-clu-&gt;setRow         ( maxAdcHit-&gt;row         ( ) );
-clu-&gt;setOrientation ( maxAdcHit-&gt;orientation ( ) );
-<b style="color:darkred">clu-&gt;setMaxStripLength( maxAdcHit-&gt;stripLength() );  // <-- missing</b>
-</pre>
-<p><b>Fixed and validated</b> on real data -- see the
-<a href="../jpsi/ftt_quadrant_charge_fixed_2.html">quadrant &times; charge page</a> for the
-before/after comparison. Confirmation with Daniel on syncing this fix upstream is still
-pending. Production plots across <tt>jpsi/</tt> still need updating with the fix before it's
-fully rolled out -- see that page's "Next steps".</p>
-
-<HR>
-<a href="../jpsi/ftt_quadrant_charge.html">Quadrant &times; charge page (pre-fix)</a> |
-<a href="../jpsi/ftt_quadrant_charge_fixed_2.html">Quadrant &times; charge page (fixed)</a> |
-<a href="../jpsi/electron_45.html">Electron gun @ 45&deg; page</a> |
 <a href="../jpsi/index.html">Back to main DiLepton page</a>
 <ADDRESS>
 <A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>

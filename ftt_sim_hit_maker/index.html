@@ -1,26 +1,21 @@
 <HTML>
 <HEAD>
    <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
-   <TITLE>StFttSimHitMaker -- FTT GEANT-to-hit simulation maker (proposal)</TITLE>
+   <TITLE>StFttSimHitMaker -- FTT GEANT-to-hit simulation maker (built + validated)</TITLE>
 </HEAD>
 <BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
 
-<H1>StFttSimHitMaker: a real-geometry FTT simulation maker (proposal / in progress)</H1>
-<p>Landing page for a separate, ongoing piece of work: a new maker that would let a
-GEANT particle-gun or Pythia MC event drive the <i>real</i> FTT reconstruction code path
-(<tt>StFttClusterMaker</tt> &rarr; <tt>StFttClusterPointMaker</tt> &rarr;
-<tt>StFttDb::getGloablOffset_ClusterPoint()</tt>) instead of the fast-sim shortcuts that
-bypass <tt>StFttDb</tt> entirely. Full design in
-<a href="../proposal_ftt_sim_maker.txt">proposal_ftt_sim_maker.txt</a> at the repo root.
-Being worked on in a separate Claude session from the one that found and fixed the
-<tt>maxStripLength</tt> bug below -- this page is the shared reference point between the two.</p>
+<H1>StFttSimHitMaker: a real-geometry FTT simulation maker</H1>
+<p>A new maker that lets a GEANT MC event drive the FTT reconstruction code path<br>
+  <tt>G2THIT</tt>  &rarr; <tt>StFttSimHitMaker</tt> &rarr; <tt>StFttClusterMaker</tt> &rarr; <tt>StFttClusterPointMaker</tt> which uses <tt>StFttDb</tt><br>
+  instead of the fast-sim shortcuts that bypass them entirely.
 
 <HR>
 <H2>Motivation</H2>
 <p>Directly motivated by the <a href="../jpsi/electron_45.html">single-electron gun @
 45&deg; page</a>: that page set out to test the FTT geometry transform with a controlled,
 known-kinematics single track, and found that <b>no MC-compatible code path in this repo
-actually reaches <tt>StFttDb</tt></b> --</p>
+actually reaches <tt>StFttDb</tt></b> : </p>
 <ul>
   <li><tt>StFttClusterPointMaker::MakeGeantPoints()</tt> (what <tt>script/sim.C</tt> and
       therefore <i>all</i> particle-gun/Pythia MC uses) reads GEANT truth directly in global
@@ -32,30 +27,247 @@ actually reaches <tt>StFttDb</tt></b> --</p>
       never reads GEANT truth at all; it only unpacks real raw DAQ data or an
       already-existing <tt>MuDst</tt>.
 </ul>
-<p>So the actual bug that turned out to explain the swapped/bowtie-shaped FTT footprint
-(<tt>StFttCluster::maxStripLength()</tt> defaulting to <tt>-999</tt>, full writeup at
-<a href="../fttgeom/index.html">fttgeom/index.html</a>) was found and fixed by reading the
-code and computing the <tt>StFttDb</tt> transform by hand against real data -- not by a
-controlled single-track test, because no such test was possible. <tt>StFttSimHitMaker</tt>
-is meant to close that gap for the next one.</p>
+<tt>StFttSimHitMaker</tt> closes this gap. This is also essential for
+<ul>  
+  <li>Noise studies
+  <li>Studies for high occupancy
+  <li>Embedding
+</ul>
 
 <HR>
-<H2>Status</H2>
-<p>Proposal only as of 2026-07-17 -- not started, not urgent (the bug it would have helped
-find is already found and fixed by hand). See
-<a href="../proposal_ftt_sim_maker.txt">proposal_ftt_sim_maker.txt</a> for the full design:
-two candidate approaches (inject synthetic <tt>StFttCluster</tt> objects directly, or the
-preferred option, inject synthetic <tt>StFttRawHit</tt> objects and let the real
-<tt>StFttClusterMaker</tt> do the clustering, reusing
-<tt>StFttDb::reverseHardwareMap()</tt>/<tt>hardwareMap()</tt> to avoid needing any new
-<tt>StFttDb</tt> code), rough scope (half a day to a day), and the reasoning for doing this
-in a separate session rather than folded into the bug-hunting one.</p>
+<H2>New StFttSimHitMaker</H2>
+<ul>
+  <li>Reads <tt>St_g2t_fts_hit</tt> and truth hits
+  <li>brute-forces which quadrant a hit belongs to by inverting <tt>StFttDb::getGloablOffset_ClusterPoint()</tt>'s 
+    forward transform for all 4 quadrants and keeping whichever gives a physically valid local (x,y) 
+    <ul>
+      <li>volume_id's own quadrant digit does <i>not</i> match <tt>StFttDb</tt>'s A/B/C/D convention (True? Is there better way?) 
+    </ul>
+  <li>Covers X, Y and both diagonal (U/V) orientations
+  <li>Injects ADC to strips using <tt>StFttDb::reverseHardwareMap()</tt>
+    <ul>
+      <li>Inital model : a fixed 3-strip cluster of 100,800,100 ADC
+      <li><a href="charge_sharing.html">
+	  Real-data analysis of FTT hits/clusters to get a realistic strip charge-sharing profile</a>
+      <li><a href="timecut/index.html">Per-VMM uuid-vs-time diagnostic</a>
+      <li>New model based on that analysis:
+        <ul>	  
+	  <li>Total charge/cluster : draw from exponential with mean=431.5 (measured cluster sumAdc mean=RMS)
+          <li>Center strip is always kept, floored to threshold (~70 ADC) if the draw came in low,
+              keeping single-hit efficiency at 100% for now
+          <li>Width : Gaussian(&sigma;=2.4mm) charge response, fit to the real nStrips=3 cluster mean 25:48:25 ratio
+          <li>Split is asymmetric, depending on where the hit truly lands within its strip
+              (not a fixed ratio) -- restores real charge-division resolution
+        </ul>
+    </ul>
+  <li>Sum up ADC for same strips (there can be multuple g2t hits for a strip, from 2nd particles or embedding)
+  <li>Create <tt>StFttRawHit</tt> for all strips with hit above threshold (&gt= 70)
+  <li><tt>StFttClusterMaker</tt> and <tt>StFttClusterPointMaker</tt> (with <tt>mUseGeantData=false</tt>)
+    do the actual clustering and transform.
+</ul>
+<H3>StFttDb::reverseHardwareMap</H3>
+<ul>
+  <li>Bug: only ever returned ONE orientation per (plane,quadrant) -- (row,strip) &rarr; H/V
+      collision, <tt>rMap</tt> had no orientation key, so the 2nd orientation silently
+      overwrote the 1st at load time.
+  <li>Fix: <tt>rMap</tt> now holds a small vector per key; new signature takes orientation
+      as an extra input/output key to disambiguate:
+</ul>
+<pre>bool reverseHardwareMap( int &amp;rob, int &amp;feb, int &amp;vmm, int &amp;ch,
+                          int plane, int quad, int row, int strip,
+                          UChar_t &amp;orientation ) const;   // orientation: in as hint, out as result
+</pre>
+<ul>
+  <li>Only caller anywhere in the repo is this new maker, so the fix carries no other risk.
+  <li>Also ported the <a href="../fttgeom/index.html">StFttCluster::setMaxStripLength() line</a>.
+</ul>
+
+<H3>FTT geometry: disk / quadrant / foil / row / orientation</H3>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>Level</TH><TH>Values</TH><TH>Notes</TH></TR>
+<TR><TD>disk (<tt>plane</tt>)</TD><TD>0-3</TD>
+    <TD>increasing z, ~312/330/347/365cm</TD></TR>
+<TR><TD>quadrant (<tt>quad</tt>)</TD><TD>0=A, 1=B, 2=C, 3=D</TD>
+    <TD>D | A (top row), C | B (bottom row). A is the sign reference
+        (sx=sy=+1); B flips y; C flips x and y; D flips x.</TD></TR>
+<TR><TD>foil (chamber)</TD><TD>front / back</TD>
+    <TD>front = "vertical chamber" (Vertical + DiagonalV strips);
+        back = "horizontal chamber" (Horizontal + DiagonalH strips).
+        Same quadrant, same footprint, two physical foils.</TD></TR>
+<TR><TD><tt>row</tt> 0-2</TD><TD>X/Y strips</TD>
+    <TD>3 bands along the row axis, start edges 11.49 / 172.29 / 360.09mm
+        (<tt>YX_StripGroupEdge</tt>), strip pitch 3.2mm.</TD></TR>
+<TR><TD><tt>row</tt> 3-4</TD><TD>diagonal (U/V) strips</TD>
+    <TD>NOT a 4th/5th spatial band -- same footprint as rows 0-2, on the
+        same foil. row 3 vs 4 is just the sign of (y-x) in local
+        coordinates (which side of the strip's own long axis).</TD></TR>
+<TR><TD><tt>orientation</tt></TD>
+    <TD>0=Horizontal, 1=Vertical, 2=DiagonalH, 3=DiagonalV</TD>
+    <TD>Horizontal/Vertical &harr; row 0-2; DiagonalH/DiagonalV &harr; row 3-4,
+        on the back/front foil respectively.</TD></TR>
+</TABLE>
+
+<svg width="480" height="490" viewBox="0 0 480 490" style="background:#fff;border:1px solid #888;">
+  <!-- One FTT disk, seen face-on. Real quadrant offsets (StFttDb X/Y_shift_Quad*,
+       plane 0), NOT a symmetric cross: A/D's local origins sit ~9.5cm above the
+       beampipe and close together near the vertical seam; B/C's origins are
+       ALSO ~8.4cm above the beampipe but pulled ~11cm sideways (B right, C
+       left) -- so the 4 quadrants don't meet at one point, they cluster above
+       and to the sides of the beampipe, leaving a gap around it. -->
+
+  <!-- beampipe: true global (0,0) -->
+  <circle cx="240" cy="310" r="6" fill="none" stroke="red" stroke-width="1.5"/>
+  <text x="240" y="330" font-size="11" text-anchor="middle" fill="red">beampipe (0,0)</text>
+
+  <!-- quadrant A (top-right): local origin ~(+0.8,+9.5)cm, extends up-right -->
+  <rect x="242" y="231" width="50"  height="50"  fill="none" stroke="#3366cc" stroke-width="1.5"/>
+  <rect x="242" y="171" width="110" height="110" fill="none" stroke="#3366cc" stroke-width="1.5"/>
+  <rect x="242" y="91"  width="190" height="190" fill="none" stroke="#3366cc" stroke-width="1.5"/>
+  <circle cx="242" cy="281" r="2.5" fill="#3366cc"/>
+  <text x="222" y="251" font-size="11" fill="#3366cc">row0</text>
+  <text x="282" y="191" font-size="11" fill="#3366cc">row1</text>
+  <text x="362" y="111" font-size="11" fill="#3366cc">row2</text>
+  <text x="400" y="105" font-size="24" font-weight="bold" fill="#3366cc">A</text>
+
+  <!-- quadrant D (top-left): local origin ~(-0.4,+9.6)cm, extends up-left -->
+  <rect x="189" y="231" width="50"  height="50"  fill="none" stroke="#339966" stroke-width="1.5"/>
+  <rect x="129" y="171" width="110" height="110" fill="none" stroke="#339966" stroke-width="1.5"/>
+  <rect x="49"  y="91"  width="190" height="190" fill="none" stroke="#339966" stroke-width="1.5"/>
+  <circle cx="239" cy="281" r="2.5" fill="#339966"/>
+  <text x="70"  y="105" font-size="24" font-weight="bold" fill="#339966">D</text>
+
+  <!-- quadrant B (bottom-right): local origin ~(+11.3,+8.4)cm, extends down-right -->
+  <rect x="274" y="285" width="50"  height="50"  fill="none" stroke="#cc3366" stroke-width="1.5"/>
+  <rect x="274" y="285" width="110" height="110" fill="none" stroke="#cc3366" stroke-width="1.5"/>
+  <rect x="274" y="285" width="190" height="190" fill="none" stroke="#cc3366" stroke-width="1.5"/>
+  <circle cx="274" cy="285" r="2.5" fill="#cc3366"/>
+  <text x="430" y="465" font-size="24" font-weight="bold" fill="#cc3366">B</text>
+
+  <!-- quadrant C (bottom-left): local origin ~(-10.8,+8.4)cm, extends down-left -->
+  <rect x="158" y="285" width="50"  height="50"  fill="none" stroke="#cc8800" stroke-width="1.5"/>
+  <rect x="98"  y="285" width="110" height="110" fill="none" stroke="#cc8800" stroke-width="1.5"/>
+  <rect x="18"  y="285" width="190" height="190" fill="none" stroke="#cc8800" stroke-width="1.5"/>
+  <circle cx="158" cy="285" r="2.5" fill="#cc8800"/>
+  <text x="45"  y="465" font-size="24" font-weight="bold" fill="#cc8800">C</text>
+
+  <!-- rows 3-4 (U/V) overlay the SAME footprint as A's rows 0-2 -- direction
+       hatch only, NOT real strip count/pitch (~150 real strips, not 4) -->
+  <g stroke="#000" stroke-width="1" opacity="0.5">
+    <line x1="262" y1="281" x2="422" y2="121"/>
+    <line x1="292" y1="281" x2="422" y2="151"/>
+    <line x1="332" y1="281" x2="422" y2="191"/>
+    <line x1="242" y1="241" x2="382" y2="101"/>
+  </g>
+  <text x="335" y="245" font-size="11">rows 3-4 (U/V,</text>
+  <text x="335" y="258" font-size="11">direction only)</text>
+
+  <text x="460" y="315" font-size="12" text-anchor="end">x</text>
+  <text x="235" y="95"  font-size="12" text-anchor="end">y</text>
+</svg>
+<p><i>Schematic, not to scale, plane-0 offsets. Row bands drawn to scale-ish for A/D/B/C
+(colored dots = each quadrant's own local origin -- they do NOT coincide with each other
+or with the beampipe); U/V hatching (direction only) and row0/1/2 labels drawn once, in A,
+for clarity -- the same layout repeats in B, C, D.</i></p>
+
+<p>Diagonal strips exist to resolve H&times;V crossing ambiguity (confirmed via a reverted
+commit's <tt>StFwdFttClusterQAMaker.cxx</tt>, which cross-checks H/V/D candidates), not to
+cover a gap X/Y misses. One bug found+fixed along the way: <tt>MakeLocalPoints()</tt> uses
+<i>opposite</i> row&harr;sign conventions for DiagonalV vs DiagonalH -- using the same rule
+for both silently picks a real-but-wrong hardware channel.</p>
+
+<H3>Validation</H3>
+<p>Ran a 5-event electron-gun sample (p<sub>T</sub>=1.5GeV, &eta;=2.5-4.0, random &phi;).
+For X/Y clusters, the measured axis reproduces GEANT truth to ~1mm end-to-end through the
+real transform -- well within one strip pitch (3.2mm), checked by hand for several
+quadrants/orientations. For diagonal clusters, the rotation mixes a precise coordinate
+(from the strip index) with an approximate <plusmn>half-length placeholder into both output
+x and y, so neither individually matches truth by itself -- but the invariant
+local_x+local_y = 2&middot;D_StripGroupEdge[0] + &radic;2&middot;(measured strip coordinate)
+(the placeholder exactly cancels in the sum) reproduces truth to &lt;0.05mm every time,
+exactly the same residual metric <tt>StFwdFttClusterQAMaker.cxx</tt> uses to confirm a
+diagonal cluster against an H&times;V crossing point. Checked all 4 (orientation,
+row-sign) combinations by hand. No crashes across the 5-event sample with per-hit debug
+tracing on.</p>
+
+<H3>Full chain: FST + real FTT + GenFit + StFwdResidualMaker (2026-07-17, later that evening)</H3>
+<p>Built the full chain <a href="../jpsi/electron_45.html">electron-gun @ 45&deg;</a> asked
+for but found <i>not actually possible</i> at the time that page was written: FST fast-sim
++ this maker's real FTT chain + GenFit <tt>StFwdTrackMaker</tt> +
+<tt>StFwdResidualMaker</tt> (copied unmodified from this repo into <tt>~/fcstrk12</tt>,
+which didn't have it), inserted right before <tt>fwdTrack</tt> so GenFit sees real
+<tt>StFttPoint</tt>s built through the actual <tt>StFttDb</tt> transform. Generator: single
+e<sup>-</sup>, p<sub>T</sub>=1.5GeV, &eta;=2.5-4.0, &phi;=45&deg;&plusmn;0.001rad (top-south
+quadrant A, where <tt>sx=sy=+1</tt> so the still-open scale-then-shift bug doesn't bite).</p>
+<p>200 events &rarr; 163 converged Global tracks, 447 FST + 465 FTT residuals. FST residuals
+are unbiased (mean &lt;0.01cm on all 3 disks). <b>FTT residuals show a small but very
+consistent systematic offset on every plane</b> -- dx: -0.29 to -0.34cm, dy: -0.37 to
+-0.45cm, all 4 planes, both axes, same sign, with 52-62 entries each (nowhere near
+statistical-fluctuation territory). This is new -- not yet explained. Working hypothesis:
+each <tt>StFttPoint</tt>'s "other axis" is a coarse row-center placeholder, not a real
+measurement (see maxStripLength fix above) -- even with a real, bounded value and a large
+sigma, GenFit's Kalman fit still assigns it nonzero weight, and if that placeholder is
+consistently offset from the true trajectory in the same direction across several planes
+of the same track, it could pull the whole fit by a few mm -- which would then show up as
+a small residual even on the OTHER point's precise axis once the fit is projected back,
+despite that axis's own hit position being accurate in isolation (as validated above,
+without any fitting involved). Not confirmed; a plausible next step, not done here.</p>
+
+<H3>2D hit-position and projection maps (200-event, &phi;=45&deg; run)</H3>
+<p>Same format as the <a href="../jpsi/electron_45.html">electron-gun @ 45&deg; page</a> and the
+<a href="../jpsi/ftt_quadrant_charge_fixed_2.html">quadrant &times; charge page</a>: each panel is
+Pos(q&gt;0) | Neg(q&lt;0) | asymmetry, from <tt>script/plotFwdResidualQuadCharge.C</tt> run
+unmodified against this run's <tt>StFwdResidualMaker</tt> output. Single e<sup>-</sup> sample, so
+Neg dominates (Pos is pair-production secondaries only) and only the Stop (South-top, quadrant A)
+quadrant is populated -- both expected. Click any thumbnail for the full-size image.</p>
+
+<table border=1>
+  <tr><td>Plot</td><td align=center>hit-position</td><td align=center>projection</td></tr>
+  <tr><td>Usage Fraction</td>
+    <td align=center colspan=2><a href="plots45/Global_usageFraction.png"><img src="plots45/Global_usageFraction.png" height=180></a></td></tr>
+  <tr><td>FST disk 0</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FstHitXY_disk0.png"><img src="plots45/Global_hitXY_h2FstHitXY_disk0.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FstProjXY_disk0.png"><img src="plots45/Global_projXY_h2FstProjXY_disk0.png" height=180></a></td></tr>
+  <tr><td>FST disk 1</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FstHitXY_disk1.png"><img src="plots45/Global_hitXY_h2FstHitXY_disk1.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FstProjXY_disk1.png"><img src="plots45/Global_projXY_h2FstProjXY_disk1.png" height=180></a></td></tr>
+  <tr><td>FST disk 2</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FstHitXY_disk2.png"><img src="plots45/Global_hitXY_h2FstHitXY_disk2.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FstProjXY_disk2.png"><img src="plots45/Global_projXY_h2FstProjXY_disk2.png" height=180></a></td></tr>
+  <tr><td>FTT disk 0 (x)</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FttHitXY_disk0_x.png"><img src="plots45/Global_hitXY_h2FttHitXY_disk0_x.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FttProjXY_disk0_x.png"><img src="plots45/Global_projXY_h2FttProjXY_disk0_x.png" height=180></a></td></tr>
+  <tr><td>FTT disk 0 (y)</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FttHitXY_disk0_y.png"><img src="plots45/Global_hitXY_h2FttHitXY_disk0_y.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FttProjXY_disk0_y.png"><img src="plots45/Global_projXY_h2FttProjXY_disk0_y.png" height=180></a></td></tr>
+  <tr><td>FTT disk 1 (x)</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FttHitXY_disk1_x.png"><img src="plots45/Global_hitXY_h2FttHitXY_disk1_x.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FttProjXY_disk1_x.png"><img src="plots45/Global_projXY_h2FttProjXY_disk1_x.png" height=180></a></td></tr>
+  <tr><td>FTT disk 1 (y)</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FttHitXY_disk1_y.png"><img src="plots45/Global_hitXY_h2FttHitXY_disk1_y.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FttProjXY_disk1_y.png"><img src="plots45/Global_projXY_h2FttProjXY_disk1_y.png" height=180></a></td></tr>
+  <tr><td>FTT disk 2 (x)</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FttHitXY_disk2_x.png"><img src="plots45/Global_hitXY_h2FttHitXY_disk2_x.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FttProjXY_disk2_x.png"><img src="plots45/Global_projXY_h2FttProjXY_disk2_x.png" height=180></a></td></tr>
+  <tr><td>FTT disk 2 (y)</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FttHitXY_disk2_y.png"><img src="plots45/Global_hitXY_h2FttHitXY_disk2_y.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FttProjXY_disk2_y.png"><img src="plots45/Global_projXY_h2FttProjXY_disk2_y.png" height=180></a></td></tr>
+  <tr><td>FTT disk 3 (x)</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FttHitXY_disk3_x.png"><img src="plots45/Global_hitXY_h2FttHitXY_disk3_x.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FttProjXY_disk3_x.png"><img src="plots45/Global_projXY_h2FttProjXY_disk3_x.png" height=180></a></td></tr>
+  <tr><td>FTT disk 3 (y)</td>
+    <td align=center><a href="plots45/Global_hitXY_h2FttHitXY_disk3_y.png"><img src="plots45/Global_hitXY_h2FttHitXY_disk3_y.png" height=180></a></td>
+    <td align=center><a href="plots45/Global_projXY_h2FttProjXY_disk3_y.png"><img src="plots45/Global_projXY_h2FttProjXY_disk3_y.png" height=180></a></td></tr>
+</table>
 
 <HR>
-<a href="../proposal_ftt_sim_maker.txt">Full proposal</a> |
-<a href="../jpsi/electron_45.html">Electron gun @ 45&deg; page (motivation)</a> |
-<a href="../fttgeom/index.html">The maxStripLength bug (found without this maker)</a> |
-<a href="../jpsi/index.html">Back to main DiLepton page</a>
+<H2>TODO</H2>
+<ul>
+  <li>Investigate the systematic FTT residual shift seen in the 200-event full-chain run.
+  <li>Noise, signal fractuation and pedestal? Using kTimeCutModeAcceptAll? (nothing for now)
+  <li>Realistic Efficiency? (100% for now)
+</ul>
+
+<HR>
 <ADDRESS>
 <A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
 

@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>FTT hit-matching MC: 2pi, 1 e-/event</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffe8d5" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>Electron-gun MC: full 2&pi;, 1 electron/event, 4000 events</H1>
+<p><a href="ftt_search_window.html">&larr; Back to FST-blind projection study</a> |
+Other MC samples:
+<a href="mc_ele_45deg.html">single e- @ 45&deg;</a> |
+<a href="mc_ele_2pi_np8.html">2&pi;, 8 e-/event</a></p>
+
+<HR>
+<H2>Setup</H2>
+<ul>
+  <li>Single-electron gun per event, full azimuth (0&lt;&phi;&lt;2&pi;), pt=1.5GeV,
+      2.5&lt;&eta;&lt;4.0, vz=0, 4000 events (<tt>script/genElectron2pi.C(4000,1,1)</tt>).
+  <li>Same real reconstruction chain and FST-blind diagnostic as the other MC pages --
+      <tt>StFttDbMaker &rarr; StFttSimHitMaker &rarr; StFttClusterMaker &rarr;
+      StFttClusterPointMaker(mUseGeantData=false) &rarr; fwdTrack</tt>
+      (<tt>script/simFttResidualTest.C</tt>).
+</ul>
+
+<HR>
+<H2>Findings</H2>
+<ul>
+  <li>Precise coordinate still shows a real peak at dx&asymp;0, but now with visible shoulders
+      out to &plusmn;5-7cm rather than the near-delta spike seen in the single-quadrant
+      45&deg; sample -- expected, since events now span all strip lengths/pitches across the
+      full azimuth instead of one fixed quadrant's strips.
+  <li>Off-axis coordinate is a broad real hump (not flat, not a tight spike) -- a middle
+      ground between the 45&deg; sample's tight peak and real data's flat background. Makes
+      sense: still only one track/event (little combinatoric background), but now mixing
+      many different strip lengths/positions across 2&pi;.
+  <li>2D maps: candidates form a genuine vertical (V) / horizontal (H) band around the true
+      hit, wider than the 45&deg; sample but still clearly correlated, not a flat landscape.
+  <li>Still one track/event, so this sample alone still can't test the real-data
+      "closest-candidate artifact" question -- see the
+      <a href="mc_ele_2pi_np8.html">8 e-/event page</a> for that.
+</ul>
+
+<HR>
+<H2>Plots (all 4 disks, split by orientation)</H2>
+<p>Gray filled = every candidate hit on that disk. Red line = the hit actually matched into
+a track's seed. Log-y throughout. 2D maps: log-z, left = all candidates, right = matched
+only. V = vertical strip (x plane), H = horizontal strip (y plane).</p>
+<table border=1>
+  <tr><td>Disk</td><td align=center>V: dx (precise)</td><td align=center>V: dy (off-axis)</td>
+      <td align=center>H: dx (off-axis)</td><td align=center>H: dy (precise)</td>
+      <td align=center>V: 2D</td><td align=center>H: 2D</td></tr>
+  <tr><td>0</td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dx_V_disk0.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dx_V_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dy_V_disk0.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dy_V_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dx_H_disk0.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dx_H_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dy_H_disk0.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dy_H_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_XY_V_disk0.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_XY_V_disk0.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_XY_H_disk0.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_XY_H_disk0.png" height=160></a></td></tr>
+  <tr><td>1</td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dx_V_disk1.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dx_V_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dy_V_disk1.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dy_V_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dx_H_disk1.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dx_H_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dy_H_disk1.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dy_H_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_XY_V_disk1.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_XY_V_disk1.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_XY_H_disk1.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_XY_H_disk1.png" height=160></a></td></tr>
+  <tr><td>2</td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dx_V_disk2.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dx_V_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dy_V_disk2.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dy_V_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dx_H_disk2.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dx_H_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dy_H_disk2.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dy_H_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_XY_V_disk2.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_XY_V_disk2.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_XY_H_disk2.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_XY_H_disk2.png" height=160></a></td></tr>
+  <tr><td>3</td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dx_V_disk3.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dx_V_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dy_V_disk3.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dy_V_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dx_H_disk3.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dx_H_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_Dy_H_disk3.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_Dy_H_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_XY_V_disk3.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_XY_V_disk3.png" height=160></a></td>
+    <td align=center><a href="ele2pi_np1_blinddiag_crosscond/blind_XY_H_disk3.png"><img src="ele2pi_np1_blinddiag_crosscond/blind_XY_H_disk3.png" height=160></a></td></tr>
+</table>
+
+<HR>
+<p><a href="ftt_search_window.html">&larr; Back to FST-blind projection study</a> |
+<a href="index.html">FTT geometry page</a> |
+<a href="../jpsi/index.html">Back to main DiLepton page</a></p>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

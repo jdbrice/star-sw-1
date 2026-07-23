@@ -177,6 +177,8 @@ class ForwardTracker : public ForwardTrackMaker {
 
     void finish() {
 
+        writeBlindDiagHistograms();
+
         if (FwdSystem::sInstance){
             delete FwdSystem::sInstance;
             FwdSystem::sInstance = 0;

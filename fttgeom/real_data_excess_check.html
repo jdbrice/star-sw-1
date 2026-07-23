@@ -1,0 +1,406 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>Real-data "All candidates" excess check</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffe8d5" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>Does real data show a real correlation before hit selection?</H1>
+<p><a href="ftt_search_window.html">&larr; Back to FST-blind projection study</a></p>
+
+<HR>
+<H2>Method</H2>
+<ul>
+  <li><b>Updated 2026-07-22 with much larger statistics:</b> 101 real-data files
+      (condor-parallelized, <tt>condor/submit_blinddiag_stats.txt</tt> +
+      <tt>script/runBlindDiag</tt>), sampled evenly across the full 3846-file
+      production (data20-23 disks), merged with <tt>hadd</tt>. ~2 billion
+      "All candidates" entries and ~10-11 million matched entries per disk --
+      roughly 1000x the original 500-event single-file test. One of the 102
+      sampled files (run 23081004) produced no output at all and was skipped:
+      confirmed via RunLog that this run had FST off, so zero FST-seeded
+      tracks were ever fit and the blind-diagnostic histograms (which need an
+      FST-only track state) never got created for it -- not a bug, just real
+      run-to-run detector availability.
+  <li>Same <tt>hBlindDxAll_V</tt> / <tt>hBlindDyAll_H</tt> histograms (precise
+      coordinate) as the main page -- zoomed into &plusmn;5cm and checked for
+      an excess right at the blind projection, <i>before</i> any nearest-hit
+      selection is applied.
+  <li>Background estimated LOCALLY: average of the two sideband windows
+      immediately next to the peak (0.6-3cm on each side), not distant
+      sidebands -- the background is not flat across the full &plusmn;15cm
+      range (see disk0/H below), so a distant/symmetric average would pick up
+      that slope instead of measuring a real peak.
+  <li>Peak window: |x|&lt;0.6cm. Significance uses Poisson error on the
+      sideband-average background.
+  <li><tt>script/checkAllExcess.C</tt> (numbers) and
+      <tt>script/plotAllExcess.C</tt> (these plots), both checked in.
+</ul>
+
+<HR>
+<H2>Findings</H2>
+<ul>
+  <li><b>With ~1000x the statistics, the excess in 7 of 8 disk&times;orientation
+      combinations is now several hundred sigma</b> (192-525&sigma;), same
+      ~2-5% magnitude as before -- the earlier 5-15&sigma; single-file read was
+      not a fluke, it's now overwhelming.
+  <li><b>New at this statistics level: real peaks (and one real dip) are
+      visible directly by eye</b>, not just inferred from a sigma number --
+      see e.g. disk3/V or disk1/V below, a clean narrow spike sitting on a
+      smooth background hump. This wasn't visually obvious in the single-file
+      plots even though the significance was already there.
+  <li><b>disk0/V is not just "flat" -- it's a real, visible narrow DIP</b>
+      (excess=0.99x but -127&sigma;, a genuine statistically overwhelming
+      deficit right at dx=0, not noise around zero). Not understood; flagged
+      as a new open question rather than smoothed into "no effect".
+  <li>This is not "zero correlation" -- real data does have a genuine
+      signal in the raw candidate population, not just after selection.
+      Argues against hits landing in a completely uncorrelated wrong place as
+      the full explanation.
+  <li>But it's still far below the ~20x excess seen in the
+      <a href="mc_ele_2pi_np8.html">8 e-/event MC</a> at comparable occupancy
+      -- whatever true efficiency this implies is genuinely low.
+  <li><b>H-strips also show a striking, reproducible ~15-20% left/right (+dy vs
+      -dy) slope in their own local background</b>, consistent across all 4
+      disks -- most likely the known real N-S acceptance gap below the
+      beampipe, but not yet confirmed. Separate from the peak-excess
+      question, visible clearly in the disk0/H plot below.
+</ul>
+
+<HR>
+<H2>Plots (all 4 disks, both orientations, 101-file statistics)</H2>
+<p>Gray filled = "All candidates" histogram, zoomed to &plusmn;5cm. Blue dashed
+line = local background level (sideband average). Peak window (|x|&lt;0.6cm,
+red) and sideband windows (0.6-3cm each side, blue) marked. Title gives the
+excess ratio and significance for that disk/orientation.</p>
+<table border=1>
+  <tr><td>Disk</td><td align=center>V (dx)</td><td align=center>H (dy)</td></tr>
+  <tr><td>0</td>
+    <td align=center><a href="20260722_allexcess_bigstats/excess_V_disk0.png"><img src="20260722_allexcess_bigstats/excess_V_disk0.png" height=280></a></td>
+    <td align=center><a href="20260722_allexcess_bigstats/excess_H_disk0.png"><img src="20260722_allexcess_bigstats/excess_H_disk0.png" height=280></a></td></tr>
+  <tr><td>1</td>
+    <td align=center><a href="20260722_allexcess_bigstats/excess_V_disk1.png"><img src="20260722_allexcess_bigstats/excess_V_disk1.png" height=280></a></td>
+    <td align=center><a href="20260722_allexcess_bigstats/excess_H_disk1.png"><img src="20260722_allexcess_bigstats/excess_H_disk1.png" height=280></a></td></tr>
+  <tr><td>2</td>
+    <td align=center><a href="20260722_allexcess_bigstats/excess_V_disk2.png"><img src="20260722_allexcess_bigstats/excess_V_disk2.png" height=280></a></td>
+    <td align=center><a href="20260722_allexcess_bigstats/excess_H_disk2.png"><img src="20260722_allexcess_bigstats/excess_H_disk2.png" height=280></a></td></tr>
+  <tr><td>3</td>
+    <td align=center><a href="20260722_allexcess_bigstats/excess_V_disk3.png"><img src="20260722_allexcess_bigstats/excess_V_disk3.png" height=280></a></td>
+    <td align=center><a href="20260722_allexcess_bigstats/excess_H_disk3.png"><img src="20260722_allexcess_bigstats/excess_H_disk3.png" height=280></a></td></tr>
+</table>
+
+<HR>
+<H2>All 4 disks, all 4 quadrants (non-swapped, 101-file statistics)</H2>
+<p style="color:darkred"><b>Caveat:</b> a single quadrant's local background is
+<i>not</i> flat -- these plots show slopes and step-edges (real geometric
+density gradients and quadrant-boundary effects), not the symmetric peak the
+whole-disk plots above show. The "excess/significance" numbers on these
+plots are consequently an artifact of comparing a flat local-sideband
+average against what is actually a monotonic gradient, and should not be
+read as signal significance -- see the H/V-swap section below for more on
+why this matters.</p>
+<table border=1>
+  <tr><td>Disk</td><td>Quad</td><td align=center>V</td><td align=center>H</td>
+      <td>Disk</td><td>Quad</td><td align=center>V</td><td align=center>H</td></tr>
+  <tr><td>0</td><td>A</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk0_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk0_quadA.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk0_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk0_quadA.png" height=150></a></td>
+    <td>2</td><td>A</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk2_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk2_quadA.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk2_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk2_quadA.png" height=150></a></td></tr>
+  <tr><td>0</td><td>B</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk0_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk0_quadB.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk0_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk0_quadB.png" height=150></a></td>
+    <td>2</td><td>B</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk2_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk2_quadB.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk2_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk2_quadB.png" height=150></a></td></tr>
+  <tr><td>0</td><td>C</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk0_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk0_quadC.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk0_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk0_quadC.png" height=150></a></td>
+    <td>2</td><td>C</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk2_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk2_quadC.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk2_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk2_quadC.png" height=150></a></td></tr>
+  <tr><td>0</td><td>D</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk0_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk0_quadD.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk0_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk0_quadD.png" height=150></a></td>
+    <td>2</td><td>D</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk2_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk2_quadD.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk2_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk2_quadD.png" height=150></a></td></tr>
+  <tr><td>1</td><td>A</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk1_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk1_quadA.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk1_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk1_quadA.png" height=150></a></td>
+    <td>3</td><td>A</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk3_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk3_quadA.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk3_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk3_quadA.png" height=150></a></td></tr>
+  <tr><td>1</td><td>B</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk1_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk1_quadB.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk1_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk1_quadB.png" height=150></a></td>
+    <td>3</td><td>B</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk3_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk3_quadB.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk3_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk3_quadB.png" height=150></a></td></tr>
+  <tr><td>1</td><td>C</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk1_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk1_quadC.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk1_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk1_quadC.png" height=150></a></td>
+    <td>3</td><td>C</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk3_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk3_quadC.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk3_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk3_quadC.png" height=150></a></td></tr>
+  <tr><td>1</td><td>D</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk1_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk1_quadD.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk1_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk1_quadD.png" height=150></a></td>
+    <td>3</td><td>D</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk3_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk3_quadD.png" height=150></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk3_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk3_quadD.png" height=150></a></td></tr>
+</table>
+
+<HR>
+<H2>Estimating FTT matching purity</H2>
+<p><b>Question:</b> of the FTT hits actually assigned to a track (the
+"Matched" sample), what fraction are the genuinely correct hit, versus an
+accidental closest-candidate-in-background match?</p>
+<p><b>Method:</b> for a given track-disk search, the real (correct) FTT hit --
+if present and passing the loose off-axis-conditioned gate -- is a single
+physical hit encountered once in the search loop, so it contributes AT MOST
+one entry to the "All candidates" histogram, landing in the narrow
+sub-mm-wide peak at dx/dy=0. The background-subtracted integral of that
+peak (&plusmn;1.0cm window, local sideband background) therefore counts
+"track-searches where the real hit was present and passed the gate" --
+call this <tt>N_real</tt>. Since the real hit trivially also passes the
+tighter precise-coordinate gate (it's AT zero) and wins "closest" selection
+(nothing is closer than the true hit), <tt>N_real</tt> is a good proxy for
+how many <tt>Matched</tt> entries are genuinely correct:
+<tt>purity = N_real / N_matched</tt>. <tt>script/estimatePurity.C</tt>,
+checked in.</p>
+<p style="color:darkred"><b>This is purity, not full efficiency.</b> The search
+itself is <i>not</i> conditioned on an FTT hit already being assigned --
+<tt>findFttStripsNearProjectedState()</tt> runs for every FST-seeded,
+converged track projected to the disk (the FST-only, FTT-blind projection
+this whole page is built on), independent of whether a hit ends up matched.
+So this diagnostic does see the full population of attempted track-disk
+searches, not just the ones that already got a hit. What's still missing for
+a true efficiency number: a saved count of the TOTAL number of these
+searches, regardless of outcome -- currently only "All candidates"
+(conditioned on the off-axis gate, see Method) and "Matched" are saved, not
+a raw per-search counter. So <tt>N_real</tt> (the background-subtracted
+peak) can only be divided by <tt>N_matched</tt> here, giving purity ("of
+what got matched, how much is real"), not by total attempts, which would
+give something closer to true efficiency ("of every attempt, how often is
+the real hit found and used"). Adding that counter would be a natural next
+step.</p>
+<table border=1>
+  <tr><td>Disk</td><td>Ori</td><td align=center>N_real</td><td align=center>N_matched</td><td align=center>purity</td></tr>
+  <tr><td>0</td><td>V</td><td>-384,541</td><td>10,259,420</td><td style="color:darkred">-3.7% (not meaningful -- see disk0/V dip, above)</td></tr>
+  <tr><td>0</td><td>H</td><td>825,555</td><td>6,783,765</td><td>12.2%</td></tr>
+  <tr><td>1</td><td>V</td><td>892,188</td><td>11,326,272</td><td>7.9%</td></tr>
+  <tr><td>1</td><td>H</td><td>587,448</td><td>6,830,620</td><td>8.6%</td></tr>
+  <tr><td>2</td><td>V</td><td>1,555,130</td><td>10,092,516</td><td>15.4%</td></tr>
+  <tr><td>2</td><td>H</td><td>1,175,167</td><td>6,664,190</td><td>17.6%</td></tr>
+  <tr><td>3</td><td>V</td><td>2,180,312</td><td>10,036,140</td><td>21.7%</td></tr>
+  <tr><td>3</td><td>H</td><td>1,487,816</td><td>6,631,353</td><td>22.4%</td></tr>
+  <tr><td colspan=2><b>Overall (excluding disk0/V)</b></td>
+      <td align=center><b>8,703,618</b></td><td align=center><b>58,364,856</b></td>
+      <td align=center><b>14.9%</b></td></tr>
+</table>
+<p><b>Reading:</b> roughly 1 in 7 FTT hits actually assigned to a track is
+the genuinely correct one -- consistent with, and now a quantified,
+statistically robust version of, the "~20% efficiency" read from the
+single-file test in the Findings above. Purity clearly rises from disk1
+(&asymp;8%) to disk3 (&asymp;22%) -- not understood, a new open question:
+could be increasing real occupancy/background with disk depth diluting the
+denominator differently, a genuine per-disk efficiency difference, or
+something else. disk0/V is excluded from the combined number since it shows
+a real dip rather than a peak (see Findings above) -- the background-
+subtraction method isn't measuring anything meaningful there, not "very low
+purity".</p>
+
+<HR>
+<H2>X&lt;-&gt;Y mirror test: is the final coordinate simply mirrored?</H2>
+<p><b>Method:</b> a direct global-coordinate swap (<tt>h-&gt;getX()&lt;-&gt;h-&gt;getY()</tt>)
+would be physically incoherent -- <tt>StFttDb::getGloablOffset_ClusterPoint()</tt>'s
+per-quadrant offset/sign tables are asymmetric between X and Y (different
+shift values, different sign rules per quadrant), so swapping the
+already-transformed global values would compare each axis against the
+WRONG quadrant calibration. Instead: invert the known global transform back
+to LOCAL (mm) coordinates, swap those, then re-apply the CORRECT (still
+per-axis, still asymmetric) transform to the swapped local values -- this is
+what a genuine local x&lt;-&gt;y mislabeling downstream of clustering would
+actually produce. Implemented as new, purely additive histograms filled in
+the same event loop as the existing ones (<tt>hBlindDxAll_V_mirror</tt>,
+<tt>hBlindDyAll_H_mirror</tt> in <tt>FwdTracker.h</tt>) -- does not touch
+<tt>found_hits</tt>/production matching at all, and gives both the normal and
+mirrored view from a single production pass (no separate condor batch for
+the "before" state needed). Run on the same 101-file statistics as the plots
+above.</p>
+<table border=1>
+  <tr><td>Disk</td><td>Ori</td><td align=center>ORIGINAL excess (sig)</td>
+      <td align=center>MIRRORED excess (sig)</td></tr>
+  <tr><td>0</td><td>V</td><td style="color:darkred">0.989x (-129.9&sigma;, dip)</td><td>0.995x (-58.9&sigma;, weaker dip)</td></tr>
+  <tr><td>0</td><td>H</td><td>1.018x (+201.4&sigma;)</td><td style="color:darkred">0.989x (-105.4&sigma;, INVERTED)</td></tr>
+  <tr><td>1</td><td>V</td><td>1.029x (+292.5&sigma;)</td><td style="color:darkred">0.983x (-176.9&sigma;, INVERTED)</td></tr>
+  <tr><td>1</td><td>H</td><td>1.018x (+192.8&sigma;)</td><td style="color:darkred">0.972x (-238.6&sigma;, INVERTED)</td></tr>
+  <tr><td>2</td><td>V</td><td>1.038x (+437.0&sigma;)</td><td>0.998x (-24.1&sigma;, flattened)</td></tr>
+  <tr><td>2</td><td>H</td><td>1.038x (+415.8&sigma;)</td><td>1.015x (+148.7&sigma;, ~1/3 as strong)</td></tr>
+  <tr><td>3</td><td>V</td><td>1.047x (+523.8&sigma;)</td><td>0.998x (-26.0&sigma;, flattened)</td></tr>
+  <tr><td>3</td><td>H</td><td>1.038x (+413.9&sigma;)</td><td>1.016x (+154.2&sigma;, ~1/3 as strong)</td></tr>
+</table>
+<p><b>Statistically decisive, and consistent in direction across all 8
+combinations:</b> wherever the original code shows a real peak, mirroring
+either flattens it, weakens it to roughly a third, or inverts it into a
+dip -- never improves or stays neutral. This strongly supports: the current
+(unmirrored) coordinate assignment is correct, or at minimum is definitely
+not a simple global X&lt;-&gt;Y mirror of reality.</p>
+<table border=1>
+  <tr><td>Disk</td><td align=center>V original</td><td align=center>V mirrored</td>
+      <td align=center>H original</td><td align=center>H mirrored</td></tr>
+  <tr><td>0</td>
+    <td align=center><a href="20260722_mirrorexcess/origV_disk0.png"><img src="20260722_mirrorexcess/origV_disk0.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/mirV_disk0.png"><img src="20260722_mirrorexcess/mirV_disk0.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/origH_disk0.png"><img src="20260722_mirrorexcess/origH_disk0.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/mirH_disk0.png"><img src="20260722_mirrorexcess/mirH_disk0.png" height=200></a></td></tr>
+  <tr><td>1</td>
+    <td align=center><a href="20260722_mirrorexcess/origV_disk1.png"><img src="20260722_mirrorexcess/origV_disk1.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/mirV_disk1.png"><img src="20260722_mirrorexcess/mirV_disk1.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/origH_disk1.png"><img src="20260722_mirrorexcess/origH_disk1.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/mirH_disk1.png"><img src="20260722_mirrorexcess/mirH_disk1.png" height=200></a></td></tr>
+  <tr><td>2</td>
+    <td align=center><a href="20260722_mirrorexcess/origV_disk2.png"><img src="20260722_mirrorexcess/origV_disk2.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/mirV_disk2.png"><img src="20260722_mirrorexcess/mirV_disk2.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/origH_disk2.png"><img src="20260722_mirrorexcess/origH_disk2.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/mirH_disk2.png"><img src="20260722_mirrorexcess/mirH_disk2.png" height=200></a></td></tr>
+  <tr><td>3</td>
+    <td align=center><a href="20260722_mirrorexcess/origV_disk3.png"><img src="20260722_mirrorexcess/origV_disk3.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/mirV_disk3.png"><img src="20260722_mirrorexcess/mirV_disk3.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/origH_disk3.png"><img src="20260722_mirrorexcess/origH_disk3.png" height=200></a></td>
+    <td align=center><a href="20260722_mirrorexcess/mirH_disk3.png"><img src="20260722_mirrorexcess/mirH_disk3.png" height=200></a></td></tr>
+</table>
+<p><tt>script/plotMirrorExcess.C</tt> (these plots), checked in. This diagnostic
+is now a permanent, always-on part of the FST-blind histogram set -- every
+future <tt>fwd_blind_diag.root</tt> automatically carries both views, no
+separate swapped production needed.</p>
+
+<HR>
+<H2>Quadrant-split check: testing the online-QA H/V-swap hypothesis</H2>
+<p style="color:darkred"><b>Note:</b> this test is DIFFERENT from the mirror
+test above, not a duplicate -- it perturbs raw-hit orientation classification
+<i>before</i> clustering (which can change which raw hits get merged into
+which cluster in the first place, since clustering happens separately per
+orientation stream), whereas the mirror test above perturbs only the
+<i>already-correctly-clustered</i> point's final coordinate. These are
+genuinely different hypotheses (raw hardware-map/online-QA labeling vs. a
+downstream coordinate-convention mismatch), which is part of why this test
+came out messier/inconclusive while the mirror test above came out clean and
+decisive -- not a contradiction between them.</p>
+<p>Online monitoring (run22) reports, for plane2(=disk1)/quadrant A (positive
+x, positive y): FOB 1,3,5 alive, FOB 2,4,6 dead, and the <i>alive</i> FOBs are
+<b>Vertical</b>. A direct raw-hit tally (<tt>script/checkOrientationMap.C</tt>)
+confirms the same alive/dead FOB split in our data, but the original
+<tt>StFttDb::getOrientation()</tt> code labels those same alive FOBs
+<b>Horizontal</b> -- a direct, confirmed contradiction. A full
+<tt>kFttHorizontal&lt;-&gt;kFttVertical</tt> swap (both branches of
+<tt>getOrientation()</tt>) was tested against the quadrant-split excess
+check above to see if it clarifies the picture.</p>
+<p style="color:darkred"><b>Correction (2026-07-21):</b> the quadrant-split
+plots (further down) show slopes and step-edges -- real geometric features
+of a single quadrant's acceptance -- not a symmetric bump at dx/dy=0 the way
+the whole-disk plots do. The quadrant-level "excess/significance" numbers
+are an artifact of comparing a flat local-sideband average against what is
+actually a monotonic gradient, and should be read qualitatively, not as
+signal significance.</p>
+<p><b>Update 2026-07-22: both states now run at full (101-file) statistics.</b>
+The swap was re-applied in <tt>StFttDb.cxx</tt>, rebuilt, and run through the
+same 102-file condor batch as the non-swapped sample
+(<tt>condor/submit_blinddiag_stats_swapped.txt</tt>, output in a separate
+directory, merged with <tt>hadd</tt>) -- a real like-for-like comparison,
+not the single-file-vs-101-file mismatch from the first attempt.</p>
+
+<H3>Whole-disk comparison (the meaningful test, not the quadrant split)</H3>
+<table border=1>
+  <tr><td>Disk</td><td>Ori</td><td align=center>NON-SWAPPED excess (sig)</td>
+      <td align=center>SWAPPED excess (sig)</td></tr>
+  <tr><td>0</td><td>V</td><td style="color:darkred">0.99x (-127.3&sigma;, DIP)</td><td>1.02x (+188.6&sigma;)</td></tr>
+  <tr><td>0</td><td>H</td><td>1.02x (+197.4&sigma;)</td><td>1.01x (+106.5&sigma;)</td></tr>
+  <tr><td>1</td><td>V</td><td>1.03x (+297.4&sigma;)</td><td>1.01x (+138.3&sigma;)</td></tr>
+  <tr><td>1</td><td>H</td><td>1.02x (+192.5&sigma;)</td><td>1.01x (+128.7&sigma;)</td></tr>
+  <tr><td>2</td><td>V</td><td>1.04x (+440.5&sigma;)</td><td>1.02x (+201.6&sigma;)</td></tr>
+  <tr><td>2</td><td>H</td><td>1.04x (+414.6&sigma;)</td><td>1.01x (+157.7&sigma;)</td></tr>
+  <tr><td>3</td><td>V</td><td>1.05x (+525.0&sigma;)</td><td>1.03x (+296.3&sigma;)</td></tr>
+  <tr><td>3</td><td>H</td><td>1.04x (+415.3&sigma;)</td><td>1.03x (+328.2&sigma;)</td></tr>
+</table>
+<p><b>disk0/V flips from a real dip (non-swapped) to a real peak (swapped)</b>
+-- both now hundreds of sigma, so this is not statistics noise on either
+side. See the plots below: <a href="20260722_allexcess_bigstats/excess_V_disk0.png">non-swapped
+disk0/V</a> vs <a href="20260722_allexcess_swapped_bigstats/excess_V_disk0.png">swapped
+disk0/V</a>. Note the swapped disk0/V shape is not a clean simple peak either
+-- it has a real spike immediately next to a real dip, netting positive
+inside the &plusmn;0.6cm peak window. <b>Every other disk/orientation shows a
+real excess in BOTH states</b>, but consistently weaker under the swap
+(roughly half the significance, though the excess RATIO itself only drops
+slightly, ~1-3 percentage points).</p>
+
+<H3>Purity comparison</H3>
+<p>Same <tt>script/estimatePurity.C</tt> method as above (background-subtracted
+peak / N_matched), run on both states:</p>
+<table border=1>
+  <tr><td>Disk</td><td>Ori</td><td align=center>NON-SWAPPED purity</td><td align=center>SWAPPED purity</td></tr>
+  <tr><td>0</td><td>V</td><td style="color:darkred">n/a (dip)</td><td>4.9%</td></tr>
+  <tr><td>0</td><td>H</td><td>12.2%</td><td>9.1%</td></tr>
+  <tr><td>1</td><td>V</td><td>7.9%</td><td>3.7%</td></tr>
+  <tr><td>1</td><td>H</td><td>8.6%</td><td>5.5%</td></tr>
+  <tr><td>2</td><td>V</td><td>15.4%</td><td>7.3%</td></tr>
+  <tr><td>2</td><td>H</td><td>17.6%</td><td>4.0%</td></tr>
+  <tr><td>3</td><td>V</td><td>21.7%</td><td>7.9%</td></tr>
+  <tr><td>3</td><td>H</td><td>22.4%</td><td>15.3%</td></tr>
+  <tr><td colspan=2><b>Overall</b></td>
+      <td align=center><b>14.9%</b> (excl. disk0/V)</td>
+      <td align=center><b>7.0%</b> (all 8)</td></tr>
+</table>
+<p><b>Reading, honestly ambiguous:</b> the swap resolves the one specific
+disk0/V anomaly (dip &rarr; peak) but purity is lower under the swap in
+7 of 8 disk/orientation combinations, roughly half overall (7.0% vs 14.9%).
+Neither state is a clean winner: non-swapped has higher purity nearly
+everywhere but one broken-looking bin; swapped removes that one anomaly but
+costs purity broadly. This does not resolve the H/V-swap question -- if
+anything it shows the swap trades one problem for a different, more
+pervasive one. <tt>StFttDb.cxx</tt>'s <tt>getOrientation()</tt> currently has
+the SWAPPED labeling (from this test) -- not yet reverted.</p>
+
+<H3>Quadrant-split plots: disk1, all 4 quadrants, both states (101-file each)</H3>
+<table border=1>
+  <tr><td>Quad</td><td align=center>NON-SWAPPED V</td><td align=center>NON-SWAPPED H</td>
+      <td align=center>SWAPPED V</td><td align=center>SWAPPED H</td></tr>
+  <tr><td>A</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk1_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk1_quadA.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk1_quadA.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk1_quadA.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_swapped_bigstats/excess_V_disk1_quadA.png"><img src="20260722_allexcess_quad_swapped_bigstats/excess_V_disk1_quadA.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_swapped_bigstats/excess_H_disk1_quadA.png"><img src="20260722_allexcess_quad_swapped_bigstats/excess_H_disk1_quadA.png" height=220></a></td></tr>
+  <tr><td>B</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk1_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk1_quadB.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk1_quadB.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk1_quadB.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_swapped_bigstats/excess_V_disk1_quadB.png"><img src="20260722_allexcess_quad_swapped_bigstats/excess_V_disk1_quadB.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_swapped_bigstats/excess_H_disk1_quadB.png"><img src="20260722_allexcess_quad_swapped_bigstats/excess_H_disk1_quadB.png" height=220></a></td></tr>
+  <tr><td>C</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk1_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk1_quadC.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk1_quadC.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk1_quadC.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_swapped_bigstats/excess_V_disk1_quadC.png"><img src="20260722_allexcess_quad_swapped_bigstats/excess_V_disk1_quadC.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_swapped_bigstats/excess_H_disk1_quadC.png"><img src="20260722_allexcess_quad_swapped_bigstats/excess_H_disk1_quadC.png" height=220></a></td></tr>
+  <tr><td>D</td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_V_disk1_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_V_disk1_quadD.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_bigstats/excess_H_disk1_quadD.png"><img src="20260722_allexcess_quad_bigstats/excess_H_disk1_quadD.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_swapped_bigstats/excess_V_disk1_quadD.png"><img src="20260722_allexcess_quad_swapped_bigstats/excess_V_disk1_quadD.png" height=220></a></td>
+    <td align=center><a href="20260722_allexcess_quad_swapped_bigstats/excess_H_disk1_quadD.png"><img src="20260722_allexcess_quad_swapped_bigstats/excess_H_disk1_quadD.png" height=220></a></td></tr>
+</table>
+<p>Same slope/step character in both states, as expected from the correction
+above -- neither state produces a real peak at the quadrant level, so this
+plot set still can't be used to decide the H/V-swap question on its own.
+<tt>script/checkAllExcessQuad.C</tt> (numbers), <tt>script/plotAllExcessQuad.C</tt>
+(these plots), <tt>script/checkOrientationMap.C</tt> (the raw hardware-map/FEB
+tally), <tt>script/estimatePurity.C</tt> (purity), all checked in.</p>
+
+<HR>
+<p><a href="ftt_search_window.html">&larr; Back to FST-blind projection study</a> |
+<a href="index.html">FTT geometry page</a> |
+<a href="../jpsi/index.html">Back to main DiLepton page</a></p>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

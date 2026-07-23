@@ -82,5 +82,16 @@ if ( "$align" == "1" ) then
     if ( $nalign == 0 ) echo "WARNING: align=1 but no ${alignBase}*.root files found"
 endif
 
+# FTT-blind matching diagnostic (2026-07-17): one fwd_blind_diag.root per job,
+# renamed per-input-file to avoid collisions once copied into a shared outdir.
+if ( -e fwd_blind_diag.root ) then
+    mkdir -p $outdir/blinddiag
+    set diagname = $mudst:s/.MuDst.root/.fwd_blind_diag.root/
+    echo /bin/mv fwd_blind_diag.root $outdir/blinddiag/$diagname
+    /bin/mv fwd_blind_diag.root $outdir/blinddiag/$diagname
+else
+    echo "WARNING: fwd_blind_diag.root not found -- blind-diagnostic copy-back got nothing"
+endif
+
 /bin/rm $base
 

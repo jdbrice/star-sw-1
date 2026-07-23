@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>FTT hit-matching purity -- FST-blind projection study</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffe8d5" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>FTT hit-matching purity: is the FTT hit a track picks up actually the right one?</H1>
+
+<HR>
+<H2>Method</H2>
+<ul>
+  <li>Every candidate FTT hit on a disk, and the one actually used by tracking, are compared
+      against an <b>FST+vertex-only track projection that has never seen any FTT hit</b> --
+      a genuinely FTT-blind reference.
+  <li>Split by strip orientation: V (vertical strip) measures x precisely, y only to the
+      strip's own physical extent ("off-axis"); H (horizontal strip) is the mirror image.
+  <li>Plots below: single-file, 500-event real-data test (all 4 disks), raw counts (no area
+      normalization), off-axis range &plusmn;35cm.
+  <li>The 4 matching/geometry fixes behind this study (maxStripLength, maxStripCenter, the
+      off-axis search gate, the covariance unit fix) are listed on the
+      <a href="index.html">FTT geometry index</a> page.
+</ul>
+
+<HR>
+<H2>Electron-gun MC</H2>
+<p>Same FST-blind diagnostic, on controlled MC samples with known truth, through the real
+reconstruction chain -- <tt>StFttDbMaker &rarr; StFttSimHitMaker &rarr; StFttClusterMaker
+&rarr; StFttClusterPointMaker(mUseGeantData=false) &rarr; fwdTrack</tt> -- not the
+GEANT-truth blur used elsewhere for MC. Three samples, increasing occupancy:</p>
+<ul>
+  <li><a href="mc_ele_45deg.html">Single e- @ 45&deg;</a> (1000 events) -- one track/event,
+      phi restricted to one quadrant.
+  <li><a href="mc_ele_2pi_np1.html">2&pi;, 1 e-/event</a> (4000 events) -- one track/event,
+      full azimuthal range.
+  <li><a href="mc_ele_2pi_np8.html">2&pi;, 8 e-/event</a> (4000 events) -- 8 tracks/event,
+      full azimuthal range, closer to real multi-track occupancy.
+</ul>
+<p><b><a href="real_data_excess_check.html">&rarr; Real-data excess check</a></b> -- the same
+question checked directly on real data with ~1000x the statistics of the single-file plots
+below: is there a real correlation in the raw candidate population, and what fraction of
+matched hits are genuinely correct? Current best numbers and plots live there, not below.</p>
+
+<HR>
+<H2>Plots (single-file test, all 4 disks, split by orientation)</H2>
+<p>Gray filled = every candidate hit on that disk. Red line = the hit actually matched into
+a track's seed. Log-y throughout. 2D maps: log-z, left = all candidates, right = matched
+only. V = vertical strip (x plane), H = horizontal strip (y plane).</p>
+<table border=1>
+  <tr><td>Disk</td><td align=center>V: dx (precise)</td><td align=center>V: dy (off-axis)</td>
+      <td align=center>H: dx (off-axis)</td><td align=center>H: dy (precise)</td>
+      <td align=center>V: 2D</td><td align=center>H: 2D</td></tr>
+  <tr><td>0</td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dx_V_disk0.png"><img src="20260720_blinddiag_crosscond/blind_Dx_V_disk0.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dy_V_disk0.png"><img src="20260720_blinddiag_crosscond/blind_Dy_V_disk0.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dx_H_disk0.png"><img src="20260720_blinddiag_crosscond/blind_Dx_H_disk0.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dy_H_disk0.png"><img src="20260720_blinddiag_crosscond/blind_Dy_H_disk0.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_XY_V_disk0.png"><img src="20260720_blinddiag_crosscond/blind_XY_V_disk0.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_XY_H_disk0.png"><img src="20260720_blinddiag_crosscond/blind_XY_H_disk0.png" height=160></a></td></tr>
+  <tr><td>1</td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dx_V_disk1.png"><img src="20260720_blinddiag_crosscond/blind_Dx_V_disk1.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dy_V_disk1.png"><img src="20260720_blinddiag_crosscond/blind_Dy_V_disk1.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dx_H_disk1.png"><img src="20260720_blinddiag_crosscond/blind_Dx_H_disk1.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dy_H_disk1.png"><img src="20260720_blinddiag_crosscond/blind_Dy_H_disk1.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_XY_V_disk1.png"><img src="20260720_blinddiag_crosscond/blind_XY_V_disk1.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_XY_H_disk1.png"><img src="20260720_blinddiag_crosscond/blind_XY_H_disk1.png" height=160></a></td></tr>
+  <tr><td>2</td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dx_V_disk2.png"><img src="20260720_blinddiag_crosscond/blind_Dx_V_disk2.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dy_V_disk2.png"><img src="20260720_blinddiag_crosscond/blind_Dy_V_disk2.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dx_H_disk2.png"><img src="20260720_blinddiag_crosscond/blind_Dx_H_disk2.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dy_H_disk2.png"><img src="20260720_blinddiag_crosscond/blind_Dy_H_disk2.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_XY_V_disk2.png"><img src="20260720_blinddiag_crosscond/blind_XY_V_disk2.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_XY_H_disk2.png"><img src="20260720_blinddiag_crosscond/blind_XY_H_disk2.png" height=160></a></td></tr>
+  <tr><td>3</td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dx_V_disk3.png"><img src="20260720_blinddiag_crosscond/blind_Dx_V_disk3.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dy_V_disk3.png"><img src="20260720_blinddiag_crosscond/blind_Dy_V_disk3.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dx_H_disk3.png"><img src="20260720_blinddiag_crosscond/blind_Dx_H_disk3.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_Dy_H_disk3.png"><img src="20260720_blinddiag_crosscond/blind_Dy_H_disk3.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_XY_V_disk3.png"><img src="20260720_blinddiag_crosscond/blind_XY_V_disk3.png" height=160></a></td>
+    <td align=center><a href="20260720_blinddiag_crosscond/blind_XY_H_disk3.png"><img src="20260720_blinddiag_crosscond/blind_XY_H_disk3.png" height=160></a></td></tr>
+</table>
+
+<HR>
+<a href="index.html">Back to FTT geometry page</a> |
+<a href="../jpsi/index.html">Back to main DiLepton page</a>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

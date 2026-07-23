@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>Real-data excess/purity check: after time-cut + calibration fixes</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffe8d5" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>Real-data excess/purity check: with a real FTT time cut, after fixing the calibration</H1>
+<p><a href="ftt_search_window.html">&larr; Back to FST-blind projection study</a> |
+<a href="real_data_excess_check.html">&larr; Original (AcceptAll baseline) version of this page</a></p>
+
+<HR>
+<H2>Context</H2>
+<ul>
+  <li>Production's <tt>StFttClusterMaker</tt> time cut had been <tt>kTimeCutModeAcceptAll</tt>
+      (no real time-based filtering) for the entire history of this analysis. This session,
+      switched it on: <tt>SetTimeCut(2, -40, 100)</tt> (<tt>kTimeCutModeCalibratedTime</tt>,
+      window from Run22-Run24 online QA) in <tt>fwd_afterburner_db.C</tt>.
+  <li>While building the diagnostics to check this, found and fixed two real bugs in the
+      per-VMM time calibration itself -- see the
+      <a href="../ftt_sim_hit_maker/timecut/index.html">per-VMM uuid-vs-time diagnostic page</a>
+      for the full writeup:
+    <ul>
+      <li><tt>StFttDb::quadrant()</tt> was silently merging all 4 physical quadrants sharing a
+          (plane,feb,vmm) into one shared timing anchor (wrong bounds check on a sentinel value).
+      <li><tt>HitCalibHelper::time()</tt> had no handling for dbcid's 12-bit (4096) rollover,
+          splitting some channels' true peak into two disconnected sub-peaks.
+    </ul>
+  <li>This page repeats the main real-data checks from the
+      <a href="real_data_excess_check.html">original (AcceptAll) page</a> on a fresh 101-file
+      condor batch (same file sample, <tt>condor/submit_blinddiag_stats_timecut.txt</tt> +
+      <tt>script/runBlindDiag</tt>, output in
+      <tt>/gpfs01/star/pwg_tasks/FwdCalib/akio/blinddiag_stats_timecut/</tt>, merged with
+      <tt>hadd</tt>) -- now with both bugs fixed and the time cut genuinely active, to see what
+      changed. The online-QA H/V-labeling investigation (mirror test, quadrant-swap test) is
+      NOT repeated here -- that's a separate, still-parked question; see the original page for
+      that thread.
+</ul>
+
+<HR>
+<H2>Findings</H2>
+<ul>
+  <li><b>disk0/V's dip is resolved.</b> The original AcceptAll baseline showed a genuine,
+      overwhelming -127&sigma; to -130&sigma; DIP at disk0/V (fewer real-looking matches near
+      dx=0 than the local background predicted) -- flagged repeatedly as an unexplained open
+      question. With both calibration bugs fixed and the time cut active, disk0/V now shows a
+      real, positive excess: <b>1.04x, +352.9&sigma;</b> -- same character as every other
+      disk/orientation, not an outlier anymore. Purity flips the same way: N_real went from
+      -384,541 (baseline, meaningless negative) to +760,204 (this run).
+  <li><b>Every disk/orientation excess is stronger than the AcceptAll baseline</b> -- 353-816&sigma;
+      here vs. 192-525&sigma; in the original page, at the same 101-file statistics. Consistent
+      with cutting away out-of-time noise before clustering, as hoped.
+  <li><b>Overall purity (excluding disk0/V, for apples-to-apples with the original 14.9% figure):
+      14.9% &rarr; 15.6%.</b> A real but modest improvement, not the large jump the single-file
+      smoke test (10.3%&rarr;18.6%, done before either bug was found/fixed) suggested -- that
+      earlier result likely didn't survive contact with the real, full-statistics, properly
+      calibrated picture.
+  <li><b>Per-disk pattern is mixed, not a uniform win:</b> disk0 and disk1 clearly improve
+      (disk1 V: 7.9%&rarr;11.0%, disk1 H: 8.6%&rarr;11.6%), disk2 is roughly flat, and
+      <b>disk3 gets slightly worse</b> (V: 21.7%&rarr;19.5%, H: 22.4%&rarr;20.3%). Not
+      understood yet -- worth checking whether the fixed -40,100 window is well-matched to
+      disk3's own timing specifically, or whether something disk-dependent is going on.
+</ul>
+
+<HR>
+<H2>Plots: "All candidates" excess, all 4 disks, both orientations (101-file statistics)</H2>
+<p>Same method as the <a href="real_data_excess_check.html">original page</a>: gray filled =
+"All candidates" histogram, zoomed to &plusmn;5cm. Blue dashed line = local background level
+(sideband average). Peak window (|x|&lt;0.6cm, red) and sideband windows (0.6-3cm each side,
+blue) marked.</p>
+<table border=1>
+  <tr><td>Disk</td><td align=center>V (dx)</td><td align=center>H (dy)</td></tr>
+  <tr><td>0</td>
+    <td align=center><a href="20260723_allexcess_timecut/excess_V_disk0.png"><img src="20260723_allexcess_timecut/excess_V_disk0.png" height=280></a></td>
+    <td align=center><a href="20260723_allexcess_timecut/excess_H_disk0.png"><img src="20260723_allexcess_timecut/excess_H_disk0.png" height=280></a></td></tr>
+  <tr><td>1</td>
+    <td align=center><a href="20260723_allexcess_timecut/excess_V_disk1.png"><img src="20260723_allexcess_timecut/excess_V_disk1.png" height=280></a></td>
+    <td align=center><a href="20260723_allexcess_timecut/excess_H_disk1.png"><img src="20260723_allexcess_timecut/excess_H_disk1.png" height=280></a></td></tr>
+  <tr><td>2</td>
+    <td align=center><a href="20260723_allexcess_timecut/excess_V_disk2.png"><img src="20260723_allexcess_timecut/excess_V_disk2.png" height=280></a></td>
+    <td align=center><a href="20260723_allexcess_timecut/excess_H_disk2.png"><img src="20260723_allexcess_timecut/excess_H_disk2.png" height=280></a></td></tr>
+  <tr><td>3</td>
+    <td align=center><a href="20260723_allexcess_timecut/excess_V_disk3.png"><img src="20260723_allexcess_timecut/excess_V_disk3.png" height=280></a></td>
+    <td align=center><a href="20260723_allexcess_timecut/excess_H_disk3.png"><img src="20260723_allexcess_timecut/excess_H_disk3.png" height=280></a></td></tr>
+</table>
+
+<HR>
+<H2>Estimating FTT matching purity</H2>
+<p>Same method as the <a href="real_data_excess_check.html">original page</a>
+(<tt>script/estimatePurity.C</tt>): <tt>purity = N_real / N_matched</tt>, where
+<tt>N_real</tt> is the background-subtracted peak integral of the "All candidates" histogram
+(&plusmn;1.0cm window, local sideband background) -- see the original page for the full method
+writeup and caveats (this is purity, not full efficiency).</p>
+<table border=1>
+  <tr><td>Disk</td><td>Ori</td><td align=center>N_real</td><td align=center>N_matched</td>
+      <td align=center>purity (this run)</td><td align=center>purity (AcceptAll baseline)</td></tr>
+  <tr><td>0</td><td>V</td><td>760,204</td><td>10,338,690</td><td><b>7.4%</b></td><td style="color:darkred">-3.7% (dip, n/a)</td></tr>
+  <tr><td>0</td><td>H</td><td>931,898</td><td>6,861,775</td><td><b>13.6%</b></td><td>12.2%</td></tr>
+  <tr><td>1</td><td>V</td><td>1,236,889</td><td>11,278,231</td><td><b>11.0%</b></td><td>7.9%</td></tr>
+  <tr><td>1</td><td>H</td><td>806,623</td><td>6,931,256</td><td><b>11.6%</b></td><td>8.6%</td></tr>
+  <tr><td>2</td><td>V</td><td>1,630,351</td><td>10,141,978</td><td><b>16.1%</b></td><td>15.4%</td></tr>
+  <tr><td>2</td><td>H</td><td>1,208,616</td><td>6,790,634</td><td><b>17.8%</b></td><td>17.6%</td></tr>
+  <tr><td>3</td><td>V</td><td>1,957,406</td><td>10,031,258</td><td><b>19.5%</b></td><td style="color:darkred">21.7% (worse)</td></tr>
+  <tr><td>3</td><td>H</td><td>1,374,799</td><td>6,774,795</td><td><b>20.3%</b></td><td style="color:darkred">22.4% (worse)</td></tr>
+  <tr><td colspan=2><b>Overall (excluding disk0/V, for apples-to-apples)</b></td>
+      <td align=center><b>9,146,582</b></td><td align=center><b>58,809,927</b></td>
+      <td align=center><b>15.6%</b></td><td align=center><b>14.9%</b></td></tr>
+</table>
+<p><b>Reading:</b> a real, modest overall improvement, and disk0/V's long-standing dip anomaly
+is resolved -- but this is not a clean, uniform win across the detector. disk3 is measurably
+worse with the time cut than without it, which argues against a simple "noise is uniformly
+time-separable, cutting always helps" story. Worth understanding disk3's specific behavior
+before treating -40,100 as a settled choice for the whole detector.</p>
+
+<HR>
+<p><a href="ftt_search_window.html">&larr; Back to FST-blind projection study</a> |
+<a href="real_data_excess_check.html">Original (AcceptAll baseline) version of this page</a> |
+<a href="../ftt_sim_hit_maker/timecut/index.html">Per-VMM uuid-vs-time diagnostic (the 2 bugs)</a> |
+<a href="index.html">FTT geometry page</a> |
+<a href="../jpsi/index.html">Back to main DiLepton page</a></p>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

@@ -180,8 +180,14 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
         covMatrix[0][1] = 0;
         covMatrix[1][0] = 0;
 
+        // Fix (2026-07-18): use the fired strip's OWN center (maxStripCenter(), now
+        // populated -- see StFttClusterMaker.cxx) instead of the row-averaged
+        // YX_StripGroupEdge[row]+maxStripLength/2 fallback, which collapsed the
+        // off-axis coordinate to one constant value for ~92% of same-row hits
+        // (identical maxStripLength), discarding real per-strip resolution
+        // (~3.2mm pitch, per StFttDb::stripPitch and Row1.txt).
         point->setX( clu_x->x() );
-        point->setY( mFttDb->YX_StripGroupEdge[clu_x->row()]+clu_x->maxStripLength()/2. );
+        point->setY( clu_x->maxStripCenter() );
         point->setSigmaX(clu_x->sigma());
         point->setSigmaY(clu_x->maxStripLength()/sqrt(12));
         point->setSigmaXY(0);
@@ -206,7 +212,8 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
         covMatrix[0][1] = 0;
         covMatrix[1][0] = 0;
 
-        point->setX(  mFttDb->YX_StripGroupEdge[clu_y->row()]+clu_y->maxStripLength()/2. );
+        // Fix (2026-07-18): see matching comment in the vertical-cluster loop above.
+        point->setX( clu_y->maxStripCenter() );
         point->setY( clu_y->x() );
         point->setSigmaX(clu_y->maxStripLength()/sqrt(12.));
         point->setSigmaY(clu_y->sigma());
@@ -317,15 +324,28 @@ void StFttClusterPointMaker::MakeGlobalPoints() {
         // Z is already in cm since it is just the offset
         global.set( ((x*sx)+dx)/10.0, ((y*sy)+dy)/10.0, z+dz );
 
+        // Fix (2026-07-18): the covariance built in MakeLocalPoints()/MakeHVPoints()
+        // (from maxStripLength() and cluster sigma(), both in mm, per
+        // Row1_StripLength.txt) was never rescaled here even though position just
+        // was (/10 above) -- so cov() stayed in mm^2 forever while everything
+        // downstream (hsx/hsy in FwdTracker.h's findFttStripsNearProjectedState,
+        // and GenFit's own hit-weighting via StFwdHitLoader.cxx's hitCov3) reads it
+        // as if already cm^2. That's a 10x error on sigma (100x on variance) for
+        // every FTT hit ever fit -- found while trying to fix the search-window's
+        // off-axis gate (see jpsi/ftt_search_window.html) and discovering hsx was
+        // ~10x too large to ever bind. Variance scales as length^2, so /100 here
+        // to match position's /10.
+        std::vector<std::vector<float>> new_cov(2,std::vector<float>(2,0));
+        new_cov[0][0] = p->cov()[0][0] / 100.0;
+        new_cov[1][1] = p->cov()[1][1] / 100.0;
+        new_cov[0][1] = p->cov()[0][1] / 100.0;
+        new_cov[1][0] = p->cov()[1][0] / 100.0;
         if (p->quadrant() == 1 || p->quadrant() == 3) {
             p->setSigmaXY(-p->sigmaXY());
-            std::vector<std::vector<float>> new_cov(2,std::vector<float>(2,0));
-            new_cov[0][0] = p->cov()[0][0];
-            new_cov[1][1] = p->cov()[1][1];
-            new_cov[0][1] = -p->cov()[0][1];
-            new_cov[1][0] = -p->cov()[1][0];
-            p->setCov(new_cov);
+            new_cov[0][1] = -new_cov[0][1];
+            new_cov[1][0] = -new_cov[1][0];
         }
+        p->setCov(new_cov);
 
         if (mDebug) {
             LOG_INFO << "Global x: " << global.x() << " y: " << global.y() << " z: " << global.z() << endm;

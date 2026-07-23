@@ -1,0 +1,99 @@
+#!/bin/csh
+# Electron-gun particle-gun simulation through the REAL FTT reconstruction chain:
+# GEANT generation (genElectron2pi.C) + StFttSimHitMaker -> StFttClusterMaker ->
+# StFttClusterPointMaker(mUseGeantData=false) -> fwdTrack (simFttResidualTest.C).
+# Called by condor jobs inside the singularity container.
+#
+# Usage: runElectronFttReal NEV RUN NUMPEREVENT OUTDIR WORKDIR
+#   NEV         number of events
+#   RUN         run number (1-based, used as random seed -- also makes output unique)
+#   NUMPEREVENT number of electrons per event (1, 8, ...)
+#   OUTDIR      full path to output directory (files moved here after job)
+#   WORKDIR     full path to STAR macro working directory
+
+set nev=$1
+set run=$2
+set numPerEvent=$3
+set outdir=$4
+set workdir=$5
+
+echo "runElectronFttReal: nev=$nev run=$run numPerEvent=$numPerEvent"
+echo "runElectronFttReal: outdir=$outdir"
+echo "runElectronFttReal: workdir=$workdir"
+
+set setname=ele2pi_np${numPerEvent}.vz0
+set fzdname=${setname}.run${run}.fzd
+
+echo "runElectronFttReal: setname=$setname fzdname=$fzdname"
+
+# === Set up scratch working directory ===
+set tmpdir=${SCRATCH}/${setname}.run${run}
+if ( ! -e $tmpdir ) mkdir -p $tmpdir
+cd $tmpdir
+echo "runElectronFttReal: tmpdir=$tmpdir"
+
+# === Symlink needed resources ===
+foreach f (fGeom.root genElectron2pi.C simFttResidualTest.C bfc.C)
+    if ( ! -e $f && -e $workdir/$f ) ln -sf $workdir/$f
+end
+if ( ! -e StRoot   && -e $workdir/StRoot   ) ln -sf $workdir/StRoot
+if ( ! -e .${STAR_HOST_SYS} && -e $workdir/.${STAR_HOST_SYS} ) then
+    ln -sf $workdir/.${STAR_HOST_SYS}
+endif
+
+mkdir -p $outdir
+mkdir -p $outdir/fzd
+mkdir -p $outdir/log
+
+pwd
+ls -la
+
+# === Step 1: GEANT particle gun (genElectron2pi.C) ===
+echo "runElectronFttReal: running GEANT particle gun..."
+root4star -b -q "genElectron2pi.C($nev,$run,$numPerEvent)"
+set geant_status=$status
+echo "runElectronFttReal: GEANT exit status=$geant_status"
+
+if ( -e $fzdname ) then
+    echo "runElectronFttReal: copying $fzdname -> $outdir/fzd/"
+    /bin/cp $fzdname $outdir/fzd/
+else
+    echo "ERROR: FZD not found: $fzdname"
+    ls *.fzd
+    exit 1
+endif
+
+# === Step 2: real FTT reconstruction chain (simFttResidualTest.C) ===
+# csh doesn't treat \" as an escaped literal quote inside a "..." string the
+# way bash does -- build the quoted arg by switching quote types instead
+# (same trick as $pidq/$pidspecq in runsim), or root4star's own arg parsing
+# throws "Unmatched "." and the job dies here with no simFttResidualTest.C
+# output at all.
+set fzdnameq = '"'${fzdname}'"'
+echo "runElectronFttReal: running real FTT reconstruction chain..."
+root4star -b -q "simFttResidualTest.C($fzdnameq,$nev,0)"
+set sim_status=$status
+echo "runElectronFttReal: reconstruction exit status=$sim_status"
+
+pwd
+ls -la
+
+# === Move outputs to destination, renamed uniquely per run so parallel jobs ===
+# === writing into the same outdir don't clobber each other.               ===
+if ( -e fwd_blind_diag.root ) then
+    echo "runElectronFttReal: moving fwd_blind_diag.root -> $outdir/fwd_blind_diag.run${run}.root"
+    /bin/mv fwd_blind_diag.root $outdir/fwd_blind_diag.run${run}.root
+else
+    echo "WARNING: fwd_blind_diag.root not found"
+endif
+
+set residualname=${setname}.run${run}.FwdDetResidual_Global.root
+if ( -e $residualname ) then
+    echo "runElectronFttReal: moving $residualname -> $outdir/"
+    /bin/mv $residualname $outdir/
+else
+    echo "WARNING: $residualname not found"
+endif
+
+echo "runElectronFttReal: done. Output directory:"
+ls $outdir/
