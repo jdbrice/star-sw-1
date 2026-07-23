@@ -133,7 +133,7 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		chain->AddMaker(fttDbMk);
 		StFttHitCalibMaker * ftthcm = new StFttHitCalibMaker();
 		StFttClusterMaker * fttclu = new StFttClusterMaker();
-		fttclu->SetTimeCut(1, -40, 40);
+		fttclu->SetTimeCut(2, -40, 100); // kTimeCutModeCalibratedTime, window from Run22-Run24 online QA (was mode 1 = AcceptAll, -40,40)
 		StFttClusterPointMaker *fttCP = new StFttClusterPointMaker();
 		// StFttPointMaker * fttpoint = new StFttPointMaker();
 	}
