@@ -34,7 +34,14 @@ public:
     }
 
     Short_t time( UShort_t uuid, Short_t dbcid ){
-        return dbcid - dbcidAnchor[ uuid ]; // TODO: handle wrap around?
+        // dbcid is a 12-bit (4096) circular counter -- a channel whose true
+        // anchor sits near the 0/4095 edge would otherwise get hits on the
+        // far side of the wrap reported as a difference near +-4096 instead
+        // of their true small offset. Wrap to the shortest signed distance.
+        Short_t diff = dbcid - dbcidAnchor[ uuid ];
+        if ( diff > 2048 ) diff -= 4096;
+        if ( diff < -2048 ) diff += 4096;
+        return diff;
     }
 
     Short_t anchor( UShort_t uuid ) {
