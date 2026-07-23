@@ -12,6 +12,13 @@ bool RunFwdChain = true;
 bool RunMuDstMaker = true;
 bool RunPicoWrite = true;
 
+// Real StFttDb reconstruction chain (StFttDbMaker -> StFttSimHitMaker ->
+// StFttClusterMaker -> StFttClusterPointMaker, mUseGeantData=false) in
+// place of reading GEANT truth directly (MakeGeantPoints, mUseGeantData=
+// true) -- exercises the same geometry/clustering code real data uses.
+// Set false for the old/original GEANT-truth-direct behavior.
+bool UseFttSimHitMaker = true;
+
 bool UseCachedGeom = true;
 bool UseConstBz = false;
 bool UseZeroB = false;
@@ -131,14 +138,45 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
         }
     }
 
-    gSystem->Load( "StFttDbMaker" );
-    gSystem->Load( "libStFttSimMaker" );
-    gSystem->Load( "libStFttClusterPointMaker" );
-    // make an StFttClusterPointMaker
-    StFttClusterPointMaker * fttClusterPointMaker = new StFttClusterPointMaker("fttClusterPointMaker");
-    fttClusterPointMaker->SetDebug(1);
-    fttClusterPointMaker->setUseGeantData( true );
-    chain->AddBefore("fwdTrack", fttClusterPointMaker);
+    if ( UseFttSimHitMaker ) {
+        // Real chain: StFttDbMaker -> StFttSimHitMaker -> StFttClusterMaker ->
+        // StFttClusterPointMaker (mUseGeantData=false), same makers/order as
+        // fwd_afterburner_db.C's real-data chain, with StFttSimHitMaker in
+        // place of StFttRawHitMaker/StFttHitCalibMaker.
+        gSystem->Load( "libStFttDbMaker.so" );
+        gSystem->Load( "libStFttSimHitMaker.so" );
+        gSystem->Load( "libStFttClusterMaker.so" );
+        gSystem->Load( "libStFttClusterPointMaker.so" );
+
+        StFttDbMaker * fttDbMk = new StFttDbMaker();
+        chain->AddMaker(fttDbMk);
+
+        StFttSimHitMaker * fttSimHit = new StFttSimHitMaker();
+        chain->AddMaker(fttSimHit);
+
+        StFttClusterMaker * fttClu = new StFttClusterMaker();
+        fttClu->SetTimeCut( 1 /*kTimeCutModeAcceptAll*/, -9999, 9999 ); // no real timing in MC
+        chain->AddMaker(fttClu);
+
+        StFttClusterPointMaker * fttClusterPointMaker = new StFttClusterPointMaker("fttClusterPointMaker");
+        fttClusterPointMaker->SetDebug(1);
+        // mUseGeantData left at its constructor default (false) -- take the
+        // real MakeLocalPoints/MakeGlobalPoints path through StFttDb.
+        chain->AddBefore("fwdTrack", fttClusterPointMaker);
+    } else {
+        // Old/original behavior: read GEANT truth directly in global
+        // coordinates (StFttClusterPointMaker::MakeGeantPoints()) -- never
+        // calls into StFttDb's real geometry transform. Kept for backward
+        // compatibility (UseFttSimHitMaker = false).
+        gSystem->Load( "StFttDbMaker" );
+        gSystem->Load( "libStFttSimMaker" );
+        gSystem->Load( "libStFttClusterPointMaker" );
+
+        StFttClusterPointMaker * fttClusterPointMaker = new StFttClusterPointMaker("fttClusterPointMaker");
+        fttClusterPointMaker->SetDebug(1);
+        fttClusterPointMaker->setUseGeantData( true );
+        chain->AddBefore("fwdTrack", fttClusterPointMaker);
+    }
         
     // Configure the Forward Tracker
     if (RunFwdChain) {
