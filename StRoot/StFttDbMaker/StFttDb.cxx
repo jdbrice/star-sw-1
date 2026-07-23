@@ -698,7 +698,17 @@ UChar_t StFttDb::plane( StFttRawHit * hit ){
 }
 
 UChar_t StFttDb::quadrant( StFttRawHit * hit ){
-    if ( hit->quadrant() < nQuad )
+    // Bug (found 2026-07-22): was checking against nQuad (=16, total
+    // quadrants across all 4 planes) instead of nQuadPerPlane (=4). Since
+    // the "unset" sentinel kFttUnknownQuadrant=4 is < 16, the check always
+    // passed and the rdo()-1 fallback below never fired for a hit whose
+    // StFttRawHit::mQuadrant hadn't been mapped yet (e.g. anything read
+    // before StFttClusterMaker::ApplyHardwareMap() runs this event --
+    // notably StFttHitCalibMaker::Make(), which calls StFttDb::fob(),
+    // which calls this, and runs earlier in the chain than
+    // ApplyHardwareMap in production). Matches StFttDb::plane()'s
+    // (correct) use of nPlane just above.
+    if ( hit->quadrant() < nQuadPerPlane )
         return hit->quadrant();
     return hit->rdo() - 1;
 }
