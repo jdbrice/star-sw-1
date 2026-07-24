@@ -7,7 +7,7 @@
 */
 
 struct fttDataWindowsB {
-	short uuid[385]; /* fob(1-96) x vmm(1-4) = index 1 - 384 */
+	short uuid[385]; /* index = StFttDb::vmmId(hit) [0-383] */
 	octet mode[385]; /* 0 = timebin, 1 = bcid */
 	short min[385]; /* time window min > -32768 */
 	short max[385]; /* time window max < 32768 */

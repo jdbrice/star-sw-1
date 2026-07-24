@@ -100,8 +100,13 @@ Int_t StFttHitCalibMaker::Make()
 
     for ( auto rawHit : mFttCollection->rawHits() ) {
 
-        UShort_t fob = (UShort_t)mFttDb->fob( rawHit );
-        UShort_t uuid = rawHit->vmm() + ( StFttDb::nVMMPerFob * fob );
+        // Use StFttDb::vmmId() -- the SAME per-channel key
+        // StFttDb::getTimeCut() uses to look up the DB time-window map
+        // (dwMap). The old fob()-based formula here (vmm + 4*fob, fob
+        // 1-based) computed a DIFFERENT number, off by a constant
+        // +StFttDb::nVMMPerFob (=4), from vmmId() -- the two were
+        // independently written ~4 years apart and never reconciled.
+        UShort_t uuid = (UShort_t)mFttDb->vmmId( rawHit );
 
         mHelper->fill( uuid, rawHit->dbcid() );
 
