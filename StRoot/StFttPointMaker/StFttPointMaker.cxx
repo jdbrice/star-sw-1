@@ -120,13 +120,21 @@ void StFttPointMaker::MakeLocalPoints(){
     std::vector< StFttCluster *> clusters[StFttDb::nRob][StFttDb::nRowsPerQuad][StFttDb::nStripOrientations];
 
     for ( StFttCluster* clu : mFttCollection->clusters() ) {
+        // NOTE: rob(StFttCluster*) is 0-based, range [0, nRob-1]
+        // (= quadrant + plane*nQuadPerPlane). This differs from
+        // rob(StFttRawHit*), which is 1-based -- see StFttDb.cxx.
         UChar_t rob = mFttDb->rob( clu );
         if ( clu->nStrips() < 2 ) continue;
         clusters[ rob ][ clu->row() ][ clu->orientation() ].push_back( clu );
     } // loop on hit
 
-    
-    for ( size_t iRob = 1; iRob < StFttDb::nRob; iRob ++ ){
+    // Fix (2026-07-27): loop started at iRob=1, but the fill above is
+    // 0-based, so clusters[0] was never read and NO points were ever made
+    // for rob==0 -- i.e. quadrant A of plane 0 (disk0/quadA), which is
+    // silently absent from the output rather than merely sparse. The bfc
+    // "ftt" chain includes FttPoint (BigFullChain.h), so this affects
+    // StFttPoints in production MuDst.
+    for ( size_t iRob = 0; iRob < StFttDb::nRob; iRob ++ ){
         for ( size_t iRowH = 0; iRowH < 3; iRowH++ ){
             size_t nH = clusters[ iRob ][ iRowH ][ kFttHorizontal ].size();
             for ( size_t iRowV = 0; iRowV < 3; iRowV++ ){
