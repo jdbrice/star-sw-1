@@ -40,10 +40,10 @@ bool runFttChain = true;
 bool runFcsChain = true;
 bool runFwdChain = true;
 bool refillMuDst = false;
-bool runFwdQa    = false;
+bool runFwdQa    = true;
 bool runFitQa    = false;
-bool runPico     = false;
-
+bool runPico     = true;
+bool runFcsQa    = true;
 #include "StMemStat.h"
 
 
@@ -70,7 +70,7 @@ void fwd_afterburner( 	const Char_t * fileList = "st_physics_23037002_raw_100006
 													"MuDst.root",
 													1
 												);
-	TChain& muDstChain = *muDstMaker.chain();
+	TChain& muDstChain = *muDstMaker->chain();
     printf( "MuDst file has %d events available in tree\n", muDstChain.GetEntries());
     muDstChain.SetCacheSize(0);   // disable input TTreeCache: avoids ~128 MB-class per-event VSize jumps
     printf( "Input TTreeCache size set to 0 (disabled)\n");
@@ -89,7 +89,7 @@ void fwd_afterburner( 	const Char_t * fileList = "st_physics_23037002_raw_100006
 	/*******************************************************************************************/
 	// Create the StMuDst2StEventMaker
     StMuDst2StEventMaker * mu2ev = new StMuDst2StEventMaker();
-	mu2ev->setActive(true);
+	mu2ev->SetActive(true);
 	/*******************************************************************************************/
 
 	/*******************************************************************************************/
@@ -122,15 +122,22 @@ void fwd_afterburner( 	const Char_t * fileList = "st_physics_23037002_raw_100006
 	/*******************************************************************************************/
     // FCS Chain
 	if (runFcsChain){
-		gSystem->Load("libStFcsWaveformFitMaker.so");
-		gSystem->Load("libStFcsClusterMaker.so");
+		//gSystem->Load("libStFcsWaveformFitMaker.so");
+		//gSystem->Load("libStFcsClusterMaker.so");
 		
-		StFcsWaveformFitMaker *fcsWFF = new StFcsWaveformFitMaker();
+		//StFcsWaveformFitMaker *fcsWFF = new StFcsWaveformFitMaker();
 		// This should only be used for simulated data, for real data this done in the database
+
 		//fcsWFF->setEnergySelect(0);
 		// This skips waveform analysis, and only apply new gain from DB
 		fcsWFF->setAnaWaveform(false);
 		StFcsClusterMaker *fcsclu = new StFcsClusterMaker();
+		// fcsWFF->setEnergySelect(0);
+		//StFcsClusterMaker *fcsclu = new StFcsClusterMaker();
+		gSystem->Load("StFcsRawHitMaker");
+		StFcsRawHitMaker* hit = new StFcsRawHitMaker();
+		hit->setReadMuDst(1); //assuming reading from MuDst, so always true
+
 	}
 	/*******************************************************************************************/
 
@@ -183,10 +190,10 @@ void fwd_afterburner( 	const Char_t * fileList = "st_physics_23037002_raw_100006
 			StFwdQAMaker *fwdQA = new StFwdQAMaker();
 			fwdQA->SetDebug(2);
 			TString fwdqaname( gSystem->BaseName(inMuDstFile) );
-			fwdqaname.ReplaceAll(".MuDst.root", ".FwdTree.root");
-			cout << fwdqaname.Data() << endl;
-			fwdQA->setTreeFilename(fwdqaname);
-
+			fwdqaname.ReplaceAll(".MuDst.root", "_FwdHists.root");
+			//cout << fwdqaname.Data() << endl;
+			//fwdQA->setTreeFilename(fwdqaname);
+		        fwdQA->setLocalOutputFile(fwdqaname.Data());
 			gSystem->Load("StFwdUtils.so");
 			StFwdAnalysisMaker * fwdAna = new StFwdAnalysisMaker();
 			fwdAna->setMuDstInput();
@@ -208,6 +215,52 @@ void fwd_afterburner( 	const Char_t * fileList = "st_physics_23037002_raw_100006
 		TString fitqaoutname(gSystem->BaseName(inMuDstFile));
 		fitqaoutname.ReplaceAll(".MuDst.root", ".FwdFitQA.root");
 		fwdFitQA->setOutputFilename( fitqaoutname );
+	}
+
+
+
+	if(runFcsChain && runFcsQa){
+		gSystem->Load("StEpdDbMaker");
+		gSystem->Load("StEpdHitMaker");
+		StEpdDbMaker* epddb = new StEpdDbMaker();
+		StEpdHitMaker* epdhitmkr = new StEpdHitMaker();
+		epdhitmkr->setReadMuDst();
+		gSystem->Load("StFwdData");
+		TString foriternum(inMuDstFile);
+		Ssiz_t last_ = foriternum.Last('_');
+		TString filename = "StFcsRun22Qa_";
+		TString iternum = foriternum(last_+1,7);
+		iternum.ReplaceAll(".list","");
+		TString runnum;
+		if( foriternum.Contains("_raw_") ){ runnum = foriternum(last_-12,12); }
+		else{ runnum = foriternum(last_-8,8); }
+		//TString filenametree = "FcsRun22Pi0Ana_";
+		filename += runnum + "_" + iternum + ".root";
+		HistManager* treehists = new HistManager();
+		treehists->InitFile(filename.Data(),"RECREATE");
+
+		gSystem->Load("StFwdAna");
+		StFwdAnaData* fwdanadata = new StFwdAnaData();
+		fwdanadata->setTreeOnBit(0);
+		fwdanadata->setRandomSeed(time(0));
+		fwdanadata->setEpdNmipCut(0.7);
+		fwdanadata->setIgnoreTrig();
+
+		StFwdAnaDataMaker* fwddatamkr = new StFwdAnaDataMaker();
+		fwddatamkr->setAnaData(fwdanadata);
+		fwddatamkr->setPolDataFilename("Run22PolForJobs.txt");
+		fwddatamkr->setFcsTrigFilename("FcsSortedTrig.txt");
+		fwddatamkr->setHistManager(treehists);
+		StFwdAnaFcsRun22Qa* fcsqa = new StFwdAnaFcsRun22Qa();
+		fcsqa->setFcsAdcTbOn(false);
+		fcsqa->setEpdAdcQaOn(false);
+		fcsqa->setEpdTacQaOn(false);
+		fcsqa->setBestMassOn(false);
+		fwddatamkr->addAna(fcsqa);
+		StFwdAnaEpdQaAndVert* epdqa = new StFwdAnaEpdQaAndVert();
+		epdqa->setEpdTacAdcOn(false);
+		fwddatamkr->addAna(epdqa);
+		fwddatamkr->addAna(new StFwdAnaVertex());
 	}
 	/*******************************************************************************************/
 
