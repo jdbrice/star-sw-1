@@ -229,6 +229,7 @@ public:
             this->mNFailedPoints            = 99;
             this->mCharge                   = 0;
             this->mChi2                     = -1;
+            this->mNdf                      = 0;
             return;
         }
         try {
@@ -245,6 +246,10 @@ public:
             mNFailedPoints           = mTrack->getFitStatus()->getNFailedPoints();
             mCharge                  = mTrack->getFitStatus()->getCharge();
             mChi2                    = mTrack->getFitStatus()->getChi2();
+            // Bug fix: mNdf was declared but never populated from genfit, so it
+            // stayed at its default of 0 for every track -- making chi2/ndf
+            // divide by zero (infinite) downstream for every consumer.
+            mNdf                     = mTrack->getFitStatus()->getNdf();
 
             if ( mIsFitConverged ){
                 mMomentum = mTrack->getCardinalRep()->getMom( mTrack->getFittedState(0, mTrack->getCardinalRep()) );
@@ -260,6 +265,7 @@ public:
             this->mNFailedPoints            = 99;
             this->mCharge                   = 0;
             this->mChi2                     = -1;
+            this->mNdf                      = 0;
         }
     }
 
@@ -314,6 +320,7 @@ public:
             mNFailedPoints           = fs->getNFailedPoints();
             mCharge                  = fs->getCharge();
             mChi2                    = fs->getChi2();
+            mNdf                     = fs->getNdf();
             if ( mIsFitConverged )
                 mMomentum = cr->getMom( mTrack->getFittedState(0, cr) );
         } catch ( genfit::Exception &e ) {
