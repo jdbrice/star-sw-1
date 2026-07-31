@@ -1,0 +1,321 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>FST outer-sensor gap offset</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>FST outer-sensor gap offset: a sign error in StFstHitMaker</H1>
+
+<p>The two outer sensors of every FST wedge are reconstructed 1.000&nbsp;deg
+away from where the silicon is &mdash; one full <tt>kFstStripGapPhi</tt>,
+about 0.39&nbsp;cm at r=22&nbsp;cm. Correcting it improves the track fit for
+exactly those hits by 3.2% in &chi;&sup2;/ndf, and lets 8.5% more of them
+survive the quality cuts.
+<a href="fstgap.txt">Original email</a>
+</p> 
+
+<HR>
+<H2>The bug</H2>
+<p><tt>StFstHitMaker.cxx</tt> lines 159 and 163 add the
+&plusmn;0.5&middot;<tt>kFstStripGapPhi</tt> term to the two outer sensors with
+the signs the wrong way round:</p>
+<pre>
+L159  sensor == 1:  ... - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;   -> +
+L163  sensor == 2:  ... + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;   -> -
+</pre>
+<p>Nothing else changes. Swapping the two signs puts every strip exactly on
+the AGML silicon.</p>
+
+<HR>
+<H2>Evidence 1 &mdash; geometry, no events</H2>
+<p>All 108 FST sensors compared against the AGML silicon, read from each
+<tt>FTUS</tt> node's own <tt>TGeoTubeSeg</tt> shape and global transform in
+<tt>fGeom.root</tt>. Disk 1, FSTW copy 1, wedge-local phi (centreline 0,
+wedge spans &plusmn;15&nbsp;deg):</p>
+<table border=1 cellpadding=4>
+<tr><th></th><th>strip centres, local phi [deg]</th></tr>
+<tr><td>AGML FTUS_1 (outer)</td><td>-15.383 &hellip; -0.617</td></tr>
+<tr><td>AGML FTUS_2 (outer)</td><td>+0.617 &hellip; +15.383</td></tr>
+<tr><td>AGML FTUS_3 (inner)</td><td>-14.883 &hellip; +14.883</td></tr>
+<tr><td>StFstHitMaker, sensor 1 (phiStrip 0-63)</td><td>-14.383 &hellip; +0.383 &nbsp; <b>off by +1.000</b></td></tr>
+<tr><td>StFstHitMaker, sensor 2 (phiStrip 64-127)</td><td>-0.383 &hellip; +14.383 &nbsp; <b>off by -1.000</b></td></tr>
+<tr><td>StFstHitMaker, inner</td><td>-14.883 &hellip; +14.883 &nbsp; exact</td></tr>
+</table>
+<p>Same &plusmn;1.000&nbsp;deg on all 36 wedges. The inner sensor is exact
+everywhere, so only the outer pair is affected.</p>
+
+<p>Which sensor owns which strips is not derivable from the code &mdash;
+<tt>getSensor()</tt> comes from <tt>mChannelId</tt> (electronics) and
+<tt>getPhiStrip()</tt> from <tt>mGeoId</tt> (geometry), and only
+<tt>Calibrations/fst/fstMapping</tt> links them. Read out over all 36864
+channels:</p>
+<pre>
+sensor 0 (inner):  phiStrip   0-127,  rStrip 0-3
+sensor 1 (outer):  phiStrip   0-63,   rStrip 4-7
+sensor 2 (outer):  phiStrip  64-127,  rStrip 4-7
+</pre>
+
+<p>The reconstruction is also wrong on its own terms, without reference to
+AGML: those two spans <b>overlap by 0.77&nbsp;deg</b> across the wedge
+centreline, at identical radii (both rStrip 4-7), where
+<tt>kFstStripGapPhi</tt> says there is a 1&nbsp;deg gap. Silicon cannot
+overlap.</p>
+
+<HR>
+<H2>Evidence 2 &mdash; hit positions</H2>
+<p>Reconstructed outer-hit azimuth relative to its own wedge centreline,
+with the correction off and on. No track fit is involved, so nothing can
+absorb the effect. 152 files of runs 23081008/23081015, ~58M rows.</p>
+<table border=1 cellpadding=4>
+<tr><td align=center><a href="fstGapFixEffect.png"><img src="fstGapFixEffect.png" height=200></a></td></tr>
+</table>
+<table border=1 cellpadding=4>
+<tr><th>outer sensors</th><th>overlap |&delta;&phi;|&lt;0.383&deg;</th><th>edge 14.4&lt;|&delta;&phi;|&lt;15.4&deg;</th><th>total</th></tr>
+<tr><td>fix OFF</td><td>83,135 &nbsp; (1.67&times; plateau)</td><td>0</td><td>1,971,200</td></tr>
+<tr><td>fix ON</td><td><b>0</b></td><td><b>167,426</b></td><td>2,118,642</td></tr>
+</table>
+<p>With the fix off the two outer sensors pile up on top of each other at the
+centreline &mdash; 1.67&times; the surrounding density, approaching the 2&times;
+expected where two sensors overlap &mdash; and the outer edges are empty. With
+it on the centreline empties completely and the edges populate. The inner
+sensor is untouched, which is the control.</p>
+<p>The narrow spikes are real, not a plotting artefact: they sit at the same
+local phi in the inner control with and without the fix, so they are fixed
+features of the detector (a few strips with elevated occupancy, recurring at
+the same strip number across wedges). They are worth a second look in the outer
+panel: a single spike near |&delta;&phi;|&nbsp;=&nbsp;5&deg; with the fix off
+becomes two, bracketing it at about 3.8 and 6.3&deg;, with it on. That is a
+1&nbsp;deg shift of the two outer halves in <i>opposite</i> directions acting on
+a fixed feature &mdash; the same signature as the centreline and the edges,
+seen a third way.</p>
+<p>Binning note: one FST strip per bin (30/128&nbsp;=&nbsp;0.234375&deg;),
+rebinned by 4. Bin widths that are not an exact multiple of the strip pitch
+beat against it and paint periodic spikes that look like structure.</p>
+
+<HR>
+<H2>Evidence 3 &mdash; track fit quality</H2>
+<p>&chi;&sup2;/ndf of the leave-one-out refit, split by whether the removed hit
+was on an outer or an inner sensor. Only outer hits move, so a real
+improvement has to concentrate there; inner is the control. Sliced on
+<tt>nPointsUsed</tt> so the track composition is fixed and the comparison
+cannot be a selection effect.</p>
+<table border=1 cellpadding=4>
+<tr><td align=center><a href="fstGapChi2.png"><img src="fstGapChi2.png" height=220></a></td></tr>
+</table>
+<table border=1 cellpadding=4>
+<tr><th>removed hit</th><th>OFF</th><th>ON</th><th>change</th><th></th></tr>
+<tr><td><b>OUTER</b></td><td>7.5243 &plusmn; 0.0080</td><td><b>7.2834 &plusmn; 0.0075</b></td><td><b>-0.241 &plusmn; 0.011</b></td><td>21.9&sigma;, 3.2%</td></tr>
+<tr><td>inner (control)</td><td>7.8594 &plusmn; 0.0034</td><td>7.8206 &plusmn; 0.0034</td><td>-0.039 &plusmn; 0.005</td><td>8.1&sigma;, 0.49%</td></tr>
+</table>
+<p>Sample size, off vs on. These are unbiased-residual rows &mdash; one per
+hit removed and refitted &mdash; not tracks:</p>
+<table border=1 cellpadding=4>
+<tr><th></th><th>fix OFF</th><th>fix ON</th><th>change</th></tr>
+<tr><td><b>outer-sensor rows</b></td><td>1,660,288</td><td><b>1,800,862</b></td><td><b>+8.5%</b></td></tr>
+<tr><td>inner-sensor rows</td><td>12,992,281</td><td>13,097,222</td><td>+0.8%</td></tr>
+<tr><td>converged refits</td><td>14,652,569</td><td>14,898,084</td><td>+1.7%</td></tr>
+<tr><td>all rows in tree</td><td>58,160,090</td><td>58,775,942</td><td>+1.1%</td></tr>
+</table>
+<p>The fix costs nothing and lets 8.5% more outer hits pass the quality cuts,
+while the inner sensor is essentially unchanged &mdash; an independent
+indication it is doing the right thing to the right hits.</p>
+
+<p>Per <tt>nPointsUsed</tt> slice, &Delta;&chi;&sup2;/ndf = ON - OFF:</p>
+<table border=1 cellpadding=4>
+<tr><th>nPts</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th></tr>
+<tr><td>OUTER</td><td>-0.414</td><td>-0.393</td><td>-0.298</td><td>-0.283</td><td>-0.301</td><td>-0.075</td><td>-0.096</td><td>+0.043</td><td>-0.111</td></tr>
+<tr><td>inner</td><td>-0.059</td><td>-0.052</td><td>-0.050</td><td>-0.044</td><td>-0.037</td><td>-0.026</td><td>-0.005</td><td>+0.013</td><td>+0.029</td></tr>
+<tr><td>ratio</td><td>7.0</td><td>7.6</td><td>6.0</td><td>6.4</td><td>8.1</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+</table>
+<ul>
+  <li>Outer improves 10-17&sigma; at nPts 6-10, consistently 6-8&times; more than
+      the control.
+  <li>The control is <b>not</b> zero (8.1&sigma; inclusive, 3-4&sigma; at low
+      nPts). Moving outer hits changes the fits that inner residuals are
+      measured against, so some coupling is expected. The result rests on the
+      6-8&times; ratio, not on a null control.
+  <li>The effect dies by nPts 11-12. With more points constraining the fit, one
+      displaced hit matters less and the fit absorbs it.
+</ul>
+
+<HR>
+<H2>Evidence 4 &mdash; residual shape</H2>
+<p>&chi;&sup2; is one number; this is the unbiased r&Delta;&phi; residual
+itself, normalised to unit area so the comparison is of shape rather than of
+how many rows survived. Log scale, so the tails are visible.</p>
+<table border=1 cellpadding=4>
+<tr><td align=center><a href="fstGapResidual.png"><img src="fstGapResidual.png" height=200></a></td></tr>
+</table>
+<table border=1 cellpadding=4>
+<tr><th>region</th><th>pass</th><th>rows</th><th>rms [cm]</th><th>core &sigma; [cm]</th><th>tail &gt;0.3&nbsp;cm</th></tr>
+<tr><td><b>OUTER</b></td><td>OFF</td><td>1,971,200</td><td>0.2785</td><td><b>0.1484</b></td><td>29.59%</td></tr>
+<tr><td><b>OUTER</b></td><td>ON</td><td>2,118,642</td><td>0.2720</td><td><b>0.1412</b></td><td>28.22%</td></tr>
+<tr><td>inner</td><td>OFF</td><td>16,208,524</td><td>0.1689</td><td>0.0758</td><td>18.11%</td></tr>
+<tr><td>inner</td><td>ON</td><td>16,311,760</td><td>0.1667</td><td>0.0757</td><td>17.86%</td></tr>
+</table>
+<ul>
+  <li>The outer core narrows <b>4.9%</b> (0.1484 &rarr; 0.1412&nbsp;cm); the
+      inner control is flat to 0.1%. The ratio panel shows it as a +8% excess
+      at the peak with a dip in the shoulders.
+  <li>So the correction <b>sharpens</b> the measurement, it does not merely
+      re-centre it &mdash; which &chi;&sup2; alone could not have distinguished.
+  <li>The inner control does move slightly (+2% at the peak), the same coupling
+      seen in the &chi;&sup2; table, about 4&times; smaller than the outer.
+</ul>
+
+<HR>
+<H2>What this does not fix</H2>
+<ul>
+  <li><b>Not the 12-fold wedge structure.</b> The RMS of the 12 per-wedge means
+      is unchanged to &le;0.002&nbsp;cm. That remains open &mdash; see the
+      <a href="../fttgeom/index.html">FTT geometry page</a> and
+      <a href="../residual/index.html">residual page</a>.
+  <li><b>Not the absolute fit.</b> &chi;&sup2;/ndf is ~7.8, nowhere near 1, and
+      FST pull widths are 0.161 (U) and 0.555 (V) with 73.8% of rows outside a
+      1&nbsp;cm residual core. The FST covariance model dominates the
+      &chi;&sup2;; a 3.2% geometric improvement is real but small against it.
+      Fixing the covariance is plausibly a prerequisite for judging any FST
+      alignment work.
+  <li><b>Not MC.</b> <tt>StFstFastSimMaker</tt> never applies a gap term at
+      all, so MC has no displacement to remove &mdash; applying the correction
+      there would introduce one. MC has a different problem: it bins phi on a
+      flat 1536-fold grid that ignores the 1&nbsp;deg gap and the outer
+      sensors' &plusmn;15.5&nbsp;deg extent. See
+      <a href="../FstSlowSim/index.html">StFstSlowSimMaker</a>, which has since been
+      written and closes against GEANT truth.
+</ul>
+
+<HR>
+<H2>Applying it</H2>
+<p>The afterburner reads finished hits from MuDst
+(<tt>setFstHitSource(MUDST)</tt>) and never runs <tt>StFstHitMaker</tt>, so
+fixing that file alone does not change afterburner output. MuDst does keep
+<tt>mMeanRStrip</tt>, <tt>mMeanPhiStrip</tt> and <tt>mHardwarePosition</tt>,
+and the correction is a constant shift in phi, so it can be applied at
+load time on existing files &mdash; no DAQ reprocessing:</p>
+<pre>
+StFwdHitLoader.cxx, after the FstWedgeAligner block:
+
+    if ( mApplyFstGapFix &amp;&amp; sensorIndex &gt; 0 ) {
+        const double sgnAsIs = ( sensorIndex == 1 ) ? -1.0 : +1.0;
+        vPhi -= sgnAsIs * kFstzFilp[diskIndex] * kFstzDirct[wedgeIndex] * kFstStripGapPhi;
+    }
+</pre>
+<p>Opt-in via <tt>setApplyFstGapFix()</tt> on StFwdHitLoader/StFwdTrackMaker,
+and a trailing <tt>applyFstGapFix</tt> argument on
+<tt>fwd_afterburner_db.C</tt>.</p>
+
+<H3>Open question: this flag is a trap</H3>
+<p><i>Now...I haven't yet thought about automating this flag. I'm sure we will
+make mistakes setting/not setting <tt>mApplyFstGapFix</tt> for current mudst vs
+fixed Mudst <b>if we ever fix StFstHitMaker</b>. This is exactly why I did not
+make this a commit and PR, but rather putting this in an email. Please think
+through what we should do. Not fixing StFstHitMaker may be an option...</i></p>
+
+<p>The problem stated plainly: whether the correction should be applied depends
+on which production wrote the MuDst, and that is invisible in the file. Set it
+wrong and you get a 1&nbsp;deg error either way &mdash; uncorrected, or
+corrected twice. There are three populations to keep straight, and MC is
+already one of them today:</p>
+<table border=1 cellpadding=4>
+<tr><th>MuDst</th><th>has the 1&deg; displacement?</th><th>correct setting</th></tr>
+<tr><td>real data, current productions</td><td>yes</td><td>ON</td></tr>
+<tr><td>real data, after a StFstHitMaker fix</td><td>no</td><td>OFF</td></tr>
+<tr><td>MC (StFstFastSimMaker)</td><td>no &mdash; never applies a gap term at all</td><td>OFF</td></tr>
+</table>
+
+<p><b>Suggestion: do not decide it by hand at all &mdash; detect it from the
+data.</b> The signature is not a subtle statistical difference, it is a
+geometric impossibility, and it is binary:</p>
+<pre>
+                 outer hits with          outer hits with
+                 |dphi_local| &lt; 0.383     14.4 &lt; |dphi_local| &lt; 15.4
+  displaced           83,135                        0
+  correct                  0                  167,426
+</pre>
+<p>With the displacement present the two outer sensors overlap across the wedge
+centreline, so that band is populated and the outer edges are empty. Corrected,
+the centreline band is empty because that is the physical 1&nbsp;deg gap. Zero
+versus ~10<sup>5</sup> &mdash; a few thousand hits decide it, so the loader can
+sample the first events of a run and set the flag itself.</p>
+
+<p>The rule that covers all three rows above: <b>apply the correction if and
+only if the centreline band is populated.</b> Old real data is populated, so it
+gets corrected. Fixed real data is empty, so it does not. MC is also empty
+(GEANT puts no hits in the gap, because AGML knows the gap is there), so MC is
+left alone &mdash; which is required, since applying this to MC would introduce
+an error rather than remove one. One test, no configuration, and the dangerous
+MC case is safe by construction rather than by remembering.</p>
+
+<p><b>How many events?</b> Measured on run 23081008, raw MuDst hits (not
+residual rows &mdash; the raw rate is ~30x higher, which is why this is cheap):
+96 FST hits/event, 31.75 outer, and</p>
+<pre>
+  centreline band |dphi_local| &lt; 0.383 deg :  2.027 hits/event
+  outer edge      14.4 &lt; |dphi_local| &lt; 15.4 :  0.000 hits/event
+</pre>
+<p>so 10 band hits in 5 events, 50 in 25, 100 in 49. The cold start is a few
+tens of events, not thousands &mdash; and it need not cost any events at all,
+since this can be a one-time pre-pass over the file's <tt>FstHit</tt> branch
+before the event loop rather than something learned from the stream. That also
+sidesteps the run-condition worry: it is measured per file, on that file.</p>
+
+<p><b>Or hide a bit instead of measuring.</b>
+<tt>StMuFstHit::mHardwarePosition</tt> is a <tt>UInt_t</tt> carrying values
+1-108, so 7 bits used and 25 spare. A high bit could mark the geometry
+convention, with bit-clear meaning the current one, so every existing file
+reads correctly without being touched. It is not a schema change &mdash; no new
+member, no I/O layout change &mdash; but <tt>getDisk()</tt>,
+<tt>getWedge()</tt> and <tt>getSensor()</tt> compute straight from
+<tt>mHardwarePosition</tt> and would need masking, in both
+<tt>StMuFstHit</tt> and <tt>StFstHit</tt>. Explicit and free at runtime;
+against it, it only helps files written after the change, so detection is
+still needed for everything that already exists.</p>
+
+<p>On whether to fix <tt>StFstHitMaker</tt> at all: leaving it unfixed does
+avoid the vintage ambiguity, but only for as long as nobody fixes it. It is an
+obvious two-sign error once written down, so someone eventually will, and at
+that point every analysis carrying a hard-coded ON silently acquires the error
+it was correcting. Auto-detection removes the reason to leave it broken, so the
+recommendation is: fix <tt>StFstHitMaker.cxx:159,163</tt> for future
+productions, and make the load-time correction self-configuring rather than a
+flag anyone has to remember. A version marker on the hit would be cleaner still,
+but needs a schema change, and detection works on every file that already
+exists.</p>
+
+<p>Three workable options then &mdash; detect per file, mark a bit, or leave
+StFstHitMaker alone and always correct &mdash; with different trade-offs
+between robustness, code churn and how badly it fails if someone forgets.
+Worth agreeing on before this becomes an interface anyone depends on, rather
+than deciding it here.</p>
+
+<HR>
+<H2>Code</H2>
+<ul>
+  <li><a href="code/checkFstWedgeGeom.C">checkFstWedgeGeom.C</a> &mdash; all 108 sensors vs AGML, no events
+  <li><a href="code/checkFstStripPhi.C">checkFstStripPhi.C</a> &mdash; the per-strip table above
+  <li><a href="code/dumpFstMapping.C">dumpFstMapping.C</a> &mdash; the <tt>fstMapping</tt> dump
+  <li><a href="code/checkFstGapFixEffect.C">checkFstGapFixEffect.C</a> &mdash; the position test
+  <li><a href="code/compareGapfixCampaign.C">compareGapfixCampaign.C</a> &mdash; the off/on fit comparison
+  <li><a href="code/plotFstGapResidual.C">plotFstGapResidual.C</a> &mdash; residual shapes
+  <li><a href="code/plotFstGapChi2.C">plotFstGapChi2.C</a> &mdash; the &chi;&sup2; figure
+  <li><a href="code/runab_gapfix">runab_gapfix</a>,
+      <a href="code/submit_gapfix_off.txt">submit_gapfix_off.txt</a>,
+      <a href="code/submit_gapfix_on.txt">submit_gapfix_on.txt</a> &mdash; the campaign
+</ul>
+<ul>
+  <li><a href="code/StFstHitMaker_L150-170.txt">StFstHitMaker.cxx:150-170</a> &mdash; the block containing the two signs
+  <li><a href="code/StFwdHitLoader_gapfix_snippet.txt">StFwdHitLoader.cxx</a> &mdash; the load-time correction as applied
+  <li><a href="results.txt">results.txt</a> &mdash; all numbers on this page in one text file
+  <li><a href="../FstSlowSim/index.html">StFstSlowSimMaker</a> &mdash; the follow-on: MC now runs on the real FST reconstruction chain (supersedes <a href="proposal_StFstSimRawHitMaker.txt">proposal_StFstSimRawHitMaker.txt</a>)
+  <li><a href="fstpaths.html">fstpaths.html</a> &mdash; diagram: the four FST geometry sources and which code path uses which
+</ul>
+
+<HR>
+<a href="../jpsi/index.html">Back to main DiLepton page</a>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

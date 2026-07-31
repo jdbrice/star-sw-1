@@ -399,6 +399,29 @@ int StFwdHitLoader::loadFstHitsFromMuDst( FwdDataSource::McTrackMap_t &mcTrackMa
             vPhi = FstWedgeAligner::correctPhi( diskIndex, vPhi );
         }
 
+        // DIAGNOSTIC mirror about the wedge centreline -- see
+        // setApplyFstMirror() in StFwdHitLoader.h. Applied before the gap fix
+        // so the two are independent. The sector is taken from the hit's own
+        // global phi; sectors are [0,30), [30,60), ... with centres at 15, 45,
+        // ... deg, which is the AGML tiling on every disk.
+        if ( mApplyFstMirror ) {
+            double p360 = vPhi * 180.0 / TMath::Pi();
+            while ( p360 <   0.0 ) p360 += 360.0;
+            while ( p360 >= 360.0 ) p360 -= 360.0;
+            int    isec = (int)( p360 / 30.0 );
+            if ( isec > 11 ) isec = 11;
+            double pcen = isec * 30.0 + 15.0;
+            vPhi = ( 2.0 * pcen - p360 ) * TMath::Pi() / 180.0;
+        }
+
+        // Outer-sensor gap-offset sign fix -- see setApplyFstGapFix() in
+        // StFwdHitLoader.h for why and for the sign derivation. Inner sensor
+        // (sensorIndex 0) carries no gap term, so it is left alone.
+        if ( mApplyFstGapFix && sensorIndex > 0 ) {
+            const double sgnAsIs = ( sensorIndex == 1 ) ? -1.0 : +1.0;
+            vPhi -= sgnAsIs * kFstzFilp[diskIndex] * kFstzDirct[wedgeIndex] * kFstStripGapPhi;
+        }
+
         float x0 = vR * cos( vPhi );
         float y0 = vR * sin( vPhi );
         hitCov3 = makeFstCovMat( TVector3( x0, y0, vZ ) );
@@ -420,9 +443,23 @@ int StFwdHitLoader::loadFstHitsFromMuDst( FwdDataSource::McTrackMap_t &mcTrackMa
         mFwdHitsFst.back()._genfit_plane_index = globalIndex;
         // Store strip-native local position (no global azimuthal rotation).
         {
-            int rStrip = (int)muFstHit->getMeanRStrip();
-            mFwdHitsFst.back()._localPosition[0] = kFstrStart[rStrip] + 0.5f * kFstStripPitchR;
-            mFwdHitsFst.back()._localPosition[1] = muFstHit->getMeanPhiStrip() * kFstStripPitchPhi;
+            // Bounds guard: on MC these come back as -1, because
+            // StFstFastSimMaker builds its StFstHit with the StHit-style
+            // constructor and never sets them (see proposal_StFstSimMaker.txt).
+            // kFstrStart[-1] is an out-of-bounds read, and whatever it returns
+            // then feeds the strip-native planar decode, which is gated on
+            // _localPosition[0] >= 0 and so cannot detect the garbage. Leave
+            // the sentinel in place instead, so downstream sees "no strip
+            // information" rather than a plausible-looking wrong number.
+            int rStrip   = (int)muFstHit->getMeanRStrip();
+            float phiStr = muFstHit->getMeanPhiStrip();
+            if ( rStrip >= 0 && rStrip < kFstNumRStripsPerWedge && phiStr >= 0 ) {
+                mFwdHitsFst.back()._localPosition[0] = kFstrStart[rStrip] + 0.5f * kFstStripPitchR;
+                mFwdHitsFst.back()._localPosition[1] = phiStr * kFstStripPitchPhi;
+            } else {
+                mFwdHitsFst.back()._localPosition[0] = -1.0f;
+                mFwdHitsFst.back()._localPosition[1] = -1.0f;
+            }
         }
     } // index
 

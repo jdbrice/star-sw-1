@@ -66,6 +66,7 @@
   <a href="#seed-curvature">Seed Curvature #25</a>
   <a href="#ftt-calib-gap">FTT Calibration Gaps #26</a>
   <a href="#dca-fix">DCA Bug #27</a>
+  <a href="#ftt-geom-fixes">FTT Geometry 7 Fixes #28</a>
   <a href="#regression">Regression Tests</a>
   <a href="#files">Files &amp; Logs</a>
 </nav>
@@ -1156,6 +1157,25 @@ pre-refit <code>setDCA()</code>. Fixed the order bug in
 <code>GenfitTrackResult::setDCA()</code> to cover <code>kForwardVertexConstrained</code> and
 <code>kFCSConstrained</code>, which are constrained to a literal 3D point same as
 Primary/BLCVtx.</p>
+</div>
+
+<!-- ─────────────────────────────────────────────────── ISSUE 28 -->
+<h2 id="ftt-geom-fixes" class="section-anchor">Issue #28 — FTT Geometry &amp; Reconstruction: 7 Fixes</h2>
+
+<div class="card">
+<p>Started from FTT hit-position maps showing a top/bottom + north/south swapped, bowtie
+footprint instead of an octagon; tracing it produced 7 fixes across the FTT
+reconstruction/matching chain. Full writeup, plots and evidence tables:
+<a href="../fttgeom/index.html"><strong>FTT geometry page</strong></a>.</p>
+<ul>
+<li><code>maxStripLength</code> defaulted to -999 and was never set — the swap and bowtie.</li>
+<li><code>maxStripCenter</code> — off-axis strip position now per-strip, was one row-averaged constant.</li>
+<li>Off-axis search gate — now gates both coordinates, previously dPhi/dR only, then dx only with no dy gate.</li>
+<li>Covariance unit — hit covariance left in mm&sup2; while position was cm, a 10&times; error in sigma.</li>
+<li>Per-VMM time calibration, 2 bugs — <code>StFttDb::quadrant()</code> merged all 4 quadrants onto one timing anchor; no handling of dbcid's 12-bit rollover.</li>
+<li>Afterburner time cut — production had run <code>kTimeCutModeAcceptAll</code> (no time filtering at all) for the whole analysis.</li>
+<li><code>StFttPointMaker</code> dropped all of disk0/quadrant A — 0-based fill read from <code>iRob=1</code>, affects <code>StFttPoint</code>/<code>StMuFttPoint</code> in production MuDst.</li>
+</ul>
 </div>
 
 <!-- ─────────────────────────────────────────────────── REGRESSION -->

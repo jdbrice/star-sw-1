@@ -1,0 +1,255 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <TITLE>FST geometry and reconstruction paths</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>FST: which code decides where a hit is</H1>
+
+<p>There are <b>four</b> independent descriptions of FST geometry in the tree, and
+five code paths that use different subsets of them. Most of the confusion this
+month came from assuming a single source of truth. Marked
+<b>[!]</b> are known defects, <b>[?]</b> open questions.</p>
+
+<HR>
+<H2>1. The four geometry sources</H2>
+<pre>
+  (a) AGML                          (b) StFstConsts.h            (c) StFstDb survey
+  StarVMC/Geometry/FstmGeo/         hard-coded ideal             Geometry/fst/
+    FstmGeo.xml                     kFstphiStart/Stop            fstOnTpc, hssOnFst,
+        |                           kFstzDirct  (+-1/wedge)      fstWedgeOnHss,
+        | StarGeometry::Construct   kFstzFilp   (+-1/disk)       fstSensorOnWedge
+        |   ("y2023"/"y2024")       kFstrStart, pitches               |
+        |   -> build_geom.C         kFstStripGapPhi                   | StFstDbMaker
+        v                                 |                           v
+    fGeom.root                            |                    TGeoHMatrix per sensor
+        |                                 |                           |
+        |                                 |                           |
+   read by GEANT (MC hits)          read by StFstHitMaker       read by StFstHitMaker
+   read by Xihe's plane build       read by Xihe's decode       ...and then DISCARDED  [!]
+
+  (d) FstRasterizer, StFwdHitLoader.h -- a FOURTH description, used only on the
+      loader's GEANT path: r snapped to a 3.0 cm grid (NOT the real strip radii)
+      and phi to a 1536-fold grid. Unrelated to (a), (b) or (c).
+
+  Verified 2026-07-29: (a) and (b) agree to 0.000 deg on all 36 wedges
+  (script/checkFstWedgeGeom.C). They are NOT independent -- if AGML is wrong,
+  StFstConsts.h carries the same error.
+  All tags we use (y2022..y2024b) select config FSTMv1 -> module FstmGeo.
+</pre>
+
+<HR>
+<H2>2. Real data</H2>
+<pre>
+  DAQ
+   |
+   v
+  StFstRawHitMaker ............ elecId -> geoId via Calibrations/fst/fstMapping
+   |                            sets mChannelId = elecId, mGeoId = mapping[elecId]
+   v
+  StFstRawHit ................. getSensor()   from mChannelId  (electronics)
+   |                            getPhiStrip() from mGeoId      (geometry)
+   |                            getRStrip()   from mGeoId
+   v
+  StFstClusterMaker ........... bins [sensor][phiStrip], merges along rStrip
+   |
+   v
+  StFstCluster ................ disk, wedge, sensor, meanRStrip, meanPhiStrip, charge
+   |
+   v
+  StFstHitMaker  <----------------- StFstConsts.h  (b)
+   |   L130-165  local[0] = r from kFstrStart
+   |             local[1] = phi from kFstphiStart + kFstzFilp*kFstzDirct*strip*pitch
+   |                        +- 0.5*kFstStripGapPhi for the two outer sensors   [!] sign swapped
+   |   L176      MasterToLocal( g -> l ) using (c), stored as localPosition
+   |   L199      LocalToMaster( local -> global ) using (c)      <-- survey applied here
+   |   L212      global = local[0]*cos(local[1]) ...             <-- and OVERWRITTEN  [!]
+   |                                                                 so (c) never reaches a hit
+   v
+  StFstHit -> MuDst StMuFstHit
+              mMeanRStrip, mMeanPhiStrip   (strip-native, survives to MuDst)
+              mHardwarePosition            (disk/wedge/sensor; UInt_t, 25 spare bits)
+              mLocalPosition[3] = (r, phi, z_disk)   phi carries the [!] above
+              mXYZ                         global, from the overwrite
+</pre>
+
+<HR>
+<H2>3. MC -- two different paths, both bypassing reconstruction</H2>
+<pre>
+  GEANT, geometry from (a) fGeom.root
+   |
+   v
+  g2t_fts_hit ................. true crossing point in silicon; AGML knows the 1 deg
+   |                            outer gap, so no truth hit is ever inside it
+   |
+   +=========== PATH 3b: script/sim.C ==========================================
+   |    RunFstChain = false, so fstFastSim is NOT in the chain at all, and
+   |    setFstHitSource( 0 = GEANT ). The loader reads g2t directly:
+   |
+   |      StFwdHitLoader::loadFstHits (GEANT branch)
+   |        rastered = mFstRasterizer.raster( g2t x,y )      (d)
+   |          r   -> 3.0 cm grid   <-- NOT the real strip radii
+   |          phi -> 1536-fold grid
+   |        -> FwdHit directly.  No StFstHit, no MuDst, no strip indices.
+   |
+   |    So this path touches NONE of StFstFastSimMaker, StFstClusterMaker,
+   |    StFstHitMaker, and its r positions do not correspond to real strips.
+   |    In-code note at StFwdHitLoader.cxx:596 records that correct strip
+   |    snapping was tried and made tracking WORSE, so the seeding is tuned
+   |    to these 3.0 cm radii.                                            [!]
+   |
+   +=========== PATH 3a: fstFastSim (the 500-file SingleParticleGun sample) ====
+   v
+  StFstFastSimMaker ........... bins r on RSegment[] (== kFstrStart, so r index IS rStrip)
+   |                            bins phi on ONE UNIFORM 1536-fold grid          [!]
+   |                              - ignores which sensor the hit was in
+   |                              - no 1 deg gap, no +-15.5 deg outer extent
+   |                              - always increases with global phi, whereas the real
+   |                                strip direction alternates via kFstzFilp*kFstzDirct
+   |                            position written = grid bin centre
+   |                            meanRStrip/meanPhiStrip were -1  [!] -> kFstrStart[-1] OOB
+   |                              (stopgap now sets them by inverting (b): self-consistent,
+   |                               so it CANNOT test (b) -- tautology by construction)
+   |
+   +--> StRnDHit  (fsicollection) ... written, read by nothing in FST/Fwd, not in MuDst
+   |
+   v
+  StFstHit -> MuDst
+                          StFstClusterMaker  NEVER RUNS on MC
+                          StFstHitMaker      NEVER RUNS on MC
+</pre>
+
+<HR>
+<H2>4. Common path: the afterburner</H2>
+<pre>
+  StFwdHitLoader has three FST sources, selected by setFstHitSource():
+      0 = GEANT   -> loadFstHits,           applies FstRasterizer (d)  [sim.C]
+      1 = STEVENT -> loadFstHitsFromStEvent
+      2 = MUDST   -> loadFstHitsFromMuDst                              [fwd_afterburner_db.C]
+  Only the MUDST and STEVENT paths carry strip indices; the GEANT path does not.
+
+  MuDst (real or MC)
+   |
+   v
+  StFwdHitLoader::loadFstHitsFromMuDst
+   |   vR,vPhi,vZ  <- localPosition(0,1,2)          (position as computed upstream)
+   |   x0 = vR cos(vPhi),  y0 = vR sin(vPhi)        --> space-point mode
+   |   _localPosition[0,1] <- meanRStrip, meanPhiStrip --> planar mode
+   |   _genfit_plane_index <- fstGlobalSensorIndex(disk, wedge, sensor)
+   |
+   |   optional hooks, all off by default:
+   |     setApplyFstWedgeAlignment()  empirical per-wedge phi table (FstWedgeAligner)
+   |     setApplyFstGapFix()          undoes the [!] gap sign, MuDst-side  -- REAL DATA ONLY
+   |     setApplyFstMirror()          diagnostic; imposes a per-wedge mirror
+   v
+  StFwdTrackMaker
+   |
+   +-- space-point mode (default) ..... uses x0,y0,z as a 3D point
+   |
+   +-- planar mode (xihe-align, kUseSpacePoints=false)
+         TrackFitter rebuilds the measurement from STRIPS, not from x0,y0:
+             measU = r cos(dphi), measV = r sin(dphi)
+             dphi from stripPhi, kFstzFilp*kFstzDirct, +-0.5*kFstStripGapPhi  [!] same
+             sign convention as StFstHitMaker -- a reimplementation, not a call
+         FwdGeomUtils::getFstWedgeOrigin( ) reads (a) fGeom.root:
+             FSTW node -> origin x,y and U,V axes
+             z OVERRIDDEN with the flat FSTD disk z (per-wedge stagger dropped)
+             kElecToGeantWedge[12] = {2,7,1,12,6,11,5,10,4,9,3,8}  (disk2 variant differs)
+         X_global = O_surface + measU*U + measV*V     <-- position comes FROM the plane
+   v
+  GenFit
+</pre>
+
+<HR>
+<H2>5. Where an alignment constant could go</H2>
+<pre>
+  Xihe solves per-wedge (dU, dV, gamma) from the fwdAlign tree, and plans to store
+  them in StarDb. Two possible insertion points, and they must not both be used:
+
+  (A) at the GENFIT plane                          (B) at the survey matrices
+      FwdGeomUtils / TrackFitter                       StFstDb -> StFstHitMaker L199
+      offset O_surface and U,V                         i.e. REMOVE the L212 overwrite
+        + works today, position derives                 + lands in the hit itself, so
+          from the plane so it just works                 every consumer benefits
+        + no change to (a) or (b)                       + this is the mechanism STAR
+        - benefits ONLY the planar fitter                 already intends
+        - pico, space-point mode and every              - path is currently dead code
+          other consumer stay unaligned                 - needs the DB filled+trusted
+
+  dU, dV, gamma are IN-PLANE. dW and tilts cannot be represented while the plane z
+  is flattened to the disk z (section 4), which matches Xihe's own "no dW/tilt until
+  in-plane closes".
+</pre>
+
+<HR>
+<H2>6. Known defects and open questions</H2>
+<pre>
+  [!] outer-sensor gap sign        StFstHitMaker L159,163 and Xihe TrackFitter ~L488.
+                                   1.000 deg = one full kFstStripGapPhi. Measured,
+                                   corrected and validated: see index.html.
+  [!] survey never applied         StFstHitMaker computes LocalToMaster then overwrites
+                                   it. So StFstDb geometry tables are loaded every run
+                                   and affect nothing. Worse than it looks: commit
+                                   9e70bfd0a9 changed what setLocalPosition() stores to
+                                   sensor-local CARTESIAN, but the overwrite still treats
+                                   it as polar (r,phi), so this fork's global positions
+                                   have been wrong since 2025-09-05. Only MC exposed it
+                                   -> <a href="../FstSlowSim/index.html">FstSlowSim/index.html</a>
+  [+] MC bypasses reconstruction   FIXED. Was: no StFstClusterMaker, no StFstHitMaker,
+                                   so the transform was implemented twice and only one
+                                   copy ever tested. StFstSlowSimMaker now feeds MC in
+                                   at raw-hit level and the chain closes against GEANT
+                                   truth -> <a href="../FstSlowSim/index.html">FstSlowSim/index.html</a>
+  [!] MC phi grid                  uniform, no gap, no +-15.5 deg outer extent,
+                                   direction does not alternate
+  [!] two MC paths, neither real   sim.C uses the loader's GEANT branch and the
+                                   FstRasterizer (r on a 3.0 cm grid); the
+                                   SingleParticleGun sample uses fstFastSim. They do
+                                   not agree with each other OR with real data, and
+                                   neither exercises the reconstruction transform.
+  [?] front/back stagger           Flemming: AGML and the DB have the per-wedge
+                                   near/far assignment backwards, from a photograph.
+                                   Would imply a per-wedge MIRROR.
+                                   Imposing that mirror on real data changes almost
+                                   nothing (tracks -0.9%, FTT pickup +0.1%, chi2 +4%)
+                                   because the mirror is a SYMMETRY of every
+                                   FST-plus-vertex observable.
+                                   NOTE on what can settle it. MC is GENERATED from
+                                   the xml, so MC can only ever answer "is the
+                                   reconstruction consistent with the geometry file".
+                                   It cannot say whether the file matches the real
+                                   detector. That needs either metrology (the
+                                   photograph, survey, assembly records) or a
+                                   real-data test that is actually sensitive to
+                                   per-wedge z -- and today none is, because
+                                   StFstHitMaker assigns one flat z per disk. If
+                                   per-wedge z were implemented, the two staggers
+                                   differ by 2*1.742 = 3.485 cm, displacing the
+                                   predicted radius by r*dz/z ~ 0.46 cm at r=20 cm,
+                                   and the correct stagger would null the front/back
+                                   alternating component of the RADIAL residual.
+                                   Caveats: sigma_r ~ 0.83 cm (2.875 cm strip pitch),
+                                   so it is a per-wedge mean measurement; and a
+                                   coherent z error is partly absorbed by the
+                                   leave-one-out refit (predicted 0.17 cm, measured
+                                   0.008-0.041 cm for the flat-z case).
+                                   MC's role is narrower but still required: xml<->code
+                                   consistency is a PRECONDITION for that real-data
+                                   test to be interpretable.
+  [?] FTT as a reference           FTT pickup is insensitive to a 30 deg rotation of
+                                   the FST track direction, consistent with the 7-20%
+                                   matched-hit purity. So the FTT is not currently an
+                                   independent ruler for FST geometry.
+  [?] FST covariance               pull widths 0.161 (U) / 0.555 (V), 73.8% of rows
+                                   outside a 1 cm core, chi2/ndf ~7.8. Dominates the
+                                   fit; arguably gates any alignment work.
+</pre>
+
+<HR>
+<a href="index.html">Back to the FST gap-offset page</a>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

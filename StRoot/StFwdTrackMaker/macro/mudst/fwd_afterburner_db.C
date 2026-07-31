@@ -80,11 +80,13 @@ void loadLibs();
 // bugreport_StFstHitMaker.txt. Off by default so existing production
 // behavior doesn't silently change; turn on to validate the correction or
 // once it's ready to use routinely.
-void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, int residualTrackType=0, const char* extraFileList="", bool enableAlignment=false, bool applyFstWedgeAlignment=false){
+void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, int residualTrackType=0, const char* extraFileList="", bool enableAlignment=false, bool applyFstWedgeAlignment=false, bool applyFstGapFix=false, bool applyFstMirror=false){
 	cout << "FileList: " << fileList << endl;
 	cout << "nEvents: " << nEvents << endl;
 	cout << "enableAlignment: " << enableAlignment << endl;
 	cout << "applyFstWedgeAlignment: " << applyFstWedgeAlignment << endl;
+	cout << "applyFstGapFix: " << applyFstGapFix << endl;
+	cout << "applyFstMirror: " << applyFstMirror << endl;
 	runFwdAlignment = enableAlignment;
 
 	// First load some shared libraries we need
@@ -200,6 +202,8 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		fwdTrack->setFstHitSource( 2 /* = MUDST */);
 		fwdTrack->setFttHitSource( 1 /* = STEVENT */);
 		fwdTrack->setApplyFstWedgeAlignment( applyFstWedgeAlignment ); // see bugreport_StFstHitMaker.txt
+		fwdTrack->setApplyFstGapFix( applyFstGapFix ); // outer-sensor kFstStripGapPhi sign, see StFwdHitLoader.h
+		fwdTrack->setApplyFstMirror( applyFstMirror ); // DIAGNOSTIC only, see StFwdHitLoader.h
 
 		if (runDb) fwdTrack->setUseBeamlineFromDB( true ); // use measured beamline for BLC; off for MC
 

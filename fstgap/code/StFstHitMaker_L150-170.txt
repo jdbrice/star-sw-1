@@ -1,0 +1,21 @@
+				if(meanRStrip < kFstNumRStripsPerWedge/2)
+				{ // inner
+					local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
+					local[1] = phiInner + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi;
+				}
+				else
+				{// outer
+					if(sensor == 1){
+						local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
+						local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
+					}
+					if(sensor == 2){
+						local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
+						local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
+					}
+				}
+
+				if(disk == 1) local[2] = 151.750; //unit: cm
+				else if(disk == 2) local[2] = 165.248; //unit: cm
+				else if(disk == 3) local[2] = 178.781; //unit: cm
+				Double_t g[3], l[3];

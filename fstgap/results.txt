@@ -1,0 +1,100 @@
+FST outer-sensor gap offset -- measured results
+===============================================
+Sample: 152 matched files of runs 23081008 / 23081015, run twice through
+fwd_afterburner_db.C with StFwdHitLoader::setApplyFstGapFix off and on.
+~58M unbiased-residual rows per side. Files lacking a readable alignTree
+were excluded from BOTH samples.
+
+This is the numbers only. The working notes, including the preliminary
+pass and the analysis dead ends, are in gapfix_test/CONCLUSIONS.txt.
+
+
+1. GEOMETRY (no events)
+-----------------------
+All 108 sensors vs the AGML silicon, from each FTUS node's TGeoTubeSeg
+shape and global transform in fGeom.root. Disk 1, FSTW copy 1,
+wedge-local phi [deg]:
+
+  AGML FTUS_1 outer          -15.383 .. -0.617
+  AGML FTUS_2 outer           +0.617 .. +15.383
+  AGML FTUS_3 inner          -14.883 .. +14.883
+
+  StFstHitMaker sensor 1     -14.383 ..  +0.383   off by +1.000
+  StFstHitMaker sensor 2      -0.383 .. +14.383   off by -1.000
+  StFstHitMaker inner        -14.883 .. +14.883   exact
+
+Same +-1.000 deg on all 36 wedges. 1.000 deg = kFstStripGapPhi exactly.
+
+Calibrations/fst/fstMapping, over all 36864 channels:
+  sensor 0 (inner):  phiStrip   0-127,  rStrip 0-3
+  sensor 1 (outer):  phiStrip   0-63,   rStrip 4-7
+  sensor 2 (outer):  phiStrip  64-127,  rStrip 4-7
+
+Independent of AGML: the two outer spans overlap by 0.77 deg at identical
+radii, where kFstStripGapPhi says there is a 1 deg gap.
+
+
+2. HIT POSITIONS (no track fit involved)
+----------------------------------------
+Outer-hit azimuth relative to its own wedge centreline:
+
+  sample   overlap |dphi|<0.383   edge 14.4<|dphi|<15.4   total
+   OFF      83,135  (1.67x)              0              1,971,200
+   ON            0                 167,426  (1.25x)     2,118,642
+
+Inner sensor untouched (control).
+
+
+3. TRACK FIT QUALITY
+--------------------
+chi2/ndf of the leave-one-out refit, by which hit was removed:
+
+  removed hit      OFF                ON              change
+  OUTER        7.5243+-0.0080   7.2834+-0.0075   -0.241+-0.011  21.9 sig  3.2%
+  inner        7.8594+-0.0034   7.8206+-0.0034   -0.039+-0.005   8.1 sig  0.49%
+
+Population-controlled, d(chi2/ndf) = ON - OFF at fixed nPointsUsed:
+
+  nPts    6      7      8      9     10     11     12     13     14
+  OUTER -.414  -.393  -.298  -.283  -.301  -.075  -.096  +.043  -.111
+  inner -.059  -.052  -.050  -.044  -.037  -.026  -.005  +.013  +.029
+  ratio  7.0    7.6    6.0    6.4    8.1     --     --     --     --
+
+The control is NOT zero (8.1 sig inclusive, 3-4 sig at low nPts): moving
+outer hits changes the fits inner residuals are measured against. The
+result rests on the 6-8x ratio, not on a null control. The effect dies by
+nPts 11-12, where more fit points let the fit absorb one displaced hit.
+
+
+4. RESIDUAL SHAPE
+-----------------
+Unbiased r*dphi residual:
+
+  region  pass      rows        rms     core sigma   tail >0.3cm
+  OUTER   OFF     1,971,200   0.2785     0.1484        29.59%
+  OUTER   ON      2,118,642   0.2720     0.1412        28.22%
+  inner   OFF    16,208,524   0.1689     0.0758        18.11%
+  inner   ON     16,311,760   0.1667     0.0757        17.86%
+
+Outer core narrows 4.9%; inner core flat to 0.1%. So the correction
+sharpens the measurement, it does not merely re-centre it.
+
+
+5. SAMPLE SIZE (unbiased-residual rows, one per removed hit -- not tracks)
+--------------------------------------------------------------------------
+  outer-sensor rows    1,660,288 -> 1,800,862   +8.5%
+  inner-sensor rows   12,992,281 -> 13,097,222   +0.8%
+  converged refits    14,652,569 -> 14,898,084   +1.7%
+  all rows in tree    58,160,090 -> 58,775,942   +1.1%
+
+
+6. WHAT IT DOES NOT DO
+----------------------
+- Does not change the 12-fold wedge structure: RMS of the 12 per-wedge
+  means unchanged to <=0.002 cm.
+- Does not make the absolute fit good: chi2/ndf ~7.8, nowhere near 1.
+  FST pull widths are 0.161 (U) / 0.555 (V) with 73.8% of rows outside a
+  1 cm core. The covariance model dominates the chi2.
+- Does not apply to MC. StFstFastSimMaker never applies a gap term, so
+  there is no displacement to remove and the correction would introduce
+  one.

@@ -1,0 +1,139 @@
+<html><head><title>45&deg; electron through the FST slow-sim chain</title></head><body>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<h1>45&deg; single-electron sanity check &mdash; FST slow-sim chain</h1>
+
+<p>
+<a href="../index.html">&larr; StFstSlowSimMaker</a> &middot;
+<a href="../fstclus/index.html">FST real-data clusters</a> &middot;
+<a href="../../jpsi/electron_45.html">the original 45&deg; test (FTT)</a> &middot;
+<a href="../../ftt_sim_hit_maker/index.html">StFttSimHitMaker</a>
+</p>
+
+<h2>Why repeat this</h2>
+
+<ul>
+<li>The <a href="../index.html">closure test</a> on the mother page measures residuals in
+    <b>aggregate</b> over a mixed sample. That is blind to a whole-wedge mislabel that
+    happens to preserve r and &phi; &mdash; exactly the class of error that has bitten the
+    FST repeatedly.</li>
+<li>A single isolated track with known kinematics gives a <b>discrete</b> check instead:
+    every hit can be attributed unambiguously, so the reconstructed wedge index can be
+    compared hit-by-hit against the wedge implied by that hit's own GEANT truth &phi;.</li>
+<li>Same idea, and the same particle gun, as the
+    <a href="../../jpsi/electron_45.html">45&deg; electron test</a> that was originally
+    written for the FTT geometry.</li>
+</ul>
+
+<h2>Setup</h2>
+
+<ul>
+<li>Single e&minus; per event, 500 events. p<sub>T</sub> = 1.5 GeV, &eta; = 2.5&ndash;4.0,
+    &phi; = 45&deg; &plusmn; 0.001 rad <b>at the vertex</b>. Generator:
+    <tt>script/genElectron45.C</tt>.</li>
+<li>Chain &mdash; the real reconstruction path, no fast sim:
+<pre>
+fzin y2024 agml usexgeom sdt20220401 fstDb fstSlowSim fstRawHit fstCluster fstHit
+     MakeEvent StEvent McEvent ReverseField bigbig
+</pre></li>
+<li>Note the DB timestamp. <tt>sim.C</tt>'s usual <tt>sdt20211016</tt> predates FST
+    installation, so <tt>Geometry/fst/fstOnTpc</tt> has no entry and
+    <tt>StFstDbMaker::Make()</tt> returns <tt>StFATAL</tt>, killing the chain on event 0.</li>
+</ul>
+
+<h2>One thing to get right before reading the plots</h2>
+
+<p>The generated &phi; is the &phi; <b>at the vertex</b>. The electron is charged and bends
+over the 150&ndash;180 cm out to the FST, so the arrival &phi; has real tails and hits land
+in several wedges &mdash; 8 or 9 per disk here. <b>That is physics, not a defect</b>: the
+GEANT truth (black, first QA panel) shows the identical spread. A naive
+"all hits must be in one wedge" test would fail for entirely the wrong reason.</p>
+
+<p>So the wedge test below is per hit, against that hit's own truth &phi;.</p>
+
+<h2>Results</h2>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>quantity</th><th>value</th><th>expected</th></tr>
+<tr><td>GEANT FST hits</td><td>1869</td><td>&mdash;</td></tr>
+<tr><td>&rarr; sim raw hits</td><td>1866</td><td>3 outside the active 5&ndash;28 cm</td></tr>
+<tr><td>&rarr; StFstHits</td><td>1724</td><td>see note below</td></tr>
+<tr><td>&phi; mean, truth</td><td>45.826&deg;</td><td rowspan="2">agree</td></tr>
+<tr><td>&phi; mean, reco</td><td><b>45.832&deg;</b></td></tr>
+<tr><td>r mean, truth</td><td>12.668 cm</td><td rowspan="2">agree</td></tr>
+<tr><td>r mean, reco</td><td><b>12.764 cm</b></td></tr>
+<tr><td>dominant wedge, disk 1 / 2 / 3</td><td><b>2 / 14 / 26</b></td><td>2 / 14 / 26 &mdash; OK</td></tr>
+<tr><td><b>reco wedge &ne; truth-&phi; wedge</b></td><td><b>2 / 1724 = 0.12%</b></td><td>0, up to boundary cases</td></tr>
+<tr><td>dr mean</td><td>&minus;0.0157 cm</td><td>0</td></tr>
+<tr><td>dr RMS</td><td><b>0.7957 cm</b></td><td>0.830 (strip quantization)</td></tr>
+<tr><td>r&Delta;&phi; mean</td><td>+0.0014 cm</td><td>0</td></tr>
+<tr><td>r&Delta;&phi; RMS</td><td><b>0.0378 cm</b></td><td>small</td></tr>
+<tr><td>sensor split, inner / outer1 / outer2</td><td>1305 / 151 / 268</td><td>&mdash;</td></tr>
+</table>
+
+<p>The 0.12% wedge mismatch is 2 hits out of 1724, both consistent with a track arriving
+within a strip-width of a wedge boundary, where the truth &phi; and the assigned strip
+fall on opposite sides. A wedge-numbering error would give a large fraction, not 2 hits.</p>
+
+<p>r&Delta;&phi; RMS is 0.0378 cm here versus 0.084 cm in the mixed-sample closure test.
+The improvement is expected and is not a better detector: with one isolated track there
+is no truth-matching ambiguity, so the tail that inflated the mixed-sample number is
+simply absent.</p>
+
+<p><b>On 1866 raw hits &rarr; 1724 hits.</b> The 7.6% is not inefficiency in the maker. Raw
+hits that land on the same strip have their charge summed into one channel, and the
+cluster maker merges everything in one (sensor, phiStrip) cell into a single cluster
+regardless of r adjacency &mdash; so two GEANT hits in the same phi strip but different
+r strips become <b>one</b> hit, placed at the outer strip. That is the
+<a href="../fstclus/index.html">adjacency-free merge and the max-r rule</a> operating,
+now visible in MC for the first time. 500 single-electron events give ~3.7 FST hits per
+event rather than 3, so there are secondaries to merge.</p>
+
+<h2>Plots</h2>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr>
+<td><a href="fst45_xy.png"><img src="fst45_xy.png" height="260"></a><br>
+    Top: GEANT truth x-y per disk &mdash; a clean 45&deg; ray.<br>
+    Bottom: reconstructed &mdash; the same ray, broken into concentric arcs at the
+    8 discrete strip radii. Fine in &phi; (0.234&deg;), coarse in r (2.875 cm):
+    exactly the FST segmentation.</td>
+</tr>
+<tr>
+<td><a href="fst45_qa.png"><img src="fst45_qa.png" height="260"></a><br>
+    &phi; truth (black) vs reco (red) &mdash; overlaid, including the bending tails.
+    r truth (black, smooth) vs reco (red, comb at the 8 strip radii).
+    Sensor and wedge occupancy. dr is the textbook flat &plusmn;1.44 cm box, i.e.
+    uniform over one strip pitch. r&Delta;&phi; is a narrow spike at zero.</td>
+</tr>
+</table>
+
+<h2>What this does and does not add</h2>
+
+<ul>
+<li><b>Does:</b> confirms wedge numbering discretely and per hit, on a track whose truth
+    is known independently; confirms the r quantization is the pitch and nothing wider;
+    confirms &phi; is unbiased at the 0.006&deg; level.</li>
+<li><b>Does not:</b> validate the strip formula itself. The maker inverts the same
+    <tt>kFstphiStart</tt>/<tt>kFstrStart</tt> formula <tt>StFstHitMaker</tt> uses forward, so
+    that part of the round trip remains a tautology &mdash; see the Limitations section on the
+    <a href="../index.html">mother page</a>.</li>
+<li><b>Does not:</b> say anything about whether the geometry xml matches the real
+    detector. MC is generated from the xml.</li>
+<li>Run with the <tt>StFstHitMaker</tt> consumer fix applied (still uncommitted). Without
+    it every position here would be nonsense, as it was on the first run.</li>
+</ul>
+
+<h2>Code</h2>
+<ul>
+<li><a href="code/plotFstSlowSim45.C">plotFstSlowSim45.C</a> &mdash; runs the chain and makes
+    both figures</li>
+<li><a href="code/genElectron45.C">genElectron45.C</a> &mdash; the particle gun</li>
+</ul>
+
+<pre>
+root4star -b -q 'script/genElectron45.C(500, 1, 45.0)'
+root4star -l -b -q 'script/plotFstSlowSim45.C("ele45.vz0.run1.fzd", 500)'
+</pre>
+
+</body></html>

@@ -162,6 +162,10 @@ class StFwdTrackMaker : public StMaker {
      * Off by default.
     */
     void setApplyFstWedgeAlignment( bool apply = true ) { mFwdHitLoader.setApplyFstWedgeAlignment(apply); }
+    // see StFwdHitLoader.h -- outer-sensor kFstStripGapPhi sign fix, MuDst path only
+    void setApplyFstGapFix( bool apply = true ) { mFwdHitLoader.setApplyFstGapFix(apply); }
+    // diagnostic only -- see StFwdHitLoader.h
+    void setApplyFstMirror( bool apply = true ) { mFwdHitLoader.setApplyFstMirror(apply); }
 
     //Track Finding
     /** @brief Use FST and Ftt hits (sequentially) in the Seed Finding - then merge tracks

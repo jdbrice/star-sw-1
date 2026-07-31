@@ -820,10 +820,12 @@ UChar_t StFttDb::quadrant( StFttRawHit * hit ){
 }
 
 UChar_t StFttDb::rob( StFttRawHit * hit ){
+    // NOTE: 1-based, range [1,16] -- NOT the same convention as rob(StFttCluster*) below.
     return quadrant(hit) + ( plane(hit) * nQuadPerPlane ) + 1;
 }
 
 UChar_t StFttDb::rob( StFttCluster * clu ){
+    // NOTE: 0-based, range [0,15] -- NOT the same convention as rob(StFttRawHit*) above.
     return clu->quadrant() + ( clu->plane() * StFttDb::nQuadPerPlane );
 }
 

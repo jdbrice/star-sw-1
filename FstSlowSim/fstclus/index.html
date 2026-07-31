@@ -1,0 +1,302 @@
+<html><head><title>FST clusters in real data</title></head><body>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<h1>FST cluster properties in real data</h1>
+
+<p><a href="../index.html">&larr; StFstSlowSimMaker</a> &middot;
+<a href="../../ftt_sim_hit_maker/charge_sharing.html">the FTT counterpart of this study</a> &middot;
+<a href="../../fstgap/index.html">FST outer-sensor gap fix</a></p>
+
+<h2>Goal</h2>
+<ul>
+<li>Measure what an FST simulation has to reproduce at raw-hit level, the way
+    <a href="../../ftt_sim_hit_maker/charge_sharing.html">ftt_sim_hit_maker/charge_sharing.html</a>
+    did for the FTT.</li>
+<li>Source: production p+p 500&nbsp;GeV MuDst, run <b>23081008</b>, 13 files,
+    128,749 events, <b>12,302,393 clusters</b>.</li>
+</ul>
+
+<h2>Method, and one hard limit</h2>
+<ul>
+<li>The <tt>FstRawHit</tt> branch is <b>empty</b> in this production &mdash; 0 raw hits in
+    9,210 events. So the per-strip ADC profile that the FTT study measured
+    <b>cannot be measured here</b>. Recovering it needs a production with
+    <tt>fstEvtRawHit</tt>+<tt>fstMuRawHit</tt> enabled (BigFullChain.h:1566-1567).</li>
+<li>What does survive is the cluster summary on <tt>StMuFstHit</tt>:
+    <tt>nRawHits</tt>, <tt>nRawHitsR</tt>, <tt>nRawHitsPhi</tt>, <tt>charge</tt>,
+    <tt>meanRStrip</tt>, <tt>meanPhiStrip</tt>, <tt>maxTimeBin</tt>, disk/wedge/sensor.
+    That is enough for cluster size and charge, and enough to test what the
+    reconstruction does with them.</li>
+<li>No cuts of any kind &mdash; every cluster in the branch is counted.</li>
+</ul>
+
+<h2>Key numbers</h2>
+
+<p><b>Cluster size.</b> Three quarters of FST clusters are a single strip.</p>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>nRawHits</th><th>inner</th><th>outer</th><th>all</th></tr>
+<tr><td>1</td><td>74.58%</td><td>74.54%</td><td>74.56%</td></tr>
+<tr><td>2</td><td>17.11%</td><td>18.13%</td><td>17.45%</td></tr>
+<tr><td>3</td><td>5.27%</td><td>4.68%</td><td>5.07%</td></tr>
+<tr><td>4</td><td>1.49%</td><td>1.26%</td><td>1.41%</td></tr>
+<tr><td>5</td><td>0.53%</td><td>0.40%</td><td>0.49%</td></tr>
+<tr><td>&ge;6</td><td>0.99%</td><td>0.99%</td><td>0.99%</td></tr>
+<tr><td><b>mean</b></td><td><b>1.395</b></td><td><b>1.375</b></td><td></td></tr>
+</table>
+
+<p>Split by direction (fraction of all clusters in that region):</p>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>n</th><th>nRawHitsR inner</th><th>nRawHitsR outer</th><th>nRawHitsPhi inner</th><th>nRawHitsPhi outer</th></tr>
+<tr><td>1</td><td>79.06%</td><td>76.97%</td><td>84.91%</td><td>88.54%</td></tr>
+<tr><td>2</td><td>12.55%</td><td>15.43%</td><td>13.06%</td><td>10.07%</td></tr>
+<tr><td>3</td><td>5.53%</td><td>4.67%</td><td>1.25%</td><td>0.76%</td></tr>
+<tr><td>4</td><td>2.86%</td><td>2.92%</td><td>0.28%</td><td>0.15%</td></tr>
+</table>
+
+<p><b>Charge.</b> inner mean 480.0 (RMS 415.3), outer mean 462.4 (RMS 465.0).
+Total charge grows with size rather than staying constant, i.e. bigger clusters
+are bigger deposits, not one deposit spread thinner:</p>
+
+<pre>
+  nRawHits    1      2      3      4      5      6      7      8
+  &lt;charge&gt;  396    554    912   1536   2326   2925   3512   3692
+</pre>
+
+<p><b>Uniformity.</b> Mean cluster size by disk: 1.375 / 1.392 / 1.399 &mdash; flat.
+Inner and outer agree to 1.5%. 95.5 clusters/event (RMS 46.5).</p>
+
+<h2>What the reconstruction does with these clusters</h2>
+
+<p>Three things worth flagging. Items 1 and 2 are code: the field does not do what its
+name says, and both are original code (<tt>958cd67ee7</tt>, Jan 2022), not later
+regressions. Item 3 is not code &mdash; it is a pattern in the data that looks like readout
+hardware, recorded here for the people who would know.</p>
+
+<h3>1. <tt>meanRStrip</tt> is not a mean &mdash; it is the outermost strip</h3>
+
+<pre>
+StFstScanRadiusClusterAlgo.cxx:129-136
+    meanRStrip = 0;  maxRStrip = 0;
+    for (int iRawHit = 0; iRawHit &lt; nToMerge; iRawHit++)  {
+      if(tempRStrip[iRawHit]&gt;maxRStrip)  maxRStrip = tempRStrip[iRawHit];
+      meanRStrip = maxRStrip;                 // &lt;-- max, not centroid
+      ...
+    }
+</pre>
+
+<p>A cluster spanning several r strips is assigned the <b>largest</b> r-strip index
+it contains. The data show this directly &mdash; multi-strip clusters are
+structurally forbidden from the inner indices, and a 4-strip cluster is pinned
+to index 3 by construction:</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>nRawHitsR</th><th>idx0</th><th>idx1</th><th>idx2</th><th>idx3</th><th>&lt;idx&gt;</th><th>clusters</th></tr>
+<tr><td colspan="7"><i>inner sensor</i></td></tr>
+<tr><td>1</td><td>46.17%</td><td>30.30%</td><td>13.93%</td><td>9.61%</td><td>0.870</td><td>6,504,433</td></tr>
+<tr><td>2</td><td>0.00%</td><td>55.40%</td><td>26.24%</td><td>18.36%</td><td>1.630</td><td>1,032,347</td></tr>
+<tr><td>3</td><td>0.00%</td><td>0.00%</td><td>76.45%</td><td>23.55%</td><td>2.236</td><td>454,985</td></tr>
+<tr><td>4</td><td>0.00%</td><td>0.00%</td><td>0.00%</td><td>100.00%</td><td>3.000</td><td>235,667</td></tr>
+<tr><td colspan="7"><i>outer sensors</i></td></tr>
+<tr><td>1</td><td>46.75%</td><td>26.27%</td><td>15.51%</td><td>11.47%</td><td>0.917</td><td>3,136,636</td></tr>
+<tr><td>2</td><td>0.00%</td><td>52.09%</td><td>31.95%</td><td>15.96%</td><td>1.639</td><td>628,924</td></tr>
+<tr><td>3</td><td>0.00%</td><td>0.00%</td><td>69.81%</td><td>30.19%</td><td>2.302</td><td>190,278</td></tr>
+<tr><td>4</td><td>0.00%</td><td>0.00%</td><td>0.00%</td><td>100.00%</td><td>3.000</td><td>119,123</td></tr>
+</table>
+
+<p>Size of the effect. For a contiguous m-strip cluster the centroid is
+(m&minus;1)/2 strips below the outermost one, and the r pitch is 2.875&nbsp;cm:</p>
+<ul>
+<li>m=2 &rarr; <b>+1.44&nbsp;cm</b>, m=3 &rarr; +2.88&nbsp;cm, m=4 &rarr; +4.31&nbsp;cm, always outward.</li>
+<li><b>21.63%</b> of all clusters have nRawHitsR &gt; 1; mean outward shift over those
+    <b>2.17&nbsp;cm</b>, over <i>all</i> clusters <b>0.469&nbsp;cm</b>.</li>
+<li>For scale, the intrinsic r resolution is pitch/&radic;12 = <b>0.830&nbsp;cm</b>. So this is
+    a one-sided systematic of roughly half the resolution, on every FST hit.</li>
+<li>Whether the outermost strip is the right choice depends on where the real hit sits
+    within a multi-strip family &mdash; see <a href="#rmulti">Multi-strip clusters along r</a>.
+    The maker already identifies the largest-ADC raw hit of a cluster
+    (<tt>rawHitMaxAdcTemp</tt>) and uses it for <tt>meanPhiStrip</tt>, <tt>maxTimeBin</tt> and
+    <tt>apv</tt>, but not for r.</li>
+</ul>
+
+<h3>2. The phi charge centroid is computed, then truncated to an integer</h3>
+
+<p>The phi-merge step is the <i>only</i> place FST reconstruction does any charge
+interpolation, and it is discarded one maker later by an <tt>int</tt> declaration:</p>
+
+<pre>
+StFstScanRadiusClusterAlgo.cxx:192   // charge-weighted, fractional
+    meanPhiStrip = c1-&gt;getMeanPhiStrip()*c1-&gt;getTotCharge()/totCharge
+                 + c2-&gt;getMeanPhiStrip()*c2-&gt;getTotCharge()/totCharge;
+
+StFstHitMaker.cxx:104
+    int  meanRStrip = -1, meanPhiStrip = -1;   // &lt;-- getMeanPhiStrip() returns float
+StFstHitMaker.cxx:118
+    meanPhiStrip = (*clusterIter)-&gt;getMeanPhiStrip();   // silently truncated
+</pre>
+
+<p>Confirmed in the data: <b>0 of 12,302,393</b> clusters carry a fractional
+<tt>meanPhiStrip</tt>, although 13.89% went through the merge that produces one.</p>
+
+<ul>
+<li>Truncation is toward zero, so an affected hit always moves to the lower phi strip
+    index, by &lt;f&gt; &asymp; 0.5 strip. At a 4.09&nbsp;mrad pitch that is 0.041&nbsp;cm at
+    r=20&nbsp;cm, ~0.006&nbsp;cm averaged over all clusters &mdash; small, and far too small
+    to be the <a href="../../residual/index.html">12-fold wedge steps</a>.</li>
+<li>The sign alternates per wedge, since <tt>local[1]</tt> carries
+    <tt>kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]</tt>, with opposite sign for inner vs
+    outer sensors.</li>
+<li><b>Fix:</b> declare both as <tt>float</tt> on line 104. <tt>meanRStrip</tt> is
+    integer-valued today so it is unaffected, but it must change with it or item 1 cannot
+    ever be given a fractional value.</li>
+</ul>
+
+<h3>3. A 16-phi-strip readout pattern &mdash; for FST hardware experts</h3>
+
+<p>The phi-size distribution has a sharp, isolated spike at <b>nRawHitsPhi = 16</b>.
+nRawHitsPhi is the length of a contiguous run of occupied phi strips, so runs of
+exactly 16 occur ~7&times; more often than runs of 15 or 17:</p>
+
+<pre>
+  nRawHitsPhi     9      10     11     12     13     14     15     <b>16</b>      17
+  inner        0.020% 0.020% 0.017% 0.018% 0.015% 0.018% 0.017% <b>0.115%</b>  0.010%
+  outer        0.021% 0.021% 0.020% 0.024% 0.024% 0.028% 0.022% <b>0.164%</b>  0.007%
+</pre>
+
+<p>They are aligned to fixed 16-strip boundaries: <b>95.5%</b> land at
+<tt>meanPhiStrip mod 16</tt> of 6, 7 or 8 &mdash; where a run spanning [16k, 16k+15] puts
+its centroid &mdash; against a flat 6.25% for the single-strip control.</p>
+
+<pre>
+  meanPhiStrip mod 16 |  nPhi=16   nPhi=1 (control)
+         6            |  24.069%      6.217%
+         7            |  20.384%      6.296%
+         8            |  51.016%      6.124%
+      all others      |  &lt;0.7% each   ~6.2% each
+</pre>
+
+<ul>
+<li>Spread evenly over all 8 APVs of a wedge (17.8% down to 9.9%) &mdash; not one bad chip.</li>
+<li>From <tt>Calibrations/fst/fstMapping</tt>, one APV covers <b>32</b> phi strips &times;
+    4 r strips = 128 channels, uniformly on all 8 chips. So 16 phi strips is half a
+    chip <i>in phi</i>.</li>
+<li><b>Not measured:</b> whether these clusters also span all 4 r strips. If they do the
+    block is 64 channels (half an APV); if not it is fewer. This distinction has not
+    been checked.</li>
+<li>16,091 clusters, 0.13% of the sample. Each one is a 16-strip-wide hit handed to
+    tracking rather than rejected.</li>
+</ul>
+
+<p><b>Question for FST experts:</b> is there a readout grouping of 16 phi strips (a
+connector, pitch adapter, or APV half) that could fire together on every chip?</p>
+
+<h2><a name="rmulti"></a>Multi-strip clusters along r</h2>
+
+<p>21.6% of clusters span more than one r strip. Facts:</p>
+
+<ul>
+<li>The r pitch is <b>2.875&nbsp;cm</b>. Charge diffusion cannot cross it: a track from the
+    origin at r=20, z=165 moves ~36&nbsp;&mu;m in r while crossing 300&nbsp;&mu;m of sensor.</li>
+<li>Accidental overlap does not account for it: ~133 raw hits/event over 9,216
+    (sensor, phiStrip) cells is ~1.4% occupancy, so random double occupancy is
+    &lt;&lt;1%, not 21%.</li>
+<li><b>FST readout traces run radially outward at fixed phi</b> to a board at the outer
+    edge, so signal on an inner strip can couple electrically into outer strips at the
+    same phi, including non-adjacent ones (R1&rarr;R3 skipping R2). Reported by FST
+    hardware; this is coupling along exactly the (sensor, phiStrip) cell that the
+    clustering groups.</li>
+<li>Cluster charge grows with size (&lt;charge&gt; = 396 / 554 / 912 / 1536 for n = 1&ndash;4).
+    This is consistent both with one source plus threshold-selected shadows and with
+    several particles; it does not discriminate between them.</li>
+<li><b>Cannot be settled from this MuDst</b> &mdash; <tt>FstRawHit</tt> is empty, so there is no
+    per-strip ADC. A production with <tt>fstEvtRawHit</tt>+<tt>fstMuRawHit</tt> on would
+    show directly whether ADC falls monotonically outward from a source within a
+    family, whether the shadow/source ratio is small and constant, and whether gaps
+    occur.</li>
+</ul>
+
+<p>The clustering groups these r-wide rather than r-adjacent:</p>
+
+<pre>
+StFstScanRadiusClusterAlgo.cxx:78-90    // comment says "find all raw hits that are neighboring"
+    while (rawHitsToMergePtr != rawHitsToMerge.end() &amp;&amp; !rawHitsVec[sensorIdx][phiIdx].empty()) {
+      ... pop one from rawHitsVec, push_back to rawHitsToMerge, ++rawHitsToMergePtr;
+    }
+</pre>
+
+<ul>
+<li>Each iteration pushes one element and advances the iterator by one, so
+    <tt>rawHitsToMergePtr != end()</tt> can never become false. The loop ends only when
+    the (sensor, phiStrip) cell is empty, and <b>nothing tests r adjacency</b> &mdash; every
+    raw hit in the cell becomes one cluster. The code comment says otherwise.</li>
+<li>Given the coupling above, grouping the whole cell is the behaviour that keeps a
+    skipping family (R1, R3) as one hit; an r-adjacency requirement would split it in two.</li>
+<li>Step 2 merges phi-adjacent clusters if |&Delta;meanRStrip| &lt; 3.5. A sensor has only
+    4 r strips, so |&Delta;| &le; 3 always and the condition is unconditionally true; a run
+    of occupied adjacent phi strips chains into one cluster. 0.55% of clusters exceed
+    8 raw hits this way.</li>
+<li>Separately, lines 65-70 <tt>delete</tt> the raw hit and then store and dereference the
+    same pointer. It is a use-after-free; the freed memory is in practice still intact,
+    which is why it has not surfaced as a crash.</li>
+</ul>
+
+<p>Which r strip such a cluster should be reported at depends on where the source sits
+in the family, which is what item 1 above assigns and what the raw ADCs would settle.</p>
+
+<h2>Consequences for a slow simulation</h2>
+<ul>
+<li>A minimal one-strip-per-hit sim gives nRawHits &equiv; 1. Real data is 74.6% at 1
+    with mean 1.39, so cluster-size distributions will not match until a
+    crosstalk/noise model exists. Fine for geometry closure, not for efficiency
+    or resolution studies.</li>
+<li>Any sim built on <tt>kFstrStart</tt>/<tt>kFstrStop</tt> should note that
+    <tt>StFstConsts.h:52</tt> has <tt>kFstrStop[2] = 136.25</tt>, a typo for 13.625.
+    It is currently unused anywhere outside <tt>StFstConsts.h</tt>, so it is harmless
+    today and a trap tomorrow.</li>
+<li>Items 1 and 2 above are reconstruction bugs, not sim issues &mdash; but a sim that
+    runs through the same <tt>StFstClusterMaker</tt>/<tt>StFstHitMaker</tt> inherits both,
+    which is the point: MC and data would at least be wrong identically, and the
+    fix would be testable in one place.</li>
+</ul>
+
+<h2>Plots</h2>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr>
+<td><a href="fstClusterProps.png"><img src="fstClusterProps.png" height="200"></a><br>
+    cluster size (total, R, phi), charge, meanRStrip, R vs phi size</td>
+<td><a href="fstRStripBias.png"><img src="fstRStripBias.png" height="200"></a><br>
+    in-sensor r index by nRawHitsR &mdash; multi-strip clusters
+    cannot reach the inner indices</td>
+</tr>
+<tr>
+<td><a href="fstRPos.png"><img src="fstRPos.png" height="200"></a><br>
+    assigned radius, single vs multi strip</td>
+<td><a href="fstClusterMulti.png"><img src="fstClusterMulti.png" height="200"></a><br>
+    clusters/event, and the (identically zero) fractional part of meanPhiStrip</td>
+</tr>
+<tr>
+<td><a href="fstPhi16.png"><img src="fstPhi16.png" height="200"></a><br>
+    the 16-strip clusters are aligned to fixed 16-strip boundaries &mdash;
+    a 64-channel readout block</td>
+<td></td>
+</tr>
+</table>
+
+<h2>Code</h2>
+<ul>
+<li><a href="code/checkFstClusters.C">checkFstClusters.C</a> &mdash; cluster size, charge,
+    multiplicity, fractional centroids, per disk/region</li>
+<li><a href="code/checkFstRStripBias.C">checkFstRStripBias.C</a> &mdash; in-sensor r index
+    vs nRawHitsR, the direct test of the outermost-strip rule</li>
+<li><a href="code/checkFstApvPhiBlock.C">checkFstApvPhiBlock.C</a> &mdash; phi-strip
+    coverage of each APV chip, from <tt>Calibrations/fst/fstMapping</tt></li>
+<li><a href="code/checkFstPhi16.C">checkFstPhi16.C</a> &mdash; alignment test for the
+    16-strip spike</li>
+</ul>
+
+<p>Run as:</p>
+<pre>
+root4star -b -q 'script/checkFstClusters.C("&lt;MuDst glob&gt;", 0, "FstSlowSim/fstclus")'
+root4star -b -q 'script/checkFstRStripBias.C("&lt;MuDst glob&gt;", 0, "FstSlowSim/fstclus")'
+</pre>
+
+</body></html>

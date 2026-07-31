@@ -1,0 +1,184 @@
+Subject: FST outer-sensor gap-offset sign: proposed fix with code, plus a
+         fast-sim fix and a handoff before I travel
+
+Hi Xihe, Daniel,
+
+Thanks for the very nice presentation, plus the xihe-align branch.
+I think there are a couple of bugs... But I may run out of time to
+really test this. Also we should be a bit careful for fixing this...
+Search "!!! read below before proceed" in this doc.
+
+=====================================================================
+1. StFstHitMaker: the two outer-sensor gap-offset signs are swapped
+=====================================================================
+
+Compared, for all 108 FST sensors, where StFstHitMaker puts the strips
+against where the AGML silicon actually is -- each FTUS node's own
+TGeoTubeSeg shape and global transform read straight out of fGeom.root, no
+events involved. Then read Calibrations/fst/fstMapping to settle which
+sensor owns which phiStrip range, because that is not derivable from the
+code: StFstRawHitMaker sets mChannelId = elecId and mGeoId =
+mapping[elecId], and getSensor() comes from mChannelId while getPhiStrip()
+comes from mGeoId, so only the DB table links them.
+
+The mapping, over all 36864 channels:
+
+    sensor 0 (inner):  phiStrip   0-127,  rStrip 0-3
+    sensor 1 (outer):  phiStrip   0-63,   rStrip 4-7
+    sensor 2 (outer):  phiStrip  64-127,  rStrip 4-7
+
+Inner sensors agree with AGML to 0.000 deg on all 36 wedges. For the outer
+pair, taking disk 1 / FSTW copy 1 (electronic wedge m=3) and working in
+wedge-local phi (centreline = 0, wedge spans -15..+15 deg):
+
+    AGML strip centres      FTUS_1  -15.383 ..  -0.617
+                            FTUS_2   +0.617 .. +15.383
+
+    StFstHitMaker as-is     sensor 1 (k=0..63)    -14.383 ..  +0.383
+                            sensor 2 (k=64..127)   -0.383 .. +14.383
+
+Each outer sensor is off by exactly 1.000 deg = kFstStripGapPhi, i.e.
+2 x (0.5*gap) -- what you get by applying -0.5*gap where +0.5*gap belongs.
+Same +-1.000 on all 36 wedges.
+
+those two ranges OVERLAP by 0.77 deg across the centreline, at identical
+radii (both are rStrip 4-7). Silicon cannot overlap, and the 1 deg gap that
+kFstStripGapPhi exists to describe is not there.
+
+StRoot/StFstHitMaker/StFstHitMaker.cxx, lines 159 and 163, swap the two
+signs on the gap term (nothing else changes):
+
+  L159, sensor == 1:
+  -   local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
+  +   local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
+
+  L163, sensor == 2:
+  -   local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
+  +   local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
+
+With that, all four endpoints land exactly on the AGML strip centres
+(sensor 1 -> -15.383..-0.617, sensor 2 -> +0.617..+15.383, both 0.000) and
+the two sensors are disjoint with the gap between them. Verified
+numerically, not by hand.
+
+*** THE SAME CHANGE IN Xihe-align branch ***
+
+StRoot/StFwdTrackMaker/include/Tracker/TrackFitter.h, ~line 488, selects
+the half from the strip number rather than the sensor index, and so gives
+the -0.5*gap treatment to phiStrip 0-63 -- the same assignment as
+StFstHitMaker, hence the same 1 deg error:
+
+  -   const double gapOffset = (stripPhi < halfWedgePhi)
+  -       ? -0.5 * kFstStripGapPhi
+  -       :  0.5 * kFstStripGapPhi;
+  +   const double gapOffset = (stripPhi < halfWedgePhi)
+  +       ? +0.5 * kFstStripGapPhi
+  +       : -0.5 * kFstStripGapPhi;
+
+While you are in there: the boundary test compares floats right at the
+transition, and stripPhi comes from a float _localPosition[1]. At k=64 the
+exact value is 15.0, so it can land either side after rounding. Branching
+on the strip index is safer:
+
+      const int phiStrip = (int)lround(stripPhi / kFstStripPitchPhi);
+      ... (phiStrip < kFstNumPhiSegPerWedge/2) ...
+
+*** Fixing StFstHitMaker will NOT help the afterburner ***
+
+We read finished hits from MuDst (setFstHitSource(MUDST)) and never runs that maker.
+But StMuFstHit keeps mMeanRStrip, mMeanPhiStrip and mHardwarePosition, and the
+correction is a pure constant shift in phi, so it can be applied at
+load time on the stored value. We added it as an opt-in flag:
+
+  StRoot/StFwdTrackMaker/StFwdHitLoader.cxx, right after the existing
+  FstWedgeAligner block:
+
+  +   if ( mApplyFstGapFix && sensorIndex > 0 ) {
+  +       const double sgnAsIs = ( sensorIndex == 1 ) ? -1.0 : +1.0;
+  +       vPhi -= sgnAsIs * kFstzFilp[diskIndex] * kFstzDirct[wedgeIndex] * kFstStripGapPhi;
+  +   }
+
+  plus setApplyFstGapFix() on StFwdHitLoader/StFwdTrackMaker and a new
+  trailing bool on fwd_afterburner_db.C.
+
+Ran the afterburner twice on one file, flag off and on, and looked at hit
+POSITIONS only -- no fit involved, nothing that could absorb the effect.
+Outer-sensor hit azimuth relative to its own wedge centreline:
+
+                  overlap |dd|<0.383     edge 14.4<|dd|<15.4
+   fix OFF        84 hits                0 hits
+   fix ON          0 hits              303 hits
+   inner control (must not move): 1036 -> 1034
+
+The centreline overlap empties completely and the outer edges populate.
+So the outer-sensor phi in existing MuDst really is displaced by one full
+kFstStripGapPhi, and this correction removes it.
+
+Two honest caveats. First, with the fix off the overlap sits at 1.21x the
+surrounding density, not the ~2x a clean two-sensor overlap would give;
+my guess is lower occupancy on the edge strips at the physical gap, but
+I have not checked it, and it is the one number that does not match the
+simple picture. Second, I have NOT yet shown this improves tracking but
+only tested with one file. I'll try to run it before I go, but you may have
+to verify it with your alignment program.
+
+Also worth knowing,  original alignment measured the centreline step in
+mean r*dphi as 0.008-0.039 cm, where a 1 deg outer displacement should
+give ~0.78 cm. We do not yet understand why the residual looks so
+insensitive to a displacement we can now demonstrate is present.
+That is the open question.
+
+!!! read below before proceed
+
+Now...I haven't yet thought about automating this flag. 
+We should not apply this for MC, and new Mudst file prodiced post fix.
+I'm sure we will make mistakes setting/not setting mApplyFstGapFix for 
+current mudst vs fixed Mudst **if we ever fix StFstHitMaker***. 
+This is exactly why I did not make this a commit and PR, but rather putting this in an email.
+Please think through what we shohuld do. Not fixing StFstHitMaker may
+be an option...
+
+
+Macros, yours if useful -- the first is the deterministic all-108-sensor
+test you note is missing on slide 5:
+
+/star/u/akio/fcstrk11/star-sw-fwd/script/
+    checkFstWedgeGeom.C     geometry vs AGML, no events
+    checkFstStripPhi.C      the per-strip table above
+    dumpFstMapping.C        the fstMapping dump
+    checkFstGapFixEffect.C  the position check above
+    checkFstOuterHalf.C     the data-side centreline-step test
+
+
+=====================================================================
+2. StFstFastSimMaker never sets the strip indices
+=====================================================================
+
+It builds its hit with the StHit-style constructor, which leaves
+mMeanRStrip = mMeanPhiStrip = -1, and never sets them. StFwdHitLoader.cxx
+:383 then evaluates kFstrStart[-1], out of bounds. 
+
+I think this is (at least one of the) cause for your MC plots looking bad,
+and may explains the "???" on slides 24-25, including disk 1 at ~8 mm.
+
+The fast-sim grid is already the FST segmentation (MAXR=8, MAXPHI=128*12),
+so both indices come back out of the stored bin-centre position. After
+StFstFastSimMaker.cxx:389:
+
+  +   float rr = sqrt(pos.x()*pos.x() + pos.y()*pos.y());
+  +   float pp = atan2(pos.y(), pos.x());  if (pp < 0) pp += 2*M_PI;
+  +   int rIdx = 0;
+  +   for (int k = 0; k < mNumR; k++)
+  +       if (rr > FstGlobal::RSegment[k] && rr <= FstGlobal::RSegment[k+1]) rIdx = k;
+  +   fHit->setMeanRStrip(rIdx);
+  +   fHit->setMeanPhiStrip((int)(pp*mNumPHI*mNumSEC/(2*M_PI)) % mNumPHI);
+
+plus a bounds guard on rStrip in the loader. Caveat: within a wedge this
+makes phiStrip increase with global phi always, whereas the real strip
+direction alternates via kFstzFilp/kFstzDirct, so it is self-consistent
+but not yet a faithful strip mapping. Enough to remove the out-of-bounds
+read and make MC usable; worth doing properly later.
+
+I will be on travel from next week and would like to leave these with you two.
+
+Akio

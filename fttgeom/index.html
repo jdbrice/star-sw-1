@@ -5,7 +5,7 @@
 </HEAD>
 <BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
 
-<H1>FTT geometry: 6 fixes, and the follow-on matching investigation</H1>
+<H1>FTT geometry: 7 fixes, and the follow-on matching investigation</H1>
 <p>Starting point was the FTT hit-position maps on the
 <a href="../jpsi/ftt_quadrant_charge.html">quadrant &times; charge page</a> showing a
 top/bottom + north/south swapped, bowtie-shaped footprint instead of the expected octagon.
@@ -14,7 +14,7 @@ follow-on question: even past these fixes, is the FTT hit a track picks up actua
 right one? That investigation turned up 2 more real bugs, in the per-VMM time calibration.</p>
 
 <HR>
-<H2>The 6 fixes</H2>
+<H2>The 7 fixes</H2>
 <ul>
   <li><b><a href="maxStripLength.html">maxStripLength</a>:</b>
       <tt>StFttCluster::maxStripLength()</tt> defaulted to -999 and was never set --
@@ -48,7 +48,63 @@ right one? That investigation turned up 2 more real bugs, in the per-VMM time ca
       long-standing disk0/V dip anomaly and gives a modest overall purity improvement
       (14.9%&rarr;15.6%), though the effect is not uniform across disks -- see the page for
       the honest, mixed per-disk picture.
+  <li><b>StFttPointMaker drops all of disk0/quadrant A</b> (found 2026-07-27):
+      <tt>MakeLocalPoints()</tt> fills <tt>clusters[rob][row][orientation]</tt> using
+      <tt>StFttDb::rob(StFttCluster*)</tt>, which is <b>0-based</b>
+      (<tt>quadrant + plane*nQuadPerPlane</tt>), but the loop consuming that array started
+      at <tt>iRob=1</tt>:
+      <pre>    for ( size_t iRob = <b>1</b>; iRob &lt; StFttDb::nRob; iRob ++ ){</pre>
+      So <tt>clusters[0]</tt> was never read and <b>no point was ever made for rob==0 =
+      disk0/quadrant A</b>. It is silently absent from the output, not merely sparse, so it
+      reads as a dead detector region in any QA plot built from these points.
+      <ul>
+        <li>Affects the standard bfc <tt>ftt</tt> chain
+            (<tt>FttDat,FttHitCalib,FttClu,<b>FttPoint</b></tt>, see <tt>BigFullChain.h</tt>),
+            i.e. <tt>StFttPoint</tt>/<tt>StMuFttPoint</tt> in <b>production MuDst</b>.
+        <li>Does <b>not</b> affect our afterburner
+            (<tt>fwd_afterburner_db.C</tt>), which uses <tt>StFttClusterPointMaker</tt> instead.
+        <li>Root cause is that <tt>StFttDb</tt> has two <tt>rob()</tt> overloads with
+            opposite conventions -- <tt>rob(StFttRawHit*)</tt> is 1-based,
+            <tt>rob(StFttCluster*)</tt> is 0-based, and which one you get depends on the
+            argument type. Both are correct at every live call site today, so nothing else
+            is broken, but the trap is invisible at the point of use:
+            <a href="proposal_rob.txt">proposal_rob.txt</a> inventories all three call
+            sites and weighs the options for removing it.
+      </ul>
 </ul>
+
+<HR>
+<H2>Evidence, and three different causes of "quadrant A is missing"</H2>
+<p>Counted directly from production MuDst (500 events,
+<tt>script/checkDisk0QuadAPoints.C</tt>). Clusters come from
+<tt>StFttClusterMaker</tt>, which has no such bug, so they act as the control: if a quadrant
+has healthy clusters in <i>both</i> orientations but zero points, the point maker dropped
+them. <tt>StFttPointMaker</tt> pairs an H with a V cluster to triangulate, so a quadrant
+missing one orientation yields zero points for a physical reason instead.</p>
+<table border=1 cellpadding=4>
+  <tr><td>quadrant A of</td><td align=center>points</td><td align=center>clusters</td>
+      <td align=center>nH</td><td align=center>nV</td><td>reading</td></tr>
+  <tr><td><b>disk0</b></td><td align=center><b>0</b></td><td align=center>56,962</td>
+      <td align=center>18,302</td><td align=center>15,413</td>
+      <td><b>software</b> -- both orientations healthy and in line with neighbouring
+          quadrants, yet zero points. Nothing physical explains this; it is the
+          <tt>iRob=1</tt> hole above.</td></tr>
+  <tr><td><b>disk1</b></td><td align=center>0</td><td align=center>25,177</td>
+      <td align=center>16,148</td><td align=center><b>0</b></td>
+      <td><b>real detector</b> -- V is completely dead, so no H&times;V pair can form. This
+          is the known missing-foil problem, here confirmed from production MuDst by an
+          independent route. Unrelated to the bug.</td></tr>
+  <tr><td><b>disk3</b></td><td align=center>2,608</td><td align=center>5,088</td>
+      <td align=center>4,448</td><td align=center>443</td>
+      <td><b>real, degraded</b> -- both orientations present but suppressed ~10x (H) and
+          ~45x (V). A third, separate condition.</td></tr>
+  <tr><td colspan=6>For scale, a healthy quadrant runs ~17-21k clusters per orientation and
+      ~0.5-0.7M points over the same 500 events.</td></tr>
+</table>
+<p><b>Consequence for QA:</b> "quadrant A is missing" is not one problem. Three disks show
+it, for three different reasons, so a report of a missing quadrant A is only interpretable
+once you know <i>which disk</i> and whether its clusters are healthy. The macro above
+prints all three tables and can be pointed at any MuDst to tell them apart.</p>
 
 <HR>
 <H2>Related pages</H2>
@@ -76,6 +132,12 @@ right one? That investigation turned up 2 more real bugs, in the per-VMM time ca
   <li><a href="real_data_excess_check_timecut.html">Real-data excess/purity check, with the
       time cut on</a> -- repeats the excess/purity checks above after the 5th and 6th fixes;
       disk0/V dip resolved, modest overall purity gain, mixed per-disk picture.
+  <li><a href="proposal_rob.txt">proposal_rob.txt</a>
+      -- proposal on <tt>StFttDb::rob()</tt>'s 0-based/1-based split, the root cause of the
+      7th fix above. Full inventory of the three call sites, what it costs to standardise
+      either way (and why going all-1-based is the riskier direction, given both cluster
+      consumers index arrays sized <tt>nRob</tt>), plus a rename option that removes the
+      trap without changing behaviour.
 </ul>
 
 <HR>

@@ -11,6 +11,14 @@ bool RunFcsChain = true;
 bool RunFwdChain = true;
 bool RunMuDstMaker = true;
 
+// When true, run FTT through the real StFttDb reconstruction chain
+// (StFttDbMaker -> StFttSimHitMaker -> StFttClusterMaker ->
+// StFttClusterPointMaker, mUseGeantData=false) in place of reading GEANT
+// truth directly (MakeGeantPoints, mUseGeantData=true) -- exercises the
+// same geometry/clustering code real data uses.
+// Set false for the old/original GEANT-truth-direct behavior.
+bool UseFttSimHitMaker = true;
+
 bool UseCachedGeom = true;
 bool UseConstBz = false;
 bool UseZeroB = false;
@@ -100,6 +108,18 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
     printf("Chain: \n%s\n", _chain.Data());
     
     gSystem->Load( "libStarRoot.so" );
+    // Preload StFttDbMaker BEFORE bfc builds the chain. bfc loads
+    // libStFwdTrackMaker, which has an unresolved reference to StFttDb
+    // statics (e.g. StFttDb::X_shift_QuadC); with RunFttChain=false the
+    // _fttChain tag is blank, so bfc never loads StFttDbMaker itself and the
+    // dlopen fails with "undefined symbol: _ZN7StFttDb13X_shift_QuadCE",
+    // tripping StBFChain's libraryload assertion. The symbol exists in the
+    // current library -- this is purely a load-order problem.
+    // (St_base/StChain first -- StFttDbMaker inherits StMaker, so loading it
+    // bare here fails with "undefined symbol: _ZNK7StMaker7GetNameEv".)
+    gSystem->Load( "St_base" );
+    gSystem->Load( "StChain" );
+    gSystem->Load( "libStFttDbMaker.so" );
     gROOT->LoadMacro("bfc.C");
     bfc(-1, _chain, inFile);
 
@@ -169,14 +189,45 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
         }
     }
 
-    gSystem->Load( "StFttDbMaker" );
-    gSystem->Load( "libStFttSimMaker" );
-    gSystem->Load( "libStFttClusterPointMaker" );
-    // make an StFttClusterPointMaker
-    StFttClusterPointMaker * fttClusterPointMaker = new StFttClusterPointMaker("fttClusterPointMaker");
-    fttClusterPointMaker->SetDebug(0); // was 1 -- extra per-hit debug prints
-    fttClusterPointMaker->setUseGeantData( true );
-    chain->AddBefore("fwdTrack", fttClusterPointMaker);
+    if ( UseFttSimHitMaker ) {
+        // Real chain: StFttDbMaker -> StFttSimHitMaker -> StFttClusterMaker ->
+        // StFttClusterPointMaker (mUseGeantData=false), same makers/order as
+        // fwd_afterburner_db.C's real-data chain, with StFttSimHitMaker in
+        // place of StFttRawHitMaker/StFttHitCalibMaker.
+        gSystem->Load( "libStFttDbMaker.so" );
+        gSystem->Load( "libStFttSimHitMaker.so" );
+        gSystem->Load( "libStFttClusterMaker.so" );
+        gSystem->Load( "libStFttClusterPointMaker.so" );
+
+        StFttDbMaker * fttDbMk = new StFttDbMaker();
+        chain->AddMaker(fttDbMk);
+
+        StFttSimHitMaker * fttSimHit = new StFttSimHitMaker();
+        chain->AddMaker(fttSimHit);
+
+        StFttClusterMaker * fttClu = new StFttClusterMaker();
+        fttClu->SetTimeCut( 1 /*kTimeCutModeAcceptAll*/, -9999, 9999 ); // no real timing in MC
+        chain->AddMaker(fttClu);
+
+        StFttClusterPointMaker * fttClusterPointMaker = new StFttClusterPointMaker("fttClusterPointMaker");
+        fttClusterPointMaker->SetDebug(0); // was 1 -- extra per-hit debug prints
+        // mUseGeantData left at its constructor default (false) -- take the
+        // real MakeLocalPoints/MakeGlobalPoints path through StFttDb.
+        chain->AddBefore("fwdTrack", fttClusterPointMaker);
+    } else {
+        // Old/original behavior: read GEANT truth directly in global
+        // coordinates (StFttClusterPointMaker::MakeGeantPoints()) -- never
+        // calls into StFttDb's real geometry transform. Kept for backward
+        // compatibility (UseFttSimHitMaker = false).
+        gSystem->Load( "StFttDbMaker" );
+        gSystem->Load( "libStFttSimMaker" );
+        gSystem->Load( "libStFttClusterPointMaker" );
+        // make an StFttClusterPointMaker
+        StFttClusterPointMaker * fttClusterPointMaker = new StFttClusterPointMaker("fttClusterPointMaker");
+        fttClusterPointMaker->SetDebug(0); // was 1 -- extra per-hit debug prints
+        fttClusterPointMaker->setUseGeantData( true );
+        chain->AddBefore("fwdTrack", fttClusterPointMaker);
+    }
         
     // Configure the Forward Tracker
         StFwdTrackMaker * fwdTrack = (StFwdTrackMaker*) chain->GetMaker( "fwdTrack" );

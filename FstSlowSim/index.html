@@ -1,0 +1,193 @@
+<html><head><title>StFstSlowSimMaker &mdash; putting MC on the real FST chain</title></head><body>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<h1>StFstSlowSimMaker &mdash; putting MC on the real FST reconstruction chain</h1>
+
+<p>
+<a href="../fstgap/fstpaths.html">FST geometry paths diagram</a> &middot;
+<a href="../fstgap/index.html">FST outer-sensor gap fix</a> &middot;
+<a href="fstclus/index.html">FST Real Data Clusters</a> &middot;
+<a href="electron45/index.html">45&deg; electron check</a> &middot;
+<a href="../residual/index.html">FST residuals</a>
+</p>
+
+<h2>The problem</h2>
+
+<ul>
+<li>MC bypassed both FST reconstruction makers. <tt>StFstFastSimMaker</tt> goes straight
+    from GEANT to <tt>StFstHit</tt>, reimplementing in parallel the part of
+    <tt>StFstHitMaker</tt> that turns a measurement into a position.</li>
+<li>So <tt>StFstClusterMaker</tt> and <tt>StFstHitMaker</tt> were <b>never exercised in
+    simulation</b>, and any change to one had to be mirrored by hand into the other
+    or MC and data silently disagree.</li>
+<li>That duplication is the source of most of the FST geometry trouble this month:
+    the <a href="../fstgap/index.html">outer-sensor gap sign</a> has to be fixed in two
+    places, and the strip-direction / wedge-numbering conventions have to be
+    re-derived correctly in both. See <a href="../fstgap/fstpaths.html">FST geometry paths diagram</a></li>
+<li>David pointed out that <tt>StFstRawHitMaker</tt> already has a simulation mode fed by a
+    slow simulator, and that embedding is handled there behind a flag:
+<li>But there was no <tt>StFstSlowSimMaker</tt>
+<li>Copy <tt>StIstSlowSimMaker</tt> and make <tt>StFstSlowSimMaker</tt>
+</ul>
+
+<h2>New StFstSlowSimMaker</h2>
+
+<p><tt>StRoot/StFstSimMaker/StFstSlowSimMaker.{h,cxx}</tt> plus a <tt>fstSlowSim</tt> chain
+       option copied from <tt>istSlowSim</tt>. MC now runs:</p>
+
+<pre>
+  g2t_fsi_hit -> StFstSlowSimMaker -> "fstRawAdcSimu"
+              -> StFstRawHitMaker -> StFstClusterMaker -> StFstHitMaker
+</pre>
+
+<p>i.e. the same clustering and hit-position code real data uses. Embedding comes for
+free, since it is already implemented in <tt>StFstRawHitMaker</tt>.</p>
+
+<ul>
+<li><b>MC hit source.</b> IST reads <tt>mcEvent-&gt;istHitCollection()</tt>. There is no
+    <tt>StMcFstHit</tt>; FST GEANT hits exist only in the g2t table
+    (<tt>GetDataSet("g2t_fsi_hit")</tt>).</li>
+<li><b>The mapping table is 0-based.</b> IST's is 1-based
+    (<tt>mMappingGeomVec[geomIdTemp-1]</tt>). 
+<li><b>The seed flag is mandatory.</b> <tt>StFstScanRadiusClusterAlgo</tt> only creates a
+    cluster when <tt>nToSeedhit &gt; 0</tt>. Without <tt>setSeedhitflag(1)</tt> the chain runs
+    perfectly cleanly and produces zero clusters.</li>
+<li>The wedge and sensor digits of <tt>volume_id</tt> are deliberately <b>not</b> used: they are
+GEANT numbering, not reco numbering, and confusing the two is a classic FST failure
+mode. Wedge is derived from phi via <tt>kFstphiStart</tt>/<tt>kFstphiStop</tt>, sensor from
+radius. The elecId&harr;geoId relation is inherited from
+<tt>Calibrations/fst/fstMapping</tt> rather than assumed, so the sensor/phiStrip pairing
+(sensor 1 &larr; phiStrip 0-63, sensor 2 &larr; 64-127) comes out automatically.</p>
+<li><b>FST disks are 4, 5, 6 in <tt>volume_id</tt></b>, not 1-3 &mdash; matching <tt>FSTD_4/5/6</tt> in
+    the TGeo tree. <tt>StFstFastSimMaker</tt> keeps that convention and indexes its
+    6-element <tt>RMIN</tt>/<tt>RMAX</tt> arrays with 3,4,5.</li>
+<li><tt>sim.C</tt>'s usual <tt>sdt20211016</tt> predates FST installation, so
+    <tt>Geometry/fst/fstOnTpc</tt> has no entry, <tt>StFstDbMaker::Make()</tt> returns
+    <tt>StFATAL</tt>, and the chain dies on the first event. Any 2022+ date works.</li>
+</ul>
+
+<h2>StFstHitMaker + MC bug </h2>
+
+<p>Reconstructed hits came out at radii of ~1 cm &mdash; inside the detector's 5 cm inner
+edge. The cause was not in the new maker:</p>
+
+<ul>
+<li>Commit <tt>9e70bfd0a9</tt> (2025-09-05) correctly changed <tt>StFstHitMaker</tt> to store
+    true sensor-local <b>cartesian</b> coordinates via <tt>MasterToLocal</tt>.</li>
+<li>The consumer ~35 lines later was never updated. It still does
+    <tt>global[0] = local[0]*cos(local[1])</tt>, correct only under the OLD convention
+    where <tt>setLocalPosition()</tt> received the global <tt>(r, phi, z)</tt>.</li>
+<li>Official STAR has neither change, so it stays self-consistent. This fork is
+    producer-new / consumer-old, so <b>every FST global position this tree computes
+    has been wrong since September</b>.</li>
+<li>It stayed invisible because nothing in our workflow runs <tt>StFstHitMaker</tt>:
+    real-data studies read pre-produced MuDst, and MC used the fast sim, which
+    bypasses it. Running the real chain on MC is what exposed it.</li>
+</ul>
+
+<h2>Closure test</h2>
+
+<p>With the consumer made consistent, 200 events, 736 matched hits, comparing each
+reconstructed <tt>StFstHit</tt> against the GEANT hit it came from:</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th></th><th>before</th><th>after</th><th>expected</th></tr>
+<tr><td>dr mean</td><td>&minus;0.917</td><td><b>+0.0026</b></td><td>0</td></tr>
+<tr><td>dr RMS</td><td>1.105</td><td><b>0.799 cm</b></td><td>0.830 (strip quantization)</td></tr>
+<tr><td>r&Delta;&phi; mean</td><td>&minus;0.154</td><td><b>+0.0001</b></td><td>0</td></tr>
+<tr><td>r&Delta;&phi; RMS</td><td>2.259</td><td><b>0.084 cm</b></td><td>small</td></tr>
+<tr><td>|r&Delta;&phi;| &gt; 0.5 cm</td><td>93.6%</td><td><b>0.8%</b></td><td>&mdash;</td></tr>
+</table>
+
+<p>dr now matches strip quantization exactly and phi closes to sub-mm. The residual
+0.8% tail is truth-matching ambiguity in multi-hit events (the test pairs each
+reco hit with the nearest GEANT hit), not geometry. A wedge-numbering, disk or
+gap-sign error would put a large fraction out there, not a per-cent tail.</p>
+
+<p>That single test validates, together: wedge numbering, disk assignment, the
+sensor/phiStrip pairing, the elecId&harr;geoId round trip, the outer-sensor gap
+sign, and the clustering chain.</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><td><a href="fstSlowSimClosure.png"><img src="fstSlowSimClosure.png" height="200"></a><br>
+    dr, r&Delta;&phi; (fine), r&Delta;&phi; (wide, log) &mdash; reco vs GEANT truth</td></tr>
+</table>
+
+<h3><a href="electron45/index.html">45&deg; single-electron cross-check</a></h3>
+
+<p>The test above is an aggregate over a mixed sample, which is blind to a whole-wedge
+mislabel that preserves r and &phi;. A single isolated electron at &phi;=45&deg; gives a
+<b>discrete</b> check instead &mdash; each hit's reconstructed wedge compared against the
+wedge implied by its own truth &phi;:</p>
+
+<ul>
+<li>reco wedge &ne; truth-&phi; wedge : <b>2 / 1724 = 0.12%</b>, both at a wedge boundary</li>
+<li>dominant wedge <b>2 / 14 / 26</b> on disks 1 / 2 / 3, as predicted</li>
+<li>&phi; unbiased to 0.006&deg;; dr RMS 0.796 cm = strip quantization; r&Delta;&phi; RMS 0.038 cm</li>
+<li>the reco x-y map is the truth 45&deg; ray broken into concentric arcs at the 8 strip
+    radii &mdash; fine in &phi;, coarse in r, exactly the FST segmentation</li>
+</ul>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><td><a href="electron45/fst45_xy.png"><img src="electron45/fst45_xy.png" height="200"></a><br>
+    truth (top) vs reco (bottom), disks 1-3 &mdash;
+    <a href="electron45/index.html">details</a></td></tr>
+</table>
+
+<h2>Status &mdash; what is committed and what is not</h2>
+
+<ul>
+<li><b>New</b>: <tt>StFstSlowSimMaker.{h,cxx}</tt>, the <tt>fstSlowSim</tt> BFC option,
+    <tt>script/testFstSlowSim.C</tt>. These add a path; they change nothing existing.</li>
+<li><b>Left uncommitted</b>: the <tt>StFstHitMaker</tt> consumer fix, commented out with the
+    reasoning inline. It is <b>not a pure bug fix</b> &mdash; dropping the overwrite also
+    means the DB/survey alignment in <tt>geoMSensorOnGlobal</tt> finally gets applied,
+    which it never was. That is the candidate explanation for the
+    <a href="../residual/index.html">12-fold wedge steps</a>, so it changes real-data
+    behaviour and needs Xihe's and Daniel's sign-off rather than a silent commit.</li>
+</ul>
+
+<h2>Limitations &mdash; read before trusting a result from this</h2>
+
+<ul>
+<li><b>One raw hit per GEANT hit</b>, so every cluster is single-strip by construction.
+    Real data is 74.6% single-strip with mean size 1.39
+    (<a href="fstclus/index.html">measured here</a>), so cluster-size distributions will
+    not match until a crosstalk/charge-sharing model is added. Fine for geometry
+    closure; wrong for clustering efficiency or resolution.</li>
+<li><b>The strip lookup is a partial tautology.</b> It inverts the same
+    <tt>kFstphiStart</tt>/<tt>kFstrStart</tt> formula <tt>StFstHitMaker</tt> uses forward, so it
+    cannot validate the strip formula itself &mdash; only everything around it. A genuinely
+    independent lookup has to come from TGeo (find the FTUS node, MasterToLocal,
+    divide by pitch), the way <tt>script/checkFstWedgeGeom.C</tt> does. Hooked as
+    <tt>setStripSource(kStripFromTGeo)</tt> but not implemented.</li>
+<li><b>The gap sign is hard-coded to today's code.</b> The inverse tracks
+    <tt>StFstHitMaker.cxx:159,163</tt>. If the
+    <a href="../fstgap/index.html">gap fix</a> lands there, this must be flipped too or MC
+    and data disagree by one full <tt>kFstStripGapPhi</tt>. Having to say that is itself
+    the argument for the TGeo lookup.</li>
+<li><b>Charge model is the IST one</b> (3.87 MeV/cm, 300 &mu;m, MIP = 441 ADC) with a Landau
+    time-bin shape. Not an FST measurement. No noise, no dead channels, no pedestal.</li>
+<li><b>MC cannot settle geometry-vs-reality.</b> MC is generated from the geometry xml,
+    so this tests whether reconstruction is consistent with the xml. Whether the xml
+    matches the real detector (e.g. Flemming's front/back stagger question) needs
+    metrology or a real-data observable sensitive to it.</li>
+</ul>
+
+<h2>Code</h2>
+<ul>
+<li><a href="code/StFstSlowSimMaker.h">StFstSlowSimMaker.h</a></li>
+<li><a href="code/StFstSlowSimMaker.cxx">StFstSlowSimMaker.cxx</a></li>
+<li><a href="code/testFstSlowSim.C">testFstSlowSim.C</a> &mdash; the chain smoke test and
+    closure test above</li>
+<li><a href="../fstgap/proposal_StFstSimRawHitMaker.txt">proposal_StFstSimRawHitMaker.txt</a>
+    &mdash; the original proposal, superseded by this page</li>
+</ul>
+
+<p>Run as:</p>
+<pre>
+cons +StFstSimMaker +StBFChain
+root4star -l -b -q 'script/testFstSlowSim.C("ele.pt1.5.vz0.run1.fzd", 200)'
+</pre>
+
+</body></html>

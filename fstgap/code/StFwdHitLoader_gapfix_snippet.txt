@@ -1,0 +1,26 @@
+        // offset in every FST hit. Corrected here, at MuDst-load time, rather
+        // than at the source (raw DAQ reprocessing is expensive and this is
+        // downstream of production anyway) -- off by default.
+        if ( mApplyFstWedgeAlignment ) {
+            vPhi = FstWedgeAligner::correctPhi( diskIndex, vPhi );
+        }
+
+        // Outer-sensor gap-offset sign fix -- see setApplyFstGapFix() in
+        // StFwdHitLoader.h for why and for the sign derivation. Inner sensor
+        // (sensorIndex 0) carries no gap term, so it is left alone.
+        if ( mApplyFstGapFix && sensorIndex > 0 ) {
+            const double sgnAsIs = ( sensorIndex == 1 ) ? -1.0 : +1.0;
+            vPhi -= sgnAsIs * kFstzFilp[diskIndex] * kFstzDirct[wedgeIndex] * kFstStripGapPhi;
+        }
+
+        float x0 = vR * cos( vPhi );
+        float y0 = vR * sin( vPhi );
+        hitCov3 = makeFstCovMat( TVector3( x0, y0, vZ ) );
+        mSpacepointsFst.push_back( TVector3( x0, y0, vZ)  );
+        if ( kLogLevel >= kLogVerbose ) {LOG_INFO << TString::Format("FST local position: %f %f %f, global position: %f %f %f", vR, vPhi, vZ, x0, y0, vZ) << endm;}
+
+        // we use d+4 so that both FTT and FST start at 4
+        mFwdHitsFst.push_back(
+            FwdHit(
+                count++, // id
+                x0, y0, vZ, // position

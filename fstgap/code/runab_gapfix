@@ -1,0 +1,105 @@
+#!/bin/csh
+# Per-file condor job: MuDst -> FwdAlignment_BLCVtx.root ntuple, for the
+# outer-sensor gap-offset test. Same as script/runab but always runs
+# StFwdAlignmentMaker and takes the gap fix as an explicit argument, so the
+# OFF and ON campaigns are the same code path with one flag flipped.
+#
+# The fix under test: StFstHitMaker.cxx:159,163 apply the
+# +-0.5*kFstStripGapPhi term to the two outer FST sensors with the signs
+# swapped, which displaces each outer sensor by one full kFstStripGapPhi
+# (1 deg, ~0.39 cm at r=22 cm) and leaves the two overlapping across the wedge
+# centreline. The afterburner reads finished hits from MuDst
+# (setFstHitSource(MUDST)) and never runs StFstHitMaker, so the correction is
+# applied at load time instead, via StFwdHitLoader::setApplyFstGapFix().
+# See gapfix_test/CONCLUSIONS.txt and xihe_crosscheck_20260729.txt.
+#
+# Usage: runab_gapfix INPUTDIR BASE OUTDIR GAPFIX [NEV]
+#   GAPFIX: "1" applies the fix, "0" (or omitted) does not.
+#   NEV:    events to process, default 10000000 (all). Only for smoke-testing
+#           the script itself without waiting for a full file.
+#
+# Runs in a PER-JOB subdirectory of $SCRATCH, keyed by input file AND the gapfix
+# flag. This matters here in a way it did not for script/runab: the off and on
+# campaigns process the SAME MuDst basenames, so two jobs sharing a $SCRATCH
+# would clobber each other's input copy and output ntuple, and the `rm $base`
+# at the end would pull the file out from under the other job. Same pattern as
+# script/runsim.
+#
+# NOTE: requires BOTH `cons +StFwdTrackMaker` AND `cons +StFwdAlignmentMaker`.
+# Editing StFwdHitLoader.h changes StFwdTrackMaker's object layout and
+# StFwdAlignmentMaker reads that object through GetForwardTrackerBase(); with a
+# stale StFwdAlignmentMaker.so every job silently writes 0 rows while the
+# residual maker still looks fine.
+
+# Without this, csh aborts with "No match" the instant any ${x}*.root glob
+# below doesn't match an existing file -- nonomatch makes an unmatched glob
+# pass through literally instead of killing the job.
+set nonomatch
+
+set inputdir=$1
+set base=$2
+set outdir=$3
+set gapfix=$4
+if ( "$gapfix" == "" ) set gapfix="0"
+set gapArg="false"
+if ( "$gapfix" == "1" ) set gapArg="true"
+set nev=$5
+if ( "$nev" == "" ) set nev="10000000"
+
+set dir=$cwd
+
+echo dir=$dir gapfix=$gapfix gapArg=$gapArg nev=$nev
+
+set mudst = $base
+set alignBase = $mudst:s/.MuDst.root/.FwdAlignment_/
+echo MuDst=$mudst AlignBase=${alignBase}*
+
+set tag = $base:s/.MuDst.root//
+set wdir = ${SCRATCH}/gf${gapfix}_${tag}
+if ( ! -e $wdir ) mkdir -p $wdir
+cd $wdir
+echo wdir=$wdir
+
+# fwd_afterburner_db.C is NOT at the repo top level -- it lives under
+# StRoot/StFwdTrackMaker/macro/mudst/. script/runab copies it from $dir and so
+# would fail here; since StRoot is symlinked in just below, invoke it by path
+# instead of copying (see MACRO= below).
+/bin/cp $dir/fGeom.root .
+ln -s $dir/.$STAR_HOST_SYS
+ln -s $dir/StRoot
+
+echo copying $inputdir/$base
+/bin/cp $inputdir/$base ./
+
+pwd
+ls -la
+
+# fwd_afterburner_db.C( fileList, nEvents, debug, residualTrackType,
+#                       extraFileList, enableAlignment,
+#                       applyFstWedgeAlignment, applyFstGapFix )
+# Wedge alignment stays OFF so the only difference between the two campaigns
+# is the gap fix.
+set MACRO = StRoot/StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C
+root4star -l -b -q $MACRO'("'$base'",'$nev',0,4,"",true,false,'$gapArg')' >& run.log
+# one line per job in the condor log confirming the alignment maker actually
+# ran -- a stale StFwdAlignmentMaker.so shows up here as "0 tracks tested"
+grep -aE 'tracks seen' run.log | tail -1
+
+pwd
+ls -la
+
+set nalign=0
+foreach f (${alignBase}*.root)
+    if ( -e $f ) then
+        mkdir -p $outdir/alignment
+        echo /bin/mv $f $outdir/alignment/
+        /bin/mv $f $outdir/alignment/
+        @ nalign++
+    endif
+end
+if ( $nalign == 0 ) echo "WARNING: no ${alignBase}*.root files found -- alignment copy-back got nothing"
+
+/bin/rm -f $base
+# leave the per-job scratch dir clean so 322 jobs do not fill $SCRATCH
+cd $SCRATCH
+/bin/rm -rf $wdir

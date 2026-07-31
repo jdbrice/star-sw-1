@@ -113,7 +113,9 @@ Int_t StFttClusterPointMaker::Make() {
 
     //organize clusters by rob and orientation
     for ( StFttCluster* clu : mFttCollection->clusters() ) {
-        // group clusters by rob (1-16, 4 quadrants of 4 sTGC planes) and strip orientation
+        // group clusters by rob (0-15, 4 quadrants of 4 sTGC planes -- rob(StFttCluster*)
+        // is 0-based, unlike rob(StFttRawHit*); this array is sized [16] to match) and
+        // strip orientation
         UChar_t rob = mFttDb->rob( clu );
         UChar_t orient = clu->orientation();
         if (mDebug){

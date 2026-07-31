@@ -184,6 +184,56 @@ class StFwdHitLoader {
     // corrects for the resulting per-wedge offset at MuDst-load time instead.
     void setApplyFstWedgeAlignment( bool apply ) { mApplyFstWedgeAlignment = apply; }
     bool mApplyFstWedgeAlignment = false;
+
+    // Outer-sensor gap-offset sign fix, applied at MuDst-load time.
+    //
+    // StFstHitMaker.cxx:159,163 add the +-0.5*kFstStripGapPhi term with the
+    // signs the wrong way round for the two outer sensors:
+    //   sensor 1 gets -0.5*gap, sensor 2 gets +0.5*gap
+    // but Calibrations/fst/fstMapping says sensor 1 carries wedge-level
+    // phiStrip 0-63 and sensor 2 carries 64-127 (see script/dumpFstMapping.C),
+    // and with that assignment the resulting strip positions are each 1.0 deg
+    // (= one full kFstStripGapPhi) away from the AGML silicon, leaving the two
+    // outer sensors OVERLAPPING by 0.77 deg across the wedge centreline where
+    // the 1 deg gap should be -- see script/checkFstWedgeGeom.C and
+    // script/checkFstStripPhi.C.
+    //
+    // Fixing StFstHitMaker itself does not help the afterburner, which reads
+    // finished hits from the MuDst (setFstHitSource(MUDST)) and never runs that
+    // maker. But the correction is a pure constant shift in phi -- the r and
+    // strip terms are untouched -- so it can be applied here, on the stored
+    // value, without recomputing anything:
+    //   delta = -sgnAsIs * kFstzFilp[disk] * kFstzDirct[wedge] * kFstStripGapPhi
+    // with sgnAsIs = -1 for sensor 1, +1 for sensor 2, and 0 for the inner
+    // sensor, which carries no gap term at all.
+    //
+    // Off by default. StFstHitMaker.cxx:159,163 still wants the same fix for
+    // future productions; this is only how we test it against existing MuDst.
+    void setApplyFstGapFix( bool apply ) { mApplyFstGapFix = apply; }
+    bool mApplyFstGapFix = false;
+
+    // DIAGNOSTIC, not a correction. Mirrors every FST hit about its own wedge
+    // centreline: phi -> 2*phi_c - phi. This is the transformation Flemming's
+    // front/back claim implies, if AGML's per-wedge orientation is backwards
+    // and Calibrations/fst/fstMapping is NOT compensating for it.
+    //
+    // The point is that no FST-plus-vertex observable can see this: the wedge
+    // centreline is radial, so the mirror maps a track through the origin to
+    // another track through the origin, and three coherently mirrored hits
+    // still look exactly like a track. Residual tests are blind to it, and
+    // tests on reconstructed tracks are worse than blind -- seeding and the
+    // Kalman filter only keep hits already close to a track, so surviving
+    // tracks always look good and the ones the mirror would destroy are simply
+    // absent from the sample.
+    //
+    // So apply the mirror deliberately and look at what tracking does:
+    //   if the current geometry is right, this should DEGRADE everything
+    //     (fewer tracks, fewer FTT hits picked up, worse chi2)
+    //   if the detector really is staggered the other way, it should IMPROVE
+    //     them -- in particular it should recover FTT-matching efficiency
+    // Off by default; only ever set true for this test.
+    void setApplyFstMirror( bool apply ) { mApplyFstMirror = apply; }
+    bool mApplyFstMirror = false;
   protected:
     DataSource mFttDataSource;
     DataSource mFstDataSource;
