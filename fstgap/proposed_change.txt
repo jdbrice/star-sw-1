@@ -1,0 +1,185 @@
+Proposed change: one source of truth for the FST outer-sensor gap
+=================================================================
+
+Assumes PR23 (StFstFastSimMaker strips), PR24 (StFstSlowSimMaker) and
+PR25 (StFstHitMaker global position) have landed on dev.
+
+The 1 degree gap between the two outer sensors of a wedge is currently
+written out by hand in five places. They agree today, so nothing is
+broken -- but they all encode the SAME physical claim (which side of the
+wedge centre-line each outer sensor sits on), and that claim can only be
+changed correctly if all five move together.
+
+Step 1 below is a pure refactor: no behaviour change, provable line by
+line. Step 2 (flipping the convention) then becomes a two-line change to
+one function, and is a separate decision on separate evidence.
+
+
+=================================================================
+STEP 1 -- centralise.  Behaviour-neutral.
+=================================================================
+
+-----------------------------------------------------------------
+1/5   StRoot/StEvent/StFstConsts.h            (add, after kFstrStop)
+-----------------------------------------------------------------
+
++/// Which side of the wedge centre-line an outer sensor sits on:
++///   +1  sensor 1
++///   -1  sensor 2
++///    0  sensor 0 (the inner sensor, which has no gap)
++///
++/// THIS IS THE SINGLE STATEMENT OF THE OUTER-SENSOR GAP CONVENTION.
++/// The 1 degree gap enters reconstruction, both simulators, the track
++/// fitter and the forward hit loader. All of them derive their sign
++/// from here, so the convention can only be changed in one place.
++inline int fstOuterSensorSide(int sensor)
++{
++   if (sensor == 1) return +1;
++   if (sensor == 2) return -1;
++   return 0;
++}
++
++/// Signed phi offset of an outer sensor's strips from the position they
++/// would have if there were no gap. Zero for the inner sensor.
++inline double fstOuterGapPhiOffset(int sensor)
++{
++   return -0.5 * kFstStripGapPhi * fstOuterSensorSide(sensor);
++}
+
+
+-----------------------------------------------------------------
+2/5   StRoot/StFstHitMaker/StFstHitMaker.cxx        (around line 155)
+-----------------------------------------------------------------
+Two branches collapse to one line.
+
+     else
+     {// outer
+-       if(sensor == 1){
+-           local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
+-           local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
+-       }
+-       if(sensor == 2){
+-           local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
+-           local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
+-       }
++       const double stripSign = kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1];
++       local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
++       local[1] = phiOuter - stripSign*meanPhiStrip*kFstStripPitchPhi
++                           + stripSign*fstOuterGapPhiOffset(sensor);
+     }
+
+  check:  sensor 1 -> +S*(-0.5g) = -S*0.5g   same as before
+          sensor 2 -> +S*(+0.5g) = +S*0.5g   same as before
+
+
+-----------------------------------------------------------------
+3/5   StRoot/StFwdTrackMaker/include/Tracker/TrackFitter.h
+      (two places, around lines 498 and 509)
+-----------------------------------------------------------------
+
+(a) the measurement angle
+
+     double dphi = stripSign * (stripPhi - edgeToCenterPhi);
+-    if (sensor == 1) {
+-        dphi = stripSign * (edgeToCenterPhi - stripPhi - 0.5 * kFstStripGapPhi);
+-    } else if (sensor == 2) {
+-        dphi = stripSign * (edgeToCenterPhi - stripPhi + 0.5 * kFstStripGapPhi);
+-    }
++    if (sensor != 0) {
++        dphi = stripSign * (edgeToCenterPhi - stripPhi
++                            + fstOuterGapPhiOffset(sensor));
++    }
+
+(b) the sensor centre -- the same claim, so the same function
+
+     const double outerCenterDphi = 0.5 * (halfWedgePhi + kFstStripGapPhi);
+-    double centerDphi = 0.0;
+-    if (sensor == 1) {
+-        centerDphi = stripSign * outerCenterDphi;
+-    } else if (sensor == 2) {
+-        centerDphi = -stripSign * outerCenterDphi;
+-    }
++    const double centerDphi =
++        fstOuterSensorSide(sensor) * stripSign * outerCenterDphi;
+
+  check:  sensor 1 -> +1*S*o ;  sensor 2 -> -1*S*o ;  sensor 0 -> 0
+          identical to the branches above.
+
+
+-----------------------------------------------------------------
+4/5   StRoot/StFstSimMaker/StFstSlowSimMaker.cxx      (around line 377)
+-----------------------------------------------------------------
+This is the INVERSE of 2/5, so it uses the same helper with the same sign.
+
+-      const Double_t gapTerm = (sensor == 1)
+-                             ? -sgn * 0.5 * kFstStripGapPhi
+-                             : +sgn * 0.5 * kFstStripGapPhi;
+-
+-      const Double_t f = (phiOuter + gapTerm - phi) / (sgn * pitch);
++      const Double_t f = (phiOuter + sgn*fstOuterGapPhiOffset(sensor) - phi)
++                       / (sgn * pitch);
+
+
+-----------------------------------------------------------------
+5/5   StRoot/StFstSimMaker/StFstFastSimMaker.cxx      (around line 468)
+-----------------------------------------------------------------
+Also an inverse. The two-pass structure stays (the sensor is not known
+until the strip is), but both passes now go through the helper.
+
+-      double kA = (phiOuter - filp*dir*0.5*kFstStripGapPhi - ph) / (filp*dir*kFstStripPitchPhi);
+-      int    kR2 = (int) lround(kA);
+-      if (kR2 < kFstNumPhiSegPerWedge/2){
+-          sensorMC = 1; phiStripMC = kR2;
+-      } else {
+-          double kB = (phiOuter + filp*dir*0.5*kFstStripGapPhi - ph) / (filp*dir*kFstStripPitchPhi);
+-          sensorMC = 2; phiStripMC = (int) lround(kB);
+-      }
++      const double sgn = filp*dir;
++      // first pass: assume sensor 1, only to find which half we are in
++      const int guess = (int) lround((phiOuter + sgn*fstOuterGapPhiOffset(1) - ph)
++                                     / (sgn*kFstStripPitchPhi));
++      sensorMC   = (guess < kFstNumPhiSegPerWedge/2) ? 1 : 2;
++      phiStripMC = (int) lround((phiOuter + sgn*fstOuterGapPhiOffset(sensorMC) - ph)
++                                / (sgn*kFstStripPitchPhi));
+
+
+-----------------------------------------------------------------
+BONUS (not on dev)   StRoot/StFwdTrackMaker/StFwdHitLoader.cxx
+-----------------------------------------------------------------
+The legacy-MuDst compensation lives only on branch akio202607. It applies
+a FULL gap, not a half, because it is undoing a sign flip -- which is
+twice the offset. Routing it through the same function makes that
+relationship visible instead of something to re-derive:
+
+     if ( mApplyFstGapFix && sensorIndex > 0 ) {
+-        const double sgnAsIs = ( sensorIndex == 1 ) ? -1.0 : +1.0;
+-        vPhi -= sgnAsIs * kFstzFilp[diskIndex] * kFstzDirct[wedgeIndex] * kFstStripGapPhi;
++        vPhi += fstOuterSensorSide(sensorIndex)
++              * kFstzFilp[diskIndex] * kFstzDirct[wedgeIndex] * kFstStripGapPhi;
+     }
+
+  check:  sensor 1 -> +1*S*g ; old: -(-1)*S*g = +S*g
+          sensor 2 -> -1*S*g ; old: -(+1)*S*g = -S*g
+
+
+=================================================================
+STEP 2 -- flip the convention.  Separate decision.
+=================================================================
+
+If the fstgap measurement is accepted (see index.html: overlapping
+positions 83,135 -> 0, outer chi2/ndf improves 21.9 sigma with the inner
+sensor flat as control), the whole change is:
+
+     inline int fstOuterSensorSide(int sensor)
+     {
+-       if (sensor == 1) return +1;
+-       if (sensor == 2) return -1;
++       if (sensor == 1) return -1;
++       if (sensor == 2) return +1;
+        return 0;
+     }
+
+and every one of the five sites follows automatically.
+
+Anything reading MuDst written BEFORE this lands still needs the legacy
+compensation -- see "this flag is a trap" in index.html.

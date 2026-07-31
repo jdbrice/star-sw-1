@@ -27,7 +27,9 @@ month came from assuming a single source of truth. Marked
         |                                 |                           |
         |                                 |                           |
    read by GEANT (MC hits)          read by StFstHitMaker       read by StFstHitMaker
-   read by Xihe's plane build       read by Xihe's decode       ...and then DISCARDED  [!]
+   read by Xihe's plane build       read by Xihe's decode       ...and then CANCELLED  [!]
+                                                                (applied on the way in,
+                                                                 undone on the way out)
 
   (d) FstRasterizer, StFwdHitLoader.h -- a FOURTH description, used only on the
       loader's GEANT path: r snapped to a 3.0 cm grid (NOT the real strip radii)
@@ -63,15 +65,19 @@ month came from assuming a single source of truth. Marked
    |             local[1] = phi from kFstphiStart + kFstzFilp*kFstzDirct*strip*pitch
    |                        +- 0.5*kFstStripGapPhi for the two outer sensors   [!] sign swapped
    |   L176      MasterToLocal( g -> l ) using (c), stored as localPosition
-   |   L199      LocalToMaster( local -> global ) using (c)      <-- survey applied here
-   |   L212      global = local[0]*cos(local[1]) ...             <-- and OVERWRITTEN  [!]
-   |                                                                 so (c) never reaches a hit
+   |   L199      LocalToMaster( local -> global ) using (c)
+   |             SAME matrix as L176, so the two cancel: global == g exactly and
+   |             the survey has NO net effect. True before and after PR25.  [!]
+   |   L212      global = local[0]*cos(local[1]) ...   DELETED by PR25.
+   |             Since 9e70bfd0a9 localPosition is CARTESIAN, so reading it as
+   |             polar gave r ~ 1 cm. Fixed.
    v
   StFstHit -> MuDst StMuFstHit
               mMeanRStrip, mMeanPhiStrip   (strip-native, survives to MuDst)
               mHardwarePosition            (disk/wedge/sensor; UInt_t, 25 spare bits)
-              mLocalPosition[3] = (r, phi, z_disk)   phi carries the [!] above
-              mXYZ                         global, from the overwrite
+              mLocalPosition[3] = sensor-local CARTESIAN since 9e70bfd0a9,
+                                  (r, phi, z_disk) before it            [!] see below
+              mXYZ                         global, correct after PR25
 </pre>
 
 <HR>
@@ -133,9 +139,15 @@ month came from assuming a single source of truth. Marked
    |
    v
   StFwdHitLoader::loadFstHitsFromMuDst
-   |   vR,vPhi,vZ  <- localPosition(0,1,2)          (position as computed upstream)
-   |   x0 = vR cos(vPhi),  y0 = vR sin(vPhi)        --> space-point mode
-   |   _localPosition[0,1] <- meanRStrip, meanPhiStrip --> planar mode
+   |   vR,vPhi,vZ  <- localPosition(0,1,2)
+   |   x0 = vR cos(vPhi),  y0 = vR sin(vPhi)        --> space-point mode   [!] STILL BROKEN
+   |     Same error PR25 fixed inside StFstHitMaker, in a different consumer:
+   |     localPosition is CARTESIAN since 9e70bfd0a9, so cos/sin of it is
+   |     meaningless. Present in BOTH loadFstHitsFromMuDst and
+   |     loadFstHitsFromStEvent. Existing 2022 productions predate 9e70bfd0a9
+   |     and are polar, so they still read correctly -- this bites any MuDst
+   |     or StEvent produced with current code, e.g. the new slow-sim chain.
+   |   _localPosition[0,1] <- meanRStrip, meanPhiStrip --> planar mode  (unaffected)
    |   _genfit_plane_index <- fstGlobalSensorIndex(disk, wedge, sensor)
    |
    |   optional hooks, all off by default:
@@ -188,14 +200,26 @@ month came from assuming a single source of truth. Marked
   [!] outer-sensor gap sign        StFstHitMaker L159,163 and Xihe TrackFitter ~L488.
                                    1.000 deg = one full kFstStripGapPhi. Measured,
                                    corrected and validated: see index.html.
-  [!] survey never applied         StFstHitMaker computes LocalToMaster then overwrites
-                                   it. So StFstDb geometry tables are loaded every run
-                                   and affect nothing. Worse than it looks: commit
-                                   9e70bfd0a9 changed what setLocalPosition() stores to
-                                   sensor-local CARTESIAN, but the overwrite still treats
-                                   it as polar (r,phi), so this fork's global positions
-                                   have been wrong since 2025-09-05. Only MC exposed it
+  [!] survey never applied         StFstHitMaker applies MasterToLocal when storing the
+                                   hit and LocalToMaster when reading it back, using the
+                                   SAME matrix. The round trip is the identity, so the
+                                   StFstDb survey tables are loaded every run and cancel
+                                   out. This is true both before and after the 3-line fix
+                                   below -- deleting the overwrite does NOT switch the
+                                   survey on. (An earlier version of this page said it
+                                   did; that was wrong, and it is why the alignment was
+                                   briefly listed as a candidate explanation for the
+                                   12-fold wedge steps. It is not.)
+  [+] global position was broken   FIXED (PR25). Commit 9e70bfd0a9 changed what
+                                   setLocalPosition() stores to sensor-local CARTESIAN,
+                                   but the consumer ~25 lines later still read it as
+                                   polar (r,phi), so global positions were nonsense
+                                   (r ~ 1 cm) from 2025-09-05 until PR25. Only MC exposed
+                                   it, because nothing else runs StFstHitMaker
                                    -> <a href="../FstSlowSim/index.html">FstSlowSim/index.html</a>
+                                   NOTE this never touched the planar path: TrackFitter
+                                   builds its measurement from strip indices, not from
+                                   the stored global position.
   [+] MC bypasses reconstruction   FIXED. Was: no StFstClusterMaker, no StFstHitMaker,
                                    so the transform was implemented twice and only one
                                    copy ever tested. StFstSlowSimMaker now feeds MC in

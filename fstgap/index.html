@@ -213,11 +213,61 @@ fixed Mudst <b>if we ever fix StFstHitMaker</b>. This is exactly why I did not
 make this a commit and PR, but rather putting this in an email. Please think
 through what we should do. Not fixing StFstHitMaker may be an option...</i></p>
 
-<p>The problem stated plainly: whether the correction should be applied depends
-on which production wrote the MuDst, and that is invisible in the file. Set it
-wrong and you get a 1&nbsp;deg error either way &mdash; uncorrected, or
-corrected twice. There are three populations to keep straight, and MC is
-already one of them today:</p>
+<p>Whether the correction should be applied depends on which production wrote
+the MuDst, and that is invisible in the file. Set it wrong and you get a
+1&nbsp;deg error either way &mdash; uncorrected, or corrected twice.</p>
+
+<p><b>But it only matters in one of the two tracking modes.</b> That halves the
+problem and is worth stating first:</p>
+
+<table border=1 cellpadding=4>
+<tr><th></th><th>space-point mode (default)</th><th>planar mode (xihe-align)</th></tr>
+<tr><td>what the hit position comes from</td>
+    <td><tt>StMuFstHit::localPosition</tt>, read as (r, phi, z) &mdash;
+        see the warning below</td>
+    <td><tt>meanRStrip</tt>/<tt>meanPhiStrip</tt> + <tt>StFstConsts.h</tt> +
+        the plane from <tt>fGeom.root</tt></td>
+</tr>
+<tr><td>carries the gap sign from StFstHitMaker?</td>
+    <td><b>yes</b></td>
+    <td><b>no</b> &mdash; strip indices are unchanged by the gap sign</td>
+</tr>
+<tr><td>needs <tt>setApplyFstGapFix</tt>?</td>
+    <td><b>yes</b>, and getting it wrong is the trap</td>
+    <td><b>never</b> &mdash; the flag is irrelevant here</td>
+</tr>
+<tr><td>has its own copy of the gap convention?</td>
+    <td>no</td>
+    <td>yes, in <tt>TrackFitter.h</tt> &mdash; independent of StFstHitMaker,
+        must be right on its own terms</td>
+</tr>
+</table>
+
+<p>So the flag is a space-point-mode problem only. Planar mode never reads the
+affected quantity, which is also why Xihe's alignment work was unaffected by
+either of the StFstHitMaker bugs.</p>
+
+<p><b>Separate defect found in space-point mode, still open.</b>
+<tt>StFwdHitLoader</tt> does</p>
+<pre>
+  float vR   = localPosition(0);
+  float vPhi = localPosition(1);
+  float x0 = vR*cos(vPhi);   float y0 = vR*sin(vPhi);
+</pre>
+<p>in <b>both</b> <tt>loadFstHitsFromMuDst</tt> and
+<tt>loadFstHitsFromStEvent</tt>. But commit <tt>9e70bfd0a9</tt> changed
+<tt>setLocalPosition()</tt> to store sensor-local <b>cartesian</b> coordinates, so
+cos/sin of it is meaningless &mdash; the same error PR25 fixed inside
+<tt>StFstHitMaker</tt>, in a different consumer that PR25 did not touch.
+Existing 2022 productions predate <tt>9e70bfd0a9</tt> and are still polar, so
+they read correctly today; this bites any MuDst or StEvent written with current
+code, including the new slow-sim chain. It is independent of the gap question
+and needs its own decision: either the loader converts, or
+<tt>localPosition</tt> goes back to polar and Xihe's planar code takes the
+cartesian from elsewhere.</p>
+
+<p>Within space-point mode there are three populations to keep straight, and MC
+is already one of them:</p>
 <table border=1 cellpadding=4>
 <tr><th>MuDst</th><th>has the 1&deg; displacement?</th><th>correct setting</th></tr>
 <tr><td>real data, current productions</td><td>yes</td><td>ON</td></tr>
@@ -225,8 +275,22 @@ already one of them today:</p>
 <tr><td>MC (StFstFastSimMaker)</td><td>no &mdash; never applies a gap term at all</td><td>OFF</td></tr>
 </table>
 
-<p><b>Suggestion: do not decide it by hand at all &mdash; detect it from the
-data.</b> The signature is not a subtle statistical difference, it is a
+<H3>Do not decide it by hand &mdash; three options</H3>
+
+<p><b>1. Make the flag unnecessary.</b> Fix the convention once (below), reprocess,
+and delete the flag. Nothing to set, nothing to detect. The cost is reprocessing
+and a window in which old and new MuDst coexist &mdash; during which one of the
+next two is still needed.</p>
+
+<p><b>2. Stamp the convention into the file.</b>
+<tt>StMuFstHit::mHardwarePosition</tt> is a <tt>UInt_t</tt> holding 1-108: 7 bits
+used, 25 spare. Set a high bit to mark the new convention, bit-clear meaning the
+old one, so every existing file still reads correctly. No schema change, no new
+member &mdash; but <tt>getDisk()/getWedge()/getSensor()</tt> compute straight from
+it and would need masking, in both <tt>StMuFstHit</tt> and <tt>StFstHit</tt>.
+Explicit and free at runtime; only helps files written after it lands.</p>
+
+<p><b>3. Detect it from the data.</b> The signature is not statistical, it is a
 geometric impossibility, and it is binary:</p>
 <pre>
                  outer hits with          outer hits with
@@ -234,44 +298,88 @@ geometric impossibility, and it is binary:</p>
   displaced           83,135                        0
   correct                  0                  167,426
 </pre>
-<p>With the displacement present the two outer sensors overlap across the wedge
-centreline, so that band is populated and the outer edges are empty. Corrected,
-the centreline band is empty because that is the physical 1&nbsp;deg gap. Zero
-versus ~10<sup>5</sup> &mdash; a few thousand hits decide it, so the loader can
-sample the first events of a run and set the flag itself.</p>
+<p>With the displacement the two outer sensors overlap across the wedge
+centreline; corrected, that band is empty because it is the physical gap.
+<b>Rule: apply the correction iff the centreline band is populated.</b> Old data
+gets corrected, fixed data does not, and MC is empty too (AGML knows the gap),
+so the dangerous MC case is safe by construction rather than by remembering.
+Cost: 2.03 band hits/event on run 23081008, so ~50 events settles it &mdash; and it
+can be a one-time pre-pass over the file's <tt>FstHit</tt> branch, measured per
+file, so no events are spent and run conditions do not matter.</p>
 
-<p>The rule that covers all three rows above: <b>apply the correction if and
-only if the centreline band is populated.</b> Old real data is populated, so it
-gets corrected. Fixed real data is empty, so it does not. MC is also empty
-(GEANT puts no hits in the gap, because AGML knows the gap is there), so MC is
-left alone &mdash; which is required, since applying this to MC would introduce
-an error rather than remove one. One test, no configuration, and the dangerous
-MC case is safe by construction rather than by remembering.</p>
+<p>These are not exclusive: 1 is the destination, 3 covers the transition and
+every already-written file, 2 is worth doing if we expect this class of change
+again.</p>
 
-<p><b>How many events?</b> Measured on run 23081008, raw MuDst hits (not
-residual rows &mdash; the raw rate is ~30x higher, which is why this is cheap):
-96 FST hits/event, 31.75 outer, and</p>
+<H3>Underneath all of it: one source of truth for the gap</H3>
+
+<p>The 1&nbsp;deg gap is currently written out by hand in five places. They agree
+today, so nothing is broken &mdash; but they all encode the <b>same physical claim</b>
+(which side of the wedge centre-line each outer sensor sits on), and that claim
+can only be changed correctly if all five move together. One function should
+state it:</p>
+
 <pre>
-  centreline band |dphi_local| &lt; 0.383 deg :  2.027 hits/event
-  outer edge      14.4 &lt; |dphi_local| &lt; 15.4 :  0.000 hits/event
-</pre>
-<p>so 10 band hits in 5 events, 50 in 25, 100 in 49. The cold start is a few
-tens of events, not thousands &mdash; and it need not cost any events at all,
-since this can be a one-time pre-pass over the file's <tt>FstHit</tt> branch
-before the event loop rather than something learned from the stream. That also
-sidesteps the run-condition worry: it is measured per file, on that file.</p>
+/// Which side of the wedge centre-line an outer sensor sits on:
+///   +1 sensor 1, -1 sensor 2, 0 inner sensor (no gap).
+/// THIS IS THE SINGLE STATEMENT OF THE OUTER-SENSOR GAP CONVENTION.
+inline int fstOuterSensorSide(int sensor)
+{
+   if (sensor == 1) return +1;
+   if (sensor == 2) return -1;
+   return 0;
+}
 
-<p><b>Or hide a bit instead of measuring.</b>
-<tt>StMuFstHit::mHardwarePosition</tt> is a <tt>UInt_t</tt> carrying values
-1-108, so 7 bits used and 25 spare. A high bit could mark the geometry
-convention, with bit-clear meaning the current one, so every existing file
-reads correctly without being touched. It is not a schema change &mdash; no new
-member, no I/O layout change &mdash; but <tt>getDisk()</tt>,
-<tt>getWedge()</tt> and <tt>getSensor()</tt> compute straight from
-<tt>mHardwarePosition</tt> and would need masking, in both
-<tt>StMuFstHit</tt> and <tt>StFstHit</tt>. Explicit and free at runtime;
-against it, it only helps files written after the change, so detection is
-still needed for everything that already exists.</p>
+/// Signed phi offset of an outer sensor's strips from their no-gap position.
+inline double fstOuterGapPhiOffset(int sensor)
+{
+   return -0.5 * kFstStripGapPhi * fstOuterSensorSide(sensor);
+}
+</pre>
+
+<p>in <tt>StRoot/StEvent/StFstConsts.h</tt>, which all five already reach. Every
+site then collapses onto it, reproducing today's behaviour exactly:</p>
+
+<table border=1 cellpadding=4>
+<tr><th>site</th><th>now</th><th>with the helper</th></tr>
+<tr><td><tt>StFstHitMaker:159,163</tt></td>
+    <td>two branches, <tt>&#8723;S&middot;0.5&middot;gap</tt></td>
+    <td><tt>+ S*fstOuterGapPhiOffset(sensor)</tt> &mdash; one line, branches gone</td></tr>
+<tr><td><tt>TrackFitter.h</tt> dphi</td>
+    <td><tt>if(sensor==1)&hellip;else if(sensor==2)&hellip;</tt></td>
+    <td><tt>+ fstOuterGapPhiOffset(sensor)</tt></td></tr>
+<tr><td><tt>TrackFitter.h</tt> centerDphi</td>
+    <td><tt>+S&middot;o</tt> / <tt>&minus;S&middot;o</tt></td>
+    <td><tt>fstOuterSensorSide(sensor) * S * outerCenterDphi</tt></td></tr>
+<tr><td><tt>StFstSlowSimMaker</tt></td>
+    <td><tt>gapTerm = (sensor==1)? &minus;sgn&middot;0.5g : +sgn&middot;0.5g</tt></td>
+    <td><tt>sgn * fstOuterGapPhiOffset(sensor)</tt></td></tr>
+<tr><td><tt>StFstFastSimMaker</tt></td>
+    <td>separate <tt>kA</tt>/<tt>kB</tt> expressions</td>
+    <td>one expression via the helper</td></tr>
+<tr><td><tt>StFwdHitLoader</tt> (legacy flag)</td>
+    <td><tt>sgnAsIs = (sensor==1)? &minus;1 : +1</tt></td>
+    <td><tt>fstOuterSensorSide(sensor) * S * kFstStripGapPhi</tt></td></tr>
+</table>
+
+<p>The loader entry is worth a second look: its <tt>sgnAsIs</tt> is exactly
+<tt>&minus;fstOuterSensorSide()</tt>, and it applies a <b>full</b> gap rather than a
+half &mdash; correct, since undoing a sign flip is twice the offset. Routing both
+through one function makes that relationship visible instead of something to
+re-derive.</p>
+
+<p>Two steps, deliberately separate:</p>
+<ul>
+<li><b>Step 1, centralise.</b> Pure refactor, provable line by line, no behaviour
+    change. Reviewable without agreeing about the physics.</li>
+<li><b>Step 2, flip.</b> If the measurement below is accepted, the entire change
+    is two return values in <tt>fstOuterSensorSide()</tt>, and all five sites
+    follow.</li>
+</ul>
+
+<p>Both written out as diffs, assuming PR23-25 have landed:
+<a href="proposed_change.txt">proposed_change.txt</a>.</p>
+
 
 <p>On whether to fix <tt>StFstHitMaker</tt> at all: leaving it unfixed does
 avoid the vintage ambiguity, but only for as long as nobody fixes it. It is an
