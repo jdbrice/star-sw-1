@@ -359,9 +359,16 @@ int StFwdHitLoader::loadFstHitsFromMuDst( FwdDataSource::McTrackMap_t &mcTrackMa
     for ( unsigned int index = 0; index < fst->numberOfHits(); index++){
         StMuFstHit * muFstHit = fst->getHit( index );
 
-        float vR = muFstHit->localPosition(0);
-        float vPhi = muFstHit->localPosition(1);
-        float vZ = muFstHit->localPosition(2);
+        // Take the stored GLOBAL position, do not rebuild it from localPosition.
+        // Since 9e70bfd0a9 localPosition is sensor-local CARTESIAN, so treating
+        // [0],[1] as (r,phi) and taking cos/sin of them is meaningless. xyz() is
+        // correct both for files written before that change and after it
+        // (verified equal to the old r*cos/sin to 1e-6 cm on production
+        // run 23081008, 19942 hits).
+        const TVector3 &gpos = muFstHit->xyz();
+        float x0 = gpos.X();
+        float y0 = gpos.Y();
+        float vZ = gpos.Z();
 
         int diskIndex   = muFstHit->getDisk() - 1;                                    // getDisk() is 1-indexed; convert to 0-indexed
         int wedgeIndex  = (muFstHit->getWedge() - 1) % kFstNumWedgePerDisk;           // getWedge() is global 1-indexed (1-36); convert to per-disk 0-indexed (0-11)
@@ -369,11 +376,9 @@ int StFwdHitLoader::loadFstHitsFromMuDst( FwdDataSource::McTrackMap_t &mcTrackMa
         int globalIndex = FwdHit::fstGlobalSensorIndex( diskIndex, wedgeIndex, sensorIndex );
         if ( kLogLevel >= kLogVerbose ) {LOG_INFO << "wedgeIndex: " << wedgeIndex << ", sensorIndex: " << sensorIndex << ", diskIndex: " << diskIndex << ", globalIndex: " << globalIndex << endm;}
 
-        float x0 = vR * cos( vPhi );
-        float y0 = vR * sin( vPhi );
         hitCov3 = makeFstCovMat( TVector3( x0, y0, vZ ) );
         mSpacepointsFst.push_back( TVector3( x0, y0, vZ)  );
-        if ( kLogLevel >= kLogVerbose ) {LOG_INFO << TString::Format("FST local position: %f %f %f, global position: %f %f %f", vR, vPhi, vZ, x0, y0, vZ) << endm;}
+        if ( kLogLevel >= kLogVerbose ) {LOG_INFO << TString::Format("FST global position: %f %f %f", x0, y0, vZ) << endm;}
 
         // we use d+4 so that both FTT and FST start at 4
         mFwdHitsFst.push_back(
@@ -435,10 +440,13 @@ int StFwdHitLoader::loadFstHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTrack
                 if ( !sc ) continue;
                 StSPtrVecFstHit fsthits = sc->hits();
                 for ( unsigned int ih = 0; ih < fsthits.size(); ih++ ){
-                    float vR   = fsthits[ih]->localPosition(0);
-                    float vPhi = fsthits[ih]->localPosition(1);
-                    float vZ   = fsthits[ih]->localPosition(2);
-                    if ( kLogLevel >= kLogInfo ){LOG_INFO << TString::Format("FST local position: %f %f %f", vR, vPhi, vZ) << endm;}
+                    // Global position, not localPosition -- see the note in
+                    // loadFstHitsFromMuDst above.
+                    const StThreeVectorF &gpos = fsthits[ih]->position();
+                    float x0   = gpos.x();
+                    float y0   = gpos.y();
+                    float vZ   = gpos.z();
+                    if ( kLogLevel >= kLogInfo ){LOG_INFO << TString::Format("FST global position: %f %f %f", x0, y0, vZ) << endm;}
                     
                     int wedgeIndex  = iw % kFstNumWedgePerDisk;
                     int sensorIndex = is % kFstNumSensorsPerWedge;
@@ -446,8 +454,6 @@ int StFwdHitLoader::loadFstHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTrack
                     int globalIndex = FwdHit::fstGlobalSensorIndex( diskIndex, wedgeIndex, sensorIndex );
 
                     if ( kLogLevel >= kLogVerbose ) {LOG_INFO << "diskIndex = " << diskIndex << ", wedgeIndex = " << wedgeIndex << ", sensorIndex = " << sensorIndex << ", globalIndex = " << globalIndex << endm;}
-                    float x0 = vR * cos( vPhi );
-                    float y0 = vR * sin( vPhi );
                     hitCov3 = makeFstCovMat( TVector3( x0, y0, vZ ) );
 
                        
