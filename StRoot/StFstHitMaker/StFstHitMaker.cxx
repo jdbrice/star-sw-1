@@ -198,10 +198,6 @@ Int_t StFstHitMaker::Make()
 				TGeoHMatrix *geoMSensorOnGlobal = (TGeoHMatrix *) mSensorTransforms->FindObject(Form("R%04i", sensorId));
 				geoMSensorOnGlobal->LocalToMaster(local, global);
 
-                                global[0] = local[0]*cos(local[1]);
-                                global[1] = local[0]*sin(local[1]);
-                                global[2] = local[2];
-
 				StThreeVectorF vecGlobal(global);
 				newHit->setPosition(vecGlobal); //set global position
 			}//end sensor hit collection
