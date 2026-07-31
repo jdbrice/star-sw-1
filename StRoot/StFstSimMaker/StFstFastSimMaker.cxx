@@ -6,6 +6,7 @@
 #include "StEvent/StRnDHit.h"
 #include "StEvent/StFstHit.h"
 #include "StEvent/StFstHitCollection.h"
+#include "StEvent/StFstConsts.h"
 #include "StEvent/StRnDHitCollection.h"
 
 #include "tables/St_g2t_fts_hit_Table.h"
@@ -391,10 +392,111 @@ void StFstFastSimMaker::FillSilicon(StEvent *event) {
 			float r = sqrt(hits[i]->position().x() * hits[i]->position().x() + hits[i]->position().y() * hits[i]->position().y());
 			float phi = atan2(hits[i]->position().y(), hits[i]->position().x());
 			fHit->setLocalPosition( r, phi, hits[i]->position().z() );
+
+			// Give the hit its strip indices. Without them the StHit-style constructor above leaves
+			// mMeanRStrip = mMeanPhiStrip = -1, StFwdHitLoader evaluates
+			// kFstrStart[-1] (out of bounds), and every strip-native (planar)
+			// study on MC is meaningless.
+			//
+			// The indices are chosen so that the RECONSTRUCTION's own forward
+			// transform reproduces this hit's position. That is deliberate and
+			// it has a limit worth stating: MC then round-trips exactly, so
+			// this cannot TEST the transform (see step 2). What it does do is
+			// let the strip-native path run on MC at all, which today it
+			// cannot.
+			//
+			// A grid-derived index (phi_index % 128) would NOT do: this maker
+			// bins phi on a uniform grid that always increases with global
+			// phi, while the reconstruction advances strips by
+			// kFstzFilp[disk]*kFstzDirct[wedge], which alternates wedge to
+			// wedge. Half the wedges would come out mirrored inside
+			// themselves, by up to the full 30 deg at the wedge edge.
+			{
+				double xh = hits[i]->position().x();
+				double yh = hits[i]->position().y();
+				double rh = sqrt(xh*xh + yh*yh);
+				double ph = atan2(yh, xh);
+				if (ph < 0) ph += 2.0*M_PI;
+
+				// radial strip: exact, because FstGlobal::RSegment[] IS
+				// kFstrStart[] plus the 28 cm endpoint
+				int rStripMC = -1;
+				for (int kR = 0; kR < mNumR; kR++)
+					if (rh > FstGlobal::RSegment[kR] && rh <= FstGlobal::RSegment[kR+1]) rStripMC = kR;
+
+				// reconstruction wedge index m (1-12) is the one whose
+				// kFstphiStart/kFstphiStop sector contains this hit -- NOT the
+				// GEANT wedge number and not the geometric sector index
+				int mIdx = -1;
+				for (int mm = 1; mm <= kFstNumWedgePerDisk && mIdx < 0; mm++){
+					double c1 = kFstphiStart[mm-1]*M_PI/6.0;
+					double c2 = kFstphiStop [mm-1]*M_PI/6.0;
+					double lo = (c1 < c2) ? c1 : c2;
+					double hi2 = (c1 < c2) ? c2 : c1;
+					double p2 = ph;
+					if (hi2 > 2.0*M_PI - 1e-9 && p2 < lo) p2 += 2.0*M_PI;
+					if (p2 >= lo - 1e-9 && p2 < hi2 + 1e-9) mIdx = mm;
+				}
+
+				if (rStripMC >= 0 && mIdx > 0){
+					int diskIdx = hits[i]->layer() - 4;            // 0-2
+					int dir  = kFstzDirct[mIdx-1];
+					int filp = kFstzFilp[diskIdx];
+					double phiInner, phiOuter;
+					if (diskIdx == 1){                             // disk 2 swaps
+						phiInner = kFstphiStop [mIdx-1]*M_PI/6.0 - 0.5*dir*kFstStripPitchPhi;
+						phiOuter = kFstphiStart[mIdx-1]*M_PI/6.0 + 0.5*dir*kFstStripPitchPhi;
+					} else {
+						phiInner = kFstphiStart[mIdx-1]*M_PI/6.0 + 0.5*dir*kFstStripPitchPhi;
+						phiOuter = kFstphiStop [mIdx-1]*M_PI/6.0 - 0.5*dir*kFstStripPitchPhi;
+					}
+
+					int sensorMC = 0, phiStripMC = 0;
+					if (rStripMC < kFstNumRStripsPerWedge/2){
+						// inner: phi = phiInner + filp*dir*k*pitch
+						double kk = (ph - phiInner) / (filp*dir*kFstStripPitchPhi);
+						phiStripMC = (int) lround(kk);
+						sensorMC   = 0;
+					} else {
+						// outer: phi = phiOuter - filp*dir*k*pitch (-+) filp*dir*0.5*gap
+						//
+						// These signs are the exact inverse of StFstHitMaker.cxx:159,163
+						// AS THEY STAND TODAY. They must be kept in sync with that file:
+						// if the outer-sensor gap sign there is ever changed, the two
+						// lines below have to be swapped with it, or MC and data will
+						// disagree by one full kFstStripGapPhi (1 deg).
+						//
+						// Calibrations/fst/fstMapping: sensor 1 <- phiStrip 0-63,
+						// sensor 2 <- 64-127.
+						double kA = (phiOuter - filp*dir*0.5*kFstStripGapPhi - ph) / (filp*dir*kFstStripPitchPhi);
+						int    kR2 = (int) lround(kA);
+						if (kR2 < kFstNumPhiSegPerWedge/2){
+							sensorMC = 1; phiStripMC = kR2;
+						} else {
+							double kB = (phiOuter + filp*dir*0.5*kFstStripGapPhi - ph) / (filp*dir*kFstStripPitchPhi);
+							sensorMC = 2; phiStripMC = (int) lround(kB);
+						}
+					}
+
+					if (phiStripMC >= 0 && phiStripMC < kFstNumPhiSegPerWedge){
+						fHit->setMeanRStrip(rStripMC);
+						fHit->setMeanPhiStrip(phiStripMC);
+						fHit->setDiskWedgeSensor(diskIdx,
+						                         diskIdx*kFstNumWedgePerDisk + mIdx,
+						                         sensorMC);
+					}
+				}
+			}
+
 			// AHHH the disk is ignored and the wedge is used as 0 - 36
 			// because of the old geometry layout the FST disks are layers 4, 5, 6 in simulation
+			// NOTE: disk/wedge/sensor are set in the strip block above, from
+			// the RECONSTRUCTION's wedge numbering. The GEANT wedge
+			// (hits[i]->ladder()) is a different numbering and must not be
+			// written here, or the label and the strip index disagree.
 			int iDisk = hits[i]->layer() - 4;
-			fHit->setDiskWedgeSensor(iDisk, iDisk * kFstNumWedgePerDisk + hits[i]->ladder(), hits[i]->wafer());
+			if (fHit->getMeanPhiStrip() < 0)
+				fHit->setDiskWedgeSensor(iDisk, iDisk * kFstNumWedgePerDisk + hits[i]->ladder(), hits[i]->wafer());
 			LOG_INFO << Form("Adding hit to StFstHitCollection: %d %d %d %f %f %f", fHit->getDisk(), fHit->getWedge(), fHit->getSensor(), hits[i]->position().x(), hits[i]->position().y(), hits[i]->position().z()) << endm;
 			bool added = event->fstHitCollection()->addHit(fHit);
 			LOG_INFO << "ST hit added? " << added << endm;
