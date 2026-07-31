@@ -209,29 +209,21 @@ Int_t StFstHitMaker::Make()
 				         << " correctGlobalX=" << global[0] << " correctGlobalY=" << global[1]
 				         << " correctPhiDeg=" << correctPhiDeg << endm;
 
-                                // LOCAL EDIT, NOT COMMITTED -- see FstSlowSim/index.html.
-                                // These three lines used to overwrite the LocalToMaster
-                                // result above, converting (local[0], local[1]) as if they
-                                // were polar (r, phi). That was correct only under the OLD
-                                // convention, where setLocalPosition() was handed the global
-                                // (r, phi, z). Commit 9e70bfd0a9 (Xihe, 2025-09-05) changed
-                                // the producer at line ~177 to store true sensor-local
-                                // CARTESIAN coordinates via MasterToLocal, but this consumer
-                                // was not updated, so every global position computed by this
-                                // tree has been nonsense since then (r of ~1 cm, inside the
-                                // 5 cm inner edge). Official STAR has neither change and is
-                                // self-consistent with the old polar convention.
+                                // The three lines that used to sit here overwrote the
+                                // LocalToMaster result above, converting (local[0],
+                                // local[1]) as if they were polar (r,phi). That was only
+                                // correct under the OLD convention, where
+                                // setLocalPosition() received the global (r,phi,z).
+                                // Commit 9e70bfd0a9 changed the producer at line ~177 to
+                                // store sensor-local CARTESIAN coordinates, so the
+                                // overwrite has produced nonsense (r ~ 1 cm) ever since.
                                 //
-                                // NOTE this is not a pure bug fix: dropping the overwrite
-                                // also means the DB/survey alignment in geoMSensorOnGlobal
-                                // now actually gets applied, which it never was before. That
-                                // is the candidate explanation for the 12-fold wedge steps in
-                                // residual/index.html, so it changes real-data behaviour and
-                                // needs Xihe's and Daniel's sign-off, not a silent commit.
-                                //
-                                // global[0] = local[0]*cos(local[1]);
-                                // global[1] = local[0]*sin(local[1]);
-                                // global[2] = local[2];
+                                // Removing it is a pure bug fix: producer and consumer use
+                                // the SAME matrix with inverse operations, so the round
+                                // trip is the identity and the global position returns to
+                                // exactly its pre-9e70bfd0a9 value. It does NOT start
+                                // applying the DB/survey alignment -- the transforms
+                                // cancel either way.
 
 				// TEMPORARY DEBUG (remove after wedge-step diagnosis)
 				double buggyPhiDeg = atan2(global[1], global[0]) * 180.0 / TMath::Pi();

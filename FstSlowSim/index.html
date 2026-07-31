@@ -139,12 +139,16 @@ wedge implied by its own truth &phi;:</p>
 <ul>
 <li><b>New</b>: <tt>StFstSlowSimMaker.{h,cxx}</tt>, the <tt>fstSlowSim</tt> BFC option,
     <tt>script/testFstSlowSim.C</tt>. These add a path; they change nothing existing.</li>
-<li><b>Left uncommitted</b>: the <tt>StFstHitMaker</tt> consumer fix, commented out with the
-    reasoning inline. It is <b>not a pure bug fix</b> &mdash; dropping the overwrite also
-    means the DB/survey alignment in <tt>geoMSensorOnGlobal</tt> finally gets applied,
-    which it never was. That is the candidate explanation for the
-    <a href="../residual/index.html">12-fold wedge steps</a>, so it changes real-data
-    behaviour and needs Xihe's and Daniel's sign-off rather than a silent commit.</li>
+<li><b>The <tt>StFstHitMaker</tt> consumer fix</b> &mdash; deleting the three overwrite lines
+    &mdash; is a <b>pure bug fix</b> and is up as its own PR against <tt>dev</tt>.
+    <br>
+    <i>Correction:</i> an earlier version of this page said dropping the overwrite would
+    also start applying the DB/survey alignment, and therefore needed sign-off. That was
+    wrong. The producer applies <tt>MasterToLocal</tt> and the consumer applies
+    <tt>LocalToMaster</tt> using the <b>same</b> matrix, so the round trip is the identity:
+    the global position returns to exactly its pre-<tt>9e70bfd0a9</tt> value and the
+    alignment cancels either way. It follows that this is <b>not</b> a candidate
+    explanation for the <a href="../residual/index.html">12-fold wedge steps</a>.</li>
 </ul>
 
 <h2>Limitations &mdash; read before trusting a result from this</h2>
