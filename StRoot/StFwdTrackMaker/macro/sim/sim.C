@@ -19,6 +19,12 @@ bool RunPicoWrite = true;
 // Set false for the old/original GEANT-truth-direct behavior.
 bool UseFttSimHitMaker = true;
 
+// Run MC through the REAL FST reconstruction chain
+//   StFstSlowSimMaker -> StFstRawHitMaker -> StFstClusterMaker -> StFstHitMaker
+// instead of StFstFastSimMaker's parallel reimplementation of the
+// strip-to-position transform. Mutually exclusive with fstFastSim.
+bool UseFstSlowSim = false;
+
 bool UseCachedGeom = true;
 bool UseConstBz = false;
 bool UseZeroB = false;
@@ -72,6 +78,8 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
         _fcsChain = "";
     if (!RunFstChain)
         _fstChain = "";
+    if (UseFstSlowSim)                       // fstDb is needed by fstSlowSim and fstRawHit
+        _fstChain = "fstDb fstSlowSim fstRawHit fstCluster fstHit";
     if (!RunFwdChain)
         _fwdTrackChain = "";
 
@@ -81,6 +89,12 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
 
     TString _timestamp = "sdt20211016";
     _timestamp = "";
+    if (UseFstSlowSim && _timestamp == ""){
+        // Geometry/fst/fstOnTpc has no entry before the FST was installed, and
+        // StFstDbMaker::Make() then returns StFATAL, killing the chain on event 0.
+        _timestamp = "sdt20220401";
+        printf("UseFstSlowSim: setting timestamp %s (FST DB needs 2022+)\n", _timestamp.Data());
+    }
     
     // Form the complete chain
     _chain = Form("fzin %s %s %s %s %s %s MakeEvent StEvent McEvent ReverseField bigbig evout cmudst tree", _geom.Data(), _timestamp.Data(), _fttChain.Data(), _fcsChain.Data(), _fstChain.Data(), _fwdTrackChain.Data()); 
@@ -201,7 +215,10 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
             
             // fwdTrack->setFttHitSource( 0 /*StFwdHitLoader::GEANT*/ );
             fwdTrack->setFttHitSource( 1 /*StFwdHitLoader::IGNORE*/ );
-            fwdTrack->setFstHitSource( 0 /*StFwdHitLoader::GEANT*/ );
+            // With the slow sim, FST hits are real StFstHits in StEvent written by
+            // StFstHitMaker; otherwise they come from GEANT truth.
+            fwdTrack->setFstHitSource( UseFstSlowSim ? 1 /*StFwdHitLoader::STEVENT*/
+                                                     : 0 /*StFwdHitLoader::GEANT*/ );
 
             // DisableTrackFitting();
             // DoOnlyGlobalTrackFitting();

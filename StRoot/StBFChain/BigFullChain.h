@@ -1557,6 +1557,11 @@ Bfc_st BFC[] = { // standard chains
   {"fst","fstChain","","fstRawHit,fstCluster,fstHit", "StMaker","StChain","FST chain"              ,kFALSE},
   {"fstFastSim","","fstChain","StMcEvent,StEvent","StFstFastSimMaker","StFstSimMaker","FST fast simulator", 
                                                                                                     kFALSE},
+  // Slow (raw-hit level) simulator. Feeds "fstRawAdcSimu" to StFstRawHitMaker,
+  // so MC goes through the same fstCluster/fstHit path as real data. Use WITH
+  // fstRawHit,fstCluster,fstHit and WITHOUT fstFastSim.
+  {"fstSlowSim","","","FstUtil,fstDb","StFstSlowSimMaker","StFstSimMaker","FST slow simulator",
+                                                                                                    kFALSE},
   {"fstRawHit", "", "fstChain", "FstUtil,fstDb","StFstRawHitMaker", "StFstRawHitMaker","FST raw hit maker", 
                                                                                                     kFALSE},
   {"fstCluster", "", "fstChain", "fstRawHit","StFstClusterMaker",  "StFstClusterMaker","FST Cluster maker", 
