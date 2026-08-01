@@ -140,13 +140,13 @@ month came from assuming a single source of truth. Marked
    v
   StFwdHitLoader::loadFstHitsFromMuDst
    |   vR,vPhi,vZ  <- localPosition(0,1,2)
-   |   x0 = vR cos(vPhi),  y0 = vR sin(vPhi)        --> space-point mode   [!] STILL BROKEN
-   |     Same error PR25 fixed inside StFstHitMaker, in a different consumer:
-   |     localPosition is CARTESIAN since 9e70bfd0a9, so cos/sin of it is
-   |     meaningless. Present in BOTH loadFstHitsFromMuDst and
-   |     loadFstHitsFromStEvent. Existing 2022 productions predate 9e70bfd0a9
-   |     and are polar, so they still read correctly -- this bites any MuDst
-   |     or StEvent produced with current code, e.g. the new slow-sim chain.
+   |   x0 = vR cos(vPhi),  y0 = vR sin(vPhi)        --> space-point mode   [+] FIXED (PR25)
+   |     Was the same error PR25 fixed inside StFstHitMaker, in a different
+   |     consumer: localPosition is CARTESIAN since 9e70bfd0a9, so cos/sin of
+   |     it is meaningless. Was present in BOTH loadFstHitsFromMuDst and
+   |     loadFstHitsFromStEvent. Now takes the stored global position
+   |     (xyz() / position()) instead, correct under either convention.
+   |     Seed finding on the slow-sim chain: 3/10 -> 9/10 events.
    |   _localPosition[0,1] <- meanRStrip, meanPhiStrip --> planar mode  (unaffected)
    |   _genfit_plane_index <- fstGlobalSensorIndex(disk, wedge, sensor)
    |

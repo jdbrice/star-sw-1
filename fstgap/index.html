@@ -247,7 +247,7 @@ problem and is worth stating first:</p>
 affected quantity, which is also why Xihe's alignment work was unaffected by
 either of the StFstHitMaker bugs.</p>
 
-<p><b>Separate defect found in space-point mode, still open.</b>
+<p><b>Separate defect found in space-point mode &mdash; now fixed, PR25.</b>
 <tt>StFwdHitLoader</tt> does</p>
 <pre>
   float vR   = localPosition(0);
@@ -260,11 +260,17 @@ either of the StFstHitMaker bugs.</p>
 cos/sin of it is meaningless &mdash; the same error PR25 fixed inside
 <tt>StFstHitMaker</tt>, in a different consumer that PR25 did not touch.
 Existing 2022 productions predate <tt>9e70bfd0a9</tt> and are still polar, so
-they read correctly today; this bites any MuDst or StEvent written with current
-code, including the new slow-sim chain. It is independent of the gap question
-and needs its own decision: either the loader converts, or
-<tt>localPosition</tt> goes back to polar and Xihe's planar code takes the
-cartesian from elsewhere.</p>
+they read correctly today; it bit any MuDst or StEvent written with current
+code, including the new slow-sim chain.</p>
+
+<p>Fixed in PR25 by taking the global position that is already stored
+(<tt>StMuFstHit::xyz()</tt> / <tt>StFstHit::position()</tt>) instead of
+rebuilding it, which is correct under both conventions and so removes the
+version dependence entirely &mdash; verified equal to the old reconstruction to
+1.3&times;10<sup>-6</sup>&nbsp;cm over 19,942 hits of run 23081008, i.e. no change
+for existing productions. It was not harmless: on the slow-sim chain, where hits
+are written by current code, events in which seed finding succeeds go from
+<b>3/10 to 9/10</b>. The planar path is unaffected either way.</p>
 
 <p>Within space-point mode there are three populations to keep straight, and MC
 is already one of them:</p>
