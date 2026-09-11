@@ -27,11 +27,33 @@ class StarFieldAdaptor : public genfit::AbsBField {
         if (StarMagField::Instance()){
 
             float z = x[2];
-            float r = sqrt(pow(x[0],2) + pow(x[1],2));
-            if( fabs(z) < 250. && r < 50.)  { 
-                B[0] = 0.; B[1] = 0.; B[2] = 4.97979927; 
-            } else if ( fabs(z) > 450 ) {
-                B[0] = 0.; B[1] = 0.; B[2] = 0.; 
+            // This used to short-circuit the field map inside the TPC volume
+            // (|z| < 250 && r < 50) and return a hardcoded Bz = 4.97979927 kG,
+            // i.e. the nominal POSITIVE full field as a constant. That ignores
+            // the StarMagField scale factor, and so both the polarity and the
+            // magnitude of the run being reconstructed. All three FST disks
+            // (z = 151-179, r = 5-28) sit inside that box, so for FST hits the
+            // map was never consulted at all.
+            //
+            // It was harmless until now, which is why nothing looked wrong:
+            //   - bfc/sim chains run at scale +1 ("Scale factor = 1.000000,
+            //     bfield_full_positive_2D.dat, Bz(0) = 4.9798"), so the constant
+            //     happened to equal the truth;
+            //   - the MuDst afterburner macros never construct a StarMagField at
+            //     all, so Instance() is null, this whole block is skipped and B
+            //     stays {0,0,0}. The null instance MASKED the hardcode.
+            // Once the afterburner is given a real instance (see
+            // macro/mudst/fwd_afterburner_db.C) this becomes wrong. Measured at
+            // the FST with the 2022 ReversedFullField production:
+            //     map -4.990 kG   vs   constant +4.980   (opposite sign)
+            // and for a field-off run: map +0.030 kG vs constant +4.980.
+            //
+            // The map is correct in this region, so just use it. Cost for MC is a
+            // 0.06% shift (+4.9798 constant -> +4.9826 from the map).
+            if ( fabs(z) > 450 ) {
+                // Outside the mapped volume: keep returning zero rather than
+                // letting the extrapolator run on edge-extrapolated values.
+                B[0] = 0.; B[1] = 0.; B[2] = 0.;
             } else {
                 StarMagField::Instance()->Field(x, B);
             }
