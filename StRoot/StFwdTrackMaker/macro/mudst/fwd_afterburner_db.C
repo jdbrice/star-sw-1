@@ -61,9 +61,24 @@ void loadLibs();
 // some other STAR IO makers do. Empty (default) = old single-file behavior.
 // enableAlignment: turns on StFwdAlignmentMaker for THIS invocation only, no
 // source edit/rebuild needed.
-void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, const char* extraFileList="", bool enableAlignment=false){
+// magField: where the track fitter's magnetic field comes from. Nothing needs
+// setting per dataset -- mode 1 reads it out of the file.
+//    1 = FROM DATA (default). Build StarMagField with the scale implied by the
+//        MuDst's own magneticField() stamp. Correct for field-on AND field-off
+//        runs: measured -4.98702 kG for the 2022 ReversedFullField production,
+//        +0.02994 kG for the 2022 zeroFieldAlignment runs.
+//    0 = FORCE ZERO, genfit::ConstField(0,0,0) via TrackFitter:zeroB.
+//   -1 = LEGACY, build nothing. This reproduces the behaviour of every
+//        afterburner run before this fix (see the block near "MAGNETIC FIELD"
+//        below), and is provided so old output can be reproduced for comparison.
+// At B=0 momentum is unconstrained (a straight track has no curvature), so pT is
+// meaningless there and the pT-based guards in FwdTracker.h (addFttHits /
+// addFstHits / addEpdHits, "blown-up state") reject nearly every track.
+void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, const char* extraFileList="", bool enableAlignment=false, int magField=1){
 	cout << "FileList: " << fileList << endl;
 	cout << "nEvents: " << nEvents << endl;
+	cout << "magField: " << magField
+	     << (magField==1 ? "  (from MuDst)" : (magField==0 ? "  (forced zero)" : "  (LEGACY: no field at all)")) << endl;
 	cout << "enableAlignment: " << enableAlignment << endl;
 	runFwdAlignment = enableAlignment;
 
@@ -178,6 +193,10 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		fwdTrack->setFstHitSource( 2 /* = MUDST */);
 		fwdTrack->setFttHitSource( 1 /* = STEVENT */);
 
+		// magField==0 only; modes 1 and -1 are handled where the field is built
+		// (search "MAGNETIC FIELD" below).
+		if (magField == 0) fwdTrack->setZeroB( true );
+
 		if (runDb) fwdTrack->setUseBeamlineFromDB( true ); // use measured beamline for BLC; off for MC
 
 		// fwdTrack->setConfigKeyValue("TrackFitter:doBeamlineTrackFitting", false);
@@ -287,7 +306,51 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 	  printf("FCS Gain 352 R17c0 = %8.4f\n",fcsdb->getGainCorrection(0,352));
 	  printf("FCS Gain 374 R18c0 = %8.4f\n",fcsdb->getGainCorrection(0,374));
 	}
-		 
+
+	/*******************************************************************************************/
+	// MAGNETIC FIELD.
+	//
+	// StarMagField is normally constructed either by StBFChain::SetDbOptions from
+	// the bfc FieldOn/FieldOff/HalfField option (StBFChain.cxx:1913) or by
+	// StMagFMaker::InitRun (StMagFMaker.cxx:154). This macro builds its chain BY
+	// HAND and does neither, so no instance was ever created. STARField.h's
+	// StarFieldAdaptor guards its whole body with "if (StarMagField::Instance())"
+	// and therefore silently returned B={0,0,0} at EVERY point -- FST, FTT and
+	// beyond -- so all afterburner tracking ran at ZERO FIELD regardless of the
+	// data. Verified: Instance() is null after loadLibs(), after chain->Init() and
+	// after chain->InitRun(), and running the same file with TrackFitter:zeroB on
+	// and off gave bit-identical fitted momenta.
+	//
+	// Take the field from the MuDst rather than from a chain option: the
+	// production stamps it per event, so there is nothing to set per dataset and
+	// a field-off run cannot accidentally be tracked as field-on.
+	//
+	// Placement after chain->Init() is fine even though TrackFitter picks its
+	// AbsBField there: StarFieldAdaptor resolves Instance() on every lookup.
+	{
+	  // Only read an entry if the runDb block above has not already done so --
+	  // calling GetEntry(0) a second time is NOT neutral, it perturbs the MuDst
+	  // buffers enough to change the fit.
+	  if (!runDb) muDstChain.GetEntry(0);
+	  double bz = muDstMaker->muDst()->event()->magneticField(); // kGauss, signed
+	  double scale = bz / 4.98;                                  // StarMagField nominal full field
+	  printf("MuDst magneticField = %.5f kGauss (implies StarMagField scale %.5f)\n", bz, scale);
+	  if (magField == 1) {
+	    if (!StarMagField::Instance()) {
+	      new StarMagField( StarMagField::kMapped, scale, kTRUE );
+	      printf("magField=1: created StarMagField(kMapped, %.5f, locked)\n", scale);
+	    } else {
+	      printf("magField=1: StarMagField instance already exists -- left alone\n");
+	    }
+	  } else {
+	    printf("magField=%d: NOT creating StarMagField."
+	           " Instance()=%p -> StarFieldAdaptor returns B={0,0,0} EVERYWHERE."
+	           " This reproduces the pre-fix behaviour; momenta are meaningless.\n",
+	           magField, (void*)StarMagField::Instance());
+	  }
+	}
+	/*******************************************************************************************/
+
 	StMemStat stmem;
 	stmem.PrintMem("BEFORE Event Loop");
 	/*******************************************************************************************/
