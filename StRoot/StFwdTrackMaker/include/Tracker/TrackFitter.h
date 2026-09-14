@@ -463,8 +463,9 @@ class TrackFitter {
         // FST _localPosition stores strip-native polar coordinates:
         //   r        = radial strip center
         //   stripPhi = meanPhiStrip * pitch
-        // The inner/outer region and outer half are decoded from r and stripPhi.  No
-        // sensor origin or sensor basis is used.  The resulting coordinates are
+        // The sensor id selects inner or either outer half; stripPhi locates the
+        // channel within that surface.  No sensor origin or sensor basis is used.
+        // The resulting coordinates are
         // measured from the wedge origin with U radial and V counterclockwise:
         //   hitOnPlane[0] = r*cos(dphi)
         //   hitOnPlane[1] = r*sin(dphi)
@@ -476,6 +477,9 @@ class TrackFitter {
                 static_cast<int>(fh->_genfit_plane_index) / kFstNumSensorsPerWedge;
             const int disk = globalWedge / kFstNumWedgePerDisk;
             const int electronicWedge = globalWedge % kFstNumWedgePerDisk;
+            const int sensor =
+                static_cast<int>(fh->_genfit_plane_index) %
+                kFstNumSensorsPerWedge;
 
             const double r = fh->_localPosition[0];
             const double stripPhi = fh->_localPosition[1];
@@ -484,10 +488,10 @@ class TrackFitter {
             const double edgeToCenterPhi = halfWedgePhi - 0.5 * kFstStripPitchPhi;
 
             double dphi = stripSign * (stripPhi - edgeToCenterPhi);
-            if (r >= kFstrStart[kFstNumRStripsPerWedge / 2]) {
-                const double gapOffset = (stripPhi < halfWedgePhi)
-                    ? -0.5 * kFstStripGapPhi
-                    :  0.5 * kFstStripGapPhi;
+            if (sensor != 0) {
+                const double gapOffset = (sensor == 1)
+                    ?  0.5 * kFstStripGapPhi
+                    : -0.5 * kFstStripGapPhi;
                 dphi = stripSign * (edgeToCenterPhi - stripPhi + gapOffset);
             }
 
