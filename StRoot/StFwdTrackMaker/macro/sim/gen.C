@@ -127,7 +127,7 @@ void gen( Int_t nevents=1000, Int_t rngSeed=12352342 )
   //
   // Setup geometry and set starsim to use agusread for input
   //
-  //geometry("y2012");
+  geometry("y2024");   // DETP GEOM ... field=-5.0: reversed full field, as in the 2022+ data
   command("gkine -4 0");
   command( TString::Format("gfile o %s", fzdFilename.Data()) );
 
