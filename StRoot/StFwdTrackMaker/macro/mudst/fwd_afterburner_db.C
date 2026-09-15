@@ -74,11 +74,16 @@ void loadLibs();
 // At B=0 momentum is unconstrained (a straight track has no curvature), so pT is
 // meaningless there and the pT-based guards in FwdTracker.h (addFttHits /
 // addFstHits / addEpdHits, "blown-up state") reject nearly every track.
-void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, const char* extraFileList="", bool enableAlignment=false, int magField=1){
+// fieldFstConstBz, fieldZMax: StarFieldAdaptor options (see STARField.h).
+//    fieldFstConstBz = uniform Bz over the FST box, with the run's own sign and
+//        magnitude (fast: half the StFwdTrackMaker CPU of the map); false = map.
+//    fieldZMax = |z| [cm] beyond which B = 0; <= 0 means no cut.
+void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, const char* extraFileList="", bool enableAlignment=false, int magField=1, bool fieldFstConstBz=true, double fieldZMax=450.){
 	cout << "FileList: " << fileList << endl;
 	cout << "nEvents: " << nEvents << endl;
 	cout << "magField: " << magField
 	     << (magField==1 ? "  (from MuDst)" : (magField==0 ? "  (forced zero)" : "  (LEGACY: no field at all)")) << endl;
+	cout << "fieldFstConstBz: " << fieldFstConstBz << "  fieldZMax: " << fieldZMax << endl;
 	cout << "enableAlignment: " << enableAlignment << endl;
 	runFwdAlignment = enableAlignment;
 
@@ -196,6 +201,8 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		// magField==0 only; modes 1 and -1 are handled where the field is built
 		// (search "MAGNETIC FIELD" below).
 		if (magField == 0) fwdTrack->setZeroB( true );
+		fwdTrack->setConfigKeyValue( "TrackFitter:fieldFstConstBz", (bool)fieldFstConstBz );
+		fwdTrack->setConfigKeyValue( "TrackFitter:fieldZMax", (double)fieldZMax );
 
 		if (runDb) fwdTrack->setUseBeamlineFromDB( true ); // use measured beamline for BLC; off for MC
 

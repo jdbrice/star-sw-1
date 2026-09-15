@@ -31,7 +31,7 @@ TString LHAPDF_DATA_PATH="/star/u/akio/lhapdf";
 // ----------------------------------------------------------------------------
 void geometry( TString tag, Bool_t agml=true )
 {
-  TString cmd = "DETP GEOM "; cmd += tag;
+  TString cmd = "DETP GEOM "; cmd += tag + " field=-5.0"; // reversed full field, as in the 2022+ data
   if ( !geant_maker ) geant_maker = (St_geant_Maker *)chain->GetMaker("geant");
   geant_maker -> LoadGeometry(cmd);
   //  if ( agml ) command("gexec $STAR_LIB/libxgeometry.so");

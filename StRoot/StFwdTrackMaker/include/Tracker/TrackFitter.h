@@ -114,8 +114,12 @@ class TrackFitter {
             mBField = std::unique_ptr<genfit::AbsBField>(new genfit::ConstField(0., 0., 0.)); // ZERO FIELD
             LOG_INFO << "StFwdTrackMaker: Tracking with ZERO magnetic field" << endm;
         } else {
-            mBField = std::unique_ptr<genfit::AbsBField>(new StarFieldAdaptor());
-            LOG_INFO << "StFwdTrackMaker: Tracking with StarFieldAdapter" << endm;
+            // options documented in STARField.h
+            const bool   fstConstBz = mConfig.get<bool>("TrackFitter:fieldFstConstBz", true);
+            const double zMaxField  = mConfig.get<double>("TrackFitter:fieldZMax", 450.);
+            mBField = std::unique_ptr<genfit::AbsBField>(new StarFieldAdaptor(fstConstBz, zMaxField));
+            LOG_INFO << "StFwdTrackMaker: Tracking with StarFieldAdapter (fieldFstConstBz=" << fstConstBz
+                     << ", fieldZMax=" << zMaxField << ")" << endm;
         }
         // we must have one of the two available fields at this point
         // note, the pointer is still bound to the lifetime of the TackFitter
