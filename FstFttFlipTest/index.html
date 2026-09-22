@@ -182,56 +182,72 @@ front/back parity does not reach the strip &phi;, which is possible because the 
 mapping in <tt>StFstDb</tt> sits between them and was tuned on data. The alternative is that the
 inspected wedge maps to a different DB wedge index than assumed.</p>
 
-<H2>The wedge-phase test: it is settled, the convention is right</H2>
+<H2>The wedge-phase test: settled, the convention is right</H2>
 
 <p>Match quality versus &phi; <i>within</i> the wedge decides this without reference to AGML or to
 any wedge-index convention. A mirror about the wedge centreline displaces a hit by 2|&delta;|, where
-&delta; is its angular distance from that centreline: zero at the centre, 30&deg; at the wedge edge.
-So a globally mirrored convention keeps the correspondence only near the centreline and loses it
-towards the edges; a correct one is flat. |&delta;| is itself mirror-invariant, so the same bins mean
-the same tracks with the mirror on or off. Run on the full ZF file (37304 events), Primary tracks,
-sTGC never added; <tt>g110</tt> is the positive control, because there the hits really are
-mirrored.</p>
+&delta; is its angular distance from that centreline: <b>zero at the centre, 30&deg; at the wedge
+edge</b>. So a globally mirrored convention keeps the correspondence only near the centreline and
+loses it towards the edges; a correct one is flat. |&delta;| is itself mirror-invariant, so the same
+bins mean the same tracks with the mirror on or off.</p>
+
+<p>Zero field run 23063028, Primary tracks, sTGC never added, window [-1,3], binned on the mean
+|&delta;| of the track's own FST hits. <b>g110 and g010 are positive controls</b>: there the hits
+really are mirrored, so they must lose the correspondence towards the wedge edge. g010 has the gap
+fix OFF, which also removes a 1&deg; inconsistency in g110 (the gap correction is applied after the
+mirror using the un-mirrored sensor index).</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/wedge_phase_summary.png"><img src="plots/wedge_phase_summary.png" height=200></a></TD>
+    <TD><a href="plots/wedge_phase.png"><img src="plots/wedge_phase.png" height=200></a></TD></TR>
+<TR><TD>Purity and H-strip peak significance against |&delta;|. Mirror off (black) is flat all the
+        way to the wedge edge; both mirrored configurations sit at the noise floor everywhere.</TD>
+    <TD>The dx distributions themselves, 4 disks summed, each normalised to its own sideband. Left
+        mirror off: the same peak at every |&delta;|. Right mirror on: a bump only in the centreline
+        bin, gone by 8-12&deg;.</TD></TR>
+</TABLE>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>|&delta;| from wedge centreline</TH>
-    <TH colspan=3>g100 &mdash; mirror OFF</TH><TH colspan=3>g110 &mdash; mirror ON (control)</TH></TR>
+    <TH colspan=3>g100 &mdash; mirror OFF</TH>
+    <TH colspan=2>g110 &mdash; mirror ON</TH>
+    <TH colspan=2>g010 &mdash; mirror ON, no gap fix</TH></TR>
 <TR BGCOLOR="#c0c0f0"><TH></TH>
     <TH>purity</TH><TH>H peak centre</TH><TH>H signif.</TH>
-    <TH>purity</TH><TH>H peak centre</TH><TH>H signif.</TH></TR>
+    <TH>purity</TH><TH>H signif.</TH><TH>purity</TH><TH>H signif.</TH></TR>
 <TR><TD>0-4&deg; (centreline)</TD>
-    <TD>19.7%</TD><TD>+0.83 cm</TD><TD>32.7</TD>
-    <TD>7.2%</TD><TD>+0.52 cm</TD><TD>1.9</TD></TR>
+    <TD>19.3%</TD><TD>+0.81 cm</TD><TD>57.7</TD>
+    <TD>6.6%</TD><TD>0.2</TD><TD>0.8%</TD><TD>1.3</TD></TR>
 <TR><TD>4-8&deg;</TD>
-    <TD>16.7%</TD><TD>+0.86 cm</TD><TD>36.0</TD>
-    <TD>3.4%</TD><TD>-1.70 cm</TD><TD>3.1</TD></TR>
+    <TD>18.0%</TD><TD>+0.85 cm</TD><TD>61.7</TD>
+    <TD>6.1%</TD><TD>2.2</TD><TD>1.8%</TD><TD>5.6</TD></TR>
 <TR><TD>8-12&deg;</TD>
-    <TD>17.6%</TD><TD>+0.92 cm</TD><TD>33.7</TD>
-    <TD>0.4%</TD><TD>-3.30 cm</TD><TD>1.0</TD></TR>
-<TR BGCOLOR="#ccffcc"><TD>12-15&deg; (wedge edge)</TD>
-    <TD><b>17.3%</b></TD><TD><b>+0.86 cm</b></TD><TD><b>30.4</b></TD>
-    <TD>5.9%</TD><TD>-2.00 cm</TD><TD>0.1</TD></TR>
-</TABLE>
-
-<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
-<TR><TD><a href="plots/wedge_phase.png"><img src="plots/wedge_phase.png" height=200></a></TD></TR>
-<TR><TD>dx in the four wedge-phase bins, 4 disks summed, each curve normalised to its own sideband.
-        Left (mirror off): the same peak structure at every |&delta;|. Right (mirror on): a peak only
-        in the centreline bin, gone by 8-12&deg;.</TD></TR>
+    <TD>17.3%</TD><TD>+0.92 cm</TD><TD>59.4</TD>
+    <TD>0.6%</TD><TD>1.9</TD><TD>-0.1%</TD><TD>&mdash;</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD><b>12-15&deg; (wedge edge)</b></TD>
+    <TD><b>15.4%</b></TD><TD><b>+0.88 cm</b></TD><TD><b>52.9</b></TD>
+    <TD>5.8%</TD><TD>1.0</TD><TD>3.8%</TD><TD>0.7</TD></TR>
+<TR BGCOLOR="#eeeeee"><TD>files used</TD><TD colspan=3>3 (37304 ev each)</TD>
+    <TD colspan=2>2</TD><TD colspan=2>1</TD></TR>
 </TABLE>
 
 <ul>
-  <li><b>The control behaves exactly as predicted.</b> With the hits genuinely mirrored, the
-      correspondence survives only near the centreline (7.2%) and is gone by 8-12&deg; (0.4%). So the
-      binning does detect a global wedge mirror, and the g110 purity collapse is the geometric
-      displacement, not some unrelated failure of seeding or fitting.</li>
-  <li><b>The mirror-off configuration is flat.</b> Purity 19.7 / 16.7 / 17.6 / 17.3%, and the H-strip
-      peak sits at the same place (+0.83 to +0.92&nbsp;cm) at 30-37&sigma; in <i>every</i> bin
-      &mdash; including the wedge edge, where a global phase error would have displaced hits by up to
-      30&deg; and left nothing at all.</li>
+  <li><b>The decisive cell is the bottom-left one.</b> At the wedge edge a global phase error
+      displaces hits by up to 30&deg;, so there should be nothing there. Instead the peak sits at
+      +0.88&nbsp;cm at <b>53&sigma;</b> &mdash; the same place, and nearly the same strength, as at
+      the centreline.</li>
+  <li><b>Mirror off is flat</b>: 19.3 / 18.0 / 17.3 / 15.4%, H peak 53-62&sigma; in every bin with a
+      stable centre (+0.81 to +0.92&nbsp;cm). The mild 20% decline towards the edge is nothing like
+      the total loss a phase error produces &mdash; compare g110 at 8-12&deg;, which is 0.6%.</li>
+  <li><b>The controls confirm the method sees a mirror.</b> With the hits genuinely mirrored there is
+      no significant peak at any |&delta;| (H &le; 2.2&sigma; for g110, and g010 the same), and what
+      little survives is concentrated at the centreline, where a mirror does nothing. So the mirror's
+      purity collapse is the geometric displacement, not some unrelated failure of seeding or
+      fitting.</li>
   <li><b>Conclusion: there is no residual global wedge flip in the reconstruction.</b> The strip
       &phi; convention now in <tt>StFstHitMaker</tt> is the one that matches the sTGC, at the wedge
-      edges just as much as at the centre.</li>
+      edges just as much as at the centre. Reproduced on independent files and on two different
+      machines.</li>
 </ul>
 
 <p>That settles the reconstruction question but not the hardware one: if the detector really is
@@ -241,10 +257,13 @@ where such an inversion would be absorbed. What it would still affect is wedge <
 material &mdash; and <tt>StFstHitMaker</tt> assigns the disk centre z to every hit
 (<tt>proposal_fst_outer_overlap.txt</tt>), so reconstruction is currently blind to that too.</p>
 
-<p><i>Caveat on the table: the V (dx) significance does fall across the bins (20.6, 22.2, 7.4, 2.6)
-while H is stable. That is the two-halves double peak in dx &mdash; a single Gaussian fit on a
-split distribution degrades as statistics drop &mdash; not a loss of correspondence: the combined
-purity, which counts both, stays flat. H is the clean channel for this test.</i></p>
+<p><i>Caveats, stated rather than buried: (1) the V (dx) significance falls across the bins while H
+is stable &mdash; that is the two-halves double peak in dx degrading a single-Gaussian fit as
+statistics drop, not lost correspondence, and the combined purity counts both and stays flat;
+H is the clean channel here. (2) These are the 4 of 15 condor jobs finished at the time of writing
+plus the local runs; the remaining jobs will tighten the controls, which are the statistically thin
+part, and allow a per-disk split. They cannot change the g100 column, which is already at
+50&sigma;+.</i></p>
 
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
 <b>For the AGML tag work</b> (see <tt>proposal_fst_wedge_flip.txt</tt>): because the constants track
