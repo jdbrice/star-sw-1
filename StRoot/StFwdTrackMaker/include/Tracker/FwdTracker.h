@@ -47,6 +47,25 @@
 #include "StFwdTrackMaker/include/Tracker/GenfitTrackResult.h"
 
 
+// FST-blind diagnostic controls (config keys, set from fwd_afterburner_db.C):
+//   TrackFitter:fttDiagType  -1 = fill for every track type (old behaviour), else only
+//                            that StFwdTrack type (0 Global, 1 BLC, 2 Primary, 3 FwdVtx,
+//                            4 BLCVtx). The diagnostic has no type of its own: refitTrack()
+//                            runs once per type, so without this the same physical track
+//                            enters up to five times with different constraints.
+//   TrackFitter:fttNoAdd     true = search for sTGC hits and fill the diagnostic, but never
+//                            put them on the track. addFttHits() normally APPENDS what it
+//                            finds to the seed, and the types are refit in sequence, so only
+//                            the first (Global) refit is genuinely FST-blind -- every later
+//                            type is matched against hits already in its own fit.
+//   TrackFitter:fttDiagMix   true = fill the diagnostic against the PREVIOUS event's sTGC
+//                            hits (tracking still uses this event's). The null test: real
+//                            per-particle correspondence must vanish, geometry survives.
+inline bool& fwdDiagFill(){ static bool b = true; return b; }
+inline std::vector<FwdHit>* fwdDiagPrevFtt(){ static std::vector<FwdHit> v[4]; return v; }
+inline std::vector<FwdHit>* fwdDiagCurFtt(){ static std::vector<FwdHit> v[4]; return v; }
+inline double& fwdDiagFttFingerprint(){ static double f = -1; return f; }
+
 class ForwardTrackMaker {
   public:
     ForwardTrackMaker() : mConfigFile("config.xml"), mEventVertex(-999, -999, -999) {
@@ -104,6 +123,13 @@ class ForwardTrackMaker {
     virtual void initialize( TString geoCache, bool genHistograms) {
         mGeoCache = geoCache;
         mDoTrackFitting = mConfig.get<bool>("TrackFitter:active", true);
+
+        mFttDiagType = mConfig.get<int>("TrackFitter:fttDiagType", -1);
+        mFttNoAdd    = mConfig.get<bool>("TrackFitter:fttNoAdd",   false);
+        mFttDiagMix  = mConfig.get<bool>("TrackFitter:fttDiagMix", false);
+        if ( mFttDiagType >= 0 || mFttNoAdd || mFttDiagMix )
+            LOG_INFO << "FST-blind diagnostic: fttDiagType=" << mFttDiagType
+                     << " fttNoAdd=" << mFttNoAdd << " fttDiagMix=" << mFttDiagMix << endm;
 
         mBeamlineHit.setXYZDetId( 0, 0, 0, kTpcId );
         mBeamlineHit._covmat(0,0) = 0.1;
@@ -1888,6 +1914,37 @@ class ForwardTrackMaker {
      * @return Seed_t : The combined seed points
      */
     int addFttHits( GenfitTrackResult &gtr, size_t disk ) {
+        fwdDiagFill() = ( mFttDiagType < 0 ) ? true : ( gtr.mTrackType == mFttDiagType );
+
+        // WEDGE-PHASE bin for this track (2026-09-22): mean angular distance of
+        // the track's own FST hits from their wedge centreline. FST wedge centres
+        // sit at 15 + 30k degrees, so delta = phi mod 30, folded into [-15,+15].
+        // A global wedge-orientation phase error mirrors each hit about that
+        // centreline, i.e. displaces it by 2*|delta| -- nothing at the centre,
+        // 30 deg at the edge. Selected on FST hits only, by z (FST 140-190 cm,
+        // sTGC 270-320 cm), so it is unaffected by whatever is on the seed.
+        {
+            double sumAbsDelta = 0.0; int nFstOnSeed = 0;
+            for ( auto hseed : gtr.mSeed ) {
+                if ( !hseed ) continue;
+                const double zh = hseed->getZ();
+                if ( zh < 140.0 || zh > 190.0 ) continue;       // not an FST hit
+                double ph = TMath::ATan2( hseed->getY(), hseed->getX() ) * 180.0 / TMath::Pi();
+                if ( ph < 0 ) ph += 360.0;
+                double delta = fmod( ph, 30.0 ) - 15.0;          // wedge centres at 15+30k
+                sumAbsDelta += fabs( delta );
+                nFstOnSeed++;
+            }
+            mWedgePhaseBin = -1;
+            if ( nFstOnSeed > 0 ) {
+                const double meanAbsDelta = sumAbsDelta / nFstOnSeed;
+                if      ( meanAbsDelta <  4.0 ) mWedgePhaseBin = 0;
+                else if ( meanAbsDelta <  8.0 ) mWedgePhaseBin = 1;
+                else if ( meanAbsDelta < 12.0 ) mWedgePhaseBin = 2;
+                else                            mWedgePhaseBin = 3;
+            }
+        }
+
         const FwdDataSource::HitMap_t &hitmap = mDataSource->getFttHits();
         if ( disk > 3 ) {
             LOG_WARN << "Invalid FTT disk number: " << disk << ", cannot add Ftt points to track" << endm;
@@ -1925,12 +1982,47 @@ class ForwardTrackMaker {
             // hits_near_plane = findFttHitsNearProjectedState(hitmap.at(disk), msp);
             LOG_DEBUG << "Looking for FTT strips near projected state on disk " << disk << endm;
             LOG_DEBUG << "There are " << hitmap.at(disk).size() << " available FTT strips on this disk" << endm;
-            hits_near_plane = findFttStripsNearProjectedState(hitmap.at(disk), disk, msp);
+            if ( mFttDiagMix ) {
+                double fp = 0;                       // cheap "is this a new event" fingerprint
+                for ( int dd = 0; dd < 4; dd++ ){
+                    if ( hitmap.find(dd) == hitmap.end() || hitmap.at(dd).empty() ) continue;
+                    fp += 1000.0 * hitmap.at(dd).size() + hitmap.at(dd)[0]->getX();
+                }
+                if ( fp != fwdDiagFttFingerprint() ){
+                    for ( int dd = 0; dd < 4; dd++ ){
+                        fwdDiagPrevFtt()[dd] = fwdDiagCurFtt()[dd];
+                        fwdDiagCurFtt()[dd].clear();
+                        if ( hitmap.find(dd) == hitmap.end() ) continue;
+                        fwdDiagCurFtt()[dd].reserve( hitmap.at(dd).size() );
+                        for ( auto hs : hitmap.at(dd) ){
+                            FwdHit* fs = dynamic_cast<FwdHit*>(hs);
+                            if ( fs ) fwdDiagCurFtt()[dd].push_back( *fs );
+                        }
+                    }
+                    fwdDiagFttFingerprint() = fp;
+                }
+                const bool fillOK = fwdDiagFill();
+                fwdDiagFill() = false;                                    // real search: no fills
+                hits_near_plane = findFttStripsNearProjectedState(hitmap.at(disk), disk, msp);
+                if ( fillOK && !fwdDiagPrevFtt()[disk].empty() ){         // mixed search: fills only
+                    Seed_t mixed;
+                    mixed.reserve( fwdDiagPrevFtt()[disk].size() );
+                    for ( size_t im = 0; im < fwdDiagPrevFtt()[disk].size(); im++ )
+                        mixed.push_back( &fwdDiagPrevFtt()[disk][im] );
+                    fwdDiagFill() = true;
+                    findFttStripsNearProjectedState(mixed, disk, msp);
+                    fwdDiagFill() = false;
+                }
+            } else {
+                hits_near_plane = findFttStripsNearProjectedState(hitmap.at(disk), disk, msp);
+            }
             LOG_DEBUG << " Found #FTT strips on plane #" << disk << TString::Format( " = [%ld]", hits_near_plane.size() ) << endm;
         } catch (genfit::Exception &e) {
             // Failed to project
             LOG_WARN << "Unable to get Ftt projections: " << e.what() << endm;
         }
+
+        if ( mFttNoAdd ) return 0;   // diagnostic-only: never put sTGC hits on the track
 
         LOG_DEBUG << "Found " << gtr.mSeed.size() << " existing seed points" << endm;
 
@@ -2266,15 +2358,17 @@ class ForwardTrackMaker {
             else if ( h->getX() < 0 && h->getY() > 0 ) qidx = 3;
 
             if ( hsx > hsy ) { // H strip: y precise, x off-axis
-                if ( sy < thresholdY )           hBlindDxAll_H[disk]->Fill(sxs); // dx, dy-conditioned
-                if ( sx < kOffAxisNSigma * hsx ) hBlindDyAll_H[disk]->Fill(sys); // dy, dx-conditioned
-                if ( sx < kOffAxisNSigma * hsx && qidx >= 0 ) hBlindDyAll_H_q[disk][qidx]->Fill(sys);
-                hBlindXYAll_H[disk]->Fill(sxs, sys);
+                if ( fwdDiagFill() && sy < thresholdY )           hBlindDxAll_H[disk]->Fill(sxs); // dx, dy-conditioned
+                if ( fwdDiagFill() && sx < kOffAxisNSigma * hsx ) hBlindDyAll_H[disk]->Fill(sys); // dy, dx-conditioned
+                if ( fwdDiagFill() && sx < kOffAxisNSigma * hsx && qidx >= 0 ) hBlindDyAll_H_q[disk][qidx]->Fill(sys);
+                if ( fwdDiagFill() && sx < kOffAxisNSigma * hsx && mWedgePhaseBin >= 0 ) hBlindDyAll_H_wp[disk][mWedgePhaseBin]->Fill(sys);
+                if (fwdDiagFill()) hBlindXYAll_H[disk]->Fill(sxs, sys);
             } else if ( hsy > hsx ) { // V strip: x precise, y off-axis
-                if ( sy < kOffAxisNSigma * hsy ) hBlindDxAll_V[disk]->Fill(sxs); // dx, dy-conditioned
-                if ( sy < kOffAxisNSigma * hsy && qidx >= 0 ) hBlindDxAll_V_q[disk][qidx]->Fill(sxs);
-                if ( sx < thresholdX )           hBlindDyAll_V[disk]->Fill(sys); // dy, dx-conditioned
-                hBlindXYAll_V[disk]->Fill(sxs, sys);
+                if ( fwdDiagFill() && sy < kOffAxisNSigma * hsy ) hBlindDxAll_V[disk]->Fill(sxs); // dx, dy-conditioned
+                if ( fwdDiagFill() && sy < kOffAxisNSigma * hsy && qidx >= 0 ) hBlindDxAll_V_q[disk][qidx]->Fill(sxs);
+                if ( fwdDiagFill() && sy < kOffAxisNSigma * hsy && mWedgePhaseBin >= 0 ) hBlindDxAll_V_wp[disk][mWedgePhaseBin]->Fill(sxs);
+                if ( fwdDiagFill() && sx < thresholdX )           hBlindDyAll_V[disk]->Fill(sys); // dy, dx-conditioned
+                if (fwdDiagFill()) hBlindXYAll_V[disk]->Fill(sxs, sys);
             }
 
             // X<->Y MIRROR test (2026-07-22) -- purely additive, does not touch
@@ -2318,9 +2412,9 @@ class ForwardTrackMaker {
                 double hsyM = hsx;
 
                 if ( hsxM > hsyM ) { // mirror-H: y precise, x off-axis
-                    if ( sxM < kOffAxisNSigma * hsxM ) hBlindDyAll_H_mirror[disk]->Fill(sysM); // dy, dx-conditioned
+                    if ( fwdDiagFill() && sxM < kOffAxisNSigma * hsxM ) hBlindDyAll_H_mirror[disk]->Fill(sysM); // dy, dx-conditioned
                 } else if ( hsyM > hsxM ) { // mirror-V: x precise, y off-axis
-                    if ( syM < kOffAxisNSigma * hsyM ) hBlindDxAll_V_mirror[disk]->Fill(sxsM); // dx, dy-conditioned
+                    if ( fwdDiagFill() && syM < kOffAxisNSigma * hsyM ) hBlindDxAll_V_mirror[disk]->Fill(sxsM); // dx, dy-conditioned
                 }
             }
 
@@ -2408,9 +2502,10 @@ class ForwardTrackMaker {
              && fabs(horizontalMin_dxs) < kOffAxisNSigma * horizontalMin_hsx ) {
             found_hits.push_back(horizontalClosest);
             LOG_DEBUG << "Adding horizontal strip hit with dPhi = " << horizontalMin_dp << ", dR = " << horizontalMin_dr << ", dx = " << horizontalMin_dx << ", dy = " << horizontalMin_dy << endm;
-            hBlindDxMatched_H[disk]->Fill(horizontalMin_dxs);
-            hBlindDyMatched_H[disk]->Fill(horizontalMin_dys);
-            hBlindXYMatched_H[disk]->Fill(horizontalMin_dxs, horizontalMin_dys);
+            if (fwdDiagFill()) hBlindDxMatched_H[disk]->Fill(horizontalMin_dxs);
+            if (fwdDiagFill()) hBlindDyMatched_H[disk]->Fill(horizontalMin_dys);
+            if (fwdDiagFill() && mWedgePhaseBin >= 0) hBlindDyMatched_H_wp[disk][mWedgePhaseBin]->Fill(horizontalMin_dys);
+            if (fwdDiagFill()) hBlindXYMatched_H[disk]->Fill(horizontalMin_dxs, horizontalMin_dys);
         }
 
         // check threshold and add the closest vertical strip hit
@@ -2418,9 +2513,10 @@ class ForwardTrackMaker {
              && fabs(verticalMin_dys) < kOffAxisNSigma * verticalMin_hsy ) {
             found_hits.push_back(verticalClosest);
             LOG_DEBUG << "Adding vertical strip hit with dPhi = " << verticalMin_dp << ", dR = " << verticalMin_dr << ", dx = " << verticalMin_dx << ", dy = " << verticalMin_dy << endm;
-            hBlindDxMatched_V[disk]->Fill(verticalMin_dxs);
-            hBlindDyMatched_V[disk]->Fill(verticalMin_dys);
-            hBlindXYMatched_V[disk]->Fill(verticalMin_dxs, verticalMin_dys);
+            if (fwdDiagFill()) hBlindDxMatched_V[disk]->Fill(verticalMin_dxs);
+            if (fwdDiagFill() && mWedgePhaseBin >= 0) hBlindDxMatched_V_wp[disk][mWedgePhaseBin]->Fill(verticalMin_dxs);
+            if (fwdDiagFill()) hBlindDyMatched_V[disk]->Fill(verticalMin_dys);
+            if (fwdDiagFill()) hBlindXYMatched_V[disk]->Fill(verticalMin_dxs, verticalMin_dys);
         }
 
 
@@ -2589,6 +2685,9 @@ class ForwardTrackMaker {
     // dy is off-axis, for H-strip hits it's the other way around, so overlaying
     // them made both the 1D and 2D plots look like a confusing blend (a "cross" in
     // 2D) instead of two separately-interpretable distributions.
+    int  mFttDiagType = -1;   // see fwdDiagFill() above
+    bool mFttNoAdd    = false;
+    bool mFttDiagMix  = false;
     TFile *mBlindDiagFile = nullptr;
     TH1F  *hBlindDxAll_V[4]     = {nullptr,nullptr,nullptr,nullptr};
     TH1F  *hBlindDyAll_V[4]     = {nullptr,nullptr,nullptr,nullptr};
@@ -2603,6 +2702,21 @@ class ForwardTrackMaker {
     // well-separated regions.
     TH1F  *hBlindDxAll_V_q[4][4] = {{nullptr}};
     TH1F  *hBlindDyAll_H_q[4][4] = {{nullptr}};
+    // WEDGE-PHASE split (2026-09-22) -- decides whether the FST wedge
+    // orientation convention (kFstzFilp x kFstzDirct, which reproduces AGML's
+    // front/back phase exactly) matches the real detector. A global phase
+    // error mirrors every hit about its wedge centreline, displacing it by
+    // 2*delta where delta is its angular distance from that centreline. Hits
+    // AT the centreline are unmoved, hits at the wedge edge move by 30 deg.
+    // So if the convention is wrong, the FST->sTGC correspondence survives
+    // only at small |delta| and dies towards the wedge edges; if it is right,
+    // the correspondence is flat in |delta|. Binned on the mean |delta| of the
+    // track's own FST hits: [0,4) [4,8) [8,12) [12,15] degrees.
+    TH1F  *hBlindDxAll_V_wp[4][4]     = {{nullptr}};
+    TH1F  *hBlindDyAll_H_wp[4][4]     = {{nullptr}};
+    TH1F  *hBlindDxMatched_V_wp[4][4] = {{nullptr}};
+    TH1F  *hBlindDyMatched_H_wp[4][4] = {{nullptr}};
+    int    mWedgePhaseBin = -1;   // set per track in addFttHits, read in findFttStripsNearProjectedState
     // Post-hoc X<->Y MIRROR test (2026-07-22) -- purely additive, does NOT
     // touch found_hits/production matching at all. An earlier test tried
     // swapping the kFttHorizontal<->kFttVertical LABEL in
@@ -2671,6 +2785,19 @@ class ForwardTrackMaker {
                         Form("disk%d quad%s: V-strip, x_{hit}-x_{blind proj} (precise), |dy|-conditioned;dx [cm];strips", d, qName[q]), 150, -15, 15);
                     hBlindDyAll_H_q[d][q] = new TH1F(Form("hBlindDyAll_H_disk%d_quad%s", d, qName[q]),
                         Form("disk%d quad%s: H-strip, y_{hit}-y_{blind proj} (precise), |dx|-conditioned;dy [cm];strips", d, qName[q]), 150, -15, 15);
+                }
+            }
+            {
+                const char* wpName[4] = {"0to4", "4to8", "8to12", "12to15"};
+                for (int w = 0; w < 4; w++) {
+                    hBlindDxAll_V_wp[d][w] = new TH1F(Form("hBlindDxAll_V_disk%d_wp%s", d, wpName[w]),
+                        Form("disk%d |#delta_{wedge}|=%s deg: V-strip, x_{hit}-x_{blind proj};dx [cm];strips", d, wpName[w]), 150, -15, 15);
+                    hBlindDyAll_H_wp[d][w] = new TH1F(Form("hBlindDyAll_H_disk%d_wp%s", d, wpName[w]),
+                        Form("disk%d |#delta_{wedge}|=%s deg: H-strip, y_{hit}-y_{blind proj};dy [cm];strips", d, wpName[w]), 150, -15, 15);
+                    hBlindDxMatched_V_wp[d][w] = new TH1F(Form("hBlindDxMatched_V_disk%d_wp%s", d, wpName[w]),
+                        Form("disk%d |#delta_{wedge}|=%s deg: MATCHED V-strip, dx;dx [cm];tracks", d, wpName[w]), 150, -15, 15);
+                    hBlindDyMatched_H_wp[d][w] = new TH1F(Form("hBlindDyMatched_H_disk%d_wp%s", d, wpName[w]),
+                        Form("disk%d |#delta_{wedge}|=%s deg: MATCHED H-strip, dy;dy [cm];tracks", d, wpName[w]), 150, -15, 15);
                 }
             }
             hBlindDxAll_V_mirror[d] = new TH1F(Form("hBlindDxAll_V_mirror_disk%d", d),
