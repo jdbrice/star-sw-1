@@ -1,0 +1,250 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <TITLE>FST wedge flip and FTT X/Y flip: the blind test</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>FST wedge flip and FTT X/Y flip: a blind A/B on zero-field data (2026-09-22)</H1>
+
+<p>Three geometry corrections have been switched ON together in every recent afterburner
+campaign, without ever being tested separately:</p>
+<ul>
+  <li><b>gap</b> &mdash; <tt>applyFstGapFix</tt>, undoes the FST outer-sensor 1&deg;
+      <tt>kFstStripGapPhi</tt> sign error (see <a href="../fstgap/index.html">fstgap</a>).</li>
+  <li><b>FSTm</b> &mdash; <tt>applyFstMirror</tt>, mirrors each FST hit about its wedge
+      centreline: a stand-in for a wedge-orientation change in AGML.</li>
+  <li><b>FTTm</b> &mdash; <tt>applyFttXYMirror</tt>, exchanges which sTGC strip orientation
+      measures global X and which measures Y
+      (<tt>StFttClusterPointMaker.cxx</tt>:183-186).</li>
+</ul>
+
+<p>This page tests them one at a time. <b>All of it is zero-field data</b> (run 23063028),
+where tracks are straight and a geometry error shows up directly instead of through the fit.
+Configurations are named g&lt;gap&gt;&lt;FSTm&gt;&lt;FTTm&gt;, so g000 is everything off and
+g111 everything on.</p>
+
+<p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
+An earlier version of this measurement was circular &mdash; the diagnostic was fed tracks that
+already contained the sTGC hits it was testing against &mdash; and gave the opposite FST conclusion:
+<a href="old/index.html">the superseded page</a>. The same contamination affects the July study,
+<a href="../fttgeom/real_data_excess_check.html">real_data_excess_check.html</a>.</p>
+
+<H2>Method</H2>
+<p>The track is fitted <i>without</i> sTGC hits, projected to each sTGC plane, and the sTGC hits near
+that projection are histogrammed. Two properties make it blind:</p>
+<ul>
+  <li><b>sTGC hits are never added to any track</b> (<tt>TrackFitter:fttNoAdd</tt>). Normally
+      <tt>addFttHits()</tt> appends what it finds to the seed, and <tt>refitTrack()</tt> then runs the
+      next track type on that enlarged seed &mdash; so every type after Global was being matched
+      against hits already in its own fit.</li>
+  <li><b>One track type per job</b> (<tt>TrackFitter:fttDiagType</tt>). Without it the same physical
+      track enters up to five times, fitted under different constraints (measured: sTGC projection
+      radii from 31 to 49&nbsp;cm for one track).</li>
+</ul>
+<p>Every configuration was run twice: <b>Global</b> (FST hits alone) and <b>Primary</b> (FST + the TPC
+primary vertex, a constraint that comes from neither detector under test). <tt>gmix</tt> is the
+event-mixing null: the same tracks searched against the PREVIOUS event's sTGC hits.</p>
+<p>80 condor jobs, 5 files per configuration, 189831 events, FTT time window [-1,3] with per-run
+per-VMM anchors. <b>The match peak is not at zero</b>, so it is fitted rather than assumed: Gaussian +
+linear background in a 2.4&nbsp;cm window around the observed maximum
+(<tt>script/fitBlindPeak.C</tt>). Purity = fitted Gaussian area / all matched entries.</p>
+
+<H2>Result</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>config</TH><TH>gap</TH><TH>FSTm</TH><TH>FTTm</TH><TH>FST tracks</TH>
+    <TH colspan=4>Primary (FST + TPC vertex)</TH><TH colspan=4>Global (FST only)</TH></TR>
+<TR BGCOLOR="#c0c0f0"><TH></TH><TH></TH><TH></TH><TH></TH><TH>(both types)</TH>
+    <TH>matched</TH><TH>purity</TH><TH>peak centre</TH><TH>signif.</TH>
+    <TH>matched</TH><TH>purity</TH><TH>peak centre</TH><TH>signif.</TH></TR>
+<TR><TD>g000</TD><TD>off</TD><TD>off</TD><TD>off</TD><TD>3573234</TD>
+    <TD>1021879</TD><TD>16.5%</TD><TD>+1.01 cm</TD><TD>48</TD>
+    <TD>713940</TD><TD>6.4%</TD><TD>-0.27 cm</TD><TD>8.4</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD><b>g100</b></TD><TD><b>on</b></TD><TD>off</TD><TD>off</TD><TD>3599957</TD>
+    <TD>1043042</TD><TD><b>17.5%</b></TD><TD>+1.03 cm</TD><TD><b>54</b></TD>
+    <TD>726808</TD><TD><b>8.2%</b></TD><TD>-0.22 cm</TD><TD><b>9.1</b></TD></TR>
+<TR><TD>g010</TD><TD>off</TD><TD><b>on</b></TD><TD>off</TD><TD>3543877</TD>
+    <TD>945457</TD><TD>1.7%</TD><TD>-0.98 cm</TD><TD>2.1</TD>
+    <TD>682521</TD><TD>-0.5%</TD><TD>+0.45 cm</TD><TD>1.2</TD></TR>
+<TR><TD>g110</TD><TD>on</TD><TD><b>on</b></TD><TD>off</TD><TD>3463686</TD>
+    <TD>941132</TD><TD>2.0%</TD><TD>-0.99 cm</TD><TD>2.3</TD>
+    <TD>670098</TD><TD>1.8%</TD><TD>+0.82 cm</TD><TD>1.6</TD></TR>
+<TR><TD>g101</TD><TD>on</TD><TD>off</TD><TD><b>on</b></TD><TD>3599242</TD>
+    <TD>885159</TD><TD>0.4%</TD><TD>+0.14 cm</TD><TD>1.7</TD>
+    <TD>706125</TD><TD>-0.4%</TD><TD>+1.71 cm</TD><TD>0.8</TD></TR>
+<TR><TD>g111</TD><TD>on</TD><TD><b>on</b></TD><TD><b>on</b></TD><TD>3463612</TD>
+    <TD>843284</TD><TD>0.6%</TD><TD>+0.56 cm</TD><TD>1.7</TD>
+    <TD>666578</TD><TD>4.4%</TD><TD>+1.85 cm</TD><TD>2.4</TD></TR>
+<TR BGCOLOR="#eeeeee"><TD><b>gmix</b> null</TD><TD>off</TD><TD>off</TD><TD>off</TD><TD>3573105</TD>
+    <TD>673545</TD><TD>0.10%</TD><TD>-0.11 cm</TD><TD>0.8</TD>
+    <TD>534476</TD><TD>0.06%</TD><TD>+0.67 cm</TD><TD>0.9</TD></TR>
+</TABLE>
+<p>Read the significance column first: below about 3 there is no peak, and the purity and centre are
+fitting noise. Only g000 and g100 have a real peak.</p>
+
+<p><b>The samples are the same size everywhere</b>, so none of this is a statistics effect.
+FST track counts span 3.46-3.60&nbsp;M over all seven configurations (18.25-18.96 per event, a 3.9%
+spread), and the matched-candidate denominators span 843k-1043k (Primary) and 667k-727k (Global).
+The mirror configurations lose a few percent of tracks &mdash; moving hits by up to 23.5&deg; makes
+some seeds fail &mdash; but nothing remotely like the factor 10 drop in purity. <tt>gmix</tt> is the
+one exception, 34% fewer matched entries, because a track only enters if the previous event had sTGC
+hits to search; purity is a ratio, so the null test is unaffected.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR>
+<TD><a href="plots/blind_P/flip_overlay.png"><img src="plots/blind_P/flip_overlay.png" height=200></a></TD>
+<TD><a href="plots/blind_G/flip_overlay.png"><img src="plots/blind_G/flip_overlay.png" height=200></a></TD>
+</TR>
+<TR><TD>Primary tracks, all 4 disks x V/H, each curve normalised to its own sideband.
+        Only black (g000) and red (g100) show a peak &mdash; and it does not sit at zero.</TD>
+    <TD>Global tracks, same configurations.</TD></TR>
+</TABLE>
+
+<H2>Conclusions</H2>
+<ul>
+  <li><b>The extra FST wedge mirror must stay OFF &mdash; because the flip is ALREADY in the
+      reconstruction.</b> Turning <tt>applyFstMirror</tt> on destroys the correspondence: Primary
+      16.5% &rarr; 1.7%, significance 48 &rarr; 2.1. This does <i>not</i> mean the real wedges are
+      unflipped &mdash; see the next section, where three independent checks show that
+      <tt>StFstHitMaker</tt> already applies the per-wedge flip, so <tt>applyFstMirror</tt> is a
+      second one.</li>
+  <li><b>The FTT X/Y mirror is wrong</b>: 17.5% &rarr; 0.4% with the FST settings otherwise
+      unchanged (g100 &rarr; g101). This agrees with the July measurement
+      (<a href="../fttgeom/real_data_excess_check.html">real_data_excess_check.html</a>).</li>
+  <li><b>The FST 1&deg; gap fix helps, modestly but consistently</b>: Primary 16.5 &rarr; 17.5% with
+      significance 48 &rarr; 54, Global 6.4 &rarr; 8.2% with 8.4 &rarr; 9.1. Both track types agree in
+      sign. Small, as expected &mdash; 1&deg; at r=22&nbsp;cm is 0.39&nbsp;cm against a 0.45&nbsp;cm
+      match width.</li>
+  <li><b>Best configuration: gap fix ON, both mirrors OFF (g100).</b></li>
+  <li><b>The TPC vertex doubles the correspondence</b>: 17.5% (Primary) against 8.2% (Global) for the
+      same configuration. Worth having in any FST&rarr;sTGC study.</li>
+  <li><b>The event-mixing null works</b>: 0.06-0.10% purity, significance below 1. Any surviving peak
+      is real per-particle correspondence.</li>
+</ul>
+
+<HR>
+<a name="mirror"></a>
+<H1>Why the mirror result does NOT contradict the real detector</H1>
+
+<p>The wedges really are mirrored with respect to a naive reading of AGML &mdash; that was confirmed
+by direct inspection of the detector. The result above is consistent with that, because the
+reconstruction <b>already applies the flip</b>. Three independent checks:</p>
+
+<ol>
+<li><b>The code does it.</b> <tt>StFstHitMaker.cxx</tt>:153-163 multiplies the strip coordinate by a
+per-disk and a per-wedge sign:
+<pre>
+local[1] = phiInner + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi;
+
+// StEvent/StFstConsts.h:47-48
+const int kFstzFilp [3]  = {1,-1,1};
+const int kFstzDirct[12] = {1,-1,1,-1,1,-1,1,-1,1,-1,1,-1};
+</pre>
+i.e. the strip-to-phi direction is reversed on alternate wedges, and reversed again on disk 2.</li>
+
+<li><b>The data does it.</b> Measured slope d(&phi; within wedge)/d(meanPhiStrip) per global wedge
+index, straight from the MuDst:
+<pre>
+disk 0:  +0.092  -0.057  +0.057  -0.103  +0.078  -0.058  +0.079  -0.089  +0.060  -0.131  +0.090  -0.110
+disk 1:  -0.090  +0.060  -0.073  +0.071  -0.090   ...
+</pre>
+Alternating wedge by wedge, and flipped as a whole on disk 1 &mdash; exactly
+<tt>kFstzFilp</tt>&times;<tt>kFstzDirct</tt>.</li>
+
+<li><b>The reflection axis is right, so the mirror is not a no-op.</b> The stored wedge index maps to
+&phi; ranges [60.1,89.9], [30.1,59.9], [0.1,29.9]&deg; &hellip;, i.e. wedge centres at 15+30k degrees,
+which is the axis <tt>applyFstMirror</tt> reflects about. It genuinely moves hits, by up to
+23.5&deg;.</li>
+</ol>
+
+<p><b>So the correct statement is: the flip is applied once, in <tt>StFstHitMaker</tt>, and it is the
+convention that agrees with the sTGC.</b> <tt>applyFstMirror</tt> applies it a second time, which
+returns the hits to the unflipped (wrong) orientation &mdash; hence the collapse to noise. The blind
+measurement is therefore positive evidence FOR the flip the detector inspection found, not against
+it.</p>
+
+<p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
+<b>Warning for the AGML tag work</b> (see <tt>proposal_fst_wedge_flip.txt</tt>): if Jason's new
+FSTMv1sm / FstmGeoSM tag builds the flip into the <i>geometry</i>, then
+<tt>kFstzFilp</tt>/<tt>kFstzDirct</tt> must be neutralised at the same time, or the same double
+counting comes back through the supported path instead of through a diagnostic hack. The two must
+move together, in one commit, with this blind measurement rerun as the acceptance test.</p>
+
+<HR>
+<a name="offset"></a>
+<H1>A real FST-to-sTGC misalignment</H1>
+
+<p>The peak does not sit at zero. Fitted centres for the best configuration (g100, Primary):</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>disk</TH><TH>V (dx) centre</TH><TH>&sigma;</TH><TH>signif.</TH><TH>H (dy) centre</TH><TH>&sigma;</TH><TH>signif.</TH></TR>
+<TR><TD>0</TD><TD>+1.265 cm</TD><TD>0.466</TD><TD>37</TD><TD>+0.987 cm</TD><TD>0.387</TD><TD>89</TD></TR>
+<TR><TD>1</TD><TD>+1.182 cm</TD><TD>0.473</TD><TD>38</TD><TD>+0.943 cm</TD><TD>0.399</TD><TD>68</TD></TR>
+<TR><TD>2</TD><TD>+1.174 cm</TD><TD>0.438</TD><TD>36</TD><TD>+0.791 cm</TD><TD>0.430</TD><TD>79</TD></TR>
+<TR><TD>3</TD><TD>+1.120 cm</TD><TD>0.493</TD><TD>31</TD><TD>+0.746 cm</TD><TD>0.457</TD><TD>59</TD></TR>
+</TABLE>
+<p>The width, 0.39-0.49&nbsp;cm, is the real FST&rarr;sTGC pointing resolution. The offset is 2-3
+times that, at 30-90&nbsp;sigma, on every disk.</p>
+
+<H2>The double peak in dx is the two halves</H2>
+<p>The dx distribution has two peaks. Splitting the blind diagnostic by quadrant
+(A=x&gt;0,y&gt;0; B=x&gt;0,y&lt;0; C=x&lt;0,y&lt;0; D=x&lt;0,y&gt;0), summed over the 4 disks,
+g100 Primary:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>quadrant</TH><TH>dx centre</TH><TH>&sigma;</TH><TH>signif.</TH>
+    <TH>dy centre</TH><TH>&sigma;</TH><TH>signif.</TH></TR>
+<TR><TD>A  x&gt;0, y&gt;0</TD><TD><b>-1.203 cm</b></TD><TD>0.547</TD><TD>32</TD>
+    <TD>+0.363 cm</TD><TD>0.603</TD><TD>10</TD></TR>
+<TR><TD>B  x&gt;0, y&lt;0</TD><TD><b>-1.525 cm</b></TD><TD>0.738</TD><TD>4.5</TD>
+    <TD>+0.854 cm</TD><TD>0.353</TD><TD>92</TD></TR>
+<TR><TD>C  x&lt;0, y&lt;0</TD><TD><b>+1.466 cm</b></TD><TD>0.900</TD><TD>15</TD>
+    <TD>+1.058 cm</TD><TD>0.406</TD><TD>104</TD></TR>
+<TR><TD>D  x&lt;0, y&gt;0</TD><TD><b>+1.181 cm</b></TD><TD>0.457</TD><TD>99</TD>
+    <TD>+0.833 cm</TD><TD>0.395</TD><TD>92</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD><b>x&gt;0 half (A+B)</b></TD><TD><b>-1.245 cm</b></TD><TD>0.602</TD><TD>26</TD>
+    <TD colspan=3 ROWSPAN=2 ALIGN="center">y&gt;0 (A+D) <b>+0.763</b>, y&lt;0 (B+C) <b>+0.958</b></TD></TR>
+<TR BGCOLOR="#ccffcc"><TD><b>x&lt;0 half (C+D)</b></TD><TD><b>+1.189 cm</b></TD><TD>0.485</TD><TD>92</TD></TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/quad_split_g100_P.png"><img src="plots/quad_split_g100_P.png" height=200></a></TD></TR>
+<TR><TD>g100 Primary, 4 disks summed, each curve normalised to its own 2-5&nbsp;cm sideband.
+        Left: dx splits by the sign of x. Right: dy does not split &mdash; all four quadrants peak
+        on the same side.</TD></TR>
+</TABLE>
+
+<p><b>Yes &mdash; the two peaks in X are the two halves.</b> The answer is clean:</p>
+<ul>
+  <li><b>dx is antisymmetric in x.</b> The sign of the offset follows the sign of x, not of y:
+      the x&gt;0 half is at -1.25&nbsp;cm, the x&lt;0 half at +1.19&nbsp;cm. Reconstructed sTGC hits
+      sit ~1.2&nbsp;cm <b>closer to the beam line</b> than the FST says, in both halves. That is a
+      per-half x offset &mdash; the two halves are ~2.4&nbsp;cm closer together in the geometry than
+      in reality &mdash; and not a global translation, which would give the same sign everywhere.</li>
+  <li><b>It is an offset, not a scale.</b> A scale error would grow with |x|, hence with disk number.
+      It shrinks instead, in every quadrant: quadrant D goes +1.245, +1.180, +1.166,
+      +1.130&nbsp;cm over disks 0-3, quadrant A -1.316 &rarr; -1.061.</li>
+  <li><b>dy is common-mode.</b> All four quadrants have the same sign, +0.36 to +1.06&nbsp;cm, mean
+      +0.86&nbsp;cm. This one really is a translation in y (and it too shrinks with disk number,
+      +0.98 &rarr; +0.66&nbsp;cm in quadrant D, so a small angular term sits on top of both).</li>
+  <li><b>The single-Gaussian dx numbers in the table above therefore understate the signal.</b> The
+      unsplit fit locks onto the larger (x&lt;0) peak and treats the other as background: 65839 peak
+      entries against 110255 when the halves are fitted separately. Correcting for that, the true
+      g100 Primary purity is about <b>22%</b> rather than 17.5%. The H (dy) numbers are unaffected,
+      since dy has no such split.</li>
+</ul>
+
+<p>So the thing to check against the sTGC survey is not "a 1&nbsp;cm offset" but two separate
+numbers: <b>a half-separation in x wrong by ~2.4&nbsp;cm total (~1.2&nbsp;cm per half, both toward
+the beam)</b>, and <b>a common y offset of ~+0.9&nbsp;cm</b>. The x number is the one that looks
+mechanical &mdash; the halves are the parts that move.</p>
+
+<p>Correcting this should raise the matching efficiency directly: the offsets are 2-3 times the
+0.45&nbsp;cm match width, so at present a large part of the genuine matches falls outside any window
+centred on zero.</p>
+
+<HR>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

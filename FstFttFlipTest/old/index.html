@@ -1,0 +1,261 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <TITLE>SUPERSEDED: FST wedge flip and FTT X/Y flip, contaminated measurement</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>SUPERSEDED &mdash; the contaminated FST/FTT flip measurement (2026-09-21)</H1>
+
+<p style="background-color:#ffcccc; padding:8px; border:2px solid red;">
+<b>The first section of this page is wrong and is kept only for the record</b> (the second,
+"Corrected measurement", is the sound but small preliminary that replaced it).
+<tt>addFttHits()</tt> APPENDS the sTGC hits it finds to the track's seed, and
+<tt>refitTrack()</tt> runs once per track type in sequence, so only the first (Global) refit is
+genuinely FST-blind &mdash; every later type was "matched" against sTGC hits already in its own
+fit. On top of that the diagnostic had no track-type filter, so one physical track entered up to
+five times with different constraints. The excess and purity numbers below are dominated by that
+circularity, and the FST conclusion drawn from them &mdash; that the wedge mirror barely matters
+&mdash; is an artefact of it.<br>
+&rarr; <b><a href="../index.html">Go to the current page</a></b> (blind campaign, 2026-09-22).<br>
+&rarr; The same contamination affects the July study,
+<a href="../../fttgeom/real_data_excess_check.html">real_data_excess_check.html</a>.</p>
+
+<p>Three geometry corrections, tested one at a time on zero-field data (run 23063028):
+<b>gap</b> = <tt>applyFstGapFix</tt>, <b>FSTm</b> = <tt>applyFstMirror</tt>,
+<b>FTTm</b> = <tt>applyFttXYMirror</tt>. Configurations are named
+g&lt;gap&gt;&lt;FSTm&gt;&lt;FTTm&gt;.</p>
+
+<HR>
+<H2>What is measured</H2>
+<p>Everything comes from the FST-blind diagnostic: the track is fitted <i>without</i> sTGC hits,
+projected to each sTGC plane, and the sTGC hits near that projection are histogrammed <i>before</i>
+any hit is attached to the track.</p>
+<p><b>Which tracks?</b> The diagnostic is filled inside <tt>addFttHits()</tt>, which runs from
+<tt>refitTrack()</tt> &mdash; and that is called once per TRACK TYPE. So excess and purity mix
+Global, BLC, Primary, FwdVtx and BLCVtx: the same physical track enters up to five times, fitted
+with different constraints. Only the usage fraction below is a single type (Global). This matters:
+for one track measured here, the five types projected to sTGC radii from 31 to 49 cm, because the
+FST-only fit is free to choose the polar angle while the vertex-constrained fits are not.</p>
+<ul>
+  <li><b>excess</b> &mdash; height of the peak at the projection point over the local sideband
+      background (peak |d|&lt;0.6 cm, sideband 0.6-3 cm). 1.0 means no correlation at all.
+      <b>V</b> and <b>H</b> are the two strip orientations: V supplies the precise x, H the
+      precise y. Both are given; they are independent measurements of the same thing.</li>
+  <li><b>purity</b> &mdash; background-subtracted peak entries divided by all matched entries:
+      of the hits the tracker would attach, the fraction that are the genuinely correct one.</li>
+  <li><b>FTT used</b> &mdash; fraction of Global tracks (this one IS type-selected) with a hit used on an FTT plane
+      ("hit pickup probability"), top and bottom quadrants separately.</li>
+  <li><b>FST residual</b> &mdash; the FST's own r&middot;d&phi; residual, split at r=16.5 cm
+      into the inner sensor (which the gap fix does not touch) and the two outer sensors
+      (where the gap term lives), plus the residual mean folded into one 30&deg; wedge
+      ("wedge modulation"): a wrong wedge orientation should show a 30&deg;-periodic pattern.</li>
+</ul>
+
+<H2>Result</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>config</TH><TH>gap</TH><TH>FSTm</TH><TH>FTTm</TH>
+    <TH>excess V</TH><TH>excess H</TH><TH>purity</TH><TH>FTT used top</TH><TH>FTT used bot</TH></TR>
+<TR BGCOLOR="#ccffcc"><TD><b><font color="black">g000</font></b></TD><TD>off</TD><TD>off</TD><TD>off</TD>
+    <TD><b>2.360</b></TD><TD><b>2.246</b></TD><TD><b>37.9%</b></TD><TD>17.3%</TD><TD>5.2%</TD></TR>
+<TR><TD><font color="red"><b>g110</b></font></TD><TD>on</TD><TD>on</TD><TD>off</TD>
+    <TD>2.282</TD><TD>2.053</TD><TD>33.1%</TD><TD>16.9%</TD><TD>4.9%</TD></TR>
+<TR><TD>g100</TD><TD>on</TD><TD>off</TD><TD>off</TD><TD colspan=5><i>running</i></TD></TR>
+<TR><TD>g010</TD><TD>off</TD><TD>on</TD><TD>off</TD><TD colspan=5><i>running</i></TD></TR>
+<TR><TD><font color="blue"><b>g101</b></font></TD><TD>on</TD><TD>off</TD><TD>on</TD>
+    <TD>1.832</TD><TD>1.507</TD><TD>23.2%</TD><TD>17.1%</TD><TD>5.1%</TD></TR>
+<TR><TD><font color="magenta"><b>g011</b></font></TD><TD>off</TD><TD>on</TD><TD>on</TD>
+    <TD>1.843</TD><TD>1.519</TD><TD>23.3%</TD><TD>16.8%</TD><TD>4.9%</TD></TR>
+<TR BGCOLOR="#ffdddd"><TD><font color="green"><b>g111</b></font> (what we have been running)</TD><TD>on</TD><TD>on</TD><TD>on</TD>
+    <TD>1.840</TD><TD>1.506</TD><TD>23.1%</TD><TD>17.0%</TD><TD>4.6%</TD></TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR>
+<TD><a href="../plots/flip_summary.png"><img src="../plots/flip_summary.png" height=200></a></TD>
+<TD><a href="../plots/flip_overlay.png"><img src="../plots/flip_overlay.png" height=200></a></TD>
+</TR>
+<TR><TD>purity and excess per configuration</TD>
+    <TD>the match distribution itself, all 4 disks x V/H, each curve normalised to its own
+        sideband. Black (g000) and red (g110) peak well above the three FTT-mirror-ON curves,
+        which lie on top of each other. Colours match the config names in the table above.</TD></TR>
+</TABLE>
+
+<H2>What it says</H2>
+<ul>
+  <li><b>The FTT X/Y mirror is the dominant effect, and it is harmful.</b> Turning it off takes
+      purity from 23% to 33%, and the excess from 1.84/1.51 to 2.28/2.05. With it ON, the two
+      FST switches make no difference at all (g111 = g101 = g011 to within 0.2%): it swamps
+      everything.</li>
+  <li><b>All three off is better still</b>, 33.1% &rarr; 37.9%. So the FST gap fix and wedge
+      mirror together cost about 5 points of purity. Which of the two is responsible is what
+      g100 and g010 are for.</li>
+  <li><b>Hit pickup probability barely moves</b> (17% top, ~5% bottom everywhere). The tracker
+      attaches about the same number of sTGC hits in every configuration &mdash; what changes is
+      how often the attached hit is the right one. Pickup probability alone would have told us
+      nothing; purity is the discriminator.</li>
+  <li><b>This agrees with the July measurement</b>
+      (<a href="../../fttgeom/real_data_excess_check.html">real_data_excess_check.html</a>), which
+      also favoured the non-flipped FTT, and it contradicts the mirror-histogram reading made on
+      2026-09-16. The direct A/B is the one to trust: actually running with the mirror off
+      exercises clustering, time calibration and point building, while the diagnostic mirror only
+      re-maps a coordinate afterwards.</li>
+</ul>
+
+<H2>The FST's own residuals agree</H2>
+<p>r&middot;d&phi; residual of FST hits to the FST-only track, from the same jobs
+(<tt>script/fstResidualSplit.C</tt>). RMS in cm.</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>config</TH><TH>inner RMS d0/d1/d2</TH><TH>outer RMS d0/d1/d2</TH><TH>wedge modulation d0/d1/d2</TH></TR>
+<TR BGCOLOR="#ccffcc"><TD>g000</TD><TD>0.069 / 0.056 / 0.087</TD><TD>0.062 / 0.080 / 0.088</TD><TD>0.0024 / 0.0028 / 0.0020</TD></TR>
+<TR><TD><font color="red"><b>g110</b></font></TD><TD>0.079 / 0.062 / 0.102</TD><TD>0.070 / 0.087 / 0.105</TD><TD>0.0044 / 0.0040 / 0.0088</TD></TR>
+<TR><TD>g111</TD><TD>0.072 / 0.062 / 0.095</TD><TD>0.073 / 0.086 / 0.105</TD><TD>0.0044 / 0.0033 / 0.0038</TD></TR>
+</TABLE>
+<p>All-off is the narrowest on every disk, inner and outer, and its wedge modulation is the
+flattest &mdash; about half that of the mirror-ON states. A correct wedge orientation should
+<i>remove</i> a 30&deg;-periodic pattern, not introduce one.</p>
+
+<H2>Caveats</H2>
+<ul>
+  <li>The matching metric involves both detectors, so a wrong FST transform could in principle be
+      compensating a wrong FTT one. The FST-internal residuals point the same way, which makes
+      that less likely, but they are not fully independent either: FTT hits also enter the Global
+      fit, which is why g110 and g111 differ slightly in FST RMS.</li>
+  <li>The gap fix was originally justified on field-on data reconstructed with the old B=0 field
+      bug (&chi;&sup2;/ndf 3.2% better, 8.5% more hits surviving). That configuration is now known
+      to have been broken, so the original evidence needs redoing in this setup.</li>
+  <li>The FST residuals come from tracks fitted to those same FST hits (3 hits, straight line at
+      zero field), so they are correlated, not unbiased residuals.</li>
+  <li>Zero field only. Nothing here has been checked with the magnet on.</li>
+</ul>
+
+<H2>Consequence</H2>
+<p>Every production campaign of 2026-09-15/16 ran with <tt>fttmirror=1</tt> &mdash; the setting
+this test says is wrong. They are still valid for the time-window study (all four campaigns there
+share the same flags), but the absolute matching numbers on
+<a href="../../ftt_sim_hit_maker/timecut/index.html#20260921">the timecut page</a> would be better
+with the mirror off.</p>
+
+<H2>Is the FST mirror actually doing anything? Yes &mdash; and that is the puzzle</H2>
+<p>g110 (mirror ON) and g000 (mirror OFF) give nearly the same match quality, which is hard to
+believe if every FST hit really moves by up to 15&deg; inside its wedge. Checked directly, by
+printing each hit as read from the MuDst and as used by the tracker (diagnostic build,
+same file, same events):</p>
+<pre>
+ mirror=0 gap=1 disk0 wedge 0 sens1  r 20.81  phi_in  87.273  phi_out  88.273  dphi   1.000 deg
+ mirror=1 gap=1 disk0 wedge 0 sens1  r 20.81  phi_in  87.273  phi_out  63.727  dphi -23.547 deg
+ mirror=1 gap=1 disk0 wedge 2 sens1  r 17.94  phi_in  27.273  phi_out   3.727  dphi -23.547 deg
+ mirror=1 gap=1 disk0 wedge10 sens1  r 26.56  phi_in 137.898  phi_out 133.102  dphi  -4.797 deg
+</pre>
+<p>So the mirror is applied and it is large: hits move by up to 23.5&deg;, about 8&nbsp;cm at
+r=20&nbsp;cm. FST hits are uniform in wedge phase (measured: 8-10% per 2.5&deg; bin across the full
+&plusmn;15&deg;), and only 4.9% of hits move by less than 1.3&deg;, so this is not a case of most hits
+sitting near the wedge centre where the mirror does nothing.</p>
+<p>Yet:</p>
+<ul>
+  <li>track yield barely changes: 18.20 &rarr; 17.54 tracks/event;</li>
+  <li>FST residuals barely change (RMS 0.069 &rarr; 0.079 cm on disk0 inner);</li>
+  <li>the sTGC match peak stays narrow and centred at zero, and purity falls only 37.9% &rarr; 33.1%.</li>
+</ul>
+<p>The first two are expected: a reflection about the wedge bisector is an isometry, so a real
+track maps to a perfectly good straight-line track, and the FST fit cannot tell the difference.
+The third is not. A mirrored track points 10-25&deg; away in azimuth at the sTGC, so its own hit
+should be nowhere near the projection, and the peak should collapse to the accidental level. It
+does not. Either the diagnostic is not measuring what we think for these tracks, or something
+downstream of the FST partly undoes the reflection. <b>This is unresolved and it is the reason not
+to act on the FST part of this test yet.</b> The FTT X/Y conclusion does not depend on it: the FTT
+mirror was OFF in both g000 and g110.</p>
+
+<H2>Next</H2>
+<ul>
+  <li>g100 / g010 to separate the gap fix from the wedge mirror (running).</li>
+  <li>Resolve the mirror puzzle above: dump, for the same event and the same track, the FST hits,
+      the sTGC projection and the matched sTGC hit in both g000 and g110, and see whether the
+      matched hit is the same physical hit or a different one.</li>
+  <li>Repeat the FST gap evidence (&chi;&sup2;, hit survival) in this zero-field setup, since the
+      original measurement used the broken field.</li>
+  <li>July's other hypothesis is still untested here: the raw orientation label in
+      <tt>StFttDb::getOrientation()</tt>, which is upstream of clustering AND of the per-VMM time
+      anchor key. See <tt>proposal_ftt_xy_fix.txt</tt> &mdash; anchors must be regenerated with the
+      new labelling before any such comparison means anything.</li>
+</ul>
+
+
+<HR>
+<a name="blind"></a>
+<H1>Corrected measurement: genuinely blind tracks (2026-09-21, later)</H1>
+<p><i>This section is the first, one-file (3000 event) blind measurement. Its method is right and
+its conclusions were confirmed, but the numbers are superseded by the 80-job campaign on
+<a href="../index.html">the current page</a>.</i></p>
+
+<p>Two problems were found with the measurement above, both in the diagnostic rather than in the
+geometry switches:</p>
+<ol>
+  <li><b>Circular matching.</b> <tt>addFttHits()</tt> adds the sTGC hits it finds to the track seed,
+      and <tt>refitTrack()</tt> is called once per track type in sequence. The Global refit is blind;
+      BLC, Primary, FwdVtx and BLCVtx all inherit sTGC hits from it and are then "matched" against
+      hits already in their own fit. That is why mirroring every FST hit by 10-25&deg; appeared not
+      to matter: the projection was anchored by sTGC hits, not by the FST.</li>
+  <li><b>All types mixed.</b> The diagnostic has no track-type filter, so the same physical track
+      enters up to five times with different constraints (measured: sTGC projection radii from 31 to
+      49&nbsp;cm for one track).</li>
+</ol>
+
+<p>Both were fixed with diagnostic switches: fill for ONE track type, and never add sTGC hits to any
+track (search and histogram only). The natural choice is <b>Primary</b>: FST hits plus the TPC
+primary vertex, which is an independent constraint &mdash; it comes from neither detector under
+test. Zero field, run 23063028, one file, 3000 events, window [-1,3].</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>track sample</TH><TH>config</TH><TH>purity</TH><TH>excess V disk0/disk1</TH></TR>
+<TR BGCOLOR="#ccffcc"><TD rowspan=3>Primary (FST + TPC vertex), sTGC never added</TD>
+    <TD>g000 all off</TD><TD><b>10.2%</b></TD><TD>1.035 / 1.076</TD></TR>
+<TR><TD>g110 gap + FST mirror</TD><TD>3.5%</TD><TD>1.089 / 1.124</TD></TR>
+<TR><TD>g111 all on</TD><TD>-0.3%</TD><TD>0.951 / 1.039</TD></TR>
+<TR><TD rowspan=3>Global only (FST alone, first refit = already blind)</TD>
+    <TD>g000</TD><TD>4.4%</TD><TD>0.981 / 0.972</TD></TR>
+<TR><TD>g110</TD><TD>0.2%</TD><TD>1.011 / 0.988</TD></TR>
+<TR><TD>g111</TD><TD>1.6%</TD><TD>1.121 / 1.055</TD></TR>
+<TR BGCOLOR="#eeeeee"><TD rowspan=2>EVENT MIXING control (tracks vs the previous event's sTGC hits)</TD>
+    <TD>g000</TD><TD>0.4%</TD><TD>0.948 / 1.008</TD></TR>
+<TR BGCOLOR="#eeeeee"><TD>g110</TD><TD>0.3%</TD><TD>0.972 / 1.065</TD></TR>
+</TABLE>
+
+<H2>What the corrected numbers say</H2>
+<ul>
+  <li><b>The peak is real when it is there.</b> Event mixing &mdash; the same tracks searched against
+      the PREVIOUS event's sTGC hits &mdash; gives 0.3-0.4% purity and excess consistent with 1.0. So a
+      surviving peak is genuine per-particle correspondence, not detector acceptance.</li>
+  <li><b>The FST mirror does hurt, as the geometry always said it must</b>: 10.2% &rarr; 3.5%.
+      Mirroring moves hits by up to 23.5&deg; (~8&nbsp;cm at r=20), so a real correspondence cannot
+      survive it. The earlier "mirror barely matters" result was entirely the circularity.</li>
+  <li><b>All switches off remains the best configuration</b>, now for a defensible reason.</li>
+  <li><b>The absolute correspondence is weak</b>: about 10% even at best, on tracks constrained by
+      the TPC vertex. The 23-38% purities quoted earlier in this page, and in the July study, are
+      inflated by circular matching and should not be used.</li>
+</ul>
+
+<H2>Health warning on everything measured with this diagnostic</H2>
+<p>The same circularity applies to the FTT time-window study on
+<a href="../../ftt_sim_hit_maker/timecut/index.html#20260921">the timecut page</a>. The comparison
+there is between window settings at fixed track treatment, so the RELATIVE conclusion (a tight window
+is better) is not overturned, but the absolute purity numbers are inflated for the same reason.
+The FTT X/Y mirror conclusion also survives in the corrected data (g111 is the worst configuration
+in the Primary-blind row), though with much smaller absolute numbers.</p>
+
+<H2>What to run next</H2>
+<ul>
+  <li>Repeat the full 7-configuration campaign with the blind settings (one track type, sTGC never
+      added) and a proper file count &mdash; the numbers above are one file, 3000 events.</li>
+  <li>Make the blind behaviour a real option rather than a diagnostic env switch, so the tracking
+      code can be validated against it.</li>
+  <li>g100 / g010 (gap fix alone, mirror alone) are still needed, now under the blind treatment.</li>
+</ul>
+
+
+<HR>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>
