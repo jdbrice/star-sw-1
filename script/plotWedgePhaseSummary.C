@@ -60,13 +60,13 @@ void plotWedgePhaseSummary(const char* f1, const char* f2, const char* f3, const
   fr1->Draw();
   for (int a = 0; a < 3; a++) gp[a]->Draw("PL same");
   TLatex t; t.SetNDC(); t.SetTextSize(0.038);
-  for (int k = 0; k < 3; k++){ t.SetTextColor(cols[k]); t.DrawLatex(0.16, 0.36-0.055*k, labs[k]); }
+  for (int k = 0; k < 3; k++){ t.SetTextColor(cols[k]); t.DrawLatex(0.52, 0.52-0.055*k, labs[k]); }
   t.SetTextColor(kBlack); t.SetTextSize(0.032);
-  t.DrawLatex(0.16, 0.86, "a wrong wedge phase would fall to zero here #rightarrow");
+  t.DrawLatex(0.16, 0.90, "a wrong wedge phase would fall to zero at the edge");
   c1->cd(2); gPad->SetGridy(); gPad->SetGridx(); gPad->SetLogy();
   TH2F* fr2 = new TH2F("fr2","H-strip peak significance vs distance from wedge centreline;|#delta| from wedge centreline [deg];peak significance [#sigma]",10,0,15.5,10,0.1,200);
   fr2->Draw();
   for (int b = 0; b < 3; b++) gs[b]->Draw("PL same");
-  for (int m = 0; m < 3; m++){ t.SetTextColor(cols[m]); t.SetTextSize(0.038); t.DrawLatex(0.16, 0.36-0.055*m, labs[m]); }
+  for (int m = 0; m < 3; m++){ t.SetTextColor(cols[m]); t.SetTextSize(0.038); t.DrawLatex(0.52, 0.52-0.055*m, labs[m]); }
   c1->SaveAs(out);
 }
