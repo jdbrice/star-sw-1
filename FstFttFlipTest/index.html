@@ -102,12 +102,11 @@ hits to search; purity is a ratio, so the null test is unaffected.</p>
 
 <H2>Conclusions</H2>
 <ul>
-  <li><b>The extra FST wedge mirror must stay OFF &mdash; because the flip is ALREADY in the
-      reconstruction.</b> Turning <tt>applyFstMirror</tt> on destroys the correspondence: Primary
-      16.5% &rarr; 1.7%, significance 48 &rarr; 2.1. This does <i>not</i> mean the real wedges are
-      unflipped &mdash; see the next section, where three independent checks show that
-      <tt>StFstHitMaker</tt> already applies the per-wedge flip, so <tt>applyFstMirror</tt> is a
-      second one.</li>
+  <li><b>The extra FST wedge mirror must stay OFF.</b> Turning <tt>applyFstMirror</tt> on destroys
+      the correspondence: Primary 16.5% &rarr; 1.7%, significance 48 &rarr; 2.1, i.e. down to the
+      event-mixing noise level. What this does <i>not</i> settle is the physical front/back parity of
+      the wedges, which direct inspection of the detector disputes &mdash;
+      <a href="#mirror">see below</a>.</li>
   <li><b>The FTT X/Y mirror is wrong</b>: 17.5% &rarr; 0.4% with the FST settings otherwise
       unchanged (g100 &rarr; g101). This agrees with the July measurement
       (<a href="../fttgeom/real_data_excess_check.html">real_data_excess_check.html</a>).</li>
@@ -124,15 +123,15 @@ hits to search; purity is a ratio, so the null test is unaffected.</p>
 
 <HR>
 <a name="mirror"></a>
-<H1>Why the mirror result does NOT contradict the real detector</H1>
+<H1>What the mirror result does and does not settle</H1>
 
-<p>The wedges really are mirrored with respect to a naive reading of AGML &mdash; that was confirmed
-by direct inspection of the detector. The result above is consistent with that, because the
-reconstruction <b>already applies the flip</b>. Three independent checks:</p>
+<p>The wedges alternate front/back, and the reconstruction knows it. What the reconstruction does
+<b>not</b> do is correct AGML &mdash; it reproduces AGML exactly. Three checks, in order:</p>
 
 <ol>
-<li><b>The code does it.</b> <tt>StFstHitMaker.cxx</tt>:153-163 multiplies the strip coordinate by a
-per-disk and a per-wedge sign:
+<li><b>The reconstruction alternates the strip direction per wedge.</b>
+<tt>StFstHitMaker.cxx</tt>:153-163 multiplies the strip coordinate by a per-disk and a per-wedge
+sign:
 <pre>
 local[1] = phiInner + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi;
 
@@ -140,35 +139,60 @@ local[1] = phiInner + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFs
 const int kFstzFilp [3]  = {1,-1,1};
 const int kFstzDirct[12] = {1,-1,1,-1,1,-1,1,-1,1,-1,1,-1};
 </pre>
-i.e. the strip-to-phi direction is reversed on alternate wedges, and reversed again on disk 2.</li>
+Neither constant has ever been modified: both arrive in Daniel's original FST StEvent PR #265
+(2022-01-04) with today's values, and no later commit touches those lines.</li>
 
-<li><b>The data does it.</b> Measured slope d(&phi; within wedge)/d(meanPhiStrip) per global wedge
-index, straight from the MuDst:
+<li><b>The data confirms it is applied.</b> Measured slope d(&phi; within wedge)/d(meanPhiStrip) per
+global wedge index, straight from the MuDst:
 <pre>
 disk 0:  +0.092  -0.057  +0.057  -0.103  +0.078  -0.058  +0.079  -0.089  +0.060  -0.131  +0.090  -0.110
 disk 1:  -0.090  +0.060  -0.073  +0.071  -0.090   ...
 </pre>
-Alternating wedge by wedge, and flipped as a whole on disk 1 &mdash; exactly
+Alternating wedge by wedge, flipped as a whole on disk 1 &mdash; exactly
 <tt>kFstzFilp</tt>&times;<tt>kFstzDirct</tt>.</li>
 
-<li><b>The reflection axis is right, so the mirror is not a no-op.</b> The stored wedge index maps to
-&phi; ranges [60.1,89.9], [30.1,59.9], [0.1,29.9]&deg; &hellip;, i.e. wedge centres at 15+30k degrees,
-which is the axis <tt>applyFstMirror</tt> reflects about. It genuinely moves hits, by up to
-23.5&deg;.</li>
+<li><b>But it matches AGML, 36 wedges out of 36.</b> In <tt>fGeom.root</tt> the FST sensors are
+annular sectors centred on the beam axis, so a wedge's orientation is carried by its rotation
+matrix: the 180&deg; x-rotation that makes a wedge back-facing shows up as zz = -1
+(<tt>script/fstWedgePhase.C</tt>).
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>wedge</TH><TH>centre</TH>
+    <TH>disk0 AGML</TH><TH>const</TH><TH>disk1 AGML</TH><TH>const</TH><TH>disk2 AGML</TH><TH>const</TH></TR>
+<TR><TD>0</TD><TD>75&deg;</TD><TD>BACK</TD><TD>+1</TD><TD>FRONT</TD><TD>-1</TD><TD>BACK</TD><TD>+1</TD></TR>
+<TR><TD>1</TD><TD>45&deg;</TD><TD>FRONT</TD><TD>-1</TD><TD>BACK</TD><TD>+1</TD><TD>FRONT</TD><TD>-1</TD></TR>
+<TR><TD>2</TD><TD>15&deg;</TD><TD>BACK</TD><TD>+1</TD><TD>FRONT</TD><TD>-1</TD><TD>BACK</TD><TD>+1</TD></TR>
+<TR><TD colspan=8><i>&hellip; alternating, all 12 wedges, all 3 disks: agreement 36/36.</i></TD></TR>
+</TABLE>
+<tt>kFstzFilp</tt>&times;<tt>kFstzDirct</tt> is +1 for exactly the AGML BACK wedges and -1 for
+exactly the FRONT ones. The constants encode AGML's phase; they do not correct it.</li>
 </ol>
 
-<p><b>So the correct statement is: the flip is applied once, in <tt>StFstHitMaker</tt>, and it is the
-convention that agrees with the sTGC.</b> <tt>applyFstMirror</tt> applies it a second time, which
-returns the hits to the unflipped (wrong) orientation &mdash; hence the collapse to noise. The blind
-measurement is therefore positive evidence FOR the flip the detector inspection found, not against
-it.</p>
+<H2>The open question</H2>
+<p>Direct inspection of the real detector says disk0 wedge 0 (centre 75&deg;, near the top on the
+south side) is FRONT, while AGML &mdash; and therefore the reconstruction &mdash; has it BACK. If that
+is right, both are wrong together, and the correction is a global flip of every wedge, which is
+exactly what <tt>applyFstMirror</tt> does. The measurement says the opposite: the mirror takes the
+FST&rarr;sTGC correspondence from 16.5% to 1.7%, 48&sigma; to 2.1&sigma;, against a 0.1%
+event-mixing null.</p>
+
+<p>This is not resolved. The weight of evidence is on the reconstructed hit &phi; being correct as it
+stands &mdash; an FST-only track pointing at an independent detector at 48&sigma; is very hard to
+obtain if every FST hit &phi; is mirrored by up to &plusmn;15&deg;. That would mean the physical
+front/back parity does not reach the strip &phi;, which is possible because the strip-to-channel
+mapping in <tt>StFstDb</tt> sits between them and was tuned on data. The alternative is that the
+inspected wedge maps to a different DB wedge index than assumed.</p>
+
+<p><b>The test that settles it</b> is match quality versus &phi; <i>within</i> the wedge. A wrong
+global phase leaves the correspondence alive only near the wedge centreline, where a mirror does
+nothing, and kills it at the edges; a correct phase is flat in wedge phase. It needs one extra
+histogram in the blind diagnostic and a single local run.</p>
 
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
-<b>Warning for the AGML tag work</b> (see <tt>proposal_fst_wedge_flip.txt</tt>): if Jason's new
-FSTMv1sm / FstmGeoSM tag builds the flip into the <i>geometry</i>, then
-<tt>kFstzFilp</tt>/<tt>kFstzDirct</tt> must be neutralised at the same time, or the same double
-counting comes back through the supported path instead of through a diagnostic hack. The two must
-move together, in one commit, with this blind measurement rerun as the acceptance test.</p>
+<b>For the AGML tag work</b> (see <tt>proposal_fst_wedge_flip.txt</tt>): because the constants track
+AGML rather than correct it, a new tag that changes the front/back parity must <b>leave
+<tt>kFstzFilp</tt>/<tt>kFstzDirct</tt> untouched</b>. Only the wedge z and the material should move;
+the reconstructed hit &phi; must come out unchanged, and this blind measurement is the acceptance
+test for that.</p>
 
 <HR>
 <a name="offset"></a>
