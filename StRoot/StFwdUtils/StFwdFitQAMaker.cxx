@@ -838,10 +838,10 @@ void StFwdFitQAMaker::ProcessFwdTracks(  ){
         getHist( "RcQOverPt" )           ->Fill( qop );
         getHist( "RcQ" )                ->Fill( fwdTrack->charge() );
 
-        double dEta  = fwdTrack->momentum().pseudoRapidity() - mct.p.Eta();
+        //double dEta  = fwdTrack->momentum().pseudoRapidity() - mct.p.Eta();
         // double dPhi  = fwdTrack->momentum().DeltaPhi( mct.p );
         // double dR    = fwdTrack->momentum().DeltaR( mct.p );
-        double dPt   = fwdTrack->momentum().perp() - mct.p.Pt();
+        //double dPt   = fwdTrack->momentum().perp() - mct.p.Pt();
         double dRPt  = (fwdTrack->momentum().perp() - mct.p.Pt()) / mct.p.Pt();
         double iPt   = 1.0 / fwdTrack->momentum().perp();
         double curve   = 1.0 / fwdTrack->momentum().perp();
@@ -984,3 +984,4 @@ void StFwdFitQAMaker::FillEventStats(){
         getHist( "mSecondaryFitDuration" ) -> Fill( elem );
     }
 }
+

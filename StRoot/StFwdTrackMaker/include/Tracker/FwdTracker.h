@@ -991,7 +991,7 @@ class ForwardTrackMaker {
     //      sigma_z from vertex fit scatter.
     //   5. Refit each BLC track with that hit appended to its seed.
     std::vector<GenfitTrackResult> doBLCVertexFitting( std::vector<GenfitTrackResult> &beamlineTracks ) {
-        if (verbose) LOG_INFO << ">>doBLCVertexFitting( #blc = " << beamlineTracks.size() << " )" << endm;
+      if (verbose){ LOG_INFO << ">>doBLCVertexFitting( #blc = " << beamlineTracks.size() << " )" << endm; }
         long long itStart = FwdTrackerUtils::nowNanoSecond();
         mBLCVtxNTracks = 0; // reset per-event
 
@@ -1048,9 +1048,9 @@ class ForwardTrackMaker {
             }
         }
 
-        if (verbose || kProfile)
+        if (verbose || kProfile){
             LOG_INFO << "BLCVertex: z_vtx=" << z_vtx << " cm  sigma_vtx=" << sigma_vtx
-                     << " cm  nTrkUsed=" << trkZs.size() << "/" << beamlineTracks.size() << endm;
+                     << " cm  nTrkUsed=" << trkZs.size() << "/" << beamlineTracks.size() << endm;}
 
         // --- Step 4: build the vertex hit ---
         // Apply slope correction: beamline position at the fitted vertex z
@@ -1138,7 +1138,7 @@ class ForwardTrackMaker {
 
     // Step 3.6: refit each BLCVtx track with the matched FCS ECAL cluster (trkType=5)
     std::vector<GenfitTrackResult> doFCSConstrainedFitting(std::vector<GenfitTrackResult>& blcVtxTracks) {
-        if (verbose) LOG_INFO << ">>doFCSConstrainedFitting( #blcVtx=" << blcVtxTracks.size() << " )" << endm;
+      if (verbose){ LOG_INFO << ">>doFCSConstrainedFitting( #blcVtx=" << blcVtxTracks.size() << " )" << endm;}
 
         std::vector<GenfitTrackResult> fcsTracks;
         if (mFcsClusters.empty()) {
@@ -1174,7 +1174,7 @@ class ForwardTrackMaker {
             // Fallback: project to z=500 cm (fringe field region), then straight-line to z=725 cm.
             TVector3 posAtFCS;
             double dynMatchDr = matchDr;
-            bool usedFallback = false;
+            //bool usedFallback = false;
             try {
                 auto msp = mTrackFitter->projectToPlane(fcsPlane, gtrBLC.mTrack);
                 posAtFCS = msp.getPos();
@@ -1203,7 +1203,7 @@ class ForwardTrackMaker {
                                     zPlane);
                     // Straight-line ignores fringe field over ~225 cm → larger window than RK gives.
                     dynMatchDr = 20.0;
-                    usedFallback = true;
+                    //usedFallback = true;
                     nFallback++;
                 } catch (genfit::Exception&) {
                     index++; continue;  // true looper, can't reach z=500 cm either
@@ -2064,7 +2064,7 @@ class ForwardTrackMaker {
             static double fstDiskZ[3];
             static bool fstDiskZReady = false;
             if (!fstDiskZReady) {
-                for (int d = 0; d < 3; d++) {
+                for (unsigned int d = 0; d < 3; d++) {
                     double z = 0;
                     for (size_t is = d * 36; is < d * 36 + 36; is++)
                         z += mTrackFitter->mFstSensorPlanes[is]->getO().Z();
@@ -2160,7 +2160,7 @@ class ForwardTrackMaker {
         double mindr = 99;
         double mindp = 99;
         KiTrack::IHit *closest = nullptr;
-        KiTrack::IHit *sec_closest = nullptr;
+        //KiTrack::IHit *sec_closest = nullptr;
 
         for (auto h : available_hits) {
 
@@ -2179,7 +2179,7 @@ class ForwardTrackMaker {
     
             if ( sp < mindp ){
                 mindp = sp;
-                sec_closest = closest;
+                //sec_closest = closest;
                 closest = h;
                 mindx = sx;
                 mindy = sy;
@@ -2333,14 +2333,17 @@ class ForwardTrackMaker {
         }
         
 
-        if ( horizontalClosest )
-            LOG_INFO << "Closest horizontal FTT strip to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", horizontalMin_dr, horizontalMin_dp, horizontalMin_dx, horizontalMin_dy, dynamic_cast<FwdHit*>(horizontalClosest)->_tid ) << endm;
-        else
-            LOG_INFO << "No horizontal FTT strip found near projected state" << endm;
-        if ( verticalClosest )
-            LOG_INFO << "Closest vertical FTT strip to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", verticalMin_dr, verticalMin_dp, verticalMin_dx, verticalMin_dy, dynamic_cast<FwdHit*>(verticalClosest)->_tid ) << endm;
-        else
-            LOG_INFO << "No vertical FTT strip found near projected state" << endm;
+        if ( horizontalClosest ){
+	  LOG_INFO << "Closest horizontal FTT strip to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", horizontalMin_dr, horizontalMin_dp, horizontalMin_dx, horizontalMin_dy, dynamic_cast<FwdHit*>(horizontalClosest)->_tid ) << endm;
+	}
+        else{
+	  LOG_INFO << "No horizontal FTT strip found near projected state" << endm;
+	}
+        if ( verticalClosest ){
+	  LOG_INFO << "Closest vertical FTT strip to FST state: " << Form( "dR=%f, dPhi=%f, dx=%f, dy=%f (tid=%d) ", verticalMin_dr, verticalMin_dp, verticalMin_dx, verticalMin_dy, dynamic_cast<FwdHit*>(verticalClosest)->_tid ) << endm;}
+        else{
+	  LOG_INFO << "No vertical FTT strip found near projected state" << endm;
+	}
 
         return found_hits;
     } // findFttStripsNearProjectedState

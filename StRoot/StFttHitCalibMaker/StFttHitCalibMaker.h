@@ -53,7 +53,7 @@ public:
         Calibration = 2
     };
 
-    void SetMode( StFttHitCalibMaker::CalibMode  mode ){
+    void SetCalibMode( StFttHitCalibMaker::CalibMode  mode ){
         mCalibMode = mode;
     }
 
@@ -70,3 +70,4 @@ public:
 };
 
 #endif
+

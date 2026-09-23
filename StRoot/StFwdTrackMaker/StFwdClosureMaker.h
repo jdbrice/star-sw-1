@@ -71,7 +71,7 @@ class StFwdClosureMaker : public StMaker {
     double mRasterPhi = 0.004;
 
     // use FTT in tracking?
-    int mNumFttToUse = 4;
+    unsigned int mNumFttToUse = 4;
     enum FttMode { kStrip, kPoint};
     FttMode mFttMode = kPoint;
 

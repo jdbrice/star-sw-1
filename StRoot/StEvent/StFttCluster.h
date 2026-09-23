@@ -150,3 +150,4 @@ inline StPtrVecFttPoint& StFttCluster::points() { return mPoints; }
 inline const StPtrVecFttPoint& StFttCluster::points() const { return mPoints; }
 
 #endif  // STFTTCLUSTER_H
+

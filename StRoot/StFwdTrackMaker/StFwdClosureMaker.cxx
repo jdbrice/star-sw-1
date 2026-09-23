@@ -630,7 +630,7 @@ int StFwdClosureMaker::Make() {
     int nstg = g2t_stg_hits->GetNRows();
 
     LOG_DEBUG << "This event has " << nstg << " stg hits in geant/g2t_stg_hit " << endm;
-    int nFttHits = 0;
+    //int nFttHits = 0;
     if (mNumFttToUse == 0) {
         LOG_INFO << "Not using FTT hits, skipping" << endm;
         nstg = 0;
@@ -668,28 +668,28 @@ int StFwdClosureMaker::Make() {
             LOG_INFO << "Adding FTT point" << endm;
             fttPlaneMap[plane_id] = 1;
             auto spoint = new genfit::SpacepointMeasurement(rhc, hitCov3, 0, i+4, nullptr);
-            if ( (spoints.size() - nPointsBeforeAddingFtt) < mNumFttToUse )
+            if ( spoints.size() < (mNumFttToUse + nPointsBeforeAddingFtt) )
                 spoints.push_back(spoint);
         } else if ( kPoint != mFttMode ){
             if ( volume_id % 2 == 0 ){
                 LOG_INFO << "Adding Ftt vStrip" << endm;
                 auto spoint = new genfit::SpacepointMeasurement(rhc, vStripCov3, 0, i+4, nullptr);
-                if ( (spoints.size() - nPointsBeforeAddingFtt) < mNumFttToUse )
+                if ( spoints.size() < (mNumFttToUse + nPointsBeforeAddingFtt) )
                     spoints.push_back(spoint);
             } else {
                 LOG_INFO << "Adding Ftt hStrip" << endm;
                 auto spoint = new genfit::SpacepointMeasurement(rhc, hStripCov3, 0, i+4, nullptr);
-                if ( (spoints.size() - nPointsBeforeAddingFtt) < mNumFttToUse )
+                if ( spoints.size() < (mNumFttToUse + nPointsBeforeAddingFtt) )
                     spoints.push_back(spoint);
             }
         }
 
-        if ( (spoints.size() - nPointsBeforeAddingFtt) >= mNumFttToUse ){
+        if ( spoints.size() >= (mNumFttToUse + nPointsBeforeAddingFtt) ){
             LOG_INFO << "Reached max FTT hits, breaking" << endm;
             break;
         }
             
-        nFttHits++;
+        //nFttHits++;
     }
 
     float ptCurve = 9999.0;
@@ -804,3 +804,4 @@ int StFwdClosureMaker::Make() {
 void StFwdClosureMaker::Clear(const Option_t *opts) {
     return;
 }
+

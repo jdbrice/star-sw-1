@@ -191,7 +191,7 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
     }
 
     //loop over x clusters; clustersPerRob[Rob][kFttVertical][iClu_X]
-    for (int iClu_X=0; iClu_X < nClusters_X; iClu_X++) {
+    for (unsigned int iClu_X=0; iClu_X < nClusters_X; iClu_X++) {
         StFttCluster* clu_x = clustersPerRob[(UChar_t)Rob][kFttVertical][iClu_X];
 
         point = new StFttPoint();
@@ -223,7 +223,7 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
     }
 
     //loop over y clusters; clustersPerRob[Rob][kFttHorizontal][iClu_Y]
-    for (int iClu_Y=0; iClu_Y < nClusters_Y; iClu_Y++) {
+    for (unsigned int iClu_Y=0; iClu_Y < nClusters_Y; iClu_Y++) {
         StFttCluster* clu_y = clustersPerRob[(UChar_t)Rob][kFttHorizontal][iClu_Y];
 
         point = new StFttPoint();
@@ -250,7 +250,7 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
     }
 
     //loop over dx clusters; clustersPerRob[Rob][kFttDiagonalV][iClu_DX]
-    for (int iClu_DX=0; iClu_DX<nClusters_DX; iClu_DX++){
+    for (unsigned int iClu_DX=0; iClu_DX<nClusters_DX; iClu_DX++){
         StFttCluster* clu_dx = clustersPerRob[(UChar_t)Rob][kFttDiagonalV][iClu_DX];
 
         point = new StFttPoint();
@@ -290,7 +290,7 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
     }
 
     //loop over dy clusters; clustersPerRob[Rob][kFttDiagonalH][iClu_DY]
-    for (int iClu_DY=0; iClu_DY<nClusters_DY; iClu_DY++){
+    for (unsigned int iClu_DY=0; iClu_DY<nClusters_DY; iClu_DY++){
         StFttCluster* clu_dy = clustersPerRob[(UChar_t)Rob][kFttDiagonalH][iClu_DY];
 
         point = new StFttPoint();
@@ -469,3 +469,4 @@ void StFttClusterPointMaker::MakeGeantPoints() {
     // }
 
 }
+
