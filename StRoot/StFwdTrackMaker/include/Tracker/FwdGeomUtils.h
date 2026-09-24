@@ -6,6 +6,8 @@
 #include "TGeoMatrix.h"
 #include "TGeoNavigator.h"
 #include "TGeoTube.h"   // TGeoTubeSeg: the FST sensor shapes, used for their phi limits
+#include "StEvent/StFstConsts.h"   // kFstNumSensors
+#include "StMessMgr.h"             // LOG_INFO / LOG_WARN / LOG_ERROR
 
 class FwdGeomUtils {
     public:
@@ -113,85 +115,125 @@ class FwdGeomUtils {
             return TVector3(0,0,0);
         }
 
+        // ---------------------------------------------------------------------
+        // FST sensor lookup, driven by the geometry rather than by a hardcoded
+        // volume path.
+        //
+        // The path differs between FST geometry variants, so a fixed string
+        // cannot work for all of them:
+        //    FSTMv1  (full, ideal)  HALL/CAVE_1/FSTM_1/FSTD_4/FSTW_1/FTUS_1
+        //    FSTMv1sm / v2sm (misaligned)   HALL/CAVE_1/FSTM_1/FTUS_1 .. FTUS_108
+        // The misaligned variants drop the FSTD disk mother and lift the sensors
+        // out of FSTW up into FSTM, so that each of the 108 can carry its own
+        // <Misalign> matrix. The sensor ordering inside a wedge is opposite
+        // between the two as well (full: FTUS_1,2 outer and FTUS_3 inner;
+        // misaligned: copy 1+3w+36d inner, then the two outer). So neither the
+        // path nor the copy number is a safe key.
+        //
+        // What IS stable is the physics: a sensor is identified by where it is
+        // and what shape it has.
+        //    disk    from its global z            (~150 / ~165 / ~179)
+        //    wedge   from its local +x axis in global, which is the wedge
+        //            bisector and sits at 75 - 30*w degrees (unaffected by the
+        //            180 deg x-rotation that flips front/back wedges)
+        //    sensor  from the shape: rmin 5 -> inner (hit sensor 0), rmin 16.5
+        //            with phi1 > 180 -> hit sensor 1, else hit sensor 2
+        //            (that assignment was measured from data, script/fstLocalMap.C)
+        // This also retires the kElecToGeantWedge translation tables, which only
+        // existed because copy numbers under the old hierarchy did not follow phi.
+        // ---------------------------------------------------------------------
+        void walkFstSensors( TGeoNode* node, TGeoHMatrix mat, int depth ){
+            TGeoHMatrix here = mat; here.Multiply( node->GetMatrix() );
+            TString vname = node->GetVolume()->GetName();
+            if ( vname.BeginsWith("FTUS") ){
+                TGeoShape* shape = node->GetVolume()->GetShape();
+                if ( !shape || !shape->InheritsFrom("TGeoTubeSeg") ) return;
+                TGeoTubeSeg* seg = (TGeoTubeSeg*)shape;
+                const double* t = here.GetTranslation();
+                const double* r = here.GetRotationMatrix();
+                int disk   = ( t[2] < 158.0 ) ? 0 : ( ( t[2] < 172.0 ) ? 1 : 2 );
+                double phiW = TMath::ATan2( r[3], r[0] ) * TMath::RadToDeg();
+                if ( phiW < 0 ) phiW += 360.0;
+                int wedge = (int)TMath::Nint( (75.0 - phiW) / 30.0 );
+                wedge = ( (wedge % 12) + 12 ) % 12;
+                int sensor = ( seg->GetRmin() < 10.0 ) ? 0
+                           : ( ( seg->GetPhi1() > 180.0 ) ? 1 : 2 );
+                int idx = disk * 36 + wedge * 3 + sensor;
+                if ( idx >= 0 && idx < kFstNumSensors ){
+                    if ( _fstSensorOK[idx] ) {
+                        LOG_WARN << "FwdGeomUtils: duplicate FST sensor index " << idx
+                                 << " (disk " << disk << " wedge " << wedge
+                                 << " sensor " << sensor << ")" << endm;
+                    }
+                    _fstSensorMat[idx]  = here;
+                    _fstSensorPhi1[idx] = seg->GetPhi1();
+                    _fstSensorPhi2[idx] = seg->GetPhi2();
+                    _fstSensorOK[idx]   = true;
+                }
+                return;
+            }
+            if ( depth > 8 ) return;
+            for (int i = 0; i < node->GetNdaughters(); i++)
+                walkFstSensors( node->GetDaughter(i), here, depth + 1 );
+        }
+
+        void buildFstSensorMap(){
+            if ( _fstSensorMapped ) return;
+            _fstSensorMapped = true;
+            for (int i = 0; i < kFstNumSensors; i++) _fstSensorOK[i] = false;
+            if ( !gGeoManager || !gGeoManager->GetTopNode() ){
+                LOG_ERROR << "FwdGeomUtils: no geometry, cannot map FST sensors" << endm;
+                return;
+            }
+            TGeoHMatrix identity;
+            walkFstSensors( gGeoManager->GetTopNode(), identity, 0 );
+            int n = 0;
+            for (int i = 0; i < kFstNumSensors; i++) if ( _fstSensorOK[i] ) n++;
+            LOG_INFO << "FwdGeomUtils: mapped " << n << " / " << kFstNumSensors
+                     << " FST sensors from the geometry" << endm;
+            if ( n != kFstNumSensors )
+                LOG_ERROR << "FwdGeomUtils: incomplete FST sensor map (" << n
+                          << "/" << kFstNumSensors << ") -- geometry not understood" << endm;
+        }
+
         // phi1/phi2 (optional, degrees) come back as the SENSOR SHAPE's azimuthal
         // limits in its own local frame -- that is where AGML keeps the 1 deg
         // outer-sensor gap (outer shapes are +-0.5..15.5, inner is a clean +-15).
         TVector3 getFstSensorOrigin (int index, TVector3 &u, TVector3 &v,
                                      double *phi1 = 0, double *phi2 = 0) {
-            // Maps per-disk electronic wedge index (0–11) to AGML FSTW copy number (1–12).
-            // Electronic wedge k has phi-center = (kFstphiStart[k]+kFstphiStop[k])/2 * 30°.
-            // AGML places even wedges first (FSTW_1–6, αz=15°,75°,...,315°) then odd
-            // wedges (FSTW_7–12, αz=45°,105°,...,345°), so the copy-number ordering
-            // does NOT follow azimuthal phi order.
-            // Disks 1 and 3 (FSTD_4, FSTD_6) have no disk-level rotation.
-            // Disk 2 (FSTD_5) has an additional alphaz=30° in the AGML geometry, so each
-            // electronic wedge maps to the GEANT copy one 30°-step earlier in the base-angle
-            // sequence — a cyclic left-shift of the standard table by one entry.
-            static const int kElecToGeantWedge[12]      = {2, 7, 1, 12, 6, 11, 5, 10, 4, 9, 3, 8};
-            static const int kElecToGeantWedgeDisk2[12] = {7, 1, 12, 6, 11, 5, 10, 4, 9, 3, 8, 2};
-
-            // Hit sensor id (StMuFstHit::getSensor) is 0 = INNER, 1 and 2 = the two
-            // outer sensors.  AGML numbers them the other way round: FTUS_1 and
-            // FTUS_2 are the OUTER sensors (rmin 16.5) and FTUS_3 is the INNER one
-            // (rmin 5).  The old "(index%3)+1" therefore put inner hits on an outer
-            // plane and vice versa, a 1.4 cm z error on two sensors out of three.
-            // Verified against data (script/fstLocalMap.C): transforming each hit
-            // into the three local frames, sensor 0 lands in FTUS_3, 1 in FTUS_1,
-            // 2 in FTUS_2.
-            int hitSensor   = index % 3;
-            int sensorIndex = (hitSensor == 0) ? 3 : hitSensor;
-            // retrive the wedge index that goes from 1-12 from global sensor index
-            int electronicWedge = (index / 3) % 12;  // 0-indexed per-disk electronic wedge
-            // retrive the plane index that goes from 4-6 from global sensor index
-            int planeIndex = (index / 36) + 4;
-            const int *wedgeMap = (planeIndex == 5) ? kElecToGeantWedgeDisk2 : kElecToGeantWedge;
-            int wedgeIndex = wedgeMap[electronicWedge];
-            // construct the path to the sensor
-            stringstream spath;
-            spath << "/HALL_1/CAVE_1/FSTM_1/FSTD_" << planeIndex << "/FSTW_" << wedgeIndex << "/FTUS_" << sensorIndex;
-            
-            if (_verbose ){
-                LOG_INFO << "Getting FST sensor origin for index " << index << " with path " << spath.str() << endm;
+            buildFstSensorMap();
+            if ( index < 0 || index >= kFstNumSensors || !_fstSensorOK[index] ){
+                std::cerr << "Failed to get FST sensor origin for index " << index << std::endl;
+                return TVector3(0,0,0);
             }
-
-            bool can = cd( spath.str().c_str() );
-            if ( can && _matrix != nullptr ){
-                double x = _matrix->GetTranslation()[0];
-                double y = _matrix->GetTranslation()[1];
-                double z = _matrix->GetTranslation()[2];
-                // Column 0 of R = local x-axis in global space = u
-                // Column 1 of R = local y-axis in global space = v
-                // GetRotationMatrix() is row-major: element [i*3+j] = R[i][j]
-                // Column j is elements [0*3+j], [1*3+j], [2*3+j]
-                u.SetXYZ(_matrix->GetRotationMatrix()[0], _matrix->GetRotationMatrix()[3], _matrix->GetRotationMatrix()[6]);
-                v.SetXYZ(_matrix->GetRotationMatrix()[1], _matrix->GetRotationMatrix()[4], _matrix->GetRotationMatrix()[7]);
-                // V is deliberately NOT normalised to counterclockwise any more.
-                // The front/back wedge flip is exactly what the rotation encodes, and
-                // normalising it away forced the decode to re-supply the orientation
-                // from hardcoded constants -- which is where the missing kFstzFilp
-                // (mirrored middle disk) came from.  Measuring the strip position in
-                // the sensor's OWN local frame and letting this matrix carry it to
-                // global is correct for either placement, and makes a new AGML tag
-                // (Flemming's wedge flip) flow through with no code change.
-                if ( phi1 || phi2 ){
-                    TGeoShape *shape = _node ? _node->GetVolume()->GetShape() : 0;
-                    if ( shape && shape->InheritsFrom("TGeoTubeSeg") ){
-                        if (phi1) *phi1 = ((TGeoTubeSeg*)shape)->GetPhi1();
-                        if (phi2) *phi2 = ((TGeoTubeSeg*)shape)->GetPhi2();
-                    }
-                }
-                if ( _verbose ){
-                    LOG_INFO << "FST Sensor " << index << " origin: " << x << ", " << y << ", " << z << endm;
-                    LOG_INFO << "\tSensor " << index << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;
-                    LOG_INFO << "\tSensor " << index << " V = " << v.X() << ", " << v.Y() << ", " << v.Z() << endm;
-                }
-
-                return TVector3(x, y, z);
+            const double* t = _fstSensorMat[index].GetTranslation();
+            const double* r = _fstSensorMat[index].GetRotationMatrix();
+            // Column 0 of R = local x-axis in global space = u
+            // Column 1 of R = local y-axis in global space = v
+            // V is deliberately NOT normalised to counterclockwise: the front/back
+            // wedge flip is exactly what this rotation encodes, and normalising it
+            // away would force the strip decode to re-supply the orientation from
+            // hardcoded constants.
+            u.SetXYZ( r[0], r[3], r[6] );
+            v.SetXYZ( r[1], r[4], r[7] );
+            if (phi1) *phi1 = _fstSensorPhi1[index];
+            if (phi2) *phi2 = _fstSensorPhi2[index];
+            if ( _verbose ){
+                LOG_INFO << "FST Sensor " << index << " origin: " << t[0] << ", " << t[1]
+                         << ", " << t[2] << " shapePhi [" << _fstSensorPhi1[index] << ","
+                         << _fstSensorPhi2[index] << "]" << endm;
             }
-            std ::cerr << "Failed to get FST sensor origin for index " << index << std::endl;
-            return TVector3(0,0,0);
+            return TVector3( t[0], t[1], t[2] );
         }
+
     protected:
+    // geometry-driven FST sensor map, indexed by disk*36 + wedge*3 + sensor
+    TGeoHMatrix _fstSensorMat[kFstNumSensors];
+    double      _fstSensorPhi1[kFstNumSensors] = {0};
+    double      _fstSensorPhi2[kFstNumSensors] = {0};
+    bool        _fstSensorOK[kFstNumSensors]   = {false};
+    bool        _fstSensorMapped = false;
+
     TGeoVolume    *_volume    = nullptr;
     TGeoNode      *_node      = nullptr;
     TGeoHMatrix   *_matrix    = nullptr;
