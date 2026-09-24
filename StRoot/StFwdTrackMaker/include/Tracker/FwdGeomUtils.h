@@ -5,6 +5,7 @@
 #include "TGeoNode.h"
 #include "TGeoMatrix.h"
 #include "TGeoNavigator.h"
+#include "TGeoTube.h"   // TGeoTubeSeg: the FST sensor shapes, used for their phi limits
 
 class FwdGeomUtils {
     public:
@@ -112,7 +113,11 @@ class FwdGeomUtils {
             return TVector3(0,0,0);
         }
 
-        TVector3 getFstSensorOrigin (int index, TVector3 &u, TVector3 &v) {
+        // phi1/phi2 (optional, degrees) come back as the SENSOR SHAPE's azimuthal
+        // limits in its own local frame -- that is where AGML keeps the 1 deg
+        // outer-sensor gap (outer shapes are +-0.5..15.5, inner is a clean +-15).
+        TVector3 getFstSensorOrigin (int index, TVector3 &u, TVector3 &v,
+                                     double *phi1 = 0, double *phi2 = 0) {
             // Maps per-disk electronic wedge index (0–11) to AGML FSTW copy number (1–12).
             // Electronic wedge k has phi-center = (kFstphiStart[k]+kFstphiStop[k])/2 * 30°.
             // AGML places even wedges first (FSTW_1–6, αz=15°,75°,...,315°) then odd
@@ -125,8 +130,16 @@ class FwdGeomUtils {
             static const int kElecToGeantWedge[12]      = {2, 7, 1, 12, 6, 11, 5, 10, 4, 9, 3, 8};
             static const int kElecToGeantWedgeDisk2[12] = {7, 1, 12, 6, 11, 5, 10, 4, 9, 3, 8, 2};
 
-            // retrive the sensor index that goes from 1-3 from global sensor index
-            int sensorIndex = (index % 3) + 1;
+            // Hit sensor id (StMuFstHit::getSensor) is 0 = INNER, 1 and 2 = the two
+            // outer sensors.  AGML numbers them the other way round: FTUS_1 and
+            // FTUS_2 are the OUTER sensors (rmin 16.5) and FTUS_3 is the INNER one
+            // (rmin 5).  The old "(index%3)+1" therefore put inner hits on an outer
+            // plane and vice versa, a 1.4 cm z error on two sensors out of three.
+            // Verified against data (script/fstLocalMap.C): transforming each hit
+            // into the three local frames, sensor 0 lands in FTUS_3, 1 in FTUS_1,
+            // 2 in FTUS_2.
+            int hitSensor   = index % 3;
+            int sensorIndex = (hitSensor == 0) ? 3 : hitSensor;
             // retrive the wedge index that goes from 1-12 from global sensor index
             int electronicWedge = (index / 3) % 12;  // 0-indexed per-disk electronic wedge
             // retrive the plane index that goes from 4-6 from global sensor index
@@ -152,11 +165,21 @@ class FwdGeomUtils {
                 // Column j is elements [0*3+j], [1*3+j], [2*3+j]
                 u.SetXYZ(_matrix->GetRotationMatrix()[0], _matrix->GetRotationMatrix()[3], _matrix->GetRotationMatrix()[6]);
                 v.SetXYZ(_matrix->GetRotationMatrix()[1], _matrix->GetRotationMatrix()[4], _matrix->GetRotationMatrix()[7]);
-                // Even GEANT wedges (FSTW_1–6, placed with alphax=180°) have V pointing
-                // clockwise; odd wedges have V counterclockwise.  Normalize V to always
-                // point counterclockwise so that hitOnPlane[1] = r·sin(dphi) is consistent
-                // across all sensors.  Test: (U × V)·ẑ < 0 means V is clockwise.
-                if (u.Cross(v).Z() < 0) v = -v;
+                // V is deliberately NOT normalised to counterclockwise any more.
+                // The front/back wedge flip is exactly what the rotation encodes, and
+                // normalising it away forced the decode to re-supply the orientation
+                // from hardcoded constants -- which is where the missing kFstzFilp
+                // (mirrored middle disk) came from.  Measuring the strip position in
+                // the sensor's OWN local frame and letting this matrix carry it to
+                // global is correct for either placement, and makes a new AGML tag
+                // (Flemming's wedge flip) flow through with no code change.
+                if ( phi1 || phi2 ){
+                    TGeoShape *shape = _node ? _node->GetVolume()->GetShape() : 0;
+                    if ( shape && shape->InheritsFrom("TGeoTubeSeg") ){
+                        if (phi1) *phi1 = ((TGeoTubeSeg*)shape)->GetPhi1();
+                        if (phi2) *phi2 = ((TGeoTubeSeg*)shape)->GetPhi2();
+                    }
+                }
                 if ( _verbose ){
                     LOG_INFO << "FST Sensor " << index << " origin: " << x << ", " << y << ", " << z << endm;
                     LOG_INFO << "\tSensor " << index << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;

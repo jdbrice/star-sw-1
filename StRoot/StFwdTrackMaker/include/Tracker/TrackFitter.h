@@ -500,18 +500,42 @@ class TrackFitter {
         // global rotation.  kFstzDirct[e] = +1 if strips count counterclockwise, -1 if
         // clockwise, so dphi = kFstzDirct[e] * (strip_phi - phi_half) gives the correct
         // signed angular offset in global phi.
-        // V is normalised to counterclockwise in getFstSensorOrigin, so no sign flip needed
-        // here for even vs odd GEANT wedges.
+        // V is NOT normalised: the sensor's own local frame carries the front/back
+        // flip, so no sign convention is needed here.
         // For FTT, the stored global position is projected directly onto the plane.
         TVectorD hitOnPlane(2);
         if (fh->isFst() && fh->_localPosition[0] >= 0.f) {
-            const float phi_half = 0.5f * kFstNumPhiSegPerWedge * kFstStripPitchPhi;
-            int   electronicWedge = (fh->_genfit_plane_index / 3) % 12;
-            float r        = fh->_localPosition[0];
-            float dphi     = kFstzDirct[electronicWedge] * (fh->_localPosition[1] - phi_half);
-            float r_origin = plane->getO().Perp();              // radial distance of plane origin
-            hitOnPlane[0]  = r * TMath::Cos(dphi) - r_origin;
-            hitOnPlane[1]  = r * TMath::Sin(dphi);
+            // Strip -> position taken ENTIRELY from the sensor's own AGML shape, in the
+            // sensor's own local frame; the node matrix (u,v, un-normalised) then carries
+            // it to global.  Nothing here depends on kFstzFilp / kFstzDirct /
+            // kFstStripGapPhi: the per-wedge and per-disk flips ARE the placement, and
+            // the 1 degree gap IS the outer shapes' phi limits.
+            // Mapping measured from data (script/fstLocalMap.C), pitch 0.234375 deg:
+            //   hit sensor 0 = inner, FTUS_3, shape [345,375], 128 strips, phi DECREASING
+            //   hit sensor 1 = outer, FTUS_1, shape [344.5,359.5], 64 strips, increasing
+            //   hit sensor 2 = outer, FTUS_2, shape [0.5,15.5],   64 strips, increasing
+            // Cross-check: geometry puts inner strip 0 at 375 - 0.5*0.234375 = 374.883,
+            // and the data says 374.883.
+            const int gidx   = fh->_genfit_plane_index;
+            const int sensor = gidx % 3;                    // 0 inner, 1 and 2 outer
+            const double phi1 = ( gidx < (int)mFstSensorPhi1.size() ) ? mFstSensorPhi1[gidx] : 0;
+            const double phi2 = ( gidx < (int)mFstSensorPhi2.size() ) ? mFstSensorPhi2[gidx] : 0;
+            const float  r    = fh->_localPosition[0];
+            // recover the strip index this hit came from
+            const double strip  = fh->_localPosition[1] / kFstStripPitchPhi;
+            const int    nStrip = (sensor == 0) ? kFstNumPhiSegPerWedge : kFstNumPhiSegPerWedge / 2;
+            const double pitch  = (phi2 - phi1) / nStrip;   // degrees per strip
+            double phiLocalDeg;
+            if (sensor == 0) {                              // inner: strip counts down in phi
+                phiLocalDeg = phi2 - (strip + 0.5) * pitch;
+            } else {                                        // outer: strip counts up in phi
+                const double sLocal = (sensor == 2) ? (strip - kFstNumPhiSegPerWedge / 2) : strip;
+                phiLocalDeg = phi1 + (sLocal + 0.5) * pitch;
+            }
+            const double phiLocal = phiLocalDeg * TMath::DegToRad();
+            float r_origin = plane->getO().Perp();          // radial distance of plane origin
+            hitOnPlane[0]  = r * TMath::Cos(phiLocal) - r_origin;
+            hitOnPlane[1]  = r * TMath::Sin(phiLocal);
         } else {
             TVector3 diff = TVector3(fh->getX(), fh->getY(), fh->getZ()) - plane->getO();
             hitOnPlane[0] = diff.Dot(plane->getU());
@@ -818,7 +842,10 @@ class TrackFitter {
         {
             TVector3 u(1, 0, 0); 
             TVector3 v(0, 1, 0);
-            TVector3 o = fwdGeoUtils.getFstSensorOrigin(globalSensorIndex, u, v);
+            double sphi1 = 0, sphi2 = 0;
+            TVector3 o = fwdGeoUtils.getFstSensorOrigin(globalSensorIndex, u, v, &sphi1, &sphi2);
+            mFstSensorPhi1.push_back(sphi1);
+            mFstSensorPhi2.push_back(sphi2);
             if (kVerbose > 1) {
                 LOG_INFO << "Adding FST Sensor " << globalSensorIndex << " at " << o.X() << ", " << o.Y() << ", " << o.Z() << endm;
                 LOG_INFO << "\tSensor " << globalSensorIndex << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;
@@ -1019,6 +1046,10 @@ class TrackFitter {
     // Store the planes for FTT and FST
     vector<genfit::SharedPlanePtr> mFttPlanes;
     vector<genfit::SharedPlanePtr> mFstSensorPlanes; // 108 planes, one for each sensor
+    // Azimuthal limits of each sensor's AGML shape, in its own local frame (degrees).
+    // This is where the 1 degree outer gap lives, so the strip decode reads it from
+    // here instead of from kFstStripGapPhi.
+    vector<double> mFstSensorPhi1, mFstSensorPhi2;
 
     genfit::SharedPlanePtr mEpdPlane; // EPD plane
 
