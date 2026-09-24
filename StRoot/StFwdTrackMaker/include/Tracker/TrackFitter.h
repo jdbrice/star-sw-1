@@ -47,7 +47,7 @@ class TrackFitter {
     TVector3 getCurrentSeedPosition() const { return mCurrentSeedPosition; }
 
     // this is used rarely for debugging purposes, especially to check/compare plane misalignment
-    static constexpr bool kUseSpacePoints = true; // use spacepoints instead of planar measurements
+    static constexpr bool kUseSpacePoints = false; // use spacepoints instead of planar measurements
     static constexpr int kVerbose = 0; // was 1 -- unconditional per-track-fit LOG_INFO spam, dominant source of MC log bloat (~4M lines/run in QCD bg sample)
 
     void clear(){
@@ -129,8 +129,11 @@ class TrackFitter {
             mBField = std::unique_ptr<genfit::AbsBField>(new genfit::ConstField(0., 0., 0.)); // ZERO FIELD
             LOG_INFO << "StFwdTrackMaker: Tracking with ZERO magnetic field" << endm;
         } else {
-            mBField = std::unique_ptr<genfit::AbsBField>(new StarFieldAdaptor());
-            LOG_INFO << "StFwdTrackMaker: Tracking with StarFieldAdapter" << endm;
+            const bool   fstConstBz = mConfig.get<bool>("TrackFitter:fieldFstConstBz", true);
+            const double zMaxField  = mConfig.get<double>("TrackFitter:fieldZMax", 450.);
+            mBField = std::unique_ptr<genfit::AbsBField>(new StarFieldAdaptor(fstConstBz, zMaxField));
+            LOG_INFO << "StFwdTrackMaker: Tracking with StarFieldAdapter (fieldFstConstBz=" << fstConstBz
+                     << ", fieldZMax=" << zMaxField << ")" << endm;
         }
         // we must have one of the two available fields at this point
         // note, the pointer is still bound to the lifetime of the TackFitter
@@ -713,7 +716,14 @@ class TrackFitter {
             /******************************************************************************************************************
             * If the Primary vertex is included
             ******************************************************************************************************************/
-            if ( kUseSpacePoints || fh->isPV() ) {
+            // EPD/FCS-pres hits (kFcsPresId) have no plane in getPlaneFor(), which
+            // handles only FST and FTT. addEpdHits() appends them to the SHARED seed
+            // for every track type (FwdTracker.h:636, no guard), so under
+            // kUseSpacePoints=false they were silently dropped from Global and
+            // Primary too -- measured ~2.1 per event. Treat them like the PV: keep
+            // them as spacepoints whatever the flag says, so the flag means
+            // "FST/FTT planar vs spacepoint" and nothing else.
+            if ( kUseSpacePoints || fh->isPV() || fh->isEpd() ) {
                 LOG_DEBUG << "Treating " << hitType << " hit as a spacepoint" << endm;
                 auto tp = createTrackSpacepointFromMeasurement( mFitTrack, fh, hitId );
                 if (tp == nullptr) {
@@ -897,6 +907,23 @@ class TrackFitter {
      */
     bool warmFitFstTightSigma( Seed_t &seed ) {
         if ( !mFitTrack || !mWarmFitter ) return false;
+        // The warm pass works on mFitTrack in place. When it does not converge the
+        // caller keeps the previous result (momentum, flags), but the Track object
+        // would be left in the diverged state that setDCA, the detector projections
+        // and FCSTRK then extrapolate from ("Already extrapolated 361 deg"). On
+        // field-on 2022 data that was 57% of warm passes and 40% of stored tracks.
+        // Keep a copy and put it back.
+        genfit::Track backup( *mFitTrack );
+        const bool ok = warmFitFstTightSigmaInPlace( seed );
+        if ( !ok ) {
+            mFitTrack->swap( backup );
+            // swap() leaves each TrackPoint's back-pointer on the Track it came from
+            for ( auto tp : mFitTrack->getPoints() ) tp->setTrack( mFitTrack.get() );
+            for ( auto tp : backup.getPoints() )     tp->setTrack( &backup );
+        }
+        return ok;
+    }
+    bool warmFitFstTightSigmaInPlace( Seed_t &seed ) {
 
         // Step 1: re-seed from fitted state
         try {
