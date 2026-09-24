@@ -1,0 +1,48 @@
+﻿Hi Akio,
+
+Sorry for the late response, I was away for a while.
+
+To answer your questions:
+1. I am using my own format for numbering, specifically:
+
+	a. the hit data uses global wedge numbers 1г6
+
+	b. the QA tree(what I show in pdf) uses disk 0в and wedge 0б1. 
+Also, sensors 1 and 2 are the two outer halves, but their positions on 
+the positive/negative local-phi side swap with wedge orientation.
+
+	i. For each QA disk, wedge 0 ʩs the global center phi +75 degree 
+one, wedge 1 is + 45 degree and so on. Until wedge 11 reaches +105 degree 
+(so clockwise starting from Ҷertical")
+
+	ii. From my understanding, the AGML geometry uses FTUS_3 for inner 
+(my sensor0), and my sensor 1 and sensor 2 follows FTUS_1, FTUS_2
+
+2. I am not using the STARDb misalignment. I am starting off with ideal 
+geometry, and all Iխ solving is deviation from ideal geometry cache. In 
+my understanding, as long as my starting geometry is not too far off and 
+the solver works that should be fine
+
+3. I donմ have ҩterationӠfor alignment yet. Eventually I will. I have 
+not. Thought of a plan because for the first pass I want to see what 
+happened when I input algebraic solverճ misalignment solution and do a 
+manual refit with the afterburner.
+
+	a. Eventually I would need to write refitting, I donմ really have a 
+plan though. My hope is in each step I donմ need to rebuild fGeom.root, 
+and I can use the said misalignment macro
+
+	b. Currently there is no application of misalignement anywhere from 
+my code. Thatճ the immediate next step though
+
+4. The local measurements are saved (r, phi strip) in wedge level, so Iխ 
+afraid I canմ do sensor level tuning. ʔo do half disk/ disk level my plan 
+is to use some sort of Lagrange multiplier/constraints with the 
+individual wedge solver.
+
+I also canմ join todayճ meeting due to some personal commitments. I have 
+slides that I will circulate, and I appreciate comments as Iխ writing 
+the 3-D solver and misalignment application for the immediate next step.
+
+Best,
+

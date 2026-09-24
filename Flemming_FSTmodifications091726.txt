@@ -1,0 +1,66 @@
+﻿FST modifications 8/12/2026
+
+STAR_FST_Cone_info
+
+
+1. Implementation of FST support structure for run 22-26.
+Based of engineering drawings from Rahul, inspection and measurements for 1/2 detector taken out during STAR decommisioning.
+All volumes place in CAVE between CONE structures and FST master volume.
+
+
+Code used. Modified or new
+
+~videbaks/star-sw-1/StarVMC/Geometry/FstmGeo/
+
+modefied code:
+FstmConfig.xml
+FstmGeo.xml  FstmGeoM.xml  FstmGeoS.xml  FstmGeoSM.xml
+
+new code:
+
+FstoConfig.xml    FstoGeo1.xml
+
+Configuration used for testing in StarGeo.xml
+y2025 with option for Fst support (simplified and misaligned
+
+    <Construct sys="fstm" config="FSTMv2sm" />
+    <Construct sys="fsto" config="FSTOon"/>
+If you want the version with the mirror position of the replace the FSTMv2sm with FSTMv1sm which gives you the original code.
+This feature to easily get the original implementation was coded following our 09/16/26 discussion.
+
+
+The files in ~/star-sw-1/StarDb/Geometry/fst/
+were modified for root-5 by omitting the #include file as we discussed.
+The Cint macro that was in repository was hssOnFst.20211110.C was change to unitary transformation, and the original is also there with an obvious name.
+
+
+Note We should discuss if the other configuration should be modified to adapt the mirrored configuration.
+My suggestion is to do this for the FstmGeoM.mxl since it can be done as the Simplified geometry.
+
+Small notes:
+- Tested both with starsim (to get pictures) and with root4star (dev version root-5)
+- The cones structure as is in SconGeo.xml version SCON14 has the wrong radia and material the FST region and actual an overlap with the FST holding rings that are attached to the cone.
+
+--
+
+The following has been tested but not ready for implementation. Maybe this can be discussed next week .
+
+
+A new SupportCone geometry SCON was developed by Yuri in AgFortran.
+I implemented this in AgMl. It is based on Subatech construction Drawings, John Schleiblen drawing in 2009(7).
+Cross checked Yuri implementation with drawings. Should be valid geometry since removal of SVT in 2007.
+
+~videbaks/star-sw-1/StarVMC/Geometry/SconGeo
+
+
+New files:
+
+SconConfig.xml   SconGeo15.xml
+
+
+Usage in y 024  geometry def in my Stargeo directory
+   <Construct sys="scon" config="SCON15"  />
+
+
+
+

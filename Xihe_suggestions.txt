@@ -1,0 +1,194 @@
+Hi Xihe,
+
+Thanks — no problem about the delay. Your answers line up well with what we have been
+measuring from the data this week. Short version first, details below for reference.
+
+MY MAIN SUGGESTIONS
+
+  (A) Your final alignment should land as the geometry misalign tables
+      ($STAR/StarDb/Geometry/fst/*.C -> AGML -> fGeom.root), not as constants in code.
+      That is the one place both reconstruction and simulation can read it from.
+
+  (B) Work in kUseSpacePoints = false (planar) mode, with my fixes and Flemming's new
+      geometry. That gets you the correct per-sensor z, and it keeps you inside the AGML
+      transform instead of the various hardcoded geometry conventions scattered outside it.
+
+  (C) Rebuilding fGeom.<version>.root for each iteration costs only ~30 seconds, and it
+      leaves a clean record of every pass. Cheaper than any on-the-fly scheme, and
+      iteration and the final result then use exactly the same application point.
+
+  (D) Once we have the ~cm sTGC survey offsets in the misalign tables, that should be
+      your starting point rather than ideal geometry — we measure the FST-to-sTGC offset
+      at ~1.2 cm per half in x and ~0.9 cm in y, which is sTGC-scale, not FST-scale.
+
+  (E) One caveat on (B): the fixes are not in the repo you have. I found four separate
+      bugs in the planar path this week (wrong sensor -> FTUS plane mapping, a mirrored
+      middle disk, dropped EPD hits, and the 1 degree gap) and fixing them took the
+      FST->sTGC match from 5.4% back to 17.5%, level with the spacepoint path. I am
+      finishing the full-statistics comparison now and will send you a short page with
+      the fix list before you build on that mode.
+
+
+1. YOUR NUMBERING IS THE SAME AS THE DB/MuDst ONE
+-------------------------------------------------
+We measured the stored wedge index against global phi straight out of a MuDst and got
+wedge 0 -> [60.12, 89.88] deg, wedge 1 -> [30.12, 59.88], wedge 2 -> [0.12, 29.88] ...
+i.e. centres at 75, 45, 15, ... 105, exactly your QA convention (clockwise from
+vertical, wedge 11 back at +105). So your QA numbering and the reconstruction's
+per-disk wedge index agree, and no translation is needed between them.
+
+
+2. YOUR SENSOR -> FTUS MAPPING IS RIGHT, AND THE TRACKING CODE HAD IT WRONG
+---------------------------------------------------------------------------
+You wrote that AGML uses FTUS_3 for inner (your sensor 0), with your sensors 1 and 2
+following FTUS_1 and FTUS_2. That is correct, and we confirmed it from data rather
+than from documentation: for every FST hit we transformed the stored global position
+into each of the three FTUS local frames of its wedge and kept the one whose shape
+actually contains the hit. Result:
+
+    hit sensor 0 (inner) -> FTUS_3, shape phi [345.0, 375.0], 128 strips, phi DECREASING
+    hit sensor 1 (outer) -> FTUS_1, shape phi [344.5, 359.5],  64 strips, phi increasing
+    hit sensor 2 (outer) -> FTUS_2, shape phi [  0.5,  15.5],  64 strips, phi increasing
+    pitch = 0.234375 deg everywhere
+
+Cross-check: the geometry puts inner strip 0 at 375 - 0.5*0.234375 = 374.883 deg, and
+the data says 374.883.
+
+Worth flagging: StFwdTrackMaker's own geometry helper did NOT have this. It used
+FTUS_(sensor+1), which puts inner hits on an outer sensor's plane and vice versa — a
+1.4 cm z error on two sensors out of three. We fixed it yesterday. If you are using
+FwdGeomUtils::getFstSensorOrigin, or anything derived from it, please pick up the fix
+or you will be solving for a misalignment that is partly this bug.
+
+
+3. THE SENSOR SIDE-SWAP YOU NOTICED IS THE WEDGE FLIP — AND YOU CAN LET GEOMETRY DO IT
+---------------------------------------------------------------------------------------
+You wrote that sensors 1 and 2 swap between positive and negative local phi with wedge
+orientation. Yes — that is the 180 degree x-rotation with which AGML places the
+front/back wedges, visible as zz = -1 in the node matrix. Half the wedges on a disk
+have it, and the set flips again from disk to disk.
+
+The useful part: in the sensor's OWN local frame the mapping is invariant — strip 0
+always sits at the shape's Phi1 — and the whole swap is carried by the node matrix. So
+if you build the local position from (r, phi strip) in the sensor frame and then apply
+the AGML local->global transform, you never need per-wedge sign bookkeeping at all.
+
+That is exactly what we changed in the tracker. The old code normalised the V axis to
+counter-clockwise (throwing the orientation away) and then re-supplied the direction
+from hardcoded per-wedge/per-disk sign tables — 36 sign bits, one of which was wrong,
+mirroring every wedge on the middle disk. Letting the matrix carry it reduces that to
+one rule per sensor type. I would recommend the same approach for your solver: it also
+means Flemming's new tag, which changes the wedge parity, flows through with no code
+change on your side.
+
+
+4. THE 1 DEGREE GAP LIVES IN THE AGML SENSOR SHAPES
+----------------------------------------------------
+Worth knowing because the transform alone will not give it to you: the 1 degree dead gap
+between the two outer sensors is in AGML, but in the sensor SHAPES (the outer phi limits
+above, +-0.5 to +-15.5), not in the matrices. FTUS_1 and FTUS_2 have IDENTICAL placement
+matrices — the shape is the only thing that distinguishes them. So a strip -> local
+position conversion has to read Phi1/Phi2; the local->global transform cannot say which
+half of the wedge a sensor covers.
+
+Take the gap from the shape and you never need the kFstStripGapPhi constant at all. That
+is what we did in the planar decode.
+
+(If you ever work from the MuDst global positions instead, be aware they carry a known
+1 degree per-half error from a sign bug in StFstHitMaker, which would be absorbed into
+your constants — see proposal_spacepointmode_fix.txt. It does not apply to the planar
+path.)
+
+
+5. WEDGE-LEVEL SOLVING IS FINE
+-------------------------------
+You said the local measurements are stored at wedge level, so sensor-level tuning is out
+for now. In planar mode that is fine: the per-sensor shape and placement come from AGML,
+so what you are solving for really is a wedge-level deviation on top of a correct
+per-sensor model.
+
+It is still worth splitting inner vs outer in your QA. In spacepoint mode a systematic
+inner-outer phi difference of 0.5-1 deg is expected from the gap bug above and is not
+misalignment; in planar mode that difference should be absent, which makes the split a
+useful check that you are really running the mode you think you are.
+
+
+6. "STARTING FROM IDEAL" IS THE RIGHT STARTING POINT
+-----------------------------------------------------
+Your deviations are absolute, not relative to the ~3 mm hssOnFst numbers, because nothing
+currently applies the DB survey to FST hit positions. In planar mode that stays clean:
+alignment enters once, through AGML, when the geometry is built with the misalign option.
+
+The tables are already the right shape for your output — see point 8. (The reconstruction
+side of the DB chain has its own problems, but they live entirely in the spacepoint path:
+proposal_spacepointmode_fix.txt.)
+
+
+7. ITERATION: DO YOU HAVE TO REBUILD fGeom.root EACH TIME?
+-----------------------------------------------------------
+Yes, and it is cheap. We timed a full misaligned build (bfc with the misalign option, AgML
+construction, export) at about 31 seconds — nothing against a reconstruction pass, so the
+rebuild is not a reason to invent an on-the-fly scheme.
+
+In planar mode the geometry IS the measurement, so new tables -> rebuild -> hits move,
+which is exactly the loop you want: edit tables, rebuild (30 s), rerun the afterburner,
+measure, repeat. The virtue is that there is one application point, and it is the same one
+the final result will use, so what you converge on is what production will apply.
+
+(In spacepoint mode rebuilding fGeom.root does essentially nothing to FST hits, which is
+the other reason to work in planar.)
+
+Two practical requirements: version the cache (fGeom.<tag>.<sdt>.root and a symlink, never
+overwrite in place — a stale fGeom.root means fitting new hits to old planes, silently),
+and record which table version produced each iteration's input, or pass 2 corrects on top
+of an unknown baseline.
+
+
+8. WHERE THE OUTPUT SHOULD LAND
+--------------------------------
+The DB hierarchy already defines the levels you are solving for:
+
+    fstOnTpc -> hssOnFst -> fstWedgeOnHss -> fstSensorOnWedge
+
+so wedge-level results belong in fstWedgeOnHss (36 rows, row = iwedgem + 12*idisk) and
+half-level in hssOnFst (2 rows, row = halfid) rather than in a new flat format — that is
+the indexing AGML expects, and it is what makes the misalign build work without a
+translation layer. The tables are already the right size — hssOnFst has 2 rows,
+fstWedgeOnHss 36 and fstSensorOnWedge 108, all filled in loops — they are simply identity
+today, so you are filling in values rather than creating structure, and no geometry file
+change goes with it.
+
+Sign convention, from AgPosition.h: Misalign takes options "+xyzr", where "+ is to real,
+- is to ideal". Whatever reconstruction does has to use the same sense.
+
+Each iteration should be a new timestamped entry rather than an edited file — that is
+what makes a pass reproducible and lets any past run be reprocessed with the alignment
+that was current then.
+
+
+9. AN INDEPENDENT FIGURE OF MERIT, IF USEFUL
+---------------------------------------------
+We now have an FST->sTGC matching test that does not use FST internal residuals at all:
+FST hits plus the TPC primary vertex are fitted, projected to the sTGC, and the sTGC
+hits near the projection are histogrammed — with the sTGC hits never added to the track,
+and an event-mixing null test to calibrate the background. On zero-field data it gives a
+match peak at about 53 sigma, and it responds sharply to geometry errors (turning on a
+wedge mirror takes it from 17.7% to 1.7%).
+
+Because it never sees FST residuals, an alignment cannot improve it by construction —
+so it is a fair acceptance test for each iteration. Happy to run it on your constants
+whenever you have a set.
+
+One thing it already told us, which may matter if your tracks ever involve the sTGC: the
+FST-to-sTGC offset is about 1.2 cm per half in x, antisymmetric (both halves toward the
+beam), plus about 0.9 cm common in y. That is four times too large to come from the FST
+survey (hssOnFst is 0.7-3.3 mm) and is the same size as the offsets in the sTGC survey,
+so it is an sTGC statement, not an FST one — but it would leak into an FST alignment
+done against sTGC-containing tracks.
+
+
+Happy to go through any of this on a call, and to send the small analysis macros behind
+points 1, 2 and 4 — they run directly on a MuDst and need no tracking.
+
+Best,
+Akio
