@@ -152,4 +152,5 @@ int StFttRawHitMaker::readMuDst() {
     StMuFttUtil util;    
     mFttCollection = util.getFtt(mufttColl);
     mEvent->setFttCollection(mFttCollection);
+    return kStOk;
 }

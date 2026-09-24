@@ -125,7 +125,7 @@ void StFttPointMaker::MakeLocalPoints(){
         clusters[ rob ][ clu->row() ][ clu->orientation() ].push_back( clu );
     } // loop on hit
 
-    
+    /*
     for ( size_t iRob = 1; iRob < StFttDb::nRob; iRob ++ ){
         for ( size_t iRowH = 0; iRowH < 3; iRowH++ ){
             size_t nH = clusters[ iRob ][ iRowH ][ kFttHorizontal ].size();
@@ -141,7 +141,7 @@ void StFttPointMaker::MakeLocalPoints(){
                 } // iH
             } // iRowV
         } // iRowH
-    } // iRob
+	} // iRob*/
 } // MakeLocalPoints
 
 void StFttPointMaker::MakeGlobalPoints() {

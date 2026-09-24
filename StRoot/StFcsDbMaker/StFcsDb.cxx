@@ -753,7 +753,6 @@ StThreeVectorD StFcsDb::getNormal(int det) const
   double detangle = getDetectorAngle(det)*M_PI/180.0;
   if( det%2==0 ){ detangle *= -1.0; } //North side use negative angle
   return StThreeVectorD( sin(detangle), 0 ,cos(detangle) );
-  double planenormal[3] = {sin(detangle),0,cos(detangle)};
 }
 
 StThreeVectorD StFcsDb::projectTrackToEcal(const g2t_track_st* g2ttrk, const g2t_vertex_st* g2tvert) const

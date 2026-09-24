@@ -241,6 +241,9 @@ class StPicoEvent : public TObject {
   /// Return jet patch threshold
   Int_t    jetPatchThreshold(const Int_t i) const  { return mJetPatchThreshold[i]; }
 
+  UShort_t pastCorruption() const {return mPastCorruption;}
+  UShort_t futureCorruption() const {return mFutureCorruption;}
+
   /// Return year
   Int_t    year() const;
   /// Return day number
@@ -431,6 +434,9 @@ class StPicoEvent : public TObject {
   void setBbcAdcEast(Int_t iPMT, Float_t bbcAdcEast);
   /// Set i-th PMT of east BBC
   void setBbcAdcWest(Int_t iPMT, Float_t bbcAdcWest);
+
+  void setPastCorruption(Int_t v) {mPastCorruption=(UShort_t)v;}
+  void setFutureCorruption(Int_t v) {mFutureCorruption=(UShort_t)v;}
 
   /// Set threshold for the high tower
   void setHighTowerThreshold(const Int_t i, const Int_t th) { mHighTowerThreshold[i] = (UChar_t)th; }
@@ -651,7 +657,7 @@ protected:
   UShort_t mBLCVtxNTracks;
 
 #if defined (__TFG__VERSION__)
-  ClassDef(StPicoEvent, 10)
+  ClassDef(StPicoEvent, 11)
 #else /* ! __TFG__VERSION__ */
   ClassDef(StPicoEvent, 9)
 #endif

@@ -48,7 +48,6 @@ TMatrixDSym makeFstCovMat(TVector3 hit, float rSize = kFstStripPitchR, float phi
     const float R = sqrt(x * x + y * y);
     const float cosphi = x / R;
     const float sinphi = y / R;
-    const float sqrt12 = sqrt(12.);
 
     const float dr = rSize;
     const float dphi = phiSize;
@@ -708,3 +707,4 @@ int StFwdHitLoader::loadEpdHitsFromStEvent( FwdDataSource::McTrackMap_t &mcTrack
 
     return mFwdHitsEpd.size();
 }
+

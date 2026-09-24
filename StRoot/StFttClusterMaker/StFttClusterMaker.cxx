@@ -118,7 +118,6 @@ StFttClusterMaker::Make()
     assert( mFttDb );
 
     LOG_INFO << "Found " << mFttCollection->rawHits().size() << " Ftt Hits" << endm;
-    ApplyHardwareMap();
 
     // InjectTestData();
 
@@ -134,31 +133,30 @@ StFttClusterMaker::Make()
 
     size_t nStripsHit = 0;
     for ( StFttRawHit* hit : mFttCollection->rawHits() ) {
-        UChar_t rob = mFttDb->rob( hit );
-        UChar_t so = mFttDb->orientation( hit );
-
+      mFttDb->hardwareMap( hit );
+      UChar_t rob = mFttDb->rob( hit );
+      UChar_t so = mFttDb->orientation( hit );
+    
         // Apply the time cut
-        if ( !PassTimeCut( hit ) ) continue;
-
+        if ( !PassTimeCut( hit ) ){ continue; }
+	
         if ( kFttHorizontal == so ){
-            hStripsPerRob[ rob ].push_back(hit);
-            nStripsHit++;
+	  hStripsPerRob[ rob ].push_back(hit);
+	  nStripsHit++;
         }
         if ( kFttVertical   == so ){
-            vStripsPerRob[ rob ].push_back(hit);
+	  vStripsPerRob[ rob ].push_back(hit);
             nStripsHit++;
         }
         if ( kFttDiagonalH   == so ){
-            dhStripsPerRob[ rob ].push_back(hit);
+	  dhStripsPerRob[ rob ].push_back(hit);
             nStripsHit++;
         }
         if ( kFttDiagonalV   == so ){
-            dvStripsPerRob[ rob ].push_back(hit);
+	  dvStripsPerRob[ rob ].push_back(hit);
             nStripsHit++;
         }
     } // loop on hit
-
-    
 
     size_t nClusters = 0;
     LOG_INFO << "StFttClusterMaker::Make{ nStripsHit = " << nStripsHit << " }" << endm;
@@ -410,7 +408,7 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
      * So this could be wrapped in a run range block, but
      * does no harm.
      */
-    const bool dedup = false;
+    const bool dedup = true;
     if ( dedup ){
         auto cmp = [](StFttRawHit* a, StFttRawHit* b) { 
             
@@ -423,7 +421,6 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
     
         // NOTE according to SO this is faster than using ctor
         set<StFttRawHit*, decltype(cmp)> s(cmp);
-        unsigned size = hits.size();
         for( auto h : hits ) s.insert( h );
         hits.assign( s.begin(), s.end() );
     }
@@ -438,7 +435,6 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
     if ( mDebug ) {
         LOG_INFO << "We have " << hits.size() << " hits after removing duplicates" << endm;
     }
-
 
     // Get the max ADC hit in this projection
     size_t anchor  = hits.size()+1;
@@ -493,13 +489,13 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
         for ( size_t i = left; i < right + 1; i++ ){
             clu->addRawHit( hits[i] );
         }
-
+	
         // Take ownership before calling CalculateClusterInfo so clu is not leaked on throw
         clusters.push_back( clu );
-
+	
         // Compute cluster information from the added hits
         CalculateClusterInfo( clu );
-
+	
         if (mDebug){
             LOG_INFO << *clu << endm;;
         }

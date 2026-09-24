@@ -99,3 +99,4 @@ operator<<( ostream &os, const StFttRawHit& rh )
     os << " ) " << endl;
     return os;
 }
+

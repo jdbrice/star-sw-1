@@ -12,22 +12,15 @@
 #include "St_base/StMessMgr.h"
 #include "StEvent/StFttRawHit.h"
 
-StFttCluster::StFttCluster() :
-mId(-1),
-mOrientation(kFttUnknownOrientation),
-mNStrips(0),
-mSumAdc(0.0),
-mX(0.0),
-mSigma(0.0),
-mMaxADC(0),
-mIndexMaxStrip(0),
-mMaxStripCenter(0),
-mMaxStripLeftEdge(0),
-mMaxStripRightEdge(0),
-mRawHits(0),
-mNeighbors(0)
+StFttCluster::StFttCluster()
 {
-
+  mX = 0.0;
+  mSigma = 0.0;
+  mMaxADC = 0;
+  mIndexMaxStrip = 0;
+  mMaxStripCenter = 0;
+  mMaxStripLeftEdge = 0;
+  mMaxStripRightEdge = 0;
 }
 
 
@@ -77,3 +70,4 @@ void StFttCluster::print() {
         i++;
     }
 }
+

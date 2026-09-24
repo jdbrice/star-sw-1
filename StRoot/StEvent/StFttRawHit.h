@@ -39,7 +39,7 @@ public:
 
     void setStripLength( Float_t mStripLength );
 
-    void setTime( Short_t mTime ) { this->mTime = mTime; }
+    void setTime( Short_t time ) { mTime = time; }
     void setIdTruth( UShort_t id ) { mIdTruth = id; }
     void setQaTruth( UShort_t qa ) { mQaTruth = qa; }
 

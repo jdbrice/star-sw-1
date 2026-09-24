@@ -1,0 +1,43 @@
+/*
+  AUTHOR
+  David Kapukchyan
+
+  PURPOSE
+  Cross check that the FCS clusters and points in StEvent matches the FCS clusters and points in StMuEvent since the cluster parent information is missing from #StMuFcsCollection
+
+  DESCRIPTION
+  Grab the cluster and point collection from StEvent and print out parent cluster information. This way I can try to  match with the parent cluster information from #StMuFcsCollection
+
+  CONCLUSIONS
+  @[February 23, 2026] > Sometimes, looking at StMuFcsPoint->nParentPoints() is correct but StMuFcsCluster->nPoints() is not correct
+
+
+  LOG
+  @[Februrary 23, 2026] > First instance where relevant functionality was copied from #StMuFcsAnaFillClusPoint and modified to grab information from StEvent
+  @[May 29, 2026] > Commented out printing for when I needed to test why the MuDsts did not contain the point-cluster associations
+  @[July 1, 2026] > Changed name from StMuFcsAnaCheckFillClusPoint to StFwdAnaCheckFillClusPoint
+*/
+
+
+#ifndef STFWDANA_STFWDANACHECKFILLCLUSPOINT_HH
+#define STFWDANA_STFWDANACHECKFILLCLUSPOINT_HH
+
+//#include "StEnumerations.h"
+//#include "StContainers.h"
+
+#include "StFwdAnaVirtual.h"
+
+class StFwdAnaCheckFillClusPoint : public StFwdAnaVirtual
+{
+public:
+  StFwdAnaCheckFillClusPoint();
+  ~StFwdAnaCheckFillClusPoint();
+
+  virtual UInt_t LoadHists(TFile* file, HistManager* histman, StFwdAnaData* anadata);
+  virtual Int_t DoMake(StFwdAnaData* anadata);
+  
+  ClassDef(StFwdAnaCheckFillClusPoint,1)
+};
+
+#endif
+
