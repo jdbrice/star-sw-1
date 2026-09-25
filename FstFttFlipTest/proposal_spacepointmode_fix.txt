@@ -1,0 +1,167 @@
+proposal_spacepointmode_fix.txt -- what is still wrong in the SPACEPOINT (kUseSpacePoints
+= true) path, and what it would take to fix.
+Written 2026-09-24 (akio + Claude). Companion to proposal_fst_wedge_flip.txt and
+proposal_fst_outer_overlap.txt. Measurements behind every number are on
+FstFttFlipTest/index.html#spacepoints.
+
+PRIORITY: LOW. None of this blocks alignment. The planar path (kUseSpacePoints = false)
+is now geometry-driven and takes its alignment straight from AGML, so it is the path
+alignment should use. Spacepoint mode stays as today's production default and as the
+"debug"/cross-check mode, and the items below are what would have to be done if it is to
+carry alignment too. Handing this to Daniel as the owner of that path.
+
+WHY THE TWO PATHS DIFFER AT ALL
+-------------------------------
+  kUseSpacePoints = true   the FST measurement is the global xyz stored in the MuDst by
+                           StFstHitMaker. fGeom.root is used only for projection and hit
+                           search, never for the measurement.
+  kUseSpacePoints = false  the FST position is rebuilt from the strip indices on the AGML
+                           sensor plane. The geometry is the measurement.
+
+Consequence: rebuilding fGeom.root with a misaligned geometry does essentially nothing to
+FST hits in spacepoint mode. That is the root of everything below.
+
+
+1. THE SURVEY IS APPLIED AND THEN EXACTLY CANCELLED
+---------------------------------------------------
+StFstHitMaker builds the hit position from strips, then:
+
+    geoMSensor->MasterToLocal(g, l);            // apply the survey chain
+    newHit->setLocalPosition(l);
+    ... later ...
+    geoMSensorOnGlobal->LocalToMaster(local, global);   // apply its exact inverse
+
+Same R%04i matrix, inverse operations, so the DB survey has NO effect on the stored
+global position, whatever is in the tables. (The code's own comment says as much.)
+
+
+2. StFstDb READS ROW 0 ONLY
+----------------------------
+StFstDb.cxx:56-70:
+
+    Survey_st *hssOnFst   = tables[1];   mGeoHMatrixHssOnFst.SetTranslation(&hssOnFst->t0);
+    Survey_st *wedgeOnHss = tables[2];   mGeoHMatrixWedgeOnHss.SetTranslation(&wedgeOnHss->t0);
+
+Only fstSensorOnWedge is iterated (for ... sensorsOnWedges++). The tables themselves are
+COMPLETE -- hssOnFst has 2 rows, fstWedgeOnHss 36, fstSensorOnWedge 108, all filled in
+loops -- so nothing needs creating. The defect is purely that the consumer takes row 0 and
+applies it everywhere: the left-half offset to both halves, wedge 1's constants to all 36.
+AGML, reading the same tables, indexes them correctly
+(row="iwedgem+12*idisk", row="halfid").
+
+THE TWO DEFECTS MASK EACH OTHER, so the order matters:
+
+    fix row indexing only      -> nothing changes, still cancelled
+    fix the cancellation only  -> left-half offset applied to all 36 wedges, ~3 mm,
+                                  wrong for 35 of them. WORSE than today.
+    fix both together          -> survey actually applied, per half and per wedge
+
+Whichever is done, it has to be one change, validated on data.
+
+
+3. THE 1 DEGREE OUTER-SENSOR GAP HAS THE WRONG SIGN
+----------------------------------------------------
+The gap term in StFstHitMaker is applied with the wrong sign, so every MuDst global
+position is affected. Measured on r/z-matched inner-outer hit pairs
+(script/fstGapSign2.C): <dphi> is flat at about -0.9 deg for one half of the wedge and
++0.85 deg for the other, i.e. a STEP of +1.63 deg across the wedge centreline.
+
+    gap correct      -> step 0 deg
+    gap missing      -> step 1.0 deg
+    gap sign wrong   -> step 2.0 deg     <- measured 1.63, a lower bound (diluted by
+                                            combinatoric background in the +-4 deg window)
+
+A step, flat on both sides, is the signature of a per-half offset; a wrong phiStart would
+give a constant shift and a wrong direction sign a linear trend. So it is the gap term.
+0.4 cm at r = 22 cm.
+
+StFwdHitLoader::applyFstGapFix (off by default) flips the sign and is the existing
+workaround. The planar path does not need it at all: it takes the outer sensors' phi
+limits from the AGML shape, where the gap actually lives.
+
+Knock-on for alignment done on spacepoint positions: this 1 deg per-half offset is
+absorbed into the constants as a spurious per-sensor phi offset. A wedge-level solve
+averages the two outer sensors, whose offsets have OPPOSITE sign and partly cancel, while
+the inner sensor carries no gap term -- so inner and outer disagree by 0.5-1 deg and the
+disagreement is not misalignment.
+
+
+4. EVERY HIT GETS THE DISK-CENTRE z
+------------------------------------
+StFstHitMaker.cxx:167-169 assigns 151.750 / 165.248 / 178.781 to every hit on a disk. The
+true per-sensor z alternates by wedge:
+
+    back-wedge inner  150.0081   error +1.742 cm
+    back-wedge outer  151.4031   error +0.347 cm
+    front-wedge outer 152.0969   error -0.347 cm
+    front-wedge inner 153.4919   error -1.742 cm
+
+So inner sensors are wrong by +-1.74 cm with the sign alternating front/back, a 3.48 cm
+spread. Transversely that is |dz|*tan(theta) ~ 1.7 mm at eta=3 (0.6 mm at eta=4, 2.8 mm at
+eta=2.5).
+
+Against today's residuals this is invisible -- the FST-to-sTGC offset is ~10 mm and the
+match width 4.5 mm, so 1.7 mm is a ~7% width change, below what the blind test resolves.
+Measured: planar (true per-sensor z) and spacepoint (disk centre) give 17.29% and 17.72%
+purity, i.e. equal within statistics.
+
+BUT the ranking changes as alignment improves, and this error is not a smearing: it is
+systematic and alternates front/back by wedge, which is exactly the pattern an alignment
+solver looks for. A wedge-level solve on spacepoint hits will absorb it into the
+constants as a fake front/back pattern rather than just widening the residual. That is the
+strongest argument for doing alignment in planar mode.
+
+An isolation test exists if we want the size of it today: apply the 4-z lookup at MuDst
+load time in StFwdHitLoader, keep spacepoint mode, rerun the blind test. That changes z
+and nothing else (the "quick test" in proposal_fst_outer_overlap.txt).
+
+
+5. TWO ROUTES, IF SPACEPOINT MODE IS TO CARRY ALIGNMENT
+--------------------------------------------------------
+  (a) Fix at the source: repair the row indexing (2) and remove the cancellation (1), and
+      fix the gap sign (3). Correct, but it only helps files that are reprocessed. Every
+      existing MuDst stays unaligned, and each file then needs to record which convention
+      it was written in.
+
+  (b) Apply once at load time in StFwdHitLoader, from the same DB tables. Works on
+      existing MuDsts, no reprocessing. The hook already exists: FstWedgeAligner is
+      exactly a load-time wedge-level alignment, just with hardcoded constants from
+      2026-07-07 instead of the DB. Replacing those with the properly indexed tables is
+      the "retire them into fstWedgeOnHss" step already called for in
+      proposal_fst_wedge_flip.txt.
+
+(b) is cheaper and is safe TODAY precisely because of defect 1: since the MuDst carries no
+survey at all, applying it at load time cannot double-count. The bug leaves a clean slate.
+
+Cautions if both paths are ever active at once:
+  - the two modes would take alignment from different sources (AGML for planar, the DB at
+    load time for spacepoint). They agree only because AGML's misalign reads the same
+    tables, so the tables must stay the single source of truth and a geometry rebuild must
+    follow any table change.
+  - load-time corrections are BYPASSED in planar mode (it uses _localPosition, not the
+    global xyz), so a load-time alignment silently does nothing there. Naturally exclusive,
+    so no double counting -- but that is accidental rather than designed and should be made
+    explicit in the code.
+  - the survey is x-y only: t2 = 0.0 in every row. No z alignment from this source.
+
+
+6. WHILE IN THERE
+------------------
+StFstHitMaker still has two TEMPORARY DEBUG LOG_INFO lines ("FSTDEBUG wedge=...") firing
+PER HIT in the global-position loop, left over from the wedge-step diagnosis. They should
+go.
+
+
+ACCEPTANCE TEST
+---------------
+Any of the above changes the FST hit positions, so validate on data, not on MC: MC
+digitisation (StFstSlowSimMaker.cxx:334) uses the same kFstzFilp x kFstzDirct that
+reconstruction uses, so MC runs position -> strip -> position and any convention error
+cancels exactly. MC closure looks perfect either way.
+
+The blind FST->sTGC test is the metric: FST + TPC vertex fitted, projected to the sTGC,
+sTGC hits never added to the track, event-mixing null for the background. Current
+reference numbers, zero-field run 23063028, 5 files, Primary tracks, window [-1,3]:
+
+    spacepoint  purity 17.72%  centre +1.027 cm  sigma 0.447  mean significance 53
+    planar      purity 17.29%  centre +1.042 cm  sigma 0.452  mean significance 41 (3 files)
