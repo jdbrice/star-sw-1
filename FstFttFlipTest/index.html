@@ -416,19 +416,15 @@ times that, at 30-90&nbsp;sigma, on every disk.</p>
 g100 Primary:</p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
-<TR BGCOLOR="#c0c0f0"><TH>quadrant</TH><TH>dx centre</TH><TH>&sigma;</TH><TH>signif.</TH>
-    <TH>dy centre</TH><TH>&sigma;</TH><TH>signif.</TH></TR>
-<TR><TD>A  x&gt;0, y&gt;0</TD><TD><b>-1.203 cm</b></TD><TD>0.547</TD><TD>32</TD>
-    <TD>+0.363 cm</TD><TD>0.603</TD><TD>10</TD></TR>
-<TR><TD>B  x&gt;0, y&lt;0</TD><TD><b>-1.525 cm</b></TD><TD>0.738</TD><TD>4.5</TD>
-    <TD>+0.854 cm</TD><TD>0.353</TD><TD>92</TD></TR>
-<TR><TD>C  x&lt;0, y&lt;0</TD><TD><b>+1.466 cm</b></TD><TD>0.900</TD><TD>15</TD>
-    <TD>+1.058 cm</TD><TD>0.406</TD><TD>104</TD></TR>
-<TR><TD>D  x&lt;0, y&gt;0</TD><TD><b>+1.181 cm</b></TD><TD>0.457</TD><TD>99</TD>
-    <TD>+0.833 cm</TD><TD>0.395</TD><TD>92</TD></TR>
-<TR BGCOLOR="#ccffcc"><TD><b>x&gt;0 half (A+B)</b></TD><TD><b>-1.245 cm</b></TD><TD>0.602</TD><TD>26</TD>
-    <TD colspan=3 ROWSPAN=2 ALIGN="center">y&gt;0 (A+D) <b>+0.763</b>, y&lt;0 (B+C) <b>+0.958</b></TD></TR>
-<TR BGCOLOR="#ccffcc"><TD><b>x&lt;0 half (C+D)</b></TD><TD><b>+1.189 cm</b></TD><TD>0.485</TD><TD>92</TD></TR>
+<TR BGCOLOR="#c0c0f0"><TH>quadrant</TH><TH>dx centre</TH><TH>signif.</TH>
+    <TH>dy centre</TH><TH>signif.</TH></TR>
+<TR><TD>A  +x,+y (upper right)</TD><TD>-1.21 cm</TD><TD>20</TD><TD><b>-2.62 cm</b></TD><TD>4</TD></TR>
+<TR><TD>B  +x,-y (lower right)</TD><TD>-1.63 cm</TD><TD>7</TD><TD><b>+0.71 cm</b></TD><TD>35</TD></TR>
+<TR><TD>C  -x,-y (lower left)</TD><TD>+1.10 cm</TD><TD>10</TD><TD><b>+0.97 cm</b></TD><TD>68</TD></TR>
+<TR><TD>D  -x,+y (upper left)</TD><TD>+1.22 cm</TD><TD>43</TD><TD><b>-2.54 cm</b></TD><TD>5</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD><b>x&gt;0 (A+B) / x&lt;0 (C+D)</b></TD>
+    <TD colspan=2><b>-1.32 / +1.22 cm</b> &mdash; antisymmetric</TD>
+    <TD colspan=2><b>top (A+D) -2.68, bottom (B+C) +0.89 cm</b></TD></TR>
 </TABLE>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
@@ -454,20 +450,14 @@ g100 Primary:</p>
   <li><b>It is an offset, not a scale.</b> A scale error would grow with |x|, hence with disk number.
       It shrinks instead, in every quadrant: quadrant D goes +1.245, +1.180, +1.166,
       +1.130&nbsp;cm over disks 0-3, quadrant A -1.316 &rarr; -1.061.</li>
-  <li><b>dy is common-mode.</b> All four quadrants have the same sign, +0.36 to +1.06&nbsp;cm, mean
-      +0.86&nbsp;cm. This one really is a translation in y (and it too shrinks with disk number,
-      +0.98 &rarr; +0.66&nbsp;cm in quadrant D, so a small angular term sits on top of both).
-      <br><i>Caveat (2026-09-24): the quadrant index here is assigned from the sign of the hit's own
-      y, but the physical sTGC quadrant boundary is at y &asymp; +10&nbsp;cm, not y = 0. So hits with
-      0 &lt; y &lt; 10 are labelled with the wrong quadrant and the dy split is smeared. The dx split
-      is unaffected, since that boundary really is at x = 0 &mdash; which is why dx came out cleanly
-      antisymmetric and dy did not. Redoing the split on the true boundary should sharpen the dy
-      structure into a per-quadrant measurement.</i></li>
-  <li><b>The single-Gaussian dx numbers in the table above therefore understate the signal.</b> The
-      unsplit fit locks onto the larger (x&lt;0) peak and treats the other as background: 65839 peak
-      entries against 110255 when the halves are fitted separately. Correcting for that, the true
-      g100 Primary purity is about <b>22%</b> rather than 17.5%. The H (dy) numbers are unaffected,
-      since dy has no such split.</li>
+  <li><b>dy splits top from bottom</b> (corrected 2026-09-25). The top pair sits at
+      -2.6&nbsp;cm and the bottom pair at +0.85&nbsp;cm &mdash; a 3.4&nbsp;cm split, not the
+      common-mode translation this section originally reported. The earlier number was an
+      artefact: the quadrant index was taken from the sign of the hit's own y, but the sTGC
+      quadrant origins all sit <b>8.4-9.5&nbsp;cm above the beampipe</b> (StFttDb
+      X/Y_shift_Quad*), so every hit with 0 &lt; y &lt; ~9&nbsp;cm was labelled with the wrong
+      quadrant and the top quadrants were diluted with bottom-quadrant hits. dx was never
+      affected, because A/D really do divide near x = 0.</li>
 </ul>
 
 <p>So the thing to check against the sTGC survey is not "a 1&nbsp;cm offset" but two separate
@@ -656,10 +646,10 @@ non-trivial one:</p>
 <p>That is 0.7-2.3&nbsp;mm in x and ~3.0-3.3&nbsp;mm in y. What we measure between FST and sTGC is
 <b>~1.2&nbsp;cm per half in x</b> (antisymmetric; the residual points towards the beam, so the
 <i>correction</i> moves each half outward and the two halves ~2.4&nbsp;cm apart) and
-<b>~0.9&nbsp;cm common in y</b> &mdash; four times too large to come from the FST survey, and the
+<b>a ~3.4&nbsp;cm top/bottom split in y</b> &mdash; far too large to come from the FST survey, and the
 same size as the 1-2&nbsp;cm offsets the sTGC survey shows. So our number is an sTGC statement, and
 it is a specific prediction for the survey to confirm: <b>a half-separation error of ~2.4&nbsp;cm
-total in x, plus ~0.9&nbsp;cm common in y.</b></p>
+total in x, plus a ~3.4&nbsp;cm top/bottom split in y (top -2.6, bottom +0.85).</b></p>
 
 <H2>StFstDb uses row 0 only &mdash; new survey rows will be silently ignored</H2>
 <p><tt>StFstDbMaker/StFstDb.cxx</tt>:56-70 takes a single row from each of the half and wedge
