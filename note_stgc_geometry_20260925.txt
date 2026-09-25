@@ -1,0 +1,66 @@
+Note on the sTGC geometry: the survey z is in the XML but in no compiled library
+akio, 2026-09-25
+
+1. THE COMPILED GEOMETRY DOES NOT MATCH THE XML
+-----------------------------------------------
+StgmGeo1.xml (identical in $STAR/dev and in ~videbaks/star-sw-1) gives
+
+    STGM in CAVE   z = 338.8385   dz = 30.0
+    zplane         -26.4965  -8.8855  +8.7985  +26.5835
+    -> stations at  312.342   329.953   347.637   365.422    (spacing 17.61/17.68/17.79)
+
+Every compiled library we can reach gives instead
+
+    STFM local z   -26.0  -8.0  +8.0  +26.0
+    -> stations at  312.8385  330.8385  346.8385  364.8385   (uniform 18.0)
+
+Measured from the built geometry, station 1 gas gaps at z = 312.2544 and 313.4226,
+so the STFM centre is 312.8385. Checked in three places, all the same:
+
+    our fGeom.root (y2023, built 2026-06-27)
+    Flemming's y2024 / y2025      (his library built 2026-09-17)
+    a fresh build today against $STAR's library (built 2026-03-26)
+
+Difference, built minus XML:  +5.0, +8.9, -8.0, -5.8 mm.
+
+2. WHERE THE XML VALUES CAME FROM
+----------------------------------
+    7551fb9c4d  Daniel Brandenburg  2024-08-22
+    "Update Stgm geometry z-plane locations according to survey data (#707)"
+    "Move sTGC planes to match the z-locations measured as part of the precision
+     position survey. Use the z coord for quadrant A on each plane as the
+     z-location for the entire plane"
+
+That commit changed STGM's placement (307.65 -> 338.8385, dz 52 -> 30) and the four
+zplanes together. The built geometry has the NEW STGM z but round zplanes, so it
+matches neither the pre- nor the post-commit file. Whatever DEV builds from is not
+the StgmGeo1.xml that is in git.
+
+3. WHY IT MATTERS NOW
+----------------------
+- The next rebuild of StarGeometry moves the sTGC planes by up to 9 mm. Any sTGC
+  alignment constant derived against the current build has to be re-derived after it.
+- We are about to ask for a rebuild anyway, for the Geometry/stgc -> Geometry/ftt
+  namespace change (33 refs, StgmGeo1.xml only). That rebuild will pull the z change
+  in at the same time, so the two should be treated as one step, not two.
+- A precision sTGC position survey exists and only its z was used. The same campaign
+  should have the transverse numbers, which is exactly what we have been asking for.
+  Worth recovering rather than re-measuring.
+- The survey gave z PER QUADRANT and it was collapsed to one z per plane ("use the z
+  coord for quadrant A"). Each pentagon is placed separately in AGML, so all 16 could
+  carry their own z if the numbers are still available.
+
+4. WHAT WE WOULD LIKE
+----------------------
+a. Rebuild StarGeometry so the compiled geometry matches StgmGeo1.xml, and confirm
+   which source state DEV actually builds from.
+b. Make the Geometry/stgc -> Geometry/ftt rename in the same rebuild (Dmitry: stgc is
+   not a DB namespace; ftt is, and StFttDbMaker already uses Geometry/ftt and
+   Calibrations/ftt).
+c. If the per-quadrant survey z still exists, put it back per pentagon.
+
+Unrelated but in the same rebuild, for FST: FSTM as assembly="true" (Jason's
+suggestion) removes the mother-volume extrusion problem entirely -- with the ~3 mm
+survey applied we measured 66 extrusions, max 2.03 mm, because FSTM has only about
+1.3 mm of clearance. Zero true volume overlaps, so nothing is colliding; it is purely
+the envelope being too tight.
