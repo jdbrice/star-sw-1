@@ -40,8 +40,9 @@ MY MAIN SUGGESTIONS
 
           https://www.star.bnl.gov/protected/spin/akio/fcs/FstFttFlipTest/index.html#spacepoints
 
-      The code is on my branch and not yet pushed; happy to send you the diff, or we
-      can get it into a PR if you would rather build on it directly.
+      Since the Github/Gitea transition freeze is coming Monday, getting this into a PR
+      may take a while. Meanwhile you can see my whole code at
+          /star/u/akio/fcstrk11/star-sw-fwd
 
 More defaills : 
 
