@@ -7,6 +7,24 @@
 
 <H1>FST wedge flip and FTT X/Y flip: a blind A/B on zero-field data (2026-09-22)</H1>
 
+<p style="background-color:#eeeeff; padding:8px; border:1px solid #99a;">
+<b>Contents</b><br>
+<a href="index.html#blind">1. The blind A/B: method, result, conclusions</a> &mdash; which of the three
+   geometry switches is right<br>
+<a href="index.html#mirror">2. What the mirror result does and does not settle</a> &mdash; incl. the
+   wedge-phase test that decided it<br>
+<a href="index.html#stripmap">3. The FST strip mapping, checked on hits</a> &mdash; outer sensors,
+   inner&harr;outer, and the 1&deg; gap<br>
+<a href="index.html#offset">4. A real FST-to-sTGC misalignment</a> &mdash; the ~1 cm, and why the dx
+   peak is double<br>
+<a href="index.html#spacepoints">5. kUseSpacePoints true vs false</a> &mdash; what each path uses,
+   the five defects fixed in the planar path, and Flemming's new geometry running end to end<br>
+<a href="index.html#next">6. Consequences for alignment and geometry</a> &mdash; survey scale, the
+   StFstDb row-0 trap<br>
+</p>
+
+<a name="blind"></a>
+
 <p>Three geometry corrections have been switched ON together in every recent afterburner
 campaign, without ever being tested separately:</p>
 <ul>
@@ -278,6 +296,106 @@ the reconstructed hit &phi; must come out unchanged, and this blind measurement 
 test for that.</p>
 
 <HR>
+<a name="stripmap"></a>
+<H1>The FST strip mapping, checked directly on hits (2026-09-23)</H1>
+
+<p>The wedge-phase test above says the <i>composite</i> strip&rarr;&phi; map is right. It does not say
+which of its pieces are right &mdash; two errors that compose to the identity are invisible to it.
+Following the question of whether the FST sensor-to-APV connection is what we assumed, these checks
+go after the individual pieces, using MuDst hits only and no tracking.</p>
+
+<p>The selection is the key: at zero field a track has the same &phi; on all three disks and the same
+r/z, so <b>pairs of hits are matched on r/z &mdash; polar angle, which is independent of &phi;</b>.
+The selection therefore cannot bias the &phi; answer. (A first attempt matched pairs within a wedge
+using a |&Delta;&phi;| cut; that is swamped by combinatorics &mdash; about 13 random same-wedge pairs
+per event &mdash; and it also cuts away the very population a mirror would produce. Both traps are
+avoided here.)</p>
+
+<H2>1. Strip numbering runs across the wedge row, not per sensor</H2>
+<pre>
+sensor 0 (inner) : meanPhiStrip    0 .. 127      128 strips over 30 deg
+sensor 1 (outer) : meanPhiStrip    0 ..  63
+sensor 2 (outer) : meanPhiStrip   64 .. 127
+</pre>
+<p>So <tt>phiOuter - D*meanPhiStrip*pitch</tt> with s in [0,127] spans the full 30&deg; and the two
+outer sensors do occupy different halves of the wedge &mdash; they are not stacked on each other.
+<b>Sensor identity enters the geometry only through the &plusmn;0.5&deg; gap term.</b>
+(<tt>script/fstStripRange.C</tt>)</p>
+
+<p>That also exposes an asymmetry worth knowing about in <tt>StFstHitMaker</tt>: the inner row is
+built from the <tt>phiStart</tt> edge running one way, the outer row from the <tt>phiStop</tt> edge
+running the other way &mdash;</p>
+<pre>
+inner:  local[1] = phiInner + D*meanPhiStrip*pitch;   // starts at the phiStart edge, runs +D
+outer:  local[1] = phiOuter - D*meanPhiStrip*pitch;   // starts at the phiStop edge,  runs -D
+</pre>
+
+<H2>2. The inner&harr;outer mapping is correct, and so is the outer half assignment</H2>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/fst_strip_mapping.png"><img src="plots/fst_strip_mapping.png" height=200></a></TD></TR>
+<TR><TD>Left: &Delta;&phi; for r/z-matched inner&ndash;outer pairs (blue) against the mirrored
+        hypothesis &Delta;&phi;&minus;2&delta; (red). Right: &lt;&Delta;&phi;&gt; versus where the
+        outer hit sits in its wedge &mdash; a step, not a trend.</TD></TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>hypothesis</TH><TH>predicted peak</TH><TH>within &plusmn;2&deg;</TH><TH>rms</TH></TR>
+<TR BGCOLOR="#ccffcc"><TD>mapping correct</TD><TD>&Delta;&phi; = 0</TD><TD><b>69.0%</b></TD><TD>6.3&deg;</TD></TR>
+<TR><TD>inner&harr;outer mirrored</TD><TD>&Delta;&phi; = 2&delta;</TD><TD>10.1% (flat)</TD><TD>15.5&deg;</TD></TR>
+</TABLE>
+
+<p>A sharp peak at zero, and the mirrored variable is flat. So the opposite numbering directions in
+the code are self-consistent with the hardware: hits from one track line up in &phi; across the
+inner and outer rows. The same peak excludes a <b>swap of the two outer sensors</b>, which would
+have displaced outer hits by 15&deg; and put the peak at &plusmn;15&deg; instead of at 0.
+(<tt>script/fstInnerOuter3.C</tt>)</p>
+
+<H2>3. The 1&deg; gap really is a sign error &mdash; not a start-&phi; or direction error</H2>
+
+<p>This is the cleanest discriminator on the page. &lt;&Delta;&phi;&gt; against the outer hit's
+position in its wedge, with no same-wedge cut so there is no truncation at the wedge edge:</p>
+<pre>
+delta_out   -14.5 ... -1.5  |  +1.5 ... +14.5
+&lt;dphi&gt;      -1.18 ... -0.35  |  +0.58 ... +0.63        step = +1.63 deg
+</pre>
+<p><b>Flat on both sides with a step at the wedge centre.</b> That is what a per-half offset does. A
+wrong <tt>phiStart</tt> would shift the whole wedge by a constant; a wrong direction sign would give
+a linear trend across the wedge. Neither makes a step at the centre.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>state of the gap term</TH><TH>predicted step</TH><TH>compatible?</TH></TR>
+<TR><TD>applied with the correct sign</TD><TD>0&deg;</TD><TD>no</TD></TR>
+<TR><TD>not applied at all</TD><TD>1.0&deg;</TD><TD>marginal</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD><b>applied with the wrong sign</b></TD><TD><b>2.0&deg;</b></TD><TD><b>yes</b></TD></TR>
+</TABLE>
+
+<p>Measured +1.63&deg; against 2.0&deg; predicted. The measurement is diluted towards zero by the flat
+combinatoric background inside the &plusmn;4&deg; window, so it is a lower bound &mdash; and it excludes
+0&deg; outright. <tt>applyFstGapFix</tt> flips each sensor's half-gap, changing the step by exactly
+&minus;2.0&deg;, so the fix is right in form and in size.
+(<tt>script/fstGapSign2.C</tt>)</p>
+
+<H2>What is and is not settled</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>piece of the mapping</TH><TH>status</TH><TH>evidence</TH></TR>
+<TR><TD>global wedge &phi; phase</TD><TD>correct</TD><TD>wedge-phase test, 66-79&sigma; flat to the wedge edge</TD></TR>
+<TR><TD>inner&harr;outer relative mapping</TD><TD>correct</TD><TD>r/z-matched pairs peak at &Delta;&phi;=0, 69% vs 10%</TD></TR>
+<TR><TD>outer sensor half assignment</TD><TD>correct</TD><TD>same peak; a swap would sit at &plusmn;15&deg;</TD></TR>
+<TR BGCOLOR="#ffe0e0"><TD>1&deg; outer-sensor gap sign</TD><TD><b>wrong as-is</b></TD><TD>step of +1.63&deg; at the wedge centre</TD></TR>
+<TR BGCOLOR="#ffffcc"><TD>how the pieces factorize</TD><TD><b>open</b></TD><TD>see below</TD></TR>
+</TABLE>
+
+<p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
+<b>Why a real front/back flip can still be true.</b> These measurements constrain the composite
+strip&rarr;&phi; map, not its factorization. "The physical flip is real <i>and</i> we count &phi;
+backwards within a wedge" composes to the identity: the reconstructed &phi; comes out correct
+&mdash; which is what we measure &mdash; while the description of why is wrong. The practical
+consequence is that a new AGML tag which changes the front/back parity must change the counting
+convention <b>in the same commit</b>. Fixing either one alone breaks a composite that currently
+works.</p>
+
+<HR>
 <a name="offset"></a>
 <H1>A real FST-to-sTGC misalignment</H1>
 
@@ -323,16 +441,28 @@ g100 Primary:</p>
 <p><b>Yes &mdash; the two peaks in X are the two halves.</b> The answer is clean:</p>
 <ul>
   <li><b>dx is antisymmetric in x.</b> The sign of the offset follows the sign of x, not of y:
-      the x&gt;0 half is at -1.25&nbsp;cm, the x&lt;0 half at +1.19&nbsp;cm. Reconstructed sTGC hits
-      sit ~1.2&nbsp;cm <b>closer to the beam line</b> than the FST says, in both halves. That is a
-      per-half x offset &mdash; the two halves are ~2.4&nbsp;cm closer together in the geometry than
-      in reality &mdash; and not a global translation, which would give the same sign everywhere.</li>
+      the x&gt;0 half is at -1.25&nbsp;cm, the x&lt;0 half at +1.19&nbsp;cm
+      (dx = x<sub>hit</sub> - x<sub>projection</sub>, <tt>FwdTracker.h</tt>:2322). So in both
+      halves |x<sub>hit</sub>| &lt; |x<sub>proj</sub>|: the reconstructed sTGC hits sit ~1.2&nbsp;cm
+      closer to the beam line than the FST tracks say they should.
+      <b>The correction therefore points outward, not inward</b>: each half has to move ~1.2&nbsp;cm
+      <i>away</i> from the beam, i.e. the two halves move ~2.4&nbsp;cm <b>apart</b>. That opens the
+      gap around the beampipe rather than closing it, so there is no question of the halves
+      colliding &mdash; the geometry currently has them too close together, and reality is wider.
+      It is a per-half offset, not a global translation, which would give the same sign
+      everywhere.</li>
   <li><b>It is an offset, not a scale.</b> A scale error would grow with |x|, hence with disk number.
       It shrinks instead, in every quadrant: quadrant D goes +1.245, +1.180, +1.166,
       +1.130&nbsp;cm over disks 0-3, quadrant A -1.316 &rarr; -1.061.</li>
   <li><b>dy is common-mode.</b> All four quadrants have the same sign, +0.36 to +1.06&nbsp;cm, mean
       +0.86&nbsp;cm. This one really is a translation in y (and it too shrinks with disk number,
-      +0.98 &rarr; +0.66&nbsp;cm in quadrant D, so a small angular term sits on top of both).</li>
+      +0.98 &rarr; +0.66&nbsp;cm in quadrant D, so a small angular term sits on top of both).
+      <br><i>Caveat (2026-09-24): the quadrant index here is assigned from the sign of the hit's own
+      y, but the physical sTGC quadrant boundary is at y &asymp; +10&nbsp;cm, not y = 0. So hits with
+      0 &lt; y &lt; 10 are labelled with the wrong quadrant and the dy split is smeared. The dx split
+      is unaffected, since that boundary really is at x = 0 &mdash; which is why dx came out cleanly
+      antisymmetric and dy did not. Redoing the split on the true boundary should sharpen the dy
+      structure into a per-quadrant measurement.</i></li>
   <li><b>The single-Gaussian dx numbers in the table above therefore understate the signal.</b> The
       unsplit fit locks onto the larger (x&lt;0) peak and treats the other as background: 65839 peak
       entries against 110255 when the halves are fitted separately. Correcting for that, the true
@@ -348,6 +478,236 @@ mechanical &mdash; the halves are the parts that move.</p>
 <p>Correcting this should raise the matching efficiency directly: the offsets are 2-3 times the
 0.45&nbsp;cm match width, so at present a large part of the genuine matches falls outside any window
 centred on zero.</p>
+
+<HR>
+<a name="spacepoints"></a>
+<H1>kUseSpacePoints: what the two paths actually use (2026-09-24)</H1>
+
+<p><tt>TrackFitter::kUseSpacePoints</tt> decides whether a hit enters the fit as a 3D point or as a
+2D measurement on a geometry plane. In one line: <b>true = trust the hit's stored 3D position;
+false = rebuild the position from strip numbers plus AGML geometry</b>. Everything below follows
+from that.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH></TH><TH>kUseSpacePoints = true (current default)</TH><TH>kUseSpacePoints = false</TH></TR>
+<TR><TD><b>genfit measurement</b></TD>
+    <TD>ProlateSpacepointMeasurement (FST), SpacepointMeasurement (FTT)</TD>
+    <TD>PlanarMeasurement</TD></TR>
+<TR><TD><b>what is measured</b></TD><TD>3D global point (x,y,z)</TD>
+    <TD>2D (u,v) within the sensor plane</TD></TR>
+<TR><TD><b>FST position source</b></TD>
+    <TD><tt>fh-&gt;getX/Y/Z()</tt> &mdash; the global xyz from the MuDst via StFwdHitLoader</TD>
+    <TD>re-derived: <tt>_localPosition</tt> (strip r, &phi;) placed on the AGML sensor plane</TD></TR>
+<TR><TD><b>FTT position source</b></TD><TD>global xyz</TD><TD>global xyz projected onto the plane</TD></TR>
+<TR><TD><b>geometry used</b></TD><TD>none for the measurement itself</TD>
+    <TD><tt>mFstSensorPlanes[108]</tt>, <tt>mFttPlanes[32]</tt> from fGeom.root</TD></TR>
+<TR><TD><b>z of an FST hit</b></TD><TD>the hit's own z = <b>disk centre</b> (151.75/165.25/178.78)</TD>
+    <TD>the plane's z = <b>true per-sensor z</b> (4 values per disk)</TD></TR>
+<TR><TD><b>the 1&deg; gap</b></TD>
+    <TD>from <tt>kFstStripGapPhi</tt>, sign currently wrong; <tt>applyFstGapFix</tt> corrects it</TD>
+    <TD BGCOLOR="#ccffcc">from the sensor's own AGML shape (Phi1/Phi2) &mdash; no constant involved</TD></TR>
+<TR><TD><b>strip-direction convention</b></TD>
+    <TD>implicit: StFstHitMaker used kFstzFilp[disk] &times; kFstzDirct[wedge]</TD>
+    <TD BGCOLOR="#ccffcc">none &mdash; the front/back flip is carried by the AGML node matrix</TD></TR>
+<TR><TD><b>covariance</b></TD><TD><tt>fh-&gt;_covmat</tt>, 3&times;3 global, prolate, largest error radial</TD>
+    <TD><tt>CovMatPlaneLocal</tt>, 2&times;2 in-plane</TD></TR>
+<TR><TD><b>hit types handled</b></TD><TD>all four (FST, FTT, PV, EPD)</TD>
+    <TD>FST and FTT only &mdash; PV and EPD have no plane</TD></TR>
+<TR><TD><b>sorting parameter</b></TD><TD>insertion index</TD><TD>plane id (FST 0-107, FTT +108)</TD></TR>
+<TR><TD><b>MC &mdash; StFstFastSimMaker</b></TD><TD>works (smeared global position)</TD>
+    <TD>works <i>by inversion</i>: back-computes strip indices from the position
+        (StFstFastSimMaker.cxx:460-484), so it can only reproduce whatever convention
+        StFstHitMaker has &mdash; it cannot expose a convention error</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD><b>MC &mdash; StFstSlowSimMaker</b></TD><TD>works</TD>
+    <TD><b>the one to use</b>: emits StFstRawHits that run through StFstRawHitMaker &rarr; cluster
+        maker &rarr; StFstHitMaker, the same path as data, so the strip indices are genuine</TD></TR>
+</TABLE>
+
+<H2>Why MC cannot see a convention error</H2>
+<p><tt>StFstSlowSimMaker.cxx</tt>:334 digitises with
+<tt>sgn = kFstzFilp[disk-1] * kFstzDirct[moduleIdx-1]</tt> &mdash; the <i>same</i> constants
+<tt>StFstHitMaker</tt> uses to reconstruct. So MC runs position &rarr; strip &rarr; position with one
+convention applied in each direction, and <b>any convention error cancels exactly</b>: the
+reconstructed hit lands back on the truth hit whether the convention is right or wrong.</p>
+<p>Data has only the strip &rarr; position half &mdash; the hardware did position &rarr; strip &mdash;
+so nothing cancels and the error is a real mis-positioning. That asymmetry is why this survived for
+years, and why it took data against an independent detector (the sTGC) to expose it. <b>Any future
+convention change must be validated on data; MC closure will look perfect either way.</b></p>
+
+<H2>The geometry already knew what the code was hardcoding</H2>
+<p>AGML carries both the wedge orientation and the 1&deg; gap. Read straight out of fGeom.root:</p>
+<pre>
+FTUS inner : shapePhi = [345.00, 375.00]   = +-15 deg, no gap
+FTUS outer : shapePhi = [344.50, 359.50]   = -15.5 .. -0.5 deg
+             shapePhi = [  0.50,  15.50]   = +0.5 .. +15.5 deg   &lt;-- the 1 deg gap is right here
+wedge orientation: the 180 deg x-rotation, visible as zz = -1 in the node matrix
+</pre>
+<p>The old decode used <b>neither</b>: it normalised the V axis to counter-clockwise (discarding
+the orientation) and substituted hardcoded constants, and it assumed 128 strips spread uniformly
+over 30&deg; with no gap. Measured consequence (<tt>script/fstPlanarDecode.C</tt>): the decoded
+&phi; offset was <b>anti-correlated with the real one on the middle disk</b> &mdash; every wedge
+there mirrored.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>FST disk</TH><TH>hits</TH><TH>slope d(real)/d(decoded)</TH><TH>correlation</TH></TR>
+<TR><TD>0</TD><TD>6417</TD><TD>+0.371</TD><TD>+0.377</TD></TR>
+<TR BGCOLOR="#ffe0e0"><TD>1 (middle, kFstzFilp = -1)</TD><TD>6640</TD><TD><b>-0.352</b></TD><TD><b>-0.358</b></TD></TR>
+<TR><TD>2</TD><TD>6582</TD><TD>+0.400</TD><TD>+0.406</TD></TR>
+</TABLE>
+
+<H2>What was fixed (2026-09-24)</H2>
+<p>Five defects, all in the planar path. The fix was not to patch the missing constant in, but to
+<b>stop discarding the geometry</b>: keep the real V axis, and take the strip &rarr; &phi; mapping
+from the sensor's own shape. <tt>kFstzFilp</tt>, <tt>kFstzDirct</tt> and <tt>kFstStripGapPhi</tt> no
+longer appear in this path at all.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>#</TH><TH>defect</TH><TH>effect</TH><TH>fix</TH></TR>
+<TR><TD>1</TD><TD>EPD/FCS-pres hits have no plane, and <tt>addEpdHits</tt> appends them to the
+    shared seed for every track type</TD><TD>~2.1 hits/event silently dropped, from Global and
+    Primary too</TD><TD>keep them as spacepoints, like the PV</TD></TR>
+<TR><TD>2</TD><TD>missing <tt>kFstzFilp[disk]</tt> in the decode</TD><TD>every wedge on the middle
+    disk mirrored, up to &plusmn;15&deg;</TD><TD>gone &mdash; the node matrix carries the flip</TD></TR>
+<TR><TD>3</TD><TD><tt>_localPosition</tt> is raw strip indices, so the loader's &phi; corrections
+    never reach it</TD><TD>no gap term at all, ~1&deg; per half</TD><TD>gap read from the sensor
+    shape's Phi1/Phi2</TD></TR>
+<TR><TD>4</TD><TD>sensor &rarr; FTUS mapping used <tt>(index%3)+1</tt></TD><TD>inner hits on an
+    outer plane and vice versa, 1.4&nbsp;cm z error on 2 sensors of 3</TD><TD>mapping measured from
+    data: 0&rarr;FTUS_3, 1&rarr;FTUS_1, 2&rarr;FTUS_2</TD></TR>
+<TR><TD>5</TD><TD>hardcoded volume path
+    <tt>/FSTM_1/FSTD_&lt;d&gt;/FSTW_&lt;w&gt;/FTUS_&lt;s&gt;</tt></TD>
+    <TD>every lookup fails on any <b>misaligned</b> geometry &mdash; all 108 planes fall back to the
+    origin, silently</TD><TD>sensors found by physics: disk from z, wedge from the bisector, sensor
+    from the shape</TD></TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/spacepoint_vs_planar.png"><img src="plots/spacepoint_vs_planar.png" height=200></a></TD></TR>
+<TR><TD>The blind FST&rarr;sTGC peak, 4 disks summed, each curve normalised to its own sideband.
+        Black = spacepoint, red = planar as it was, blue = planar after the fixes. Black and blue
+        lie on top of each other.</TD></TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>configuration</TH><TH>files</TH><TH>purity</TH><TH>peak centre</TH><TH>&sigma;</TH><TH>mean signif.</TH></TR>
+<TR><TD>spacepoint (kUseSpacePoints = true)</TD><TD>5</TD><TD>17.72%</TD><TD>+1.027 cm</TD><TD>0.447</TD><TD>53.0</TD></TR>
+<TR BGCOLOR="#ffe0e0"><TD>planar, as it was</TD><TD>5</TD><TD>5.43%</TD><TD>+1.093 cm</TD><TD>0.691</TD><TD>2.7</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD><b>planar, geometry-driven</b></TD><TD>3</TD><TD><b>17.29%</b></TD><TD>+1.042 cm</TD><TD>0.452</TD><TD>40.9</TD></TR>
+</TABLE>
+<p>So the two paths now agree within statistics. The planar path is the one to use for alignment,
+not because it resolves better today &mdash; it does not &mdash; but because it is the only one in
+which the geometry moves the FST hits at all.</p>
+
+<H2>Flemming's new geometry runs end to end</H2>
+<p>Built with <tt>build_geom_misalign.C</tt> against his library (2026-09-17), no changes to our
+tree. His <tt>y2024</tt> = FSTMv1sm and <tt>y2025</tt> = FSTMv2sm, differing only in the
+<tt>modulus2</tt> array that places each wedge front or back &mdash; a ready-made parity A/B.</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>geometry</TH><TH>FST parity vs the reconstruction constants</TH><TH>blind purity (4000 ev)</TH><TH>peak centre</TH></TR>
+<TR><TD>ours, y2023 FSTMv1 (full, ideal)</TD><TD>36 / 36 agree</TD><TD>17.47%</TD><TD>+1.030 cm</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD>Flemming y2024, FSTMv1sm</TD><TD>36 / 36 agree</TD><TD><b>17.02%</b></TD><TD>+1.020 cm</TD></TR>
+<TR><TD>Flemming y2025, FSTMv2sm</TD><TD><b>0 / 36</b> &mdash; every wedge flipped</TD><TD colspan=2><i>not yet run &mdash; see the caveat below</i></TD></TR>
+</TABLE>
+<p>y2024 gives the same answer as our own geometry despite a completely different volume tree, which
+is the 0th-level integration test passing. <b>Caveat on the parity question:</b> &phi; alone cannot
+decide it. Flipping the wedge flips the local&rarr;global &phi; map, so v2 with the current strip
+convention will mirror every hit &mdash; but re-deriving the convention against v2 restores it
+exactly. The two are degenerate in &phi;; only <b>z</b> breaks the tie, and that is a ~1.7&nbsp;mm
+effect (see below), currently below what this test resolves.</p>
+
+<H2>Misalignment bursts the FSTM envelope, and how to avoid it</H2>
+<p>With the survey tables applied (~3&nbsp;mm half offsets) the FST region develops <b>66 volume
+extrusions, max 2.03&nbsp;mm</b> &mdash; volumes poking out through the FSTM mother, 18 of them the
+silicon itself. <b>Zero true volume-volume overlaps</b>: sensors and their wedge material receive the
+same half- and wedge-level misalignment and move together rigidly, so nothing collides. The FSTM
+envelope simply has only ~1.3&nbsp;mm of clearance.</p>
+<p>It can be avoided for now by splitting the survey: the average goes to <tt>fstOnTpc</tt>, which
+moves all of FSTM, and only the differential stays per half.</p>
+<pre>
+fstOnTpc   t0 = +0.14876   t1 = -0.31702 cm      (the average)
+hssOnFst   Left  -0.07750 / +0.01600 cm          (the residual, max 0.775 mm)
+           Right +0.07750 / -0.01600 cm
+</pre>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH></TH><TH>extrusions inside FSTM</TH><TH>true overlaps</TH><TH>FST at CAVE level</TH></TR>
+<TR><TD>identity tables</TD><TD>0</TD><TD>0</TD><TD>0</TD></TR>
+<TR BGCOLOR="#ffe0e0"><TD>survey, all in hssOnFst</TD><TD><b>66</b>, max 2.03 mm</TD><TD>0</TD><TD>0</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD>survey, split as above</TD><TD><b>0</b></TD><TD>0</TD><TD>0</TD></TR>
+</TABLE>
+<p>The split is <b>physically identical</b> &mdash; 0 of 108 sensors move against the all-in-hssOnFst
+version &mdash; so it is pure bookkeeping. It is a reprieve, not a cure: per-wedge or per-sensor
+constants are differential by definition and cannot be absorbed into <tt>fstOnTpc</tt>, so FSTM still
+needs alignment headroom. Extrusions are not cosmetic for GEANT navigation, though our tracking only
+reads matrices and shapes and is unaffected. The sTGC envelopes are untested and are the bigger
+worry, at ~1&nbsp;cm.</p>
+
+<HR>
+<a name="next"></a>
+<H1>Consequences for alignment and geometry</H1>
+
+<H2>The ~1 cm is the sTGC, not the FST</H2>
+<p>The FST survey entry <tt>$STAR/StarDb/Geometry/fst/hssOnFst.20211110.000001.C</tt> is the only
+non-trivial one:</p>
+<pre>
+  //FST Left Half            //FST Right Half
+  row.t0   =  0.07126;       row.t0   =  0.22626;   // x offset [cm]
+  row.t1   = -0.30102;       row.t1   = -0.33302;   // y offset [cm]
+</pre>
+<p>That is 0.7-2.3&nbsp;mm in x and ~3.0-3.3&nbsp;mm in y. What we measure between FST and sTGC is
+<b>~1.2&nbsp;cm per half in x</b> (antisymmetric; the residual points towards the beam, so the
+<i>correction</i> moves each half outward and the two halves ~2.4&nbsp;cm apart) and
+<b>~0.9&nbsp;cm common in y</b> &mdash; four times too large to come from the FST survey, and the
+same size as the 1-2&nbsp;cm offsets the sTGC survey shows. So our number is an sTGC statement, and
+it is a specific prediction for the survey to confirm: <b>a half-separation error of ~2.4&nbsp;cm
+total in x, plus ~0.9&nbsp;cm common in y.</b></p>
+
+<H2>StFstDb uses row 0 only &mdash; new survey rows will be silently ignored</H2>
+<p><tt>StFstDbMaker/StFstDb.cxx</tt>:56-70 takes a single row from each of the half and wedge
+tables:</p>
+<pre>
+   Survey_st *hssOnFst   = tables[1];      mGeoHMatrixHssOnFst.SetTranslation(&amp;hssOnFst-&gt;t0);
+   Survey_st *wedgeOnHss = tables[2];      mGeoHMatrixWedgeOnHss.SetTranslation(&amp;wedgeOnHss-&gt;t0);
+</pre>
+<p>Only <tt>sensorsOnWedges</tt> is iterated (<tt>for ... sensorsOnWedges++</tt>). So populating
+<tt>hssOnFst</tt> with its 2 real rows and <tt>fstWedgeOnHss</tt> with 36 gives <b>the left-half
+offset applied to both halves, and wedge 1's offset applied to all 36 wedges</b>. AGML indexes the
+same tables correctly (<tt>row="iwedgem+12*idisk"</tt>, <tt>row="halfid"</tt>), so geometry and
+reconstruction would disagree.</p>
+<p>The tables themselves are <b>not</b> the problem &mdash; they are already the right size and are
+filled in loops: <tt>hssOnFst</tt> 2 rows, <tt>fstWedgeOnHss</tt> 36, <tt>fstSensorOnWedge</tt> 108,
+and on the sTGC side 16 / 4 / 1. Alignment fills in values rather than creating structure, and no
+geometry file change goes with it.</p>
+<p>This only affects the <b>spacepoint</b> path: the planar path takes alignment from AGML, which
+indexes the same tables correctly. There is a second defect there too &mdash; StFstHitMaker applies
+the survey matrix and then its exact inverse, so no survey reaches a hit position at all &mdash; and
+the two mask each other, so they have to be fixed together. Both are written up in
+<tt>proposal_spacepointmode_fix.txt</tt>.</p>
+
+<H2>kUseSpacePoints</H2>
+<p><b>Use <tt>false</tt> (planar).</b> As of 2026-09-24 that path is geometry-driven and measures
+the same as the spacepoint path &mdash; 17.29% against 17.72% on the same data
+(<a href="index.html#spacepoints">section 5</a>) &mdash; and it is the only mode in which the
+geometry moves the FST hits at all, so it is the one alignment can use. It should still become a
+macro/config switch rather than a compile-time constant, since flipping it changes every job.</p>
+<p>The remaining defects all sit in the <tt>true</tt> path and none of them block alignment: the DB
+survey is applied and then exactly cancelled, <tt>StFstDb</tt> reads row 0 only of the half and
+wedge tables, the 1&deg; gap carries the wrong sign, and every hit gets the disk-centre z. Written
+up in <tt>proposal_spacepointmode_fix.txt</tt> as a lower-priority cleanup for that path.</p>
+
+<HR>
+<a name="notes"></a>
+<H2>Working notes</H2>
+<ul>
+  <li><a href="Xihe_suggestions.txt">Xihe_suggestions.txt</a> &mdash; notes to Xihe on where FST
+      alignment should be done and where its output should land: work in planar mode, let AGML carry
+      the wedge flip and the 1&deg; gap, rebuild fGeom.root per iteration, and write results into the
+      existing <tt>fstWedgeOnHss</tt> / <tt>hssOnFst</tt> rows. Also records the sensor&rarr;FTUS
+      mapping and the wedge-index convention, both measured from data.</li>
+  <li><a href="proposal_spacepointmode_fix.txt">proposal_spacepointmode_fix.txt</a> &mdash; the
+      defects that remain in the <tt>kUseSpacePoints = true</tt> path, none of which block alignment:
+      the DB survey applied and then exactly cancelled, <tt>StFstDb</tt> reading row 0 only, the
+      1&deg; gap sign, and the disk-centre z. Low priority, for whoever owns that path.</li>
+</ul>
 
 <HR>
 <ADDRESS>
