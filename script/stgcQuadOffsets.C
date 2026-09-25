@@ -112,6 +112,19 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0){
   // measured from the geometry (script/pentMap.C), NOT A,B,C,D.
   const int k2q[4]={0,3,2,1};                       // k -> index into qn[] = A,B,C,D
   const char* k2qs[4]={"A,x>0,y>0","D,x<0,y>0","C,x<0,y<0","B,x>0,y<0"};
+  // The AGML placement is a symmetric PLACEHOLDER: the quadrant local origins sit at
+  // A(0,5.9) D(0,5.9) C(-6.5,5.9) B(+6.5,5.9), the same on every station. StFttDb knows
+  // the real positions. So the table has to carry BOTH terms:
+  //    pentOnStation = (StFttDb origin - AGML placeholder) + (our measured correction)
+  // Then AGML and StFttDb describe the same true position, and StFttDb can later be
+  // changed to compute dx,dy = placeholder + table instead of hardcoding.
+  const double phx[4]={ 0.0,  0.0, -6.5, +6.5};     // by k: A, D, C, B
+  const double phy[4]={ 5.9,  5.9,  5.9,  5.9};
+  // StFttDb per-plane origins (cm), indexed [k][station]
+  const double dbx[4][4]={{0.809,0.834,0.662,0.754},{-0.369,-0.496,-0.436,-0.375},
+                          {-10.751,-10.822,-10.987,-10.891},{11.274,11.214,11.330,11.349}};
+  const double dby[4][4]={{9.534,9.433,9.603,9.501},{9.570,9.440,9.555,9.416},
+                          {8.360,8.342,8.437,8.281},{8.424,8.337,8.361,8.381}};
   char path[512]; FILE* fp;
   sprintf(path,"%s/stgcOnTpc.20211112.000001.C",outdir); fp=fopen(path,"w");
   openTable(fp,"stgcOnTpc",1,"sTGC global offset from FST->sTGC residuals (blind matching, ZF run 23063028). correction = -average residual");
@@ -129,11 +142,16 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0){
   sprintf(path,"%s/pentOnStation.20211112.000001.C",outdir); fp=fopen(path,"w");
   openTable(fp,"pentOnStation",16,"per-quadrant offsets from FST->sTGC residuals. row = 4*station + k, k: 0=A 1=D 2=C 3=B (measured from the geometry, script/pentMap.C). correction = -(residual - global)");
   for(int d=0;d<4;d++) for(int k=0;k<4;k++){
-    int q=k2q[k]; char c[160];
-    double t0=0, t1=0;
-    if(gOK[d][q][0] && gOK[d][q][1]){ t0=-(gMu[d][q][0]-gx); t1=-(gMu[d][q][1]-gy); }
-    sprintf(c,"Station=%d(Disk=%d),Pent=%d(Quad=%s)%s", d+1,d,k+1,k2qs[k],
-            (gOK[d][q][0]&&gOK[d][q][1])?"":" NO V HITS - identity");
+    int q=k2q[k]; char c[200];
+    double geo0 = dbx[k][d]-phx[k];        // placeholder -> StFttDb
+    double geo1 = dby[k][d]-phy[k];
+    double cor0 = 0, cor1 = 0;             // measured alignment correction
+    bool haveCor = (gOK[d][q][0] && gOK[d][q][1]);
+    if(haveCor){ cor0=-(gMu[d][q][0]-gx); cor1=-(gMu[d][q][1]-gy); }
+    double t0 = geo0+cor0, t1 = geo1+cor1;
+    sprintf(c,"Station=%d(Disk=%d),Pent=%d(Quad=%s) geo(%+.3f,%+.3f)%s", d+1,d,k+1,k2qs[k],
+            geo0, geo1, haveCor ? Form(" + align(%+.3f,%+.3f)",cor0,cor1)
+                                : " ; NO V HITS - geometry term only");
     writeRow(fp, 4*d+k+1, t0, t1, c);
   }
   closeTable(fp); fclose(fp); printf(">>> wrote %s\n",path);
