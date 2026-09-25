@@ -38,7 +38,7 @@ MY MAIN SUGGESTIONS
       with what each one did and how it was fixed, plus the before/after plot, is in
       section 5 of the FST/FTT flip page:
 
-          .../FstFttFlipTest/index.html#spacepoints
+          https://www.star.bnl.gov/protected/spin/akio/fcs/FstFttFlipTest/index.html#spacepoints
 
       The code is on my branch and not yet pushed; happy to send you the diff, or we
       can get it into a PR if you would rather build on it directly.
