@@ -2347,15 +2347,32 @@ class ForwardTrackMaker {
             // "Matched" histograms (which use the correct convention via
             // horizontalMin_*/verticalMin_*), breaking the expected Matched-is-a-
             // subset-of-All relationship per bin.
-            // Quadrant index for the quadrant-split excess check (2026-07-21):
-            // A=0(x>0,y>0) B=1(x>0,y<0) C=2(x<0,y<0) D=3(x<0,y>0), matching
-            // StFttDb::getGloablOffset's quad==0 A convention. From the hit's
-            // own position -- quadrants are large, well-separated regions.
+            // Quadrant index for the quadrant-split check. A=0 B=1 C=2 D=3, matching
+            // StFttDb::getGloablOffset's quad==0 A convention.
+            //
+            // NOT from the sign of x,y (2026-09-25 fix). The four sTGC quadrants do
+            // NOT meet at the origin: every local origin sits ~8.4-9.5 cm ABOVE the
+            // beampipe, and B/C are pulled ~11 cm sideways, so they cluster above it
+            // (see ftt_sim_hit_maker/index.html). Taking the top/bottom split at y=0
+            // mislabels every hit with 0 < y < ~9 cm, which smeared the dy quadrant
+            // split. The dx split was unaffected because A/D really do divide near
+            // x=0. Use the real footprints from StFttDb instead: each quadrant owns
+            // the corner beyond its own origin, in the direction its sign flips send
+            // it (A +x+y, B +x-y, C -x-y, D -x+y). Hits in the band between them are
+            // left unassigned rather than forced into a neighbour.
             int qidx = -1;
-            if ( h->getX() > 0 && h->getY() > 0 ) qidx = 0;
-            else if ( h->getX() > 0 && h->getY() < 0 ) qidx = 1;
-            else if ( h->getX() < 0 && h->getY() < 0 ) qidx = 2;
-            else if ( h->getX() < 0 && h->getY() > 0 ) qidx = 3;
+            {
+                const int    pl = (int)disk;                      // sTGC plane 0-3
+                const double xh = h->getX(), yh = h->getY();      // cm
+                const double xA = StFttDb::X_shift_QuadA[pl]*0.1, yA = StFttDb::Y_shift_QuadA[pl]*0.1;
+                const double xB = StFttDb::X_shift_QuadB[pl]*0.1, yB = StFttDb::Y_shift_QuadB[pl]*0.1;
+                const double xC = StFttDb::X_shift_QuadC[pl]*0.1, yC = StFttDb::Y_shift_QuadC[pl]*0.1;
+                const double xD = StFttDb::X_shift_QuadD[pl]*0.1, yD = StFttDb::Y_shift_QuadD[pl]*0.1;
+                if      ( xh > xA && yh > yA ) qidx = 0;   // A upper right
+                else if ( xh > xB && yh < yB ) qidx = 1;   // B lower right
+                else if ( xh < xC && yh < yC ) qidx = 2;   // C lower left
+                else if ( xh < xD && yh > yD ) qidx = 3;   // D upper left
+            }
 
             if ( hsx > hsy ) { // H strip: y precise, x off-axis
                 if ( fwdDiagFill() && sy < thresholdY )           hBlindDxAll_H[disk]->Fill(sxs); // dx, dy-conditioned
