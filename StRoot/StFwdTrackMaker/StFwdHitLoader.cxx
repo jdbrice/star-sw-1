@@ -14,6 +14,7 @@
 
 // For GEANT
 #include "include/Tracker/FwdHit.h"
+#include "StFwdTrackMaker/include/Tracker/FwdGeomUtils.h"
 #include "tables/St_g2t_fts_hit_Table.h"
 
 // For MuDst
@@ -201,13 +202,27 @@ int StFwdHitLoader::loadFttPointsFromStEvent( FwdDataSource::McTrackMap_t &mcTra
                 if ( kLogLevel >= kLogVerbose ) {LOG_DEBUG << "Adding McTrack to FTT hit: " << track_id << endm;}
             }
 
+            // Chamber (pentagon) plane this hit is measured on, 0-15.  Without
+            // it every FTT hit fell on mFttPlanes[0] = station 1 quadrant A, and
+            // a PlanarMeasurement keeps only the in-plane components -- so in
+            // planar mode the hit silently moved to the station-1 z.  See
+            // FwdGeomUtils::fttChamberIndex for the pent <-> quadrant map.
+            int fttPlaneIdx = FwdGeomUtils::fttChamberIndex( (int)point->plane(), (int)point->quadrant() );
+            if ( fttPlaneIdx < 0 ) {
+                LOG_WARN << "Skipping FTT point with out-of-range plane/quadrant: "
+                         << "plane=" << ((int)point->plane())
+                         << " quadrant=" << ((int)point->quadrant()) << endm;
+                continue;
+            }
             mFwdHitsFtt.push_back(FwdHit(count++, // id
                 xcm, ycm, zcm,
                 -point->plane(), // volume id
                 kFttId, // detid
                 track_id, // track id
                 hitCov3, // covariance matrix
-                mcTrack) // mcTrack
+                mcTrack, // mcTrack
+                nullptr, // StHit
+                (unsigned int)fttPlaneIdx) // genfit plane index
                 );
             mSpacepointsFtt.push_back( TVector3( xcm, ycm, zcm)  );
         } // end of loop over points
@@ -252,6 +267,8 @@ int StFwdHitLoader::loadFttPointsFromGEANT( FwdDataSource::McTrackMap_t &mcTrack
     hitCov3(1, 1) = sigXY * sigXY;
     hitCov3(2, 2) = 0.1; // unused since they are loaded as points on plane
 
+    FwdGeomUtils fttGeo( gGeoManager );
+
     int nstg = mGeantFtt->GetNRows();
     if ( kLogLevel >= kLogVerbose ) {LOG_DEBUG << "This event has " << nstg << " stg hits in geant/g2t_stg_hit " << endm;}
 
@@ -281,6 +298,16 @@ int StFwdHitLoader::loadFttPointsFromGEANT( FwdDataSource::McTrackMap_t &mcTrack
             mcTrack = mcTrackMap[track_id];
             LOG_DEBUG << "Adding McTrack to FTT hit: " << track_id << endm;
         } 
+        // volume_id does not carry the quadrant, so ask the geometry which
+        // pentagon this hit is in (see the StEvent branch above for why the
+        // chamber plane index matters).
+        int fttPlaneIdx = fttGeo.fttChamberIndexAt( x, y, z );
+        if ( fttPlaneIdx < 0 ) {
+            if ( kLogLevel >= kLogVerbose )
+                LOG_WARN << "GEANT FTT hit outside every sTGC chamber, skipping: "
+                         << x << ", " << y << ", " << z << endm;
+            continue;
+        }
         mFwdHitsFtt.push_back(
             FwdHit(
                 count++, // id
@@ -289,7 +316,9 @@ int StFwdHitLoader::loadFttPointsFromGEANT( FwdDataSource::McTrackMap_t &mcTrack
                 kFttId, // detid
                 track_id, // track id
                 hitCov3, // covariance matrix
-                mcTrack
+                mcTrack,
+                nullptr, // StHit
+                (unsigned int)fttPlaneIdx // genfit plane index
                 )
             );
         mSpacepointsFtt.push_back( TVector3( x, y, z )  );

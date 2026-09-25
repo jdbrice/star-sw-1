@@ -863,13 +863,24 @@ class TrackFitter {
      * @return std::vector<genfit::SharedPlanePtr>
      */
     void createAllFttPlanes( FwdGeomUtils &fwdGeoUtils ) {
-        // create FWD GeomUtils to get the plane locations
-        // 4 planes, 4 quadrants, 2 planes per quadrant
-        for (int globalPlaneIndex = 0; globalPlaneIndex < 32; globalPlaneIndex++)
+        // One plane per sTGC CHAMBER: 4 stations x 4 pentagons = 16, indexed
+        // 4*plane + pent with pent = (4 - StFttDb quadrant) % 4.  See
+        // FwdGeomUtils::fttChamberIndex for the measured pent <-> quadrant map.
+        //
+        // This used to build 32 planes from the two GAS layers of each pentagon
+        // (getFttQuadrant).  Two things were wrong with that.  The z was a gas
+        // layer, while the FTT point z from StFttDb is the chamber centre; and
+        // nothing ever set _genfit_plane_index on an FTT hit, so every FTT hit
+        // took mFttPlanes[0] -- station 1, quadrant A.  A PlanarMeasurement
+        // keeps only the in-plane components, so that silently moved every FTT
+        // hit onto the station-1 plane, up to 52 cm away in z.  Harmless while
+        // kUseSpacePoints was true (FTT went down the spacepoint path), which is
+        // why it survived: it only became live when planar mode was adopted.
+        for (int globalPlaneIndex = 0; globalPlaneIndex < 16; globalPlaneIndex++)
         {
             TVector3 u(1, 0, 0); 
             TVector3 v(0, 1, 0);
-            TVector3 o = fwdGeoUtils.getFttQuadrant(globalPlaneIndex, u, v);
+            TVector3 o = fwdGeoUtils.getFttChamber(globalPlaneIndex, u, v);
             if (kVerbose > 1) { 
                 LOG_INFO << "Adding FTT Plane " << globalPlaneIndex << " at " << o.X() << ", " << o.Y() << ", " << o.Z() << endm;
                 LOG_INFO << "\tPlane " << globalPlaneIndex << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;
@@ -878,6 +889,20 @@ class TrackFitter {
             mFttPlanes.push_back(
                 genfit::SharedPlanePtr(
                     new genfit::DetPlane(o, u, v)));
+        }
+        // One line per job: the four station z, straight from the built
+        // geometry.  Worth having in every log -- the compiled geometry and
+        // StgmGeo1.xml currently disagree by up to 9 mm in z (see
+        // note_stgc_geometry_20260925.txt), so this is the number that was
+        // actually used.
+        if ( mFttPlanes.size() == 16 ) {
+            LOG_INFO << "FTT chamber planes (16 = 4 stations x 4 pentagons), station z ="
+                     << " " << mFttPlanes[0]->getO().Z()
+                     << " " << mFttPlanes[4]->getO().Z()
+                     << " " << mFttPlanes[8]->getO().Z()
+                     << " " << mFttPlanes[12]->getO().Z() << endm;
+        } else {
+            LOG_ERROR << "FTT chamber planes: expected 16, built " << mFttPlanes.size() << endm;
         }
     }
     
@@ -1024,7 +1049,7 @@ class TrackFitter {
         
         // sTGC
         if ( fh->isFtt() ){
-            if ( fh->_genfit_plane_index > mFttPlanes.size() ) {
+            if ( fh->_genfit_plane_index >= mFttPlanes.size() ) {
                 LOG_ERROR << "Invalid FTT genfit plane index: " << fh->_genfit_plane_index << endm;
                 return nullptr;
             }
@@ -1033,7 +1058,7 @@ class TrackFitter {
 
         // FST
         if ( fh->isFst() ){
-            if ( fh->_genfit_plane_index > mFstSensorPlanes.size() ) {
+            if ( fh->_genfit_plane_index >= mFstSensorPlanes.size() ) {
                 LOG_ERROR << "Invalid FST sensor genfit plane index: " << fh->_genfit_plane_index << endm;
                 return nullptr;
             }

@@ -5,6 +5,7 @@
 #include "TGeoNode.h"
 #include "TGeoMatrix.h"
 #include "TGeoNavigator.h"
+#include "TGeoManager.h"   // TGeoManager / gGeoManager, used throughout this header
 #include "TGeoTube.h"   // TGeoTubeSeg: the FST sensor shapes, used for their phi limits
 #include "StEvent/StFstConsts.h"   // kFstNumSensors
 #include "StMessMgr.h"             // LOG_INFO / LOG_WARN / LOG_ERROR
@@ -113,6 +114,73 @@ class FwdGeomUtils {
             }
             std ::cerr << "Failed to get FTT quadrant origin for index " << index << std::endl;
             return TVector3(0,0,0);
+        }
+
+        // -------------------------------------------------------------------
+        // sTGC chamber (pentagon) planes -- what a planar FTT measurement sits on.
+        //
+        // getFttQuadrant above returns one of the two GAS layers of a pentagon.
+        // The FTT point z written into the MuDst comes from
+        // StFttDb::getGloablOffset_ClusterPoint, which uses
+        // idealPlaneZLocations_Quad*[plane] -- the CHAMBER centre, not a gas
+        // layer -- so the plane has to be the STFM node itself.
+        //
+        // AGML places the four pentagons of a station by pure ROTATIONS about z
+        // (0/90/180/270 -> STFM_1..4 of each station), while StFttDb numbers its
+        // quadrants A,B,C,D = 0,1,2,3 and maps local->global by REFLECTIONS.
+        // Measured from the built geometry (script/fttQuadConvention.C):
+        //
+        //   STFM_1  +0 deg   -> quadrant A (x>0,y>0)   StFttDb quad 0
+        //   STFM_2  +90 deg  -> quadrant D (x<0,y>0)   StFttDb quad 3
+        //   STFM_3  +180 deg -> quadrant C (x<0,y<0)   StFttDb quad 2
+        //   STFM_4  +270 deg -> quadrant B (x>0,y<0)   StFttDb quad 1
+        //
+        // so pent = (4 - quad) % 4 and the chamber index is 4*plane + pent.
+        // A and C agree between the two conventions (both are proper rotations,
+        // det +1); B and D differ by a swap of the pentagon's own local u and v.
+        // The pentagon footprint is symmetric under that swap (checked on the
+        // gas volume: the only cells that differ lie outside it), so the two
+        // conventions cover the same area and the difference is a strip
+        // ORIENTATION relabelling, not a displacement. Nothing here has to
+        // resolve it: the measurement is projected onto the plane's own axes and
+        // its covariance is rotated with them (CovMatPlaneLocal), so the fit is
+        // the same either way.
+        // -------------------------------------------------------------------
+        static int fttChamberIndex( int plane, int quadrant ){
+            if ( plane < 0 || plane > 3 || quadrant < 0 || quadrant > 3 ) return -1;
+            return 4 * plane + ( (4 - quadrant) % 4 );
+        }
+
+        TVector3 getFttChamber( int index, TVector3 &u, TVector3 &v ){
+            stringstream spath;
+            spath << "/HALL_1/CAVE_1/STGM_1/STFM_" << (index + 1) << "/";
+            if ( cd( spath.str().c_str() ) && _matrix != nullptr ){
+                const double *R = _matrix->GetRotationMatrix();   // row-major
+                u.SetXYZ( R[0], R[3], R[6] );                     // column 0 = local x in global
+                v.SetXYZ( R[1], R[4], R[7] );                     // column 1 = local y in global
+                return TVector3( _matrix->GetTranslation()[0],
+                                 _matrix->GetTranslation()[1],
+                                 _matrix->GetTranslation()[2] );
+            }
+            LOG_ERROR << "FwdGeomUtils: no sTGC chamber for index " << index << endm;
+            return TVector3(0,0,0);
+        }
+
+        // Chamber index of the pentagon containing a global point, or -1.
+        // The GEANT loader does not carry a quadrant on the hit, so it asks the
+        // geometry instead of decoding volume_id.  The four pentagons of a
+        // station are disjoint in x-y, so the local bounding box is enough.
+        int fttChamberIndexAt( double x, double y, double z ){
+            for ( int i = 0; i < 16; i++ ){
+                stringstream spath;
+                spath << "/HALL_1/CAVE_1/STGM_1/STFM_" << (i + 1) << "/";
+                if ( !cd( spath.str().c_str() ) || _matrix == nullptr ) continue;
+                double g[3] = {x, y, z}, l[3];
+                _matrix->MasterToLocal( g, l );
+                if ( l[0] > 0.0 && l[1] > 0.0 && l[0] < 61.0 && l[1] < 61.0 &&
+                     fabs( l[2] ) < 5.0 ) return i;
+            }
+            return -1;
         }
 
         // ---------------------------------------------------------------------
