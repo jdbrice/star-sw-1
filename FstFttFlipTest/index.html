@@ -21,6 +21,8 @@
    the five defects fixed in the planar path, and Flemming's new geometry running end to end<br>
 <a href="index.html#next">6. Consequences for alignment and geometry</a> &mdash; survey scale, the
    StFstDb row-0 trap<br>
+<a href="index.html#dbinput">7. Input for the DB-driven step (2026-09-28)</a> &mdash; what the
+   geometry and code changes did, and the per-quadrant residual they leave behind<br>
 </p>
 
 <a name="blind"></a>
@@ -683,6 +685,126 @@ macro/config switch rather than a compile-time constant, since flipping it chang
 survey is applied and then exactly cancelled, <tt>StFstDb</tt> reads row 0 only of the half and
 wedge tables, the 1&deg; gap carries the wrong sign, and every hit gets the disk-centre z. Written
 up in <tt>proposal_spacepointmode_fix.txt</tt> as a lower-priority cleanup for that path.</p>
+
+
+<HR>
+<a name="dbinput"></a>
+<H1>7. Input for the DB-driven step (2026-09-28)</H1>
+
+<p>Everything below is measured with the sTGC hit positions still coming from
+<tt>StFttDb</tt>'s <b>hardcoded</b> per-quadrant constants. That is the point: it is the
+<b>input</b> to the next step, in which <tt>StFttDb</tt> takes those positions from the DB
+survey tables instead and the residual should collapse towards zero.</p>
+
+<H2>What changed first</H2>
+<p>Five changes landed before this measurement was taken, in this order:</p>
+<ol>
+<li><b>Planar FTT was on the wrong plane.</b> Nothing ever set <tt>_genfit_plane_index</tt> on
+    an FTT hit, so every sTGC hit used <tt>mFttPlanes[0]</tt> &mdash; station&nbsp;1,
+    quadrant&nbsp;A. A <tt>PlanarMeasurement</tt> keeps only the in-plane components, so hits
+    were silently moved up to 52&nbsp;cm in z. Harmless while <tt>kUseSpacePoints</tt> was true;
+    it went live the day planar mode was adopted. Planes are now the 16 STFM chambers, indexed
+    <tt>4*plane + (4-quadrant)%4</tt>.</li>
+<li><b>The AGML and StFttDb quadrant orders are not the same.</b> AGML places the four pentagons
+    by rotations 0/90/180/270, giving <b>A, D, C, B</b>; <tt>StFttDb</tt> numbers them A, B, C, D.
+    Measured from the built geometry, with a closure test that takes each quadrant's
+    <tt>StFttDb</tt> footprint centre and asks which pentagon contains it: 16/16.</li>
+<li><b><tt>zplane</tt> was an integer in <tt>StgmGeo1.xml</tt>.</b> Declared in
+    <tt>&lt;varlist type="int"&gt;</tt> since #447, so every station z was truncated toward zero:
+    the survey &minus;26.4965 / &minus;8.8855 / +8.7985 / +26.5835 became &minus;26 / &minus;8 /
+    +8 / +26. Stations were built at 312.8385/330.8385/346.8385/364.8385 instead of
+    312.342/329.953/347.637/365.422, up to 8.9&nbsp;mm out, and the 17.61/17.68/17.79 spacing was
+    flattened to 18/16/18. The survey z added in #707 had therefore never reached the geometry.
+    Moving it to the float varlist changes the generated C++ by exactly four lines.</li>
+<li><b>Per-quadrant z now lives in the misalign table.</b> AGML carries one z per station (#707
+    used quadrant A's value for the whole plane) while <tt>StFttDb</tt> kept all four. The
+    difference goes into <tt>pentOnStation</tt>'s <tt>t2</tt>. All 16 chambers now match
+    <tt>StFttDb</tt> exactly &mdash; the plane-vs-hit z gap went 5-9&nbsp;mm &rarr;
+    &le;2.4&nbsp;mm &rarr; <b>0</b>.</li>
+<li><b>FST moved by the misalign table.</b> <tt>fstOnTpc</tt> shifts all 108 sensors by
+    (+1.617, &minus;3.197)&nbsp;mm, measured out of the built geometry rather than read off the
+    table.</li>
+</ol>
+
+<p>That last one gave a clean check of the whole chain. The blind residual in y moved by
+<b>+3.19 / +3.25 / +2.93 / +3.01&nbsp;mm</b> across the four stations against an FST move of
+&minus;3.197&nbsp;mm: 1:1 to 3%, and <b>flat</b>. A vertex-anchored track would pivot and give a
+1&nbsp;mm rise from station 1 to 4 (the lever arm z<sub>sTGC</sub>/z<sub>FST</sub> &asymp; 2);
+there is none, at 59-183&nbsp;&sigma;. So the track <b>translates bodily</b> &mdash; the TPC vertex
+is contributing very little to constraining these fits, which is worth knowing before anyone leans
+on vertex-constrained forward tracks. <b>dx is not understood</b>: it moved &minus;5.05&nbsp;mm
+against &minus;1.62&nbsp;mm expected, factor 3.1, also flat.</p>
+
+<H2>The residual that is left, and it is radial</H2>
+
+<p>30 files of zero-field run 23063028, FST+vertex tracks projected to the sTGC, sTGC hits never
+added to the track, quadrants taken from the real <tt>StFttDb</tt> footprints (not from the signs
+of x and y &mdash; the four quadrants do not meet at the origin).</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>quadrant</th><th>dx [cm]</th><th>dy [cm]</th><th>direction</th></tr>
+<tr><td>A&nbsp;&nbsp;(x&gt;0, y&gt;0)</td><td>&minus;1.06</td><td>&minus;1.94</td><td>towards the axis</td></tr>
+<tr><td>B&nbsp;&nbsp;(x&gt;0, y&lt;0)</td><td>&minus;1.26</td><td>+1.02</td><td>towards the axis</td></tr>
+<tr><td>C&nbsp;&nbsp;(x&lt;0, y&lt;0)</td><td>+0.55</td><td>+1.31</td><td>towards the axis</td></tr>
+<tr><td>D&nbsp;&nbsp;(x&lt;0, y&gt;0)</td><td>+0.68</td><td>&minus;1.39</td><td>towards the axis</td></tr>
+</table>
+<p>Median over the four stations; station&nbsp;3 quad&nbsp;C has dx = &minus;2.33 at only
+5.6&nbsp;&sigma; against +0.71/+0.71/+0.39 elsewhere and a mean would be dragged by it.
+Station&nbsp;1 quad&nbsp;A has no V-strip entries at all &mdash; the H/V swap suspected since
+2026-07-21 &mdash; so that one cell stays uncorrected.</p>
+
+<p><b>Every sign points inward.</b> The reconstructed sTGC hits sit systematically ~1-1.9&nbsp;cm
+closer to the beam axis than the tracks say. That is a <b>radial contraction, not a translation</b>,
+and it is the main thing to keep in mind about the numbers below: sixteen per-quadrant offsets can
+absorb it, and will drive the residual to ~0, but if the cause is a scale (an FST radial error, the
+strip pitch, something else) the constants will not generalise. A pure z error cannot explain it
+&mdash; it would need &Delta;z &asymp; 10&nbsp;cm at r &asymp; 46&nbsp;cm. <b>Worth one plot before
+these are trusted as alignment</b>: split a quadrant's residual by radius. Flat means a genuine
+offset, sloped means a scale.</p>
+
+<table border="0" cellpadding="3">
+<tr>
+  <td><a href="plots/dbinput_radial.png"><img src="plots/dbinput_radial.png" height="200"></a></td>
+  <td><a href="plots/dbinput_quad_all.png"><img src="plots/dbinput_quad_all.png" height="200"></a></td>
+</tr>
+<tr>
+  <td>correction &minus;d at each quadrant centre, &times;10. All four outward.</td>
+  <td>the same thing as distributions, all four stations summed.</td>
+</tr>
+</table>
+
+<table border="0" cellpadding="3">
+<tr>
+  <td><a href="plots/dbinput_quad_disk0.png"><img src="plots/dbinput_quad_disk0.png" height="200"></a></td>
+  <td><a href="plots/dbinput_quad_disk1.png"><img src="plots/dbinput_quad_disk1.png" height="200"></a></td>
+  <td><a href="plots/dbinput_quad_disk2.png"><img src="plots/dbinput_quad_disk2.png" height="200"></a></td>
+  <td><a href="plots/dbinput_quad_disk3.png"><img src="plots/dbinput_quad_disk3.png" height="200"></a></td>
+</tr>
+<tr>
+  <td>station 1</td><td>station 2</td><td>station 3</td><td>station 4</td>
+</tr>
+</table>
+
+<H2>What the next step does with this</H2>
+<p><tt>StFttDb</tt> now has a switch, DB by default, in which the hardcoded per-quadrant constants
+are <b>not used at all</b>. The offsets become</p>
+<pre>
+  AGML placeholder + stgcOnTpc + stationOnStgc[station] + pentOnStation[4*station+pent]
+</pre>
+<p>The tables were written as <tt>(StFttDb origin &minus; AGML placeholder) + alignment</tt>, so the
+hardcoded term cancels algebraically and what comes out is the true position &mdash; and it is the
+<i>same</i> quantity AGML computes from the same inputs. Geometry and hit positions stop being two
+things kept in step by hand. Checked on data: quadrant A station 1 comes out
+(2.15244, 12.2029, 312.342)&nbsp;cm against the <tt>STFM_1</tt> node at
+(2.152, 12.203, 312.342).</p>
+<p>Because the hit itself moves, the sTGC correction acts on the residual <b>1:1</b> &mdash; no lever
+arm, unlike the FST one above, since nothing goes through the track fit. So one iteration should be
+enough to centre it.</p>
+<p>Two things had to move with it. <tt>FwdTracker</tt> read the quadrant boundaries from
+<tt>StFttDb</tt>'s <i>statics</i>, which stay at the hardcoded placeholder while the hits move
+1-2&nbsp;cm &mdash; every hit near a quadrant edge would have been mislabelled, silently. And the
+table generator's absolute form is valid only while <tt>StFttDb</tt> is in hardcoded mode: from the
+next iteration the update is <tt>new = previous + delta</tt>, now enforced rather than documented.</p>
 
 <HR>
 <a name="notes"></a>
