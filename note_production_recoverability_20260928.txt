@@ -1,0 +1,184 @@
+What we can and cannot recover from a production MuDst
+akio, 2026-09-28, for Jerome
+
+Question: if MuDst production starts tomorrow WITHOUT any of our June/July/September
+changes, what can we still fix afterwards by reading the MuDst and running the
+afterburner, and what is baked in?
+
+SHORT ANSWER
+------------
+Exactly ONE thing is unrecoverable: FST CLUSTERING. Everything else we did this
+summer can be redone on top of a production MuDst.
+
+And it has a one-option fix. FST raw hits are already supported in the MuDst; they
+are simply switched off by default:
+
+    StMuDstMaker.cxx:1265    if (IAttr("fstMuRawHit")) { ... }
+    BigFullChain.h:1572      {"fstMuRawHit", "", "", "CMuDST,fstEvtRawHit", ...
+                              "Store FST Raw Hit in MuDst", kFALSE}
+
+Turning that option ON in the production chain makes FST fully recoverable too, and
+it is the single highest-value thing to ask for before tomorrow. FTT already writes
+its raw hits unconditionally, so this only brings FST up to what FTT already does.
+
+
+THE THREE ITEMS, CHECKED IN THE CODE
+------------------------------------
+1. FTT time offsets and cuts -- RECOVERABLE. Confirmed.
+   The MuDst stores FttRawHit, FttCluster and FttPoint (StMuArrays.cxx:33), and the
+   raw-hit fill is unconditional (StMuFttUtil::fillMuFttRawHits, called from
+   fillMuFtt -- no IAttr guard, unlike FST). StMuFttRawHit keeps bcid, dbcid and tb,
+   which is the full timing. So the afterburner can re-run StFttClusterMaker with any
+   time cut or per-VMM calibration, which is exactly what our SetTimeCut(mode,min,max)
+   already does. Nothing about FTT timing is lost.
+
+2. Not feeding 16-strip-wide FST clusters into tracking -- RECOVERABLE. Confirmed,
+   with one caveat.
+   StMuFstHit keeps getNRawHits(), getNRawHitsR() and getNRawHitsPhi(), so cluster
+   width is visible per hit and we can cut on it in the afterburner.
+   CAVEAT: we can DISCARD a wide cluster, we cannot SPLIT it back into good hits,
+   because the strips that went into it are gone. So this is a veto, not a repair --
+   we lose those hits rather than recovering them.
+
+3. FST r-skipping clustering, and the hit placed at the largest R -- NOT RECOVERABLE.
+   Confirmed, both halves, in StFstClusterMaker/StFstScanRadiusClusterAlgo.cxx:
+     - line 78 comment and loop: "put all raw hits in one phi strip to rawHitsToMerge"
+       -- every hit sharing a phi strip is merged with NO adjacency requirement in R,
+       so non-adjacent r-strips are clustered together.
+     - lines 129-136:  meanRStrip = 0; maxRStrip = 0;
+                       for (...) { if (tempRStrip[i] > maxRStrip) maxRStrip = ...;
+                                   meanRStrip = maxRStrip; }
+       -- the cluster R is the LARGEST r-strip in the cluster. Not charge-weighted,
+       not the seed strip, not the smallest R.
+   The MuDst keeps only the RESULT (meanRStrip, meanPhiStrip), not the strips that
+   produced it, so neither the merge decision nor the true R can be reconstructed.
+
+
+WHY EVERYTHING ELSE SURVIVES
+----------------------------
+The MuDst keeps FST hits as STRIP INDICES, not only as a global xyz:
+
+    StMuFstHit: mMeanRStrip, mMeanPhiStrip, plus disk/wedge/sensor and the raw-hit
+    counts (StMuFstUtil.cxx:115 rebuilds StFstHit from exactly these)
+
+That is the reason our whole class of FST POSITION bugs is recoverable. The afterburner
+in planar mode rebuilds the global position from (rStrip, phiStrip) on the AGML sensor
+plane, so it never uses the production global xyz at all. Specifically recoverable:
+  - the wedge front/back flip and the per-wedge mirror
+  - the 1 degree outer-sensor gap sign
+  - every hit getting the disk-centre z instead of its true per-sensor z
+  - the sensor -> FTUS plane mapping
+  - the survey being applied and then exactly cancelled in StFstHitMaker
+All of these are re-derived downstream from the strip indices plus geometry.
+
+Likewise recoverable on the FTT side, because FttRawHit is always written: the per-VMM
+time calibration, the data-window/time cut, maxStripLength, the cluster and point
+construction, the X<->Y assignment, and all per-quadrant geometry offsets (those now
+come from the DB survey tables, not from the MuDst at all).
+
+Everything else we touched since June is simulation-side (StFstSimMaker,
+StFttSimHitMaker, StFttChargeSharingMaker) or MC-gated (StFcsDb beamline DB read), and
+does not affect real-data production.
+
+
+IS THE OPTION ACTUALLY USABLE? PARTLY -- THE WRITE PATH ONLY
+------------------------------------------------------------
+Checked rather than assumed, because an option existing is not the same as it working.
+
+WORKS (by inspection):
+  - both options exist, both default kFALSE:
+        BigFullChain.h:1571  fstEvtRawHit  "Store FST Raw Hit in StEvent"
+        BigFullChain.h:1572  fstMuRawHit   "Store FST Raw Hit in MuDst"  (needs CMuDST,fstEvtRawHit)
+  - StFstRawHitMaker.cxx:409-414 creates/fills StFstEvtCollection, so the StEvent side is real
+  - StBFChain.cxx:687 passes the attribute to StMuDstMaker
+  - StMuDstMaker.cxx:1264-1269 picks up ev->fstEvtCollection() and
+    StMuFstUtil::fillMuFstHits writes every raw hit into the MuDst
+
+DOES NOT WORK -- nothing can read it back:
+  - StMuFstUtil::fillFst(), the MuDst -> StEvent restore, calls ONLY fillFstHits().
+    Raw hits are never restored; the function does not even take an StFstEvtCollection.
+  - nothing in StRoot or in $STAR reads StMuFstRawHit, StMuFstCollection::getRawHit()
+    or getRawHitArray(). There is no consumer anywhere.
+
+So switching the option on tomorrow WRITES the data but nothing can use it yet. Two
+pieces of code are missing, and both are ours to write:
+  (a) read the raw hits back -- either extend fillFst() to rebuild StFstEvtCollection,
+      or read StMuFstCollection directly in the afterburner;
+  (b) re-run StFstClusterMaker on them in the afterburner.
+
+THE POINT: (a) and (b) can be written next week. The DATA cannot be written next week.
+That asymmetry is the whole argument for turning the option on tomorrow.
+
+AND THERE IS AT LEAST ONE REAL BUG IN THE DECODE. akio recalls an FST hit bug that
+filled garbage into the raw hits and made them unusable; we did not have time to pin the
+exact historical commit, but here is one concrete defect still in the code today.
+
+StMuFstRawHit stores only two location words, mChannelId (electronics) and mGeoId
+(geometry), and every other accessor derives from them. The derivations split correctly:
+
+    getRdo/getArm/getApv/getChannel   use mChannelId   (electronics)  -- correct
+    getDisk/getWedge/getPhiStrip/getRStrip  use mGeoId (geometry)     -- correct
+
+but StMuFstRawHit.cxx:68
+
+    unsigned char StMuFstRawHit::getSensor() const
+    {
+        int strip = mChannelId % (inner*stripsInner + outer*stripsOuter);   <-- mChannelId
+        ...
+
+uses mChannelId with the GEOMETRY strip layout. Electronics and geometry ordering are
+different mappings, so getSensor() does not agree with getRStrip()/getPhiStrip() for the
+same hit. Whether that is the whole of the garbage akio remembers or only part of it, it
+is wrong as written and has to be fixed before the branch is usable.
+
+Supporting evidence that this was never exercised: FstRawHit is empty in every MuDst we
+looked at, and the feature came in as a single commit, f38e654361 "Add FST raw hits in
+StEvent and StMuDst (#378)", with no follow-up fix commits. The write side itself does
+look structurally sound -- StFstRawHitMaker.cxx:538-539 and :594-596 do set both
+channelId and geoId -- so the defects we can see are on the decode/consume side, which is
+the side we would be writing anyway.
+
+
+WHAT IT COSTS IN DISK SPACE
+---------------------------
+Measured on a real production MuDst, st_physics_23063028_raw_1000002.MuDst.root,
+38177 events, 5762 MB, i.e. 154.6 kB/event. Compressed bytes per branch:
+
+    FcsHit        30257 B/event    842.1 objects/event    (20% of the file)
+    FttRawHit      2120 B/event    315.9 objects/event    ( 6.7 B per raw hit)
+    FttCluster      692 B/event      7.4
+    FstHit          602 B/event     24.5 objects/event    (24.6 B per hit)
+    FstRawHit         4 B/event      0.0 objects/event    <- switched off, empty array
+
+FST raw-hit multiplicity cannot be measured directly (no MuDst has them), but the strips
+inside clusters are a firm lower bound: 24.5 hits/event x 1.45 raw hits per hit = 35.5
+strips/event. Including strips that never made a cluster, expect of order 50-100/event.
+
+Each StMuFstRawHit is ~103 B uncompressed: two Float_t[9] arrays for charge and charge
+error (kFstNumTimeBins = 9, so 72 B of that) plus ids. Taking FTT's measured compression
+as the guide, expect roughly 30-40 B/hit on disk.
+
+    50-100 raw hits/event  x  ~30-40 B  =  ~1.5 to 4 kB/event
+                                        =  ~1 to 3 % of the MuDst
+
+For scale that is about the same as FttRawHit already costs (2.1 kB/event), and roughly
+one tenth of what FcsHit costs. Cheap.
+
+
+WHAT WE ASK FOR
+---------------
+a. Add "fstMuRawHit" (which pulls in fstEvtRawHit) to the production chain. Cost is
+   ~1.5-4 kB/event, ~1-3% of the MuDst, about what FttRawHit already costs. It makes the
+   single unrecoverable item recoverable. The code to CONSUME it does not exist yet, but
+   we can write that afterwards -- the data is the part that cannot be made later.
+   Budget for fixing the decode too: getSensor() is wrong today and the branch has
+   evidently never been exercised. Worth one short test job on a few files first, reading
+   the raw hits back and checking disk/wedge/sensor/rStrip/phiStrip against the FstHit
+   in the same event, BEFORE committing a full production to it.
+
+b. If (a) is not possible, then the FST clustering fixes have to go in BEFORE
+   production starts, or that data is permanently stuck with non-adjacent r-merging and
+   R placed at the largest strip. Partial mitigation from the MuDst alone: with
+   nRawHitsR known one can assume adjacency and use maxR - (nRawHitsR-1)/2 as a better
+   R estimate -- but adjacency is exactly the assumption the algorithm violates, so this
+   is an approximation, not a fix.
