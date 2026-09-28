@@ -75,6 +75,7 @@
 #include "StFwdTrackMaker/include/Tracker/FwdTracker.h"
 #include "StFwdTrackMaker/include/Tracker/TrackFitter.h"
 #include "StFwdTrackMaker/include/Tracker/FwdGeomUtils.h"
+#include "StFttDbMaker/StFttDb.h"
 #include "StFwdTrackMaker/include/Tracker/ObjExporter.h"
 
 FwdSystem* FwdSystem::sInstance = nullptr;
@@ -212,7 +213,20 @@ StFwdTrackMaker::StFwdTrackMaker() : StMaker("fwdTrack"), mEventVertex(0,0,0), m
     LOG_DEBUG << "Done with StFwdTrackMaker::StFwdTrackMaker()" << endm;  
 };
 
+// Projection bookkeeping (makeStFwdTrack): attempts and failures (sentinel -990 / NaN) per z-plane slot
+static const int kNProjSlots = 16;
+static long   sProjTried[kNProjSlots]  = {0};
+static long   sProjFailed[kNProjSlots] = {0};
+static int    sProjDet[kNProjSlots]    = {0};
+static float  sProjZ[kNProjSlots]      = {0};
+
 int StFwdTrackMaker::Finish() {
+    LOG_INFO << "StFwdTrackMaker projection summary (slot det z : tried failed fraction):" << endm;
+    for ( int is = 0; is < kNProjSlots; is++ ) {
+        if ( sProjTried[is] == 0 ) continue;
+        LOG_INFO << TString::Format( "  PROJ slot %2d det %2d z %6.1f : %7ld %7ld %.4f", is, sProjDet[is], sProjZ[is],
+                                     sProjTried[is], sProjFailed[is], (double)sProjFailed[is] / sProjTried[is] ) << endm;
+    }
     mForwardTracker->finish();
     return kStOk;
 }
@@ -252,6 +266,13 @@ int StFwdTrackMaker::Init() {
     
     mForwardTracker = std::shared_ptr<ForwardTracker>(new ForwardTracker( ));
     mForwardTracker->setConfig(mFwdConfig);
+    // The chain's StFttDb, registered by StFttDbMaker as AddData(mFttDb,".const").
+    // Without it the tracker falls back to StFttDb's hardcoded statics, which are
+    // the wrong quadrant boundaries whenever the DB geometry is enabled.
+    StFttDb *fttDb = static_cast<StFttDb*>( GetDataSet("fttDb") );
+    if ( !fttDb ) LOG_WARN << "StFwdTrackMaker: no fttDb dataset; the FTT quadrant "
+                           << "split will use StFttDb's hardcoded offsets" << endm;
+    mForwardTracker->setFttDb( fttDb );
 
     // in production we disable crit saving.
     mForwardTracker->setSaveCriteriaValues(false);
@@ -789,6 +810,11 @@ StFwdTrack * StFwdTrackMaker::makeStFwdTrack( GenfitTrackResult &gtr, size_t ind
             float detnorm[3] = { (float)planenormal.x(), (float)planenormal.y(), (float)planenormal.z() };
             LOG_DEBUG << "Projecting to: " << detIndex << endm;
             tv3 = ObjExporter::projectAsStraightLine( gtr.mTrack.get(), xyz0, xyz1, xyzdet, detnorm, cov, mom );
+        }
+        if ( zIndex < (size_t)kNProjSlots ) {
+            sProjTried[zIndex]++;
+            if ( !(tv3.Z() > -900.) ) sProjFailed[zIndex]++;   // sentinel or NaN
+            sProjDet[zIndex] = detIndex; sProjZ[zIndex] = z;
         }
         fwdTrack->mProjections.push_back( StFwdTrackProjection( detIndex, StThreeVectorF( tv3.X(), tv3.Y(), tv3.Z() ), StThreeVectorF( mom.X(), mom.Y(), mom.Z() ), cov) );
         // LOG_INFO << "Projection added for " << detIndex << " at z=" << z << endm;

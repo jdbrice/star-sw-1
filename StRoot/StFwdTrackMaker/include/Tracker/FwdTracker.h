@@ -23,7 +23,7 @@
 #include <numeric>
 
 #include "StFwdTrackMaker/include/Tracker/FwdHit.h"
-#include "StFttDbMaker/StFttDb.h" // for the X<->Y mirror diagnostic test (2026-07-22) -- public static per-quadrant offset/sign tables only, no instance needed
+#include "StFttDbMaker/StFttDb.h" // per-quadrant offsets for the quadrant split and the X<->Y mirror test
 #include "StFwdTrackMaker/include/Tracker/FwdDataSource.h"
 #include "StFwdTrackMaker/include/Tracker/TrackFitter.h"
 
@@ -105,6 +105,10 @@ class ForwardTrackMaker {
      *
      * @param save : true to save crit values
      */
+    // The chain's StFttDb, so the quadrant split and the mirror test follow the
+    // offsets the hits were actually built with (see fttXShift/fttYShift).
+    void setFttDb( StFttDb *db ) { mFttDb = db; }
+
     void setSaveCriteriaValues(bool save) {
         mSaveCriteriaValues = save;
     }
@@ -2364,10 +2368,10 @@ class ForwardTrackMaker {
             {
                 const int    pl = (int)disk;                      // sTGC plane 0-3
                 const double xh = h->getX(), yh = h->getY();      // cm
-                const double xA = StFttDb::X_shift_QuadA[pl]*0.1, yA = StFttDb::Y_shift_QuadA[pl]*0.1;
-                const double xB = StFttDb::X_shift_QuadB[pl]*0.1, yB = StFttDb::Y_shift_QuadB[pl]*0.1;
-                const double xC = StFttDb::X_shift_QuadC[pl]*0.1, yC = StFttDb::Y_shift_QuadC[pl]*0.1;
-                const double xD = StFttDb::X_shift_QuadD[pl]*0.1, yD = StFttDb::Y_shift_QuadD[pl]*0.1;
+                const double xA = fttXShift(0,pl)*0.1, yA = fttYShift(0,pl)*0.1;
+                const double xB = fttXShift(1,pl)*0.1, yB = fttYShift(1,pl)*0.1;
+                const double xC = fttXShift(2,pl)*0.1, yC = fttYShift(2,pl)*0.1;
+                const double xD = fttXShift(3,pl)*0.1, yD = fttYShift(3,pl)*0.1;
                 if      ( xh > xA && yh > yA ) qidx = 0;   // A upper right
                 else if ( xh > xB && yh < yB ) qidx = 1;   // B lower right
                 else if ( xh < xC && yh < yC ) qidx = 2;   // C lower left
@@ -2407,10 +2411,11 @@ class ForwardTrackMaker {
             // parameter) is the plane index into the same per-disk arrays.
             if ( qidx >= 0 ) {
                 double dxQ = 0, dyQ = 6.0, sxQ = 1, syQ = 1; // StFttDb defaults
-                if ( qidx == 0 ) { dxQ = StFttDb::X_shift_QuadA[disk]; dyQ = StFttDb::Y_shift_QuadA[disk]; sxQ = 1;  syQ = 1;  }
-                else if ( qidx == 1 ) { dxQ = StFttDb::X_shift_QuadB[disk]; dyQ = StFttDb::Y_shift_QuadB[disk]; sxQ = 1;  syQ = -1; }
-                else if ( qidx == 2 ) { dxQ = StFttDb::X_shift_QuadC[disk]; dyQ = StFttDb::Y_shift_QuadC[disk]; sxQ = -1; syQ = -1; }
-                else if ( qidx == 3 ) { dxQ = StFttDb::X_shift_QuadD[disk]; dyQ = StFttDb::Y_shift_QuadD[disk]; sxQ = -1; syQ = 1;  }
+                dxQ = fttXShift(qidx,disk); dyQ = fttYShift(qidx,disk);
+                if      ( qidx == 0 ) { sxQ =  1; syQ =  1; }
+                else if ( qidx == 1 ) { sxQ =  1; syQ = -1; }
+                else if ( qidx == 2 ) { sxQ = -1; syQ = -1; }
+                else if ( qidx == 3 ) { sxQ = -1; syQ =  1; }
 
                 // invert: global_cm = ((local_mm*s)+d)/10  =>  local_mm = (global_cm*10 - d) / s
                 double xLocal = (h->getX() * 10.0 - dxQ) / sxQ;
@@ -2702,6 +2707,30 @@ class ForwardTrackMaker {
     // dy is off-axis, for H-strip hits it's the other way around, so overlaying
     // them made both the 1D and 2D plots look like a confusing blend (a "cross" in
     // 2D) instead of two separately-interpretable distributions.
+    // ---- per-quadrant sTGC offsets -------------------------------------------
+    // Set by StFwdTrackMaker from the chain's StFttDb. These MUST come from the
+    // instance, not from the StFttDb::X_shift_Quad* statics: with the DB geometry
+    // enabled (the default) the statics are only the hardcoded placeholder, while
+    // the hits are built from the AGML nominal plus the survey tables. Reading the
+    // statics would leave the quadrant boundaries 1-2 cm away from the hits and
+    // silently mislabel everything near a quadrant edge.
+    // Falls back to the statics when no instance is available, which is also
+    // exactly what StFttDb itself uses in non-DB mode, so the fallback is correct
+    // rather than merely safe.
+    StFttDb *mFttDb = nullptr;
+    double fttXShift( int quad, int plane ) const {     // mm
+        if ( mFttDb ) return mFttDb->xShift( quad, plane );
+        const double *s[4] = { StFttDb::X_shift_QuadA, StFttDb::X_shift_QuadB,
+                               StFttDb::X_shift_QuadC, StFttDb::X_shift_QuadD };
+        return s[quad][plane];
+    }
+    double fttYShift( int quad, int plane ) const {     // mm
+        if ( mFttDb ) return mFttDb->yShift( quad, plane );
+        const double *s[4] = { StFttDb::Y_shift_QuadA, StFttDb::Y_shift_QuadB,
+                               StFttDb::Y_shift_QuadC, StFttDb::Y_shift_QuadD };
+        return s[quad][plane];
+    }
+
     int  mFttDiagType = -1;   // see fwdDiagFill() above
     bool mFttNoAdd    = false;
     bool mFttDiagMix  = false;
