@@ -23,6 +23,8 @@
    StFstDb row-0 trap<br>
 <a href="index.html#dbinput">7. Input for the DB-driven step (2026-09-28)</a> &mdash; what the
    geometry and code changes did, and the per-quadrant residual they leave behind<br>
+<a href="index.html#tablesin">8. FTT tables in: the residual moves to zero (2026-09-28)</a>
+   &mdash; dy &minus;72% on identical events, dx overshoots, and the two bugs it exposed<br>
 </p>
 
 <a name="blind"></a>
@@ -805,6 +807,73 @@ enough to centre it.</p>
 1-2&nbsp;cm &mdash; every hit near a quadrant edge would have been mislabelled, silently. And the
 table generator's absolute form is valid only while <tt>StFttDb</tt> is in hardcoded mode: from the
 next iteration the update is <tt>new = previous + delta</tt>, now enforced rather than documented.</p>
+
+
+<HR>
+<a name="tablesin"></a>
+<H1>8. FTT tables in: the residual moves to zero (2026-09-28)</H1>
+
+<p>Section 7 is the input state, with sTGC hit positions still coming from
+<tt>StFttDb</tt>'s hardcoded constants. This is the same measurement with the DB survey
+tables driving those positions instead. <b>Same 2500 events in both</b>, one flag apart
+(<tt>useDbGeometry</tt>), so nothing here is a statistics or sample difference.</p>
+
+<H2>Result</H2>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>station</th><th>dy, tables OFF</th><th>dy, tables ON</th><th>&sigma;</th></tr>
+<tr><td>1</td><td>+1.301</td><td><b>+0.327</b></td><td>9.3</td></tr>
+<tr><td>2</td><td>+1.277</td><td><b>+0.350</b></td><td>6.5</td></tr>
+<tr><td>3</td><td>+1.092</td><td><b>+0.346</b></td><td>8.3</td></tr>
+<tr><td>4</td><td>+1.042</td><td><b>+0.284</b></td><td>7.3</td></tr>
+</table>
+<p>All four stations summed: <b>dy +1.175 &rarr; +0.325 cm, a 72% reduction</b>, at
+&sigma;&nbsp;&asymp;&nbsp;16. Entries are essentially unchanged (59651 &rarr; 56502), so
+this is the peak moving, not acceptance being lost.</p>
+
+<p>dx goes +0.630 &rarr; &minus;0.446: it <b>overshoots through zero</b>. The magnitude
+still falls by ~29%, but the sign flip says the dx correction is too large by roughly a
+factor two. That is consistent with dx being the coordinate we do not yet understand
+&mdash; see the factor-3.1 response in section 7 &mdash; and it is the obvious thing for
+the next iteration to fix, via <tt>script/stgcTableAddDelta.py</tt> rather than by
+regenerating the table.</p>
+
+<H2>What this does and does not establish</H2>
+<ul>
+<li><b>Does:</b> the chain table &rarr; AGML &rarr; <tt>StFttDb</tt> &rarr; hit position
+    &rarr; residual is closed and works end to end. An alignment iteration now moves the
+    hits, which is the whole point of making <tt>StFttDb</tt> table-driven.</li>
+<li><b>Does not:</b> prove the constants are physically right. The residual they correct
+    is radial (section 7), and sixteen per-quadrant translations can absorb a radial
+    pattern without being the correct description of it. The radius-split test still has
+    to be done before these are trusted as alignment rather than as a fit.</li>
+</ul>
+
+<H2>Two bugs this exposed</H2>
+<p>Both passed every structural check and still gave wrong physics, which is worth
+recording as a pattern:</p>
+<ul>
+<li><b>Planar FTT was on the wrong plane.</b> Nothing set <tt>_genfit_plane_index</tt> on
+    an FTT hit, so every sTGC hit used <tt>mFttPlanes[0]</tt> &mdash; station&nbsp;1,
+    quadrant&nbsp;A &mdash; silently moving hits up to 52&nbsp;cm in z. Harmless while
+    <tt>kUseSpacePoints</tt> was true; it went live the day planar mode was adopted.</li>
+<li><b><tt>StFttClusterPointMaker</tt> held the wrong pointer.</b> It asked for
+    <tt>GetDataSet("fttDbMkr")</tt> &mdash; the <i>maker's</i> name, not the dataset's
+    &mdash; and <tt>static_cast</tt>'d the result to <tt>StFttDb*</tt>. Invisible for as
+    long as <tt>getGloablOffset_ClusterPoint()</tt> only read <b>static</b> members, which
+    need no valid <tt>this</tt>. The moment it read per-quadrant instance data it returned
+    garbage and destroyed the matching entirely: quadrant&nbsp;B emptied, 7/16 dx cells
+    left populated, every fit significance below 3. Now a <tt>dynamic_cast</tt> on
+    <tt>"fttDb"</tt>, so a wrong name fails loudly.</li>
+</ul>
+<p>The second is the reason to be careful with "it works today" when the code has only
+ever touched statics.</p>
+
+<H2>Statistics caution</H2>
+<p>A 2500-event run has ~7k entries where the 30-file batch has 30.5M &mdash; a factor
+4000, so fit significances differ by ~65&times;. A significance of 2&ndash;4 in a smoke
+test is not a failure; it corresponds to 130&ndash;260 at batch statistics. This nearly
+caused the opposite call to be made from the smoke test alone.</p>
+
 
 <HR>
 <a name="notes"></a>
