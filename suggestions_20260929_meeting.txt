@@ -1,0 +1,126 @@
+Suggestions for 20260929_fwd_tracking.pdf
+Claude, 2026-09-28 evening. The PDF itself is untouched.
+
+Read the 2 pages as they stand. Slide 2 already carries the right story; below is what
+changed today, what I can supply, and what I think is missing.
+
+
+1. THE TODO ON SLIDE 2 -- I CAN FILL IT
+----------------------------------------
+The margin note says:
+
+    Add 3 progressive residual plots with
+    - Spacepoint mode
+    - Planar mode
+    - FTT tables in
+
+I am generating exactly that. Two of the three are clean already; see section 5 for the
+honest caveat about the third. The plots will land on
+FstFttFlipTest/index.html#dbinput (section 7, added today) with the numbers beside them.
+
+
+2. THREE SLIDE-2 BULLETS ARE NOW DONE, WITH NUMBERS TO QUOTE
+-------------------------------------------------------------
+"STGC geometry file : INT -> FLOAT z position"
+    Done and verified in our tree. zplane was in <varlist type="int">, so every station
+    z was truncated toward zero: the survey -26.4965/-8.8855/+8.7985/+26.5835 became
+    -26/-8/+8/+26 and stations were built at 312.8385/330.8385/346.8385/364.8385 instead
+    of 312.342/329.953/347.637/365.422. Up to 8.9 mm, and the 17.61/17.68/17.79 spacing
+    was flattened to 18/16/18. Moving it to the float varlist changes the generated C++
+    by exactly four lines. A rebuilt fGeom now reads the XML values exactly.
+    -> worth quoting the four numbers on the slide; it is the most concrete result of
+       the week and it is a one-word fix anyone can check.
+
+"StFttDb has survey Z for each quad while AGML has only for quad-A -> Put them in
+ misalign table"
+    Done: pentOnStation.20211112.000002 carries t2 = StFttDb z - quad A z. All 16
+    chambers now match StFttDb to better than a micron. The plane-vs-hit z gap went
+    5-9 mm -> <=2.4 mm -> 0.
+
+"StFttDb pick up xyz offsets from DB by default (switch to go back using old hardcoded
+ numbers)"
+    Done, but the DESIGN changed and the slide should say which, because it is the part
+    people will question. DB mode does NOT add the tables to StFttDb's hardcoded
+    origins. It ignores them entirely and builds
+
+        AGML nominal (placeholder) + stgcOnTpc + stationOnStgc + pentOnStation
+
+    The tables were written as (StFttDb origin - AGML placeholder) + alignment, so the
+    hardcoded term cancels algebraically and the result is the same quantity AGML itself
+    computes. Verified on data: quad A station 1 gives (2.15244, 12.2029, 312.342) cm
+    against the STFM_1 node at (2.152, 12.203, 312.342).
+    Consequence worth stating out loud: the misalign tables did NOT have to be
+    regenerated, and geometry and hit positions now come from one source instead of two
+    kept in step by hand.
+
+
+3. TWO BUGS FOUND TODAY THAT ARE NOT ON THE SLIDE, AND SHOULD BE
+-----------------------------------------------------------------
+Both are the kind that pass every structural check and still give wrong physics.
+
+a. Planar FTT was on the wrong plane. Nothing ever set _genfit_plane_index on an FTT
+   hit, so every sTGC hit used mFttPlanes[0] = station 1 quadrant A. A PlanarMeasurement
+   keeps only the in-plane components, so hits moved silently by up to 52 cm in z. It was
+   harmless while kUseSpacePoints was true and went live the day planar mode was adopted.
+   Relevant to the slide's "SpacePointMode=false as default" proposal: adopting planar is
+   right, but it exposed this, and the same class of thing may still be lurking.
+
+b. StFttClusterPointMaker asked for GetDataSet("fttDbMkr") -- the MAKER's name -- and
+   static_cast the result to StFttDb*, so the pointer was always wrong. Invisible for
+   years because getGloablOffset_ClusterPoint only read STATIC members, which need no
+   valid this. The moment it read per-quadrant instance data it returned garbage and
+   destroyed the FST->sTGC matching. Worth one line as a caution: "works today" is not
+   evidence when the code only ever touched statics.
+
+
+4. SUGGEST ADDING: WHAT WE NEED FROM OTHERS
+--------------------------------------------
+Scattered through slide 2 but not collected anywhere. A single short slide would make
+the asks land:
+  - Flemming / Jason : zplane int -> float upstream, and FSTM assembly="true" (removes
+    the 66 mother-volume extrusions; FSTM has only ~1.3 mm clearance)
+  - Dmitry           : Geometry/stgc -> Geometry/ftt, agreed for October after the
+                       GitHub/Gitea migration
+  - Production       : the fstMuRawHit question (separate note, see section 6)
+  - Gene             : per-run ideal/survey date-times
+  - Daniel           : the sTGC survey transverse numbers; only its z was ever used
+
+
+5. THE ONE THING I WOULD NOT OVERSELL
+--------------------------------------
+The per-quadrant residual left after all of the above is RADIAL, not a set of
+translations. All four quadrants sit ~1-1.9 cm closer to the beam axis than the tracks
+say:
+
+    A (x>0,y>0)  dx -1.06  dy -1.94        C (x<0,y<0)  dx +0.55  dy +1.31
+    B (x>0,y<0)  dx -1.26  dy +1.02        D (x<0,y>0)  dx +0.68  dy -1.39
+
+Sixteen per-quadrant offsets can absorb that and will drive the residual to ~0, but if
+the cause is a scale -- an FST radial error, the strip pitch, something else -- the
+constants will not generalise to other runs or geometries. A pure z error cannot explain
+it: that would need dz ~ 10 cm at r ~ 46 cm.
+    -> I would show the radial plot and say plainly that the next step is to split a
+       quadrant's residual by radius. Flat = genuine offset, sloped = scale. It is one
+       plot and it decides whether these numbers are alignment or a band-aid. Saying that
+       first is stronger than being asked it from the floor.
+
+Also worth one line: the FST misalign propagates into the blind residual 1:1, not with
+the vertex lever arm. dy moved +3.19/+3.25/+2.93/+3.01 mm across the four stations
+against an FST move of -3.197 mm -- flat, where a vertex-anchored track would have
+pivoted and given a 1 mm rise. That says the TPC vertex is contributing very little to
+constraining these fits, which is worth knowing before anyone leans on vertex-constrained
+forward tracks. dx behaves differently (factor 3.1) and is NOT understood -- better to
+say so than to leave it out.
+
+
+6. SEPARATE, BUT SAME AUDIENCE: THE PRODUCTION QUESTION
+--------------------------------------------------------
+If MuDst production starts without our changes, exactly one thing is unrecoverable: FST
+clustering (non-adjacent r-merging, and the cluster R set to the LARGEST r-strip). Cost
+of fixing it is one chain option, fstMuRawHit, at ~0.8-2.5 kB/event, ~1% of the MuDst.
+Everything else -- FTT timing, all FST position bugs -- is recoverable because the MuDst
+keeps strip indices, not just a global xyz.
+Caveat: the option writes the data but nothing can read it back yet. I wrote the missing
+StMuFstUtil::fillFstRawHits() today in ~/fcstrk13/star-sw (branch
+fst-mudst-rawhit-readback, upstream star-bnl/star-sw, builds clean).
+Full detail in note_production_recoverability_20260928.txt.

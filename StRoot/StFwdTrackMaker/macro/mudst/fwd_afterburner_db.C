@@ -80,13 +80,50 @@ void loadLibs();
 // bugreport_StFstHitMaker.txt. Off by default so existing production
 // behavior doesn't silently change; turn on to validate the correction or
 // once it's ready to use routinely.
-void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, int residualTrackType=0, const char* extraFileList="", bool enableAlignment=false, bool applyFstWedgeAlignment=false, bool applyFstGapFix=false, bool applyFstMirror=false){
+// magField: where the track fitter's magnetic field comes from. There is
+// nothing to set per dataset -- mode 1 reads it out of the file.
+//
+//    1 = FROM DATA (default). Construct StarMagField with the scale implied by
+//        the MuDst's own magneticField() stamp. Correct for field-on AND
+//        field-off runs: measured -4.98702 kG for the 2022 ReversedFullField
+//        production, +0.02994 kG for the 2022 zeroFieldAlignment runs.
+//
+//    0 = FORCE ZERO. genfit::ConstField(0,0,0) via TrackFitter:zeroB.
+//        Diagnostic only.
+//
+//   -1 = LEGACY. Construct nothing, reproducing every afterburner production
+//        before 2026-09-09. StBFChain::SetDbOptions normally creates
+//        StarMagField from the bfc FieldOn/FieldOff option, but this macro
+//        builds its chain by hand and never did; StarFieldAdaptor guards its
+//        whole body with "if (StarMagField::Instance())" and so silently
+//        returned B={0,0,0} at EVERY point -- FST, FTT and beyond, not just
+//        inside the uniform-field shortcut. Keep for A/B against existing
+//        output; do not use for new production.
+//
+// Note mode -1 also makes the STARField.h uniform-field shortcut unreachable,
+// which is why restoring old behaviour needs no second switch in that header.
+//
+// At B=0 momentum is unconstrained (a straight track has no curvature), so pT
+// is meaningless and the pT-based guards in FwdTracker.h (addFttHits /
+// addFstHits / addEpdHits, "blown-up state") reject nearly every track. That
+// is why modes 0 and -1 yield few or no FTT residuals.
+void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, int residualTrackType=0, const char* extraFileList="", bool enableAlignment=false, bool applyFstWedgeAlignment=false, bool applyFstGapFix=false, bool applyFstMirror=false, int magField=1, bool applyFttXYMirror=false, int fttTimeCutMode=2, bool fieldFstConstBz=true, double fieldZMax=450., int fttTimeCutLow=-40, int fttTimeCutHigh=100, int fttDiagType=-1, bool fttNoAdd=false, bool fttDiagMix=false, bool useDbGeometry=true){
 	cout << "FileList: " << fileList << endl;
 	cout << "nEvents: " << nEvents << endl;
 	cout << "enableAlignment: " << enableAlignment << endl;
 	cout << "applyFstWedgeAlignment: " << applyFstWedgeAlignment << endl;
 	cout << "applyFstGapFix: " << applyFstGapFix << endl;
 	cout << "applyFstMirror: " << applyFstMirror << endl;
+	cout << "magField: " << magField
+	     << (magField==1 ? "  (from MuDst)" : (magField==0 ? "  (forced zero)" : "  (LEGACY: no field at all)")) << endl;
+	cout << "applyFttXYMirror: " << applyFttXYMirror << endl;
+	cout << "fieldFstConstBz: " << fieldFstConstBz << "  fieldZMax: " << fieldZMax << endl;
+	cout << "fttDiagType: " << fttDiagType << (fttDiagType<0 ? "  (all track types)" : "  (one type only)")
+	     << "  fttNoAdd: " << fttNoAdd << (fttNoAdd ? "  (sTGC hits NEVER added to tracks)" : "")
+	     << "  fttDiagMix: " << fttDiagMix << (fttDiagMix ? "  (diagnostic vs PREVIOUS event)" : "") << endl;
+	cout << "fttTimeCutMode: " << fttTimeCutMode
+	     << (fttTimeCutMode==2 ? "  (calibrated time)" : (fttTimeCutMode==1 ? "  (AcceptAll)" : "  (other)"))
+	     << "  window [" << fttTimeCutLow << "," << fttTimeCutHigh << "] dbcid ticks" << endl;
 	runFwdAlignment = enableAlignment;
 
 	// First load some shared libraries we need
@@ -151,11 +188,29 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 	if (runFttChain){
 		gSystem->Load("libStFttDbMaker.so");
 		StFttDbMaker * fttDbMk = new StFttDbMaker();
+		// useDbGeometry=true (default): per-quadrant sTGC offsets = AGML nominal + the
+		// Geometry/stgc survey tables.  false restores StFttDb's original hardcoded
+		// numbers exactly, which is the A/B for whether the tables help.
+		fttDbMk->setUseDbGeometry( useDbGeometry );
+		printf("fwd_afterburner_db: StFttDb geometry source = %s\n",
+		       useDbGeometry ? "DB survey tables" : "hardcoded");   // LOG_INFO is not in CINT scope here
 		chain->AddMaker(fttDbMk);
 		StFttHitCalibMaker * ftthcm = new StFttHitCalibMaker();
 		StFttClusterMaker * fttclu = new StFttClusterMaker();
-		fttclu->SetTimeCut(2, -40, 100); // kTimeCutModeCalibratedTime, window from Run22-Run24 online QA (was mode 1 = AcceptAll, -40,40)
+		// fttTimeCutMode: 2 = kTimeCutModeCalibratedTime (production default since
+		// 2026-07, window from Run22-Run24 online QA), 1 = kTimeCutModeAcceptAll.
+		// Use 1 for SPARSE data such as the zeroFieldAlignment physics-stream runs.
+		// Mode 2 cuts on the per-VMM calibrated time from StFttHitCalibMaker, and a
+		// VMM only gets a calibrated time after HitCalibHelper::ready(), which needs
+		// >200 DISTINCT dbcid values -- until then every hit is time=-4097 and is
+		// rejected. Measured 2026-09-14: field-on fwd stream 23081049 reaches it in
+		// <100 events (366/368 VMMs ready), but ZF run 23063028 has 31x fewer FTT
+		// hits/event and after 300 events only 4/373 VMMs are ready (H 0/128). The
+		// few that do pass are the NOISIEST, since distinct-dbcid count rewards noise.
+		// Real fix is per-VMM anchors from a dense run instead of per-file warm-up.
+		fttclu->SetTimeCut(fttTimeCutMode, fttTimeCutLow, fttTimeCutHigh);
 		StFttClusterPointMaker *fttCP = new StFttClusterPointMaker();
+		fttCP->setApplyXYMirror( applyFttXYMirror ); // TEMP diagnostic, see signature note
 		// StFttPointMaker * fttpoint = new StFttPointMaker();
 	}
 	/*******************************************************************************************/
@@ -204,6 +259,18 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		fwdTrack->setApplyFstWedgeAlignment( applyFstWedgeAlignment ); // see bugreport_StFstHitMaker.txt
 		fwdTrack->setApplyFstGapFix( applyFstGapFix ); // outer-sensor kFstStripGapPhi sign, see StFwdHitLoader.h
 		fwdTrack->setApplyFstMirror( applyFstMirror ); // DIAGNOSTIC only, see StFwdHitLoader.h
+
+		// magField==0 only; see the note above the signature. Modes 1 and -1 are
+		// handled where the field is built (search "MAGNETIC FIELD" below).
+		if (magField == 0) fwdTrack->setZeroB( true );
+		// StarFieldAdaptor options (STARField.h): uniform sign-correct Bz over the FST box,
+		// and |z| beyond which B = 0 (<= 0: no cut)
+		fwdTrack->setConfigKeyValue( "TrackFitter:fieldFstConstBz", (bool)fieldFstConstBz );
+		fwdTrack->setConfigKeyValue( "TrackFitter:fieldZMax", (double)fieldZMax );
+		// FST-blind diagnostic controls -- see the comment above addFttHits in FwdTracker.h
+		fwdTrack->setConfigKeyValue( "TrackFitter:fttDiagType", (int)fttDiagType );
+		fwdTrack->setConfigKeyValue( "TrackFitter:fttNoAdd",    (bool)fttNoAdd );
+		fwdTrack->setConfigKeyValue( "TrackFitter:fttDiagMix",  (bool)fttDiagMix );
 
 		if (runDb) fwdTrack->setUseBeamlineFromDB( true ); // use measured beamline for BLC; off for MC
 
@@ -347,7 +414,54 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 	  printf("FCS Gain 352 R17c0 = %8.4f\n",fcsdb->getGainCorrection(0,352));
 	  printf("FCS Gain 374 R18c0 = %8.4f\n",fcsdb->getGainCorrection(0,374));
 	}
-		 
+
+	/*******************************************************************************************/
+	// MAGNETIC FIELD.
+	//
+	// StarMagField is normally constructed by StBFChain::SetDbOptions from the
+	// bfc FieldOn/FieldOff/HalfField/ReverseField option (StBFChain.cxx:1913).
+	// This macro builds its chain BY HAND and so never created one. STARField.h's
+	// StarFieldAdaptor guards every lookup with "if (StarMagField::Instance())"
+	// and silently leaves B={0,0,0} when it is absent -- so every afterburner
+	// production to date has tracked at ZERO FIELD regardless of the data.
+	// Verified 2026-09-09: Instance() is NULL after loadLibs(), after chain->Init()
+	// and after chain->InitRun(); and running the same file with zeroB on and off
+	// gave bit-identical fitted momenta.
+	//
+	// Take the field from the MuDst rather than from an option: the production
+	// stamps it per event, so there is nothing to set and no way to get it wrong
+	// for a given file. Measured: -4.98700 kG for the 2022 ReversedFullField
+	// production, +0.02994 kG for the 2022 zeroFieldAlignment runs.
+	//
+	// This must come AFTER chain->Init() (which is where TrackFitter picks its
+	// AbsBField) but that is fine -- StarFieldAdaptor resolves Instance() at each
+	// lookup, not once at init.
+	{
+	  // Only read an entry if the runDb block above did not already do it.
+	  // Calling GetEntry(0) a second time is NOT neutral: it perturbs the
+	  // MuDst buffers enough to change the fit (57 -> 55 tracks over 5 events
+	  // of run 23063028), which would have made magField=-1 fail to reproduce
+	  // the legacy output it exists to reproduce.
+	  if (!runDb) muDstChain.GetEntry(0);
+	  double bz = muDstMaker->muDst()->event()->magneticField(); // kGauss, signed
+	  double scale = bz / 4.98;                                  // StarMagField nominal full field
+	  printf("MuDst magneticField = %.5f kGauss (implies StarMagField scale %.5f)\n", bz, scale);
+	  if (magField == 1) {
+	    if (!StarMagField::Instance()) {
+	      new StarMagField( StarMagField::kMapped, scale, kTRUE );
+	      printf("magField=1: created StarMagField(kMapped, %.5f, locked)\n", scale);
+	    } else {
+	      printf("magField=1: StarMagField instance already exists -- left alone\n");
+	    }
+	  } else {
+	    printf("magField=%d: NOT creating StarMagField."
+	           " Instance()=%p -> StarFieldAdaptor returns B={0,0,0} EVERYWHERE."
+	           " This is the pre-2026-09-09 behaviour; momenta are meaningless.\n",
+	           magField, (void*)StarMagField::Instance());
+	  }
+	}
+	/*******************************************************************************************/
+
 	StMemStat stmem;
 	stmem.PrintMem("BEFORE Event Loop");
 	/*******************************************************************************************/
@@ -386,20 +500,13 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 	stmem.Summary();
 	/*******************************************************************************************/
 
-	// chain->Finish() is disabled below (pre-existing), so StFwdQAMaker/StFwdFitQAMaker's
-	// output may not get flushed either -- call ours explicitly so it isn't silently lost.
-	for (int i = 0; i < kNResidualTypes; i++) {
-		if (fwdResiduals[i]) fwdResiduals[i]->Finish();
-	}
-	for (int i = 0; i < kNAlignTypes; i++) {
-		if (fwdAlignments[i]) fwdAlignments[i]->Finish();
-	}
-
-	// Chain Finish
-	// if (nEntries > 1) {
-	// 	cout << "FINISH up" << endl;
-	// 	chain->Finish();
-	// }
+	// Finish every maker explicitly, while the chain is still intact, instead of relying
+	// on teardown at process exit: closes the picoDst and fcstrk.root, flushes the
+	// residual/alignment ntuples, and prints StFttHitCalibMaker's per-job count of hits
+	// timed from the DB anchor vs on the fly. StFwdResidualMaker/StFwdAlignmentMaker
+	// Finish() are idempotent, so the exit-time pass that follows is harmless.
+	// (Re-enabled 2026-09-14; had been commented out since 37b3744cb8.)
+	chain->Finish();
 
 	// delete chain;
 }
