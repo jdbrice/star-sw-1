@@ -58,7 +58,13 @@ void openTable(FILE* fp, const char* name, int n, const char* hdr){
 }
 void closeTable(FILE* fp){ fprintf(fp,"\nreturn (TDataSet *)tableSet;\n}\n"); }
 
-void stgcQuadOffsets(const char* file, const char* outdir = 0){
+// iteration = 1  : residuals were measured with StFttDb in HARDCODED mode, so the
+//                  absolute form below is valid and the three tables are emitted.
+// iteration >= 2 : residuals were measured with StFttDb in DB mode, i.e. hits already
+//                  sat at (AGML placeholder + previous table). The absolute form would
+//                  re-inject the hardcoded origin AND discard the previous table's
+//                  alignment. Only the delta is written; add it to the previous table.
+void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1){
   TFile* f=TFile::Open(file);
   const char* qn[4]={"A","B","C","D"};
   for(int d=0;d<4;d++) for(int q=0;q<4;q++){
@@ -104,6 +110,26 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0){
   }
   if(!outdir) return;
 
+  // ---- guard: the absolute formula below is iteration-1 only -------------------
+  if( iteration != 1 ){
+    printf("\n>>> iteration=%d: NOT writing absolute tables.\n", iteration);
+    printf(">>> Hits already sat at (AGML placeholder + previous table), so the\n");
+    printf(">>> absolute form would re-inject StFttDb's hardcoded origin and drop the\n");
+    printf(">>> previous table's alignment. Correct update is  new = previous + delta,\n");
+    printf(">>> with the delta being -(measured residual):\n\n");
+    printf(">>> # disk quad   d_t0(cm)   d_t1(cm)\n");
+    for(int dd=0; dd<4; dd++) for(int qq=0; qq<4; qq++){
+      if(!gOK[dd][qq][0] || !gOK[dd][qq][1]){
+        printf(">>> DELTA %d %s     (incomplete, leave unchanged)\n", dd, qn[qq]);
+        continue;
+      }
+      printf(">>> DELTA %d %s  %+9.5f  %+9.5f\n", dd, qn[qq], -gMu[dd][qq][0], -gMu[dd][qq][1]);
+    }
+    printf("\n>>> Apply with script/stgcTableAddDelta.py (previous table + these deltas).\n");
+    return;
+  }
+
+
   // ---- emit the three DB tables ----------------------------------------
   // stationOnStgc is left IDENTITY (per-disk terms measured at <=0.08 cm), so
   // pentOnStation must absorb the full per-quadrant term relative to the global:
@@ -112,6 +138,7 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0){
   // measured from the geometry (script/pentMap.C), NOT A,B,C,D.
   const int k2q[4]={0,3,2,1};                       // k -> index into qn[] = A,B,C,D
   const char* k2qs[4]={"A,x>0,y>0","D,x<0,y>0","C,x<0,y<0","B,x>0,y<0"};
+  // ITERATION 1 ONLY -- see the guard above and the note at the top of this function.
   // The AGML placement is a symmetric PLACEHOLDER: the quadrant local origins sit at
   // A(0,5.9) D(0,5.9) C(-6.5,5.9) B(+6.5,5.9), the same on every station. StFttDb knows
   // the real positions. So the table has to carry BOTH terms:

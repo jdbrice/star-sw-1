@@ -6,8 +6,12 @@
 // Each pentagon is placed separately in AGML, so the difference belongs here:
 //     t2 = StFttDb z(quad,station) - quadrant A z(station)
 // Quadrant A is therefore 0 by construction. Largest term 2.9 mm (station 3, C).
-// This only became meaningful once zplane was changed from int to float
-// (fe8ca6da33); before that the station z itself was wrong by up to 8.9 mm.
+// REQUIRES the float-zplane geometry (fe8ca6da33). t2 is measured against the
+// un-truncated nominal 312.342/329.953/347.637/365.422; against a geometry built
+// before that fix the nominal is 312.8385/330.8385/346.8385/364.8385 and these
+// values are wrong by the truncation. This entry and that XML change are a matched
+// pair -- a misalign table is only meaningful relative to the nominal it was
+// measured against.
 // per-quadrant offsets from FST->sTGC residuals. row = 4*station + k, k: 0=A 1=D 2=C 3=B (measured from the geometry, script/pentMap.C). correction = -(residual - global)
 TDataSet *CreateTable() {
     if (!TClass::GetClass("St_Survey")) return 0;
