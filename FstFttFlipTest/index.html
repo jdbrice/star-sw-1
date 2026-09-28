@@ -837,6 +837,33 @@ factor two. That is consistent with dx being the coordinate we do not yet unders
 the next iteration to fix, via <tt>script/stgcTableAddDelta.py</tt> rather than by
 regenerating the table.</p>
 
+<H2>The three-stage progression</H2>
+<p>Slide 2 of the 2026-09-29 deck asks for spacepoint / planar / planar+tables side by
+side. All three are the <b>same 2500 events</b>; stage&nbsp;1 needed its own build because
+<tt>kUseSpacePoints</tt> is a compile-time constant.</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>stage</th><th>dx [cm]</th><th>dy [cm]</th><th>&sigma;<sub>dy</sub></th>
+    <th>radial |d| [cm]</th></tr>
+<tr><td>1 &nbsp;spacepoint</td><td>+1.159</td><td>+0.852</td><td>19.4</td><td>1.44</td></tr>
+<tr><td>2 &nbsp;planar</td><td>+0.630</td><td>+1.175</td><td>16.4</td><td>1.33</td></tr>
+<tr><td>3 &nbsp;planar + FTT tables</td><td>&minus;0.446</td><td><b>+0.325</b></td>
+    <td>16.5</td><td><b>0.55</b></td></tr>
+</table>
+
+<p>Spacepoint and planar essentially <b>trade dx against dy</b> rather than one being
+better &mdash; which is the same conclusion as the 17.72% vs 17.29% purity comparison in
+<a href="index.html#spacepoints">section 5</a>. The real gain comes from the tables.
+Since the residual is radial (<a href="index.html#dbinput">section 7</a>), the combined
+magnitude is the honest single number: <b>1.44 &rarr; 1.33 &rarr; 0.55 cm, a 62%
+reduction</b>.</p>
+
+<table border="0" cellpadding="3">
+<tr><td><a href="plots/progressive.png"><img src="plots/progressive.png" height="200"></a></td></tr>
+<tr><td>Sideband-normalised, so three samples overlay; read the fitted centre, not the
+    height.</td></tr>
+</table>
+
 <H2>What this does and does not establish</H2>
 <ul>
 <li><b>Does:</b> the chain table &rarr; AGML &rarr; <tt>StFttDb</tt> &rarr; hit position

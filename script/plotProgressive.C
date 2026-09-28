@@ -78,6 +78,7 @@ void ppPanel(TFile** f, const char** lab, const char* base, const char* title) {
     for (int k = 0; k < 3; k++) {
         if (!h[k]) continue;
         h[k]->GetYaxis()->SetRangeUser(0, ymax * 1.45);
+        h[k]->GetXaxis()->SetRangeUser(-5, 5);   // the peaks live here; +-15 wastes the frame
         h[k]->Draw(k ? "hist same" : "hist");
     }
     TLegend* lg = new TLegend(0.13, 0.72, 0.62, 0.89);
