@@ -1,0 +1,107 @@
+Transcription: "FST Cosmic Test Stand Channel Mapping" (hand-written note)
+Transcribed 2026-09-28 from the scan; the phi reversal between inner and outer is
+the reason it was dug out.
+
+Original:  /star/u/akio/www/fcs/survey/FST_Cosmic_ChannelMap.pdf
+Published: https://www.star.bnl.gov/protected/spin/akio/fcs/survey/FST_Cosmic_Channel
+
+One page, large format. Blue = axes/indices, red = APV labels, green = channel
+numbers, orange = sensor outlines.
+
+
+1. LAYOUT
+---------
+Two blocks, drawn one above the other on the same sheet, so left-right on the page
+is the same physical phi direction for both.
+
+TOP BLOCK -- "Outer Sector Face Down", R-strips 4,5,6,7
+
+    phi index along the top, left to right:   0 | 31  32 | 63  64 | 95  96 | 127
+    arrow labelled "phi Segmentation":        ---->  (pointing RIGHT)
+    APV columns, left to right:               APV5   APV6   APV7   APV8
+
+BOTTOM BLOCK -- "Inner Sector Face Up", R-strips 3,2,1,0
+
+    phi index along the bottom, left to right: 127 | 96  95 | 64  63 | 32  31 | 0
+    arrow labelled "phi Segmentation":         <----  (pointing LEFT)
+    APV columns, left to right:                APV4   APV3   APV2   APV1
+
+A blue arrow on the right, labelled "R-Strip", points UP: R increases upward, so
+the inner sensor holds R rows 0-3 and the outer sensors R rows 4-7.
+
+Footnotes at the bottom of the page:
+
+    Sensor 0:  APV 1-4   (0-3 in RDO)
+    Sensor 1:  APV 5-6   (4-5 in RDO)
+    Sensor 2:  APV 7-8   (6-7 in RDO)
+
+("code" is struck out and replaced by "RDO" on the Sensor 0 line.)
+
+
+2. THE POINT: PHI RUNS OPPOSITE WAYS ON INNER AND OUTER
+--------------------------------------------------------
+Same sheet, same physical direction across the page:
+
+    outer  phi index 0 -> 127 running LEFT to RIGHT
+    inner  phi index 127 -> 0 running LEFT to RIGHT
+
+so the phi strip index increases in OPPOSITE senses on the inner sensor and on the
+outer sensors. Both arrows are drawn, both label rows are numbered, and they
+disagree by construction -- this is not an inference from the drawing.
+
+This is hardware documentation of what we had measured from data with
+script/fstLocalMap.C, and it is what the planar decode implements
+(TrackFitter.h, createTrackPointFromPlanarMeasurement):
+
+    if (sensor == 0) phiLocalDeg = phi2 - (strip + 0.5) * pitch;   // inner, DECREASING
+    else             phiLocalDeg = phi1 + (sLocal + 0.5) * pitch;  // outer, increasing
+
+The note also confirms the segmentation we assume: inner = 128 phi strips over the
+wedge (4 APVs x 128 channels = 512 = 128 phi x 4 R), each outer sensor = 64 phi
+strips (2 APVs = 256 = 64 phi x 4 R), 8 R rows in total.
+
+
+3. CHANNEL <-> (PHI, R) MAP
+----------------------------
+The green entries give, for each APV and each R row, the channel at the left edge
+and at the right edge of that APV's phi range. Channels are interleaved with
+stride 4 (four R rows share each phi column). Reading all 16 cells gives:
+
+    outer, R in 4..7
+        APV5   (phi  0.. 31)   ch = 4*(phi -  0) + (R - 4)
+        APV6   (phi 32.. 63)   ch = 4*(phi - 32) + (7 - R)
+        APV7   (phi 64.. 95)   ch = 4*(phi - 64) + (R - 4)
+        APV8   (phi 96..127)   ch = 4*(phi - 96) + (7 - R)
+
+    inner, R in 0..3
+        APV1   (phi  0.. 31)   ch = 4*(phi -  0) + R
+        APV2   (phi 32.. 63)   ch = 4*(phi - 32) + R
+        APV3   (phi 64.. 95)   ch = 4*(phi - 64) + (3 - R)
+        APV4   (phi 96..127)   ch = 4*(phi - 96) + (3 - R)
+
+All 16 cells on the page were checked against these and agree. Worth noticing that
+the R-ordering flips between APVs, but NOT the same way on the two sides: the outer
+APVs alternate (5,7 one way; 6,8 the other) while the inner APVs are paired
+(1,2 one way; 3,4 the other). That asymmetry is the kind of detail a mapping table
+gets subtly wrong, which makes it a good cross-check -- see section 5.
+
+
+4. WHAT THIS DOES NOT SETTLE
+-----------------------------
+- It is the COSMIC TEST STAND. "Face Up"/"Face Down" describes how the module was
+  laid out on the bench, so it speaks to module construction, not to how wedges are
+  mounted front/back in the installed detector. The wedge parity question is
+  separate (and settled elsewhere: see FstFttFlipTest/index.html).
+- It says nothing about the 1 degree dead gap between the two outer sensors. That is
+  geometric -- it lives in the AGML sensor shapes' phi limits -- not in the channel
+  map. The gap SIGN issue in StFstHitMaker (proposal_spacepointmode_fix.txt, item 3)
+  is untouched by this note.
+
+
+5. OPEN CROSS-CHECK THIS ENABLES
+---------------------------------
+The eight formulas above are enough to validate the DB mapping independently of any
+data fit: decode Calibrations/fst/fstMapping (read at StFstDbMaker.cxx:108) and
+check every channel of a wedge against them. That would close the
+"DB mapping settles sensor <-> phiStrip" thread in the gap investigation with a
+hardware reference rather than a residual fit. Not done yet.
