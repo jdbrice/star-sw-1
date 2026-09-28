@@ -107,11 +107,20 @@
         </Structure>
 
   
+        <!-- zplane MUST be float. It was declared int here since c1ee4ea52f (#447),
+             which silently truncated every station z toward zero: the survey values
+             -26.4965 / -8.8855 / +8.7985 / +26.5835 became -26 / -8 / +8 / +26, so the
+             stations were built at 312.8385/330.8385/346.8385/364.8385 instead of
+             312.342/329.953/347.637/365.422, up to 8.9 mm out, and it also destroyed
+             the 17.61/17.68/17.79 spacing. The survey z added in 8ec42e6cc9 and
+             7551fb9c4d (#707) therefore never reached the geometry. StFttDb carries the
+             same numbers at full precision, so this was also a 5-9 mm plane-vs-hit z
+             gap in planar FTT tracking. akio 2026-09-28, note_stgc_geometry_20260925.txt -->
         <varlist type="int">
-            ndisk/0/, idisk/0/, i, j, k, station, zplane
+            ndisk/0/, idisk/0/, i, j, k, station
         </varlist>
         <varlist type="float" >
-            feeSO/2.133333333/, feeId/0/
+            feeSO/2.133333333/, feeId/0/, zplane
         </varlist>
 
       
