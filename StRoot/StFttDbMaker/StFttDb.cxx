@@ -15,6 +15,7 @@
 
 #include "tables/St_fttHardwareMap_Table.h"
 #include "tables/St_fttDataWindowsB_Table.h"
+#include "tables/St_Survey_Table.h"
 
 
 ClassImp(StFttDb)
@@ -53,7 +54,7 @@ double StFttDb::X_StripGroupEdge[] = {14.60, 172.29, 216.89, 315.4, 360.09, 410.
 double StFttDb::Y_StripGroupEdge[] = {14.60, 172.29, 216.89, 315.4, 360.09, 410.9, 504.2, 548.7};//mm 
 
 
-StFttDb::StFttDb(const char *name) : TDataSet(name) {}; 
+StFttDb::StFttDb(const char *name) : TDataSet(name) { resetGeometryToHardcoded(); }; 
 
 StFttDb::~StFttDb() {}
 
@@ -140,6 +141,12 @@ void StFttDb::getTimeCut( StFttRawHit * hit, int &mode, int &l, int &h ){
             mode = dwMap[ hit_vmmid ].mode;
             l = dwMap[ hit_vmmid ].min;
             h = dwMap[ hit_vmmid ].max;
+        } else if ( !mDwFallbackWarned ) {
+            LOG_WARN << "StFttDb::getTimeCut - no data-window entry for VMM " << hit_vmmid
+                     << (dwMap.empty() ? " (no fttDataWindowsB loaded at all)" : "")
+                     << "; using default mode " << (int)mode << " window [" << l << ", " << h
+                     << "]. Warned once; other VMMs may also fall back." << endm;
+            mDwFallbackWarned = true;
         }
 
     }
@@ -175,11 +182,19 @@ void StFttDb::loadDataWindowsFromDb( St_fttDataWindowsB * dataset ) {
         if ( !rows ) return;
 
         dwMap.clear();
+        mDwStampRun = -1;
+        mDwAnchorsValid = false;
 
         fttDataWindowsB_st *table = dataset->GetTable();
         const int nEntries = sizeof(table[0].uuid) / sizeof(table[0].uuid[0]);
         for (Int_t i = 0; i < rows; i++) {
             for ( int j = 0; j < nEntries; j++ ) {
+                // Run stamp (see StFttDb.h): not a VMM, never goes into dwMap.
+                if ( table[i].uuid[j] == -1 ) {
+                    mDwStampRun = table[i].min[j] * 10000 + table[i].max[j];
+                    continue;
+                }
+                if ( table[i].uuid[j] < 0 ) continue;
                 // printf( "[feb=%d, vmm=%d, ch=%d] ==> [row=%d, strip%d]\n", table[i].feb[j], table[i].vmm[j], table[i].vmm_ch[j], table[i].row[j], table[i].strip[j] );
 
 
@@ -204,7 +219,54 @@ void StFttDb::loadDataWindowsFromDb( St_fttDataWindowsB * dataset ) {
     }
 }
 
+// Reads fttDataWindow.<run>.txt as written by script/fttDataWindow.C: '#' lines are
+// comments (the "# run N" header supplies the run stamp); data lines start with
+// "uuid mode min max anchor" and any further QA columns are ignored. Same content
+// and conventions as the DB table, so the same run-stamp check applies.
 void StFttDb::loadDataWindowsFromFile( std::string fn ) {
+    std::ifstream inf( fn.c_str() );
+    if ( !inf.good() ) {
+        LOG_ERROR << "StFttDb::loadDataWindowsFromFile - cannot open " << fn << endm;
+        return;
+    }
+    dwMap.clear();
+    mDwStampRun = -1;
+    mDwAnchorsValid = false;
+
+    std::string line;
+    int nRead = 0;
+    while ( std::getline( inf, line ) ) {
+        if ( line.empty() ) continue;
+        if ( line[0] == '#' ) {
+            int r = 0;
+            if ( sscanf( line.c_str(), "# run %d", &r ) == 1 ) mDwStampRun = r;
+            continue;
+        }
+        int u, m, lo, hi, an;
+        if ( sscanf( line.c_str(), "%d %d %d %d %d", &u, &m, &lo, &hi, &an ) != 5 ) continue;
+        if ( u < 0 || u >= (int)nVMM ) continue;
+        FttDataWindow fdw;
+        fdw.uuid   = u;
+        fdw.mode   = m;
+        fdw.min    = lo;
+        fdw.max    = hi;
+        fdw.anchor = an;
+        dwMap[ fdw.uuid ] = fdw;
+        nRead++;
+    }
+    LOG_INFO << "StFttDb::loadDataWindowsFromFile - " << nRead << " VMM entries from " << fn
+             << ", run stamp " << mDwStampRun << endm;
+}
+
+bool StFttDb::getAnchor( StFttRawHit * hit, Short_t &anchor ) {
+    if ( !mDwAnchorsValid ) return false;
+    size_t id = vmmId( hit );
+    if ( id >= nVMM ) return false;
+    std::map< uint16_t, FttDataWindow >::const_iterator it = dwMap.find( (uint16_t)id );
+    if ( it == dwMap.end() ) return false;
+    if ( it->second.anchor < 0 ) return false;
+    anchor = it->second.anchor;
+    return true;
 }
 
 
@@ -840,6 +902,114 @@ UChar_t StFttDb::orientation( StFttRawHit * hit ){
     return kFttUnknownOrientation;
 }
 
+// ---------------------------------------------------------------------------
+// Geometry offsets. See the block comment in StFttDb.h for the convention.
+// ---------------------------------------------------------------------------
+void StFttDb::resetGeometryToHardcoded() {
+    for ( size_t ip = 0; ip < nPlane; ip++ ) {
+        mXShift[0][ip] = X_shift_QuadA[ip];  mYShift[0][ip] = Y_shift_QuadA[ip];
+        mXShift[1][ip] = X_shift_QuadB[ip];  mYShift[1][ip] = Y_shift_QuadB[ip];
+        mXShift[2][ip] = X_shift_QuadC[ip];  mYShift[2][ip] = Y_shift_QuadC[ip];
+        mXShift[3][ip] = X_shift_QuadD[ip];  mYShift[3][ip] = Y_shift_QuadD[ip];
+        mZLoc[0][ip]   = idealPlaneZLocations_QuadA[ip];
+        mZLoc[1][ip]   = idealPlaneZLocations_QuadB[ip];
+        mZLoc[2][ip]   = idealPlaneZLocations_QuadC[ip];
+        mZLoc[3][ip]   = idealPlaneZLocations_QuadD[ip];
+    }
+    mGeoFromDb = false;
+}
+
+// Row i of a Survey table, or 0 if it is missing or too short. Rows are taken in
+// table order -- the same thing AGML's <Misalign row="N"/> indexes -- and the
+// 1-based Id column is only checked, never used to address.
+static Survey_st* fttSurveyRow( St_Survey *t, int irow, const char *name ) {
+    if ( !t ) return 0;
+    if ( irow < 0 || irow >= t->GetNRows() ) {
+        LOG_WARN << "StFttDb: " << name << " has " << ( t ? t->GetNRows() : 0 )
+                 << " rows, need row " << irow << " -- treating as identity" << endm;
+        return 0;
+    }
+    Survey_st *r = ((Survey_st*) t->GetTable()) + irow;
+    if ( r->Id != irow + 1 )
+        LOG_WARN << "StFttDb: " << name << " row " << irow << " has Id " << r->Id
+                 << ", expected " << irow + 1 << " (using row order regardless)" << endm;
+    return r;
+}
+
+// The AGML nominal ("placeholder") position of each pentagon, from StgmGeo1.xml.
+// STGM sits in CAVE at (0, 5.9, 338.8385) and the four STFM are placed inside it at
+// x = 0, 0, -6.5, +6.5 (pentagon order A, D, C, B) and z = zplane, so the nominal
+// global position of a pentagon is (phx[pent], 5.9, 338.8385 + zplane[station]).
+//
+// These are DESIGN values, not survey: they are the symmetric placeholder AGML starts
+// from, and everything real is carried by the misalign tables on top.
+//
+// They duplicate StgmGeo1.xml and must change with it. That duplication is avoidable:
+// the built geometry already has the tables applied, so the STFM_n node position IS
+// placeholder + tables -- reading it would need neither these constants nor the table
+// walk below. Verified equal on 2026-09-28 (quad A station 1: node (2.152, 12.203,
+// 312.342) vs this path (2.15244, 12.2029, 312.342)). Not done that way yet because
+// StFttDb would then need gGeoManager loaded before first use, which InitRun cannot
+// guarantee; this path stays as the fallback for chains that never load fGeom.
+static const double kAgmlPentX[4]  = {  0.0,   0.0,  -6.5,   6.5 };   // cm, by pent (A,D,C,B)
+static const double kAgmlPentY     =    5.9;                          // cm, from STGM in CAVE
+static const double kAgmlStationZ[4] = { 312.342, 329.953, 347.637, 365.422 };  // cm
+
+int StFttDb::loadGeometryFromDb( St_Survey *stgcOnTpc, St_Survey *stationOnStgc,
+                                 St_Survey *pentOnStation ) {
+    if ( !mUseDbGeometry ) {
+        resetGeometryToHardcoded();
+        LOG_INFO << "StFttDb: DB geometry DISABLED, using the hardcoded quadrant offsets" << endm;
+        return kStOK;
+    }
+    // pentOnStation is what carries the per-quadrant position. Without it the AGML
+    // placeholder alone is symmetric and would be centimetres wrong, so fall back
+    // rather than produce something plausible-looking and wrong.
+    if ( !pentOnStation ) {
+        resetGeometryToHardcoded();
+        LOG_WARN << "StFttDb: no Geometry/stgc/pentOnStation table, "
+                 << "falling back to the hardcoded quadrant offsets" << endm;
+        return kStWarn;
+    }
+
+    // In DB mode the hardcoded StFttDb origins are NOT used. The tables were built as
+    //     pentOnStation = (StFttDb origin - AGML placeholder) + alignment
+    // so placeholder + table reproduces the true position exactly, and it is the same
+    // quantity AGML itself computes -- the geometry and the hit positions then come
+    // from one source instead of two that have to be kept in step by hand.
+    Survey_st *glob = fttSurveyRow( stgcOnTpc, 0, "stgcOnTpc" );
+    const int quad2pent[4] = { 0, 3, 2, 1 };   // StFttDb A,B,C,D -> AGML pent order A,D,C,B
+
+    for ( size_t ip = 0; ip < nPlane; ip++ ) {
+        Survey_st *st = fttSurveyRow( stationOnStgc, (int)ip, "stationOnStgc" );
+        for ( size_t iq = 0; iq < nQuadPerPlane; iq++ ) {
+            const int ipent = quad2pent[iq];
+            Survey_st *pe = fttSurveyRow( pentOnStation, 4 * (int)ip + ipent, "pentOnStation" );
+            double tx = kAgmlPentX[ipent], ty = kAgmlPentY, tz = kAgmlStationZ[ip];   // cm
+            if ( glob ) { tx += glob->t0; ty += glob->t1; tz += glob->t2; }
+            if ( st   ) { tx += st->t0;   ty += st->t1;   tz += st->t2;   }
+            if ( pe   ) { tx += pe->t0;   ty += pe->t1;   tz += pe->t2;   }
+            mXShift[iq][ip] = 10.0 * tx;          // shifts are mm, survey is cm
+            mYShift[iq][ip] = 10.0 * ty;
+            mZLoc  [iq][ip] =        tz;          // z locations are already cm
+        }
+    }
+    mGeoFromDb = true;
+
+    const char *qn[4] = { "A", "B", "C", "D" };
+    LOG_INFO << "StFttDb: quadrant offsets built from AGML placeholder + DB survey tables"
+             << " (hardcoded origins NOT used)" << endm;
+    for ( size_t jq = 0; jq < nQuadPerPlane; jq++ )
+        LOG_INFO << "  quad " << qn[jq]
+                 << "  dx(mm) " << mXShift[jq][0] << " " << mXShift[jq][1] << " "
+                                << mXShift[jq][2] << " " << mXShift[jq][3]
+                 << " | dy(mm) " << mYShift[jq][0] << " " << mYShift[jq][1] << " "
+                                 << mYShift[jq][2] << " " << mYShift[jq][3]
+                 << " | z(cm) "  << mZLoc[jq][0]   << " " << mZLoc[jq][1]   << " "
+                                 << mZLoc[jq][2]   << " " << mZLoc[jq][3] << endm;
+    return kStOK;
+}
+
 void StFttDb::getGloablOffset( UChar_t plane, UChar_t quad, 
                                 float &dx, float &sx,
                                 float &dy, float &sy, 
@@ -863,14 +1033,11 @@ void StFttDb::getGloablOffset( UChar_t plane, UChar_t quad,
         // upper quadrants are not displace
         // there have a issue, for the xy shift, the unit is mm, but for the z, the unit is cm 
         // for Z location, suppose that z at the center of the chamber
-        if ( quad == 0 )
-        {dx = StFttDb::X_shift_QuadA[plane]; dy = StFttDb::Y_shift_QuadA[plane]; dz = StFttDb::idealPlaneZLocations_QuadA[plane]-(LocalStripZLocations[2]+LocalStripZLocations[3])/2.;} 
-        else if ( quad == 1 )
-        {dx = StFttDb::X_shift_QuadB[plane]; dy = StFttDb::Y_shift_QuadB[plane]; dz = StFttDb::idealPlaneZLocations_QuadB[plane]-(LocalStripZLocations[2]+LocalStripZLocations[3])/2.;} 
-        else if ( quad == 2 )
-        {dx = StFttDb::X_shift_QuadC[plane]; dy = StFttDb::Y_shift_QuadC[plane]; dz = StFttDb::idealPlaneZLocations_QuadC[plane]-(LocalStripZLocations[2]+LocalStripZLocations[3])/2.;} 
-        else if ( quad == 3 )
-        {dx = StFttDb::X_shift_QuadD[plane]; dy = StFttDb::Y_shift_QuadD[plane]; dz = StFttDb::idealPlaneZLocations_QuadD[plane]-(LocalStripZLocations[2]+LocalStripZLocations[3])/2.;} 
+        if ( quad < nQuadPerPlane ) {
+            dx = mXShift[quad][plane];
+            dy = mYShift[quad][plane];
+            dz = mZLoc[quad][plane] - (LocalStripZLocations[2]+LocalStripZLocations[3])/2.;
+        }
     }
         else dz = -999;
 
@@ -909,14 +1076,11 @@ void StFttDb::getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad,
 
     // upper quadrants are not displace
     // there have a issue, for the xy shift, the unit is mm, but for the z, the unit is cm 
-    if ( quad == 0 )
-    {dx = StFttDb::X_shift_QuadA[plane]; dy = StFttDb::Y_shift_QuadA[plane]; dz = StFttDb::idealPlaneZLocations_QuadA[plane];} 
-    else if ( quad == 1 )
-    {dx = StFttDb::X_shift_QuadB[plane]; dy = StFttDb::Y_shift_QuadB[plane]; dz = StFttDb::idealPlaneZLocations_QuadB[plane];} 
-    else if ( quad == 2 )
-    {dx = StFttDb::X_shift_QuadC[plane]; dy = StFttDb::Y_shift_QuadC[plane]; dz = StFttDb::idealPlaneZLocations_QuadC[plane];} 
-    else if ( quad == 3 )
-    {dx = StFttDb::X_shift_QuadD[plane]; dy = StFttDb::Y_shift_QuadD[plane]; dz = StFttDb::idealPlaneZLocations_QuadD[plane];} 
+    if ( quad < nQuadPerPlane && plane < nPlane ) {
+        dx = mXShift[quad][plane];
+        dy = mYShift[quad][plane];
+        dz = mZLoc[quad][plane];
+    }
 
     // these are the reflections of a pentagon into the symmetric shape for quadrants A, B, C, D
     if ( quad == 1 )

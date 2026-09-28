@@ -34,6 +34,8 @@ struct FttDataWindow {
 class St_fttHardwareMap;
 class St_fttDataWindowsB;
 
+class St_Survey;
+
 class StFttDb : public TDataSet {
 
 public: 
@@ -143,6 +145,37 @@ public:
     bool hardwareMap( int rob, int feb, int vmm, int ch, int &row, int &strip, UChar_t &orientation ) const;
     bool hardwareMap( StFttRawHit * rawHit ) const;
 
+    // ---- geometry offsets: from the DB (default) or the original hardcoded numbers ----
+    // The X_shift_Quad* / Y_shift_Quad* / idealPlaneZLocations_Quad* statics above are
+    // the ORIGINAL hardcoded numbers. They stay as the placeholder, and are exactly what
+    // setUseDbGeometry(false) restores, so the old behaviour is always one call away.
+    //
+    // With the DB on (the default) the hardcoded origins above are NOT used at all.
+    // The effective offset is built from the AGML nominal instead:
+    //     AGML placeholder + stgcOnTpc + stationOnStgc[station] + pentOnStation[4*station+pent]
+    // The tables were written as (StFttDb origin - AGML placeholder) + alignment, so this
+    // reproduces the true position exactly while being the SAME quantity AGML computes.
+    // Geometry and hit positions then come from one source rather than two kept in step
+    // by hand, and an alignment iteration only has to touch the table.
+    // with pent = (4 - quad) % 4: AGML orders the four pentagons A,D,C,B by rotation
+    // while StFttDb numbers its quadrants A,B,C,D. That map was measured from the built
+    // geometry, see FwdGeomUtils::fttChamberIndex and script/fttQuadConvention.C.
+    //
+    // Units: Survey translations are cm. X/Y_shift are mm, so t0/t1 are scaled by 10;
+    // t2 adds straight to the z locations, which are already cm.
+    //
+    // Rows are taken in table order, which is what AGML's <Misalign row="N"/> indexes.
+    void setUseDbGeometry( bool v ) { mUseDbGeometry = v; }
+    bool useDbGeometry() const      { return mUseDbGeometry; }
+    bool geometryFromDb() const     { return mGeoFromDb; }   // a DB load actually happened
+    void resetGeometryToHardcoded();
+    int  loadGeometryFromDb( St_Survey *stgcOnTpc, St_Survey *stationOnStgc, St_Survey *pentOnStation );
+    // The values getGloablOffset*() actually uses. Prefer these over the statics, which
+    // are only the placeholder once the DB is in play.
+    double xShift( int quad, int plane ) const { return mXShift[quad][plane]; }  // mm
+    double yShift( int quad, int plane ) const { return mYShift[quad][plane]; }  // mm
+    double zLoc  ( int quad, int plane ) const { return mZLoc  [quad][plane]; }  // cm
+
     void getGloablOffset( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
     void getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
     bool reverseHardwareMap(int &rob, int &feb, int &vmm, int &ch, int plane, int quad, int row, int strip, UChar_t &orientation) const;
@@ -163,20 +196,55 @@ public:
 
     void getTimeCut( StFttRawHit * hit, int &mode, int &l, int &h );
 
+    // ---- per-run VMM time anchors (Calibrations/ftt/fttDataWindowsB) ------------
+    // VMM dbcid anchors are reset at random at every run start, so an anchor is only
+    // meaningful for the run it was measured in. STAR DB entries carry a begin time
+    // only, so St_db_Maker hands a run with no entry of its own the PREVIOUS run's
+    // entry. Hence the RUN STAMP written by script/fttDataWindow_db.C into the spare
+    // slot 384 (uuid -1, min = run/10000, max = run%10000), and anchors are used only
+    // when StFttDbMaker has confirmed stamp == run being reconstructed.
+    int  dataWindowStampRun() const            { return mDwStampRun; }
+    void setDataWindowAnchorsValid( bool v )   { mDwAnchorsValid = v; }
+    bool dataWindowAnchorsValid() const        { return mDwAnchorsValid; }
+    // true, with the anchor, only if anchors are validated for this run AND this VMM
+    // has one (anchor -1 in the table = no usable calibration for that VMM)
+    bool getAnchor( StFttRawHit * hit, Short_t &anchor );
+    // Forget any previously loaded windows/anchors/stamp. Called before every load so a
+    // run whose fetch fails cannot silently keep the previous run's entry.
+    void clearDataWindows() { dwMap.clear(); mDwStampRun = -1; mDwAnchorsValid = false; mDwFallbackWarned = false; }
+
  private:
+  bool   mUseDbGeometry = true;          //! true = placeholder + DB survey tables (default)
+  bool   mGeoFromDb     = false;         //! set once a DB load has actually been applied
+  double mXShift[nQuadPerPlane][nPlane]; //! mm, effective per quadrant/plane
+  double mYShift[nQuadPerPlane][nPlane]; //! mm
+  double mZLoc  [nQuadPerPlane][nPlane]; //! cm
+
   int   mDbAccess=1;                     //! enable(1) or disabe(0) DB access
   int   mRun=0;                          //! run#
   // int   mDebug=1;                     //! >0 dump tables to text files    
   int   mDebug=0;                        //! >0 dump tables to text files    
 
   bool mUserDefinedTimeCut = false;
-  TimeCutMode mTimeCutMode;
-  int mTimeCutLow, mTimeCutHigh;
+  // Returned by getTimeCut() for a VMM with no data-window entry. These used to have
+  // no initializer, so such a VMM got an undefined mode and window -- and since
+  // StFttClusterMaker defaults to kTimeCutModeDB, that reaches every chain that does
+  // not call SetTimeCut() (BFC production, simulation). A VMM is "missing" when no
+  // fttDataWindowsB entry was loaded at all (query time before 2021-10-01, no DB
+  // access), when an entry's uuid column skips ids, or when the hit's vmmId is out of
+  // range. Default = calibrated time, [-65, 100]: exactly the global DB entry in use
+  // since 2021-10-01, so a missing entry behaves like the DB default.
+  TimeCutMode mTimeCutMode = CalibratedBunchCrossingMode;
+  int mTimeCutLow  = -65;
+  int mTimeCutHigh = 100;
+  bool mDwFallbackWarned = false;  //! warn once per load, not once per hit
 
   std :: map< uint16_t , uint16_t > mMap;
   std :: map< uint16_t , std::vector<uint16_t> > rMap; // reverse map -- a given (row,strip) has one channel per orientation (H and V both exist at the same row/strip in the real hardware map), so this must hold all of them, not just the last one loaded
   //  data windows map
   std :: map< uint16_t , FttDataWindow > dwMap;
+  int  mDwStampRun = -1;          //! run stamped into the loaded data-window entry, -1 = unstamped
+  bool mDwAnchorsValid = false;   //! set by StFttDbMaker only when the stamp matches the run
   std :: map< int , Float_t > scMapXY; // strip center map 
   std :: map< int , Float_t > scMapDiag; // strip center map 
   std :: map< int , Float_t > slMapRow1; // strip length map Row1
