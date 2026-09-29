@@ -139,41 +139,53 @@ channelId and geoId -- so the defects we can see are on the decode/consume side,
 the side we would be writing anyway.
 
 
-WHAT IT COSTS IN DISK SPACE
----------------------------
-Measured on a real production MuDst, st_physics_23063028_raw_1000002.MuDst.root,
-38177 events, 5762 MB, i.e. 154.6 kB/event. Compressed bytes per branch:
+WHAT IT COSTS IN DISK SPACE -- NOW MEASURED, NOT ESTIMATED
+-----------------------------------------------------------
+UPDATE 2026-09-29: the option was actually run. A MuDst was written from real DAQ
+(run 23063032, 200 events, chain "pp2022a fst CMuDST fstMuRawHit") with the option on,
+in ~/fcstrk13/star-sw. Measured compressed bytes per branch:
 
-    FcsHit        30257 B/event    842.1 objects/event    (20% of the file)
-    FttRawHit      2120 B/event    315.9 objects/event    ( 6.7 B per raw hit)
-    FttCluster      692 B/event      7.4
-    FstHit          602 B/event     24.5 objects/event    (24.6 B per hit)
-    FstRawHit         4 B/event      0.0 objects/event    <- switched off, empty array
+    FcsHit        32229 B/event   46.9% of the tree
+    FstRawHit      1975 B/event    2.87%     <- the cost of this option
+    FttRawHit      1798 B/event    2.62%
+    FstHit          628 B/event    0.91%
 
-FST raw-hit multiplicity cannot be measured directly (no MuDst has them), but the strips
-inside clusters are a firm lower bound: 24.5 hits/event x 1.45 raw hits per hit = 35.5
-strips/event. Including strips that never made a cluster, expect of order 50-100/event.
+So FST raw hits cost about 2 kB/event, essentially the same as FttRawHit already costs
+and about one sixteenth of FcsHit. Against a full production MuDst at 154.6 kB/event
+that is roughly 1.3%. (The test MuDst is 68 kB/event because the chain is leaner, which
+is why the percentage-of-tree figure above is larger than the production fraction.)
 
-Each StMuFstRawHit is ~103 B uncompressed: two Float_t[9] arrays for charge and charge
-error plus ids. But kFstNumTimeBins = 9 is only a compile-time MAXIMUM -- the header says
-"3 or 9" -- and this data used 3. Checked on the MuDst: FstHit maxTimeBin is only ever
-0, 1 or 2 (8.4% / 67.5% / 24.1% of 496k hits), never 3-8.
+The earlier estimate in this note was 0.8-2.5 kB/event; measured 1.97, so the estimate
+stands and the answer does not change: it is cheap.
 
-So six of the nine slots in each array carry no data. They are not uninitialised: StEvent's
-StFstRawHit value-initialises both arrays and fills charge with the sentinel -999, and
-StMuFstRawHit::set() writes every member, so what lands on disk is a constant, which
-compresses away to nearly nothing. Real payload is 3+3 floats plus ids, about 39 B.
+Multiplicity, also now measured: 103.2 FST raw hits/event, against 25.2 clustered
+FstHit/event -- so about 4 raw strips stored per clustered hit. FstHit/event matches the
+existing production MuDst (24.5), which is the cross-check that this test chain
+reproduces production on the FST side.
 
-Taking FTT's measured 6.7 B/hit as the guide for how this compresses, expect roughly
-15-25 B/hit on disk.
+Time bins: maxTimeBin is 0, 1 or 2 only in this run too, never 3-8, confirming 3 bins
+rather than 9.
 
-    50-100 raw hits/event  x  ~15-25 B  =  ~0.8 to 2.5 kB/event
-                                        =  ~0.5 to 1.6 % of the MuDst
 
-If a future run takes 9 timebins the cost roughly triples, to ~3-7 kB/event.
+DOES THE WRITTEN DATA DECODE CORRECTLY? YES
+--------------------------------------------
+This mattered because the branch had never been exercised and akio reports a past bug
+that filled garbage. Decoding geoId independently of the class accessors
+(wedge = 1 + geoId/1024, disk = 1 + geoId/12288, r = (geoId%1024)/128,
+phi = (geoId%1024)%128, layout confirmed against StFstRawHitMaker.cxx:369):
 
-For scale that is at or below what FttRawHit already costs (2.1 kB/event), and under a
-tenth of what FcsHit costs (30 kB/event). Cheap.
+    disk    1..3    as expected
+    wedge   1..36   as expected
+    rStrip  0..7    as expected
+    phi     0..127  as expected
+    geoId < 0 or > 36863 : none
+
+So the write path produces usable data. Whatever the historical garbage bug was, it is
+not present in what this chain writes today.
+
+Note for whoever repeats this: do the index arithmetic with integer division.
+TTree::Draw divides in double, so geoId/12288 for the last channel gives 2.9999 and the
+disk histogram shows a spurious "4". That artifact cost a false FAIL on the first pass.
 
 
 WHAT WE ASK FOR
