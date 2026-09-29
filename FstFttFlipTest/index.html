@@ -837,6 +837,42 @@ factor two. That is consistent with dx being the coordinate we do not yet unders
 the next iteration to fix, via <tt>script/stgcTableAddDelta.py</tt> rather than by
 regenerating the table.</p>
 
+<H2>Full statistics: 90 jobs, 1.17M events (2026-09-29)</H2>
+<p>The controlled 2500-event A/B below is confirmed at campaign scale. 90 jobs, all of
+them reporting the DB tables and <b>zero falling back</b>:</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>station</th><th>dy, hardcoded</th><th>dy, DB tables</th><th>&sigma;</th></tr>
+<tr><td>1</td><td>+1.324</td><td><b>+0.346</b></td><td>197</td></tr>
+<tr><td>2</td><td>+1.296</td><td><b>+0.346</b></td><td>132</td></tr>
+<tr><td>3</td><td>+1.122</td><td><b>+0.373</b></td><td>195</td></tr>
+<tr><td>4</td><td>+1.095</td><td><b>+0.363</b></td><td>165</td></tr>
+</table>
+<p><b>dy &minus;74%</b>, uniform across stations, agreeing with the 2500-event A/B
+(+0.325) to well within the spread. Three independent measurements now give the same
+answer.</p>
+
+<H3>But the per-quadrant view shows the table is the wrong size</H3>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>quadrant</th><th>dy before</th><th>dy after</th><th>verdict</th></tr>
+<tr><td>A (x&gt;0,y&gt;0)</td><td>&minus;1.86</td><td>+0.82 &hellip; +0.91</td><td>overshot</td></tr>
+<tr><td>D (x&lt;0,y&gt;0)</td><td>&minus;1.46</td><td>+0.83 &hellip; +1.32</td><td>overshot</td></tr>
+<tr><td>B (x&gt;0,y&lt;0)</td><td>+1.02</td><td><b>+0.31 &hellip; +0.36</b></td><td>good</td></tr>
+<tr><td>C (x&lt;0,y&lt;0)</td><td>+1.31</td><td><b>+0.35 &hellip; +0.36</b></td><td>good</td></tr>
+</table>
+<p>B and C land near zero and are consistent station to station. <b>A and D crossed zero
+and overshot by ~0.9 cm.</b> That is not a failure of the mechanism &mdash; the
+<tt>20211112.000002</tt> table was derived from the earlier 5-file <i>ideal-geometry</i>
+run, so its corrections do not match the residual the misaligned-FST geometry actually
+leaves. This is precisely the case the incremental update exists for:
+<tt>script/stgcTableAddDelta.py</tt>, <tt>new = previous + delta</tt>. Regenerating the
+table absolutely would be wrong now that StFttDb runs DB-driven.</p>
+<p>dx likewise overshoots, +0.65 &rarr; &minus;0.39 summed. And the dx <i>widths</i> grew
+on stations 1 and 3 (0.41&rarr;0.53) while the dy widths narrowed (0.39&rarr;0.34) &mdash;
+a rigid shift should not broaden anything, so the dx correction is not behaving as a pure
+translation. That ties back to the unexplained factor-3.1 dx response and to the residual
+being radial rather than translational.</p>
+
 <H2>The three-stage progression</H2>
 <p>Slide 2 of the 2026-09-29 deck asks for spacepoint / planar / planar+tables side by
 side. All three are the <b>same 2500 events</b>; stage&nbsp;1 needed its own build because

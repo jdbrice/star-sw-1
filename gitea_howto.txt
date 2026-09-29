@@ -1,0 +1,117 @@
+Getting our changes into the new STAR Gitea repo
+akio + Claude, 2026-09-29
+
+
+THE SITUATION
+-------------
+- The STAR GitHub repo is frozen. Daniel was asked to push his dev branch there before
+  the transition and it looks like he did not.
+- The new STAR repo is on Gitea at https://git.racf.bnl.gov/gitea/
+- akio has a fork: https://git.racf.bnl.gov/gitea/akio/star-sw
+- ~/fcstrk11 is our snapshot fork of Daniel's repo. It is NOT for PRs -- 44 commits of
+  mixed work, fine as a working record, wrong shape for review.
+- ~/fcstrk13 is a clean clone of star-bnl/star-sw from GitHub (main = 1ef9aaefdf) where
+  the fstMuRawHit work was done. This is the material that should become PRs.
+
+
+RECOMMENDATION: MAKE ~/fcstrk14, FRESH FROM THE GITEA FORK
+-----------------------------------------------------------
+Do not repoint fcstrk13 at Gitea. Its origin is the frozen GitHub repo and its main is a
+GitHub snapshot; even if the histories match today it will drift from Gitea's main
+without any obvious signal, and PRs would be built on a stale base. The ambiguity is the
+cost, not the disk space.
+
+Keep fcstrk13 as the GitHub-era reference: it is where the fstMuRawHit work was built and
+tested, and it still has the working build tree.
+
+The decision is low-stakes anyway, because the work is three small patches -- see below.
+
+
+SETUP
+-----
+    mkdir ~/fcstrk14 && cd ~/fcstrk14
+    git clone <gitea>/akio/star-sw            # origin = your fork
+    cd star-sw
+    git remote add upstream <gitea>/<star>/star-sw
+    git fetch upstream
+
+One branch per PR, always based on upstream/main:
+
+    git checkout -b <topic> upstream/main
+    git am ~/fcstrk13/patches/<patch>
+    git push origin <topic>
+
+Then open the PR in Gitea: akio/star-sw:<topic>  ->  <star>/star-sw:main
+
+
+CHECK THIS FIRST (one command, needs your credentials)
+-------------------------------------------------------
+    git ls-remote <gitea>/<star>/star-sw main
+
+  - prints 1ef9aaefdf...  -> Gitea was mirrored from GitHub, histories match, the patches
+                             apply cleanly and fcstrk13's branches could even be pushed
+                             directly if you preferred.
+  - prints anything else -> the histories are unrelated. Use the patches; do not try to
+                             push fcstrk13 branches, it would be a mess.
+
+Claude could not run this: Gitea redirects (302) to a login page for every path, and SSH
+to GitHub already fails from this machine ("Permission denied (publickey)"), so assume no
+credentials carry over. Check whether Gitea wants an SSH key or an HTTPS token before the
+first push.
+
+
+THE PATCHES  (~/fcstrk13/patches/, all based on 1ef9aaefdf)
+------------------------------------------------------------
+1. 0001-StFstHitMaker-meanPhiStrip-must-be-float-not-int.patch
+   The one-line fix. int meanPhiStrip truncated the cluster's charge-weighted phi.
+   0 of 125181 production hits carry a fractional phi; after the fix 15.4% do, with the
+   hit count unchanged. No persistent-format change.
+   NOTE: this CHANGES reconstructed hit positions (local[1]) -- a physics change.
+
+2. 0001-StMuFstUtil-read-FST-raw-hits-back-from-the-MuDst.patch
+   The MuDst -> StEvent reverse for FST raw hits, which never existed. Purely additive:
+   no existing signature changes, no existing caller touched, cannot alter any current
+   output.
+
+3. 0002-StFstRawHitMaker-read-FST-raw-hits-from-a-MuDst-so-F.patch
+   setMuDstInput()/readMuDst(), so StFstClusterMaker can re-cluster from a MuDst.
+   Default off, production path untouched.
+
+2 and 3 are one logical change and belong in one PR. 1 stands alone.
+
+
+SUGGESTED PR ORDER
+------------------
+PR #1 : patches 2+3, the fstMuRawHit read-back.
+        Purely additive, cannot change existing output, and it is what Jerome and Gene
+        are waiting on. A first PR into a freshly transitioned repo that nobody can
+        object to is worth something on its own.
+
+PR #2 : patch 1, meanPhiStrip.
+        Technically one line, but it moves reconstructed FST hit positions. Say so in the
+        description, with the evidence: 0 of 125181 production hits have fractional phi,
+        15.4% after, up to 0.96 strip (~0.22 deg, ~0.5 mm at the outer radius) discarded.
+
+Rationale for that order: PR #1 is unarguable and unblocks someone else. Leading with a
+physics change, however small, invites a slower review on a repo where nobody has
+established a review rhythm yet.
+
+
+STILL TO DO BEFORE PR #1 IS COMPLETE
+-------------------------------------
+The read-back is verified as far as: raw hits written (103/event, decode in range),
+round-tripped 20/20 events with ids preserved, and clusters rebuilt from a MuDst
+identical to production's (same count every event, same wedge/sensor/r, nothing missing
+or extra) over 20 events / 558 clusters.
+
+That last number is thin. Rerun the cluster comparison over the full 200 events (or more)
+before the PR is quoted as settled -- a 1-in-500 mismatch would not have shown up.
+    ~/fcstrk13/star-sw/cmpFstClusters.C   (run via runCmpFst.C)
+
+
+WHAT IS NOT GOING TO GITEA YET
+-------------------------------
+Everything in fcstrk11: the sTGC misalign tables, StFttDb DB mode, the FwdTracker
+accessors, the zplane int->float XML fix, the web pages. That is a much bigger merge and
+needs its own plan. The zplane fix in particular was agreed for October alongside the
+Geometry/stgc -> Geometry/ftt rename, so it should travel with that.
