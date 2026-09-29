@@ -1,8 +1,29 @@
 #!/bin/csh
 # Per-file condor job: MuDst -> picoDst (+ residual, + optional alignment ntuple).
-# Usage: runab INPUTDIR BASE OUTDIR [ALIGN]
-#   ALIGN: "1" to also run StFwdAlignmentMaker for this file (off if omitted/0)
-#          -- see fwd_afterburner_db.C's enableAlignment parameter.
+# Usage: runab INPUTDIR BASE OUTDIR [ALIGN] [MAGFIELD] [GEOFIX] [FTTTIMECUT] [FTTWINDOW] [DIAG] [MAXEVT]
+#   ALIGN:    "1" to also run StFwdAlignmentMaker for this file (off if omitted/0)
+#             -- see fwd_afterburner_db.C's enableAlignment parameter.
+#   MAGFIELD: magnetic field mode, passed straight to fwd_afterburner_db.C.
+#               1  from the MuDst's own magneticField() stamp (default)
+#               0  forced zero, genfit ConstField(0,0,0)
+#              -1  legacy: no StarMagField at all, B=0 everywhere (this is what
+#                  every afterburner production before 2026-09-09 actually did)
+#             Defaults to 1 if omitted. No per-dataset setting is needed --
+#             field-on and field-off runs both get the right answer from mode 1.
+#   GEOFIX:   3 geometry switches as one string "G,M,T" of 0/1, in order
+#               G = applyFstGapFix     undo the FST outer-sensor 1 deg gap sign
+#                                      on MuDst written before StFstHitMaker is
+#                                      fixed. TRUE for all current productions.
+#               M = applyFstMirror     per-wedge FST mirror (TEMP: real fix has
+#                                      to start from FstmGeo.xml)
+#               T = applyFttXYMirror   exchange FTT V/H -> x/y assignment (TEMP)
+#             Default "0,0,0". All three are diagnostics/compensations, not
+#             permanent behaviour -- see the notes in fwd_afterburner_db.C.
+#   FTTTIMECUT: StFttClusterMaker time-cut mode passed to the macro.
+#               2 = calibrated time -40..100 (production default)
+#               1 = AcceptAll -- use for sparse data (ZF physics stream),
+#                   where per-VMM calibration never warms up
+#             Default 2.
 
 # Without this, csh aborts with "No match" the instant any ${x}*.root glob
 # below doesn't match an existing file (e.g. the diagnostic echo before
@@ -11,6 +32,13 @@
 # literally instead of killing the job.
 set nonomatch
 
+# MAXEVT ($10): events to process, default all. Splitting a campaign into more, shorter
+# jobs turns around faster on condor -- use more FILES with fewer events each rather than
+# several jobs on one file, since the afterburner has no event-skip and they would all
+# reprocess the same first N events.
+set maxevt = $10
+if ( "$maxevt" == "" ) set maxevt = "10000000"
+
 set inputdir=$1
 set base=$2
 set outdir=$3
@@ -18,10 +46,48 @@ set align=$4
 if ( "$align" == "" ) set align="0"
 set alignArg="false"
 if ( "$align" == "1" ) set alignArg="true"
+set magfield=$5
+if ( "$magfield" == "" ) set magfield="1"
+# GEOFIX arrives as "G,M,T"; split on commas. csh has no real split, so use
+# a colon-modifier-free approach: replace commas with spaces and index.
+set geofix=$6
+if ( "$geofix" == "" ) set geofix="0,0,0"
+set gf=`echo $geofix | tr ',' ' '`
+set gapfix=$gf[1]
+set fstmirror=$gf[2]
+set fttmirror=$gf[3]
+set gapArg="false"
+if ( "$gapfix"    == "1" ) set gapArg="true"
+set fstmArg="false"
+if ( "$fstmirror" == "1" ) set fstmArg="true"
+set fttmArg="false"
+if ( "$fttmirror" == "1" ) set fttmArg="true"
+set ftttc=$7
+if ( "$ftttc" == "" ) set ftttc="2"
+# FTTWINDOW arrives as "LO,HI" (dbcid ticks, relative to the per-VMM anchor).
+# Default -40,100 = what every run before 2026-09-16 used for mode 2.
+set fttwin=$8
+if ( "$fttwin" == "" ) set fttwin="-40,100"
+set fw = `echo $fttwin | tr ',' ' '`
+set ftlo = $fw[1]
+set fthi = $fw[2]
+# DIAG arrives as "TYPE,NOADD,MIX" for the FST-blind diagnostic (see FwdTracker.h):
+#   TYPE  -1 all track types, else 0 Global / 1 BLC / 2 Primary / 3 FwdVtx / 4 BLCVtx
+#   NOADD 1 = search and fill histograms but never put sTGC hits on the track
+#   MIX   1 = fill against the PREVIOUS event's sTGC hits (null test)
+# Default "-1,0,0" = exactly what every run before 2026-09-21 did.
+set diag = $9
+if ( "$diag" == "" ) set diag = "-1,0,0"
+set dg = `echo $diag | tr ',' ' '`
+set dgtype = $dg[1]
+set dgNoAddArg = "false"
+if ( "$dg[2]" == "1" ) set dgNoAddArg = "true"
+set dgMixArg = "false"
+if ( "$dg[3]" == "1" ) set dgMixArg = "true"
 #set dir=/star/u/akio/fcstrk11/star-sw-fwd
 set dir=$cwd
 
-echo dir=$dir align=$align
+echo dir=$dir align=$align magfield=$magfield geofix=$geofix "(gap=$gapArg fstMirror=$fstmArg fttMirror=$fttmArg)" ftttimecut=$ftttc fttwindow="[$ftlo,$fthi]" diag="type=$dgtype noAdd=$dgNoAddArg mix=$dgMixArg"
 
 set mudst = $base
 set pico = $mudst:s/.MuDst.root/.picoDst.root/
@@ -38,8 +104,39 @@ echo MuDst=$mudst PicoDst=$pico ResidualBase=${residualBase}* AlignBase=${alignB
 
 cd $SCRATCH
 
-/bin/cp $dir/fwd_afterburner_db.C .
+# Take the macro from its tracked location, NOT a hand-copied duplicate at the
+# top of $dir. There used to be an untracked copy there; it silently went stale
+# (it was 4 commits behind when last used) and then disappeared entirely, which
+# would have failed every job at this line. StRoot/... is the one git tracks.
+set macro = $dir/StRoot/StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C
+if ( ! -e $macro ) then
+    echo "FATAL: $macro not found"
+    exit 1
+endif
+/bin/cp $macro .
 /bin/cp $dir/fGeom.root .
+# Per-run FTT time anchors: StFttDbMaker::loadDataWindows() looks for
+# fttDataWindow/fttDataWindow.<run>.txt relative to the working directory and
+# uses it INSTEAD of the DB entry when present (see script/fttDataWindow.C).
+# Without this copy the jobs silently fall back to the global DB window.
+if ( -d $dir/fttDataWindow ) then
+    mkdir -p fttDataWindow
+    /bin/cp $dir/fttDataWindow/fttDataWindow.*.txt fttDataWindow/
+    echo "copied per-run FTT anchors:" ; ls fttDataWindow/
+endif
+# Local DB tables. St_db_Maker searches ./StarDb BEFORE $STAR/StarDb and MySQL, so the
+# survey/misalign entries in StarDb/Geometry only reach the job if they are staged here.
+# Without this the job silently falls back to whatever is hardcoded -- which is exactly
+# what happened to the 30-job run of 2026-09-29: the geometry carried the misalign
+# (fGeom.root is built with it) but StFttDb did not, so the result reproduced the
+# hardcoded run to 0.002 cm and looked like "the tables do nothing". 796K, so just copy it.
+if ( -d $dir/StarDb ) then
+    /bin/cp -r $dir/StarDb .
+    echo "staged StarDb:" ; ls StarDb/Geometry
+else
+    echo "WARNING: no $dir/StarDb to stage -- DB-driven geometry will fall back to hardcoded"
+endif
+
 ln -s $dir/.$STAR_HOST_SYS
 ln -s $dir/StRoot
 
@@ -50,7 +147,12 @@ pwd
 ls -la
 
 #root4star -l -b -q fwd_afterburner_db.C'("'$base'",10000000)' | grep -v "StError: Cannot find"
-root4star -l -b -q fwd_afterburner_db.C'("'$base'",10000000,0,0,"",'$alignArg')' >& /dev/null
+# Full output is far too big to keep, but discarding it entirely made silent fallbacks
+# invisible -- no StFttDb line survived anywhere, so a job running on hardcoded geometry
+# looked identical to one running on the DB. Keep a filtered summary instead.
+root4star -l -b -q fwd_afterburner_db.C'("'$base'",'$maxevt',0,0,"",'$alignArg',false,'$gapArg','$fstmArg','$magfield','$fttmArg','$ftttc',true,450.,'$ftlo','$fthi','$dgtype','$dgNoAddArg','$dgMixArg')' |& tr -d '\000' | grep -aE "StFttDb|quadrant offsets|falling back|FTT chamber planes|geometry source|Cannot access|FATAL|Assertion" > fwd_key.log
+echo "--- key lines from this job ---"
+cat fwd_key.log
 
 pwd
 ls -la
