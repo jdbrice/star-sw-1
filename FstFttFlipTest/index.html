@@ -873,6 +873,35 @@ a rigid shift should not broaden anything, so the dx correction is not behaving 
 translation. That ties back to the unexplained factor-3.1 dx response and to the residual
 being radial rather than translational.</p>
 
+<table border="0" cellpadding="3">
+<tr>
+  <td><a href="plots/dbinput_radial.png"><img src="plots/dbinput_radial.png" height="200"></a></td>
+  <td><a href="plots/dbgeom_radial.png"><img src="plots/dbgeom_radial.png" height="200"></a></td>
+</tr>
+<tr>
+  <td><b>before</b> &mdash; hardcoded StFttDb. All four arrows outward, 1&ndash;1.9&nbsp;cm.</td>
+  <td><b>after</b> &mdash; DB tables in. B and C nearly gone; A and D reversed, having
+      overshot.</td>
+</tr>
+</table>
+
+<table border="0" cellpadding="3">
+<tr>
+  <td><a href="plots/dbgeom_quad_all.png"><img src="plots/dbgeom_quad_all.png" height="200"></a></td>
+  <td><a href="plots/dbgeom_quad_disk0.png"><img src="plots/dbgeom_quad_disk0.png" height="200"></a></td>
+  <td><a href="plots/dbgeom_quad_disk1.png"><img src="plots/dbgeom_quad_disk1.png" height="200"></a></td>
+  <td><a href="plots/dbgeom_quad_disk2.png"><img src="plots/dbgeom_quad_disk2.png" height="200"></a></td>
+  <td><a href="plots/dbgeom_quad_disk3.png"><img src="plots/dbgeom_quad_disk3.png" height="200"></a></td>
+</tr>
+<tr>
+  <td>all 4 stations, tables in</td><td>station 1</td><td>station 2</td><td>station 3</td>
+  <td>station 4</td>
+</tr>
+</table>
+<p>90 jobs, 1.17M events. Compare against the same plots in
+<a href="index.html#dbinput">section 7</a>, which are the hardcoded-StFttDb input state
+over 30 files.</p>
+
 <H2>The three-stage progression</H2>
 <p>Slide 2 of the 2026-09-29 deck asks for spacepoint / planar / planar+tables side by
 side. All three are the <b>same 2500 events</b>; stage&nbsp;1 needed its own build because

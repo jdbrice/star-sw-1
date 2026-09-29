@@ -52,6 +52,7 @@ void plotStgcRadial(const char* file, const char* out){
   tt.SetTextSize(0.024); tt.DrawLatex(5,-2,"beampipe");
 
   int col[4]={kRed+1,kOrange+7,kAzure+1,kBlue+2};
+  int nOut=0, nIn=0, nDrawn=0;   // caption is derived, never asserted
   for(int q=0;q<4;q++){
     // MEDIAN over the four stations, not the mean: station 3 quad C has dx = -2.33 at
     // only 5.6 sigma against +0.71/+0.71/+0.39 elsewhere, and a single bad fit like that
@@ -70,6 +71,10 @@ void plotStgcRadial(const char* file, const char* out){
     double mx = (n%2) ? vx[n/2] : 0.5*(vx[n/2-1]+vx[n/2]);
     double my = (n%2) ? vy[n/2] : 0.5*(vy[n/2-1]+vy[n/2]);
     cx/=n; cy/=n;
+    // does the correction (-d) point away from the beam axis at this quadrant?
+    double rn=sqrt(cx*cx+cy*cy);
+    if(rn>1e-6){ double radial=(-mx*cx-my*cy)/rn; if(radial>0) nOut++; else nIn++; }
+    nDrawn++;
     TMarker* m=new TMarker(cx,cy,20); m->SetMarkerColor(col[q]); m->SetMarkerSize(1.3); m->Draw();
     TArrow* a=new TArrow(cx,cy,cx-10*mx,cy-10*my,0.018,"|>");
     a->SetLineColor(col[q]); a->SetFillColor(col[q]); a->SetLineWidth(3); a->Draw();
@@ -77,8 +82,17 @@ void plotStgcRadial(const char* file, const char* out){
     tt.DrawLatex(cx-6,cy+(cy>0?6:-9), Form("%s  d=(%+.2f,%+.2f)",qn[q],mx,my));
   }
   tt.SetTextColor(kBlack); tt.SetTextSize(0.026);
-  tt.DrawLatex(-68,-48,"every arrow points OUTWARD: the reconstructed hits sit closer to the");
-  tt.DrawLatex(-68,-53,"beam axis than the tracks do -- a radial pattern, not a translation");
+  if(nOut==nDrawn){
+    tt.DrawLatex(-68,-48,"every arrow points OUTWARD: the reconstructed hits sit closer to the");
+    tt.DrawLatex(-68,-53,"beam axis than the tracks do -- a radial pattern, not a translation");
+  } else if(nIn==nDrawn){
+    tt.DrawLatex(-68,-48,"every arrow points INWARD: the correction applied was too large");
+    tt.DrawLatex(-68,-53,"and the residual has been pushed through zero");
+  } else {
+    tt.DrawLatex(-68,-48,Form("%d of %d arrows point outward, %d inward: the correction is",
+                              nOut,nDrawn,nIn));
+    tt.DrawLatex(-68,-53,"the right sign for some quadrants and too large for others");
+  }
   tt.SetTextSize(0.022);
   tt.DrawLatex(-68,-57,"per-quadrant MEDIAN over the four stations (station 3 quad C dx is a 5.6#sigma outlier)");
   c->SaveAs(out);
