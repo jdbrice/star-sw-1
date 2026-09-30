@@ -233,9 +233,15 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 	/*******************************************************************************************/
 	// FwdTrackMaker Chain
 	StFwdTrackMaker *fwdTrack = NULL;
-	const int kNResidualTypes = 3;
-	int residualTypesToRun[kNResidualTypes] = {0, 1, 4}; // Global, BLC, BLCVtx
-	StFwdResidualMaker *fwdResiduals[kNResidualTypes] = {NULL, NULL, NULL};
+	// Primary (2) added 2026-09-30 for the FTT-on-track debugging run: hPlaneUsage[]
+	// is the per-plane pickup probability, and Primary is the type that run studies
+	// (fttDiagType=2 has selected Primary for the blind residuals since 2026-09-21,
+	// but no StFwdResidualMaker instance was ever created for it, so the pickup
+	// numbers did not exist for the type the residuals were measured on).
+	// Global stays first: it is the baseline every earlier campaign is quoted in.
+	const int kNResidualTypes = 4;
+	int residualTypesToRun[kNResidualTypes] = {0, 1, 2, 4}; // Global, BLC, Primary, BLCVtx
+	StFwdResidualMaker *fwdResiduals[kNResidualTypes] = {NULL, NULL, NULL, NULL};
 	if (runFwdChain){
 		// FwdTrackMaker
 		fwdTrack = new StFwdTrackMaker();
