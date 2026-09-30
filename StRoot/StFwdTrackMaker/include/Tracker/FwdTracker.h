@@ -2382,11 +2382,16 @@ class ForwardTrackMaker {
                 if ( fwdDiagFill() && sy < thresholdY )           hBlindDxAll_H[disk]->Fill(sxs); // dx, dy-conditioned
                 if ( fwdDiagFill() && sx < kOffAxisNSigma * hsx ) hBlindDyAll_H[disk]->Fill(sys); // dy, dx-conditioned
                 if ( fwdDiagFill() && sx < kOffAxisNSigma * hsx && qidx >= 0 ) hBlindDyAll_H_q[disk][qidx]->Fill(sys);
+                // same gate as the quadrant split, so the two are directly comparable
+                if ( fwdDiagFill() && sx < kOffAxisNSigma * hsx )
+                    hBlindDyVsR_H[disk]->Fill( sqrt(h->getX()*h->getX() + h->getY()*h->getY()), sys );
                 if ( fwdDiagFill() && sx < kOffAxisNSigma * hsx && mWedgePhaseBin >= 0 ) hBlindDyAll_H_wp[disk][mWedgePhaseBin]->Fill(sys);
                 if (fwdDiagFill()) hBlindXYAll_H[disk]->Fill(sxs, sys);
             } else if ( hsy > hsx ) { // V strip: x precise, y off-axis
                 if ( fwdDiagFill() && sy < kOffAxisNSigma * hsy ) hBlindDxAll_V[disk]->Fill(sxs); // dx, dy-conditioned
                 if ( fwdDiagFill() && sy < kOffAxisNSigma * hsy && qidx >= 0 ) hBlindDxAll_V_q[disk][qidx]->Fill(sxs);
+                if ( fwdDiagFill() && sy < kOffAxisNSigma * hsy )
+                    hBlindDxVsR_V[disk]->Fill( sqrt(h->getX()*h->getX() + h->getY()*h->getY()), sxs );
                 if ( fwdDiagFill() && sy < kOffAxisNSigma * hsy && mWedgePhaseBin >= 0 ) hBlindDxAll_V_wp[disk][mWedgePhaseBin]->Fill(sxs);
                 if ( fwdDiagFill() && sx < thresholdX )           hBlindDyAll_V[disk]->Fill(sys); // dy, dx-conditioned
                 if (fwdDiagFill()) hBlindXYAll_V[disk]->Fill(sxs, sys);
@@ -2746,6 +2751,13 @@ class ForwardTrackMaker {
     // quad==0 A convention. Quadrant determined directly from the candidate
     // hit's own (x,y) sign -- simple and reliable since quadrants are large,
     // well-separated regions.
+    // Residual vs HIT RADIUS, the test that separates a genuine per-quadrant offset from
+    // a radial scale. The measured pattern points inward in all four quadrants, which 16
+    // translations can absorb without describing: a translation gives a residual flat in
+    // r, a scale gives one proportional to r. 2D rather than fixed r-bins so the slices
+    // can be chosen afterwards.
+    TH2F  *hBlindDxVsR_V[4] = {nullptr};
+    TH2F  *hBlindDyVsR_H[4] = {nullptr};
     TH1F  *hBlindDxAll_V_q[4][4] = {{nullptr}};
     TH1F  *hBlindDyAll_H_q[4][4] = {{nullptr}};
     // WEDGE-PHASE split (2026-09-22) -- decides whether the FST wedge
@@ -2824,6 +2836,12 @@ class ForwardTrackMaker {
                 Form("disk%d: H-strip, x_{hit}-x_{blind proj} (off-axis), |dy|-conditioned;dx [cm];strips", d), 350, -35, 35);
             hBlindDyAll_H[d]     = new TH1F(Form("hBlindDyAll_H_disk%d", d),
                 Form("disk%d: H-strip, y_{hit}-y_{blind proj} (precise), |dx|-conditioned;dy [cm];strips", d), 150, -15, 15);
+            hBlindDxVsR_V[d] = new TH2F(Form("hBlindDxVsR_V_disk%d", d),
+                Form("disk%d: V-strip, dx vs hit radius;r_{hit} [cm];dx [cm]", d),
+                30, 0, 75, 150, -15, 15);
+            hBlindDyVsR_H[d] = new TH2F(Form("hBlindDyVsR_H_disk%d", d),
+                Form("disk%d: H-strip, dy vs hit radius;r_{hit} [cm];dy [cm]", d),
+                30, 0, 75, 150, -15, 15);
             {
                 const char* qName[4] = {"A", "B", "C", "D"};
                 for (int q = 0; q < 4; q++) {

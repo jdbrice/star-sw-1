@@ -118,12 +118,28 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1
     printf(">>> previous table's alignment. Correct update is  new = previous + delta,\n");
     printf(">>> with the delta being -(measured residual):\n\n");
     printf(">>> # disk quad   d_t0(cm)   d_t1(cm)\n");
+    // Significance floor. A weak fit produces a large, meaningless centre -- station 3
+    // quad C gave dx = -1.86 at 1.0 sigma against +0.71/+0.71/+0.39 elsewhere -- and
+    // feeding that back as a delta injects it straight into the table. A cell whose fit
+    // is not believable is left UNCHANGED, which is the safe direction: the previous
+    // value stays and the next iteration can revisit it.
+    const double kMinSig = 5.0;
     for(int dd=0; dd<4; dd++) for(int qq=0; qq<4; qq++){
       if(!gOK[dd][qq][0] || !gOK[dd][qq][1]){
         printf(">>> DELTA %d %s     (incomplete, leave unchanged)\n", dd, qn[qq]);
         continue;
       }
-      printf(">>> DELTA %d %s  %+9.5f  %+9.5f\n", dd, qn[qq], -gMu[dd][qq][0], -gMu[dd][qq][1]);
+      // Per-coordinate, not per-cell: quad C has excellent dy fits (150+ sigma) and weak
+      // dx ones, and dropping the whole cell would throw away a good dy correction to
+      // avoid a bad dx one. A failing coordinate gets a zero delta, i.e. left unchanged.
+      bool okx = gSig[dd][qq][0] >= kMinSig, oky = gSig[dd][qq][1] >= kMinSig;
+      double dx = okx ? -gMu[dd][qq][0] : 0.0;
+      double dy = oky ? -gMu[dd][qq][1] : 0.0;
+      printf(">>> DELTA %d %s  %+9.5f  %+9.5f%s\n", dd, qn[qq], dx, dy,
+             (okx&&oky) ? "" :
+             Form("   <- %s held (dx %.1f, dy %.1f sigma)",
+                  !okx ? (!oky ? "dx and dy" : "dx") : "dy",
+                  gSig[dd][qq][0], gSig[dd][qq][1]));
     }
     printf("\n>>> Apply with script/stgcTableAddDelta.py (previous table + these deltas).\n");
     return;
