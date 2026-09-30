@@ -1,3 +1,105 @@
+Hello
+
+I'm glad that we are in agreement on how we proceed with alignment formats.
+As I understood, you have your own fixes and changes for the "Planar Mode"
+and some of fixes may overlap with mine.
+
+My code is at :
+   starsub0x:/star/u/akio/fcstrk11/star-sw-fwd
+and also my snapshot as of yesterday in daniel's Github repo as "akio202607" branch:
+   https://github.com/jdbrice/star-sw-1/tree/akio202607
+
+These are the five planar-mode fixes, with code pointers (line numbers are for my
+fcstrk11 dir above). The write-up with before/after numbers is section 5 of
+   https://www.star.bnl.gov/protected/spin/akio/fcs/FstFttFlipTest/index.html#spacepoints
+
+  (1) EPD/FCS-pres hits had no plane and were silently dropped in planar mode
+      -- about 2.1 hits/event, from Global and Primary both. They are now kept as
+      spacepoints, like the PV.
+        StRoot/StFwdTrackMaker/include/Tracker/TrackFitter.h:750
+
+  (2) kFstzFilp[disk] was missing from the decode, so every wedge on the middle disk
+      was mirrored, up to +-15 deg. The fix was not to add the constant back but to
+      stop discarding the geometry: the node matrix carries the front/back flip, so
+      the V axis is no longer normalised to counter-clockwise.
+        StRoot/StFwdTrackMaker/include/Tracker/TrackFitter.h:503 (comment), :476-540
+
+  (3) _localPosition holds raw strip indices, so the loader's phi corrections never
+      reached it and there was no 1 deg outer-sensor gap term at all. The gap is now
+      read from the sensor shape's Phi1/Phi2, where it actually lives.
+        StRoot/StFwdTrackMaker/include/Tracker/TrackFitter.h:521-534
+
+  (4) The sensor -> FTUS mapping used (index%3)+1, which puts inner hits on an outer
+      plane and vice versa -- a 1.4 cm z error on two sensors out of three. The real
+      mapping was measured from data: 0->FTUS_3, 1->FTUS_1, 2->FTUS_2.
+        StRoot/StFwdTrackMaker/include/Tracker/FwdGeomUtils.h:207 (and :213 onward)
+        script/fstLocalMap.C  (the measurement)
+
+  (5) The volume path was hardcoded as /FSTM_1/FSTD_<d>/FSTW_<w>/FTUS_<s>, which fails
+      on ANY misaligned geometry -- all 108 planes then fall back to the origin, with
+      no error. Sensors are now found by physics: disk from z, wedge from the local +x
+      bisector, sensor from the shape.
+        StRoot/StFwdTrackMaker/include/Tracker/FwdGeomUtils.h:213 walkFstSensors()
+        StRoot/StFwdTrackMaker/include/Tracker/FwdGeomUtils.h:248 buildFstSensorMap()
+
+  This is the one I would check first against your version. It is silent: the code
+  runs, every plane is at the origin, and nothing complains.
+
+Together these took the blind FST->sTGC match from 5.4% to 17.3%, level with the
+spacepoint path's 17.7% on the same data.
+
+Also note that alignment "for real" should start with
+
+  - Flemming's new geometry. It is his library, we do not copy anything into our tree:
+        /star/u/videbaks/star-sw-1
+    y2024 = FSTMv1sm and y2025 = FSTMv2sm differ only in the modulus2 array that
+    places each wedge front or back. Against our reconstruction constants y2024 agrees
+    36/36 and y2025 disagrees 36/36, so please check which one you build against.
+    One caveat worth knowing: phi alone cannot decide that parity -- flipping a wedge
+    flips the local->global phi map and re-deriving the strip convention restores it
+    exactly. Only z breaks the degeneracy, and that is ~1.7 mm, below what we can see
+    today.
+
+  - Misalign tables:
+        /star/u/akio/fcstrk11/star-sw-fwd/StarDb/Geometry/fst
+        /star/u/akio/fcstrk11/star-sw-fwd/StarDb/Geometry/stgc
+    (note Geometry/ in the path; and the sTGC ones will move to Geometry/ftt in
+    October -- "stgc" is not a DB namespace, "ftt" is)
+
+  - Geometry build:
+        /star/u/akio/fcstrk11/star-sw-fwd/build_geom_misalign.C
+    Usage is build_geom_misalign("dev2022sm","fGeom.root",1,"20211112.000002"), i.e.
+    tag, output, misalign on/off, and the DB timestamp. It writes
+    fGeom.<tag>.misalign<N>.sdt<date.time>.root, so iterations never overwrite each
+    other -- then symlink the one you want to fGeom.root. Takes about 30 seconds.
+
+Two things we learned this week that will save you time:
+
+  - StFttDb now takes the sTGC per-quadrant offsets from the survey tables rather than
+    its hardcoded numbers, so an alignment iteration moves the FTT hits as well as the
+    planes. It is on by default; setUseDbGeometry(false) restores the old behaviour.
+    On 90 jobs / 1.17M events this took the FST->sTGC dy residual from +1.30 cm to
+    +0.35 cm.
+
+  - From the second iteration on, do NOT regenerate the misalign table from the
+    residuals. Once the tables are being applied, the residual you measure is already
+    relative to them, so the update is new = previous + delta. There is a helper:
+        script/stgcTableAddDelta.py
+    script/stgcQuadOffsets.C now refuses to write absolute tables unless you tell it
+    this is iteration 1, precisely so this cannot be got wrong silently.
+
+I'm hoping to start making PRs to the new Gitea repo so that we have a unified code
+base asap, and now that the transition is done we can start soon. But for now, I don't
+know better ways.
+
+Thanks!
+Akio
+
+
+========================================================================
+Earlier note, kept for reference
+========================================================================
+
 Hi Xihe,
 
 Your answers line up well with what we have been measuring from the data this week. 
