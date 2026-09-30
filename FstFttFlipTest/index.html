@@ -25,6 +25,9 @@
    geometry and code changes did, and the per-quadrant residual they leave behind<br>
 <a href="index.html#tablesin">8. FTT tables in: the residual moves to zero (2026-09-28)</a>
    &mdash; dy &minus;72% on identical events, dx overshoots, and the two bugs it exposed<br>
+<a href="index.html#iter2">9. Iteration 2: a 0th-order baseline for the alignment program</a>
+   &mdash; dy below 200&nbsp;&micro;m, and the radial term we are deliberately leaving to
+   Xihe's program<br>
 </p>
 
 <a name="blind"></a>
@@ -965,6 +968,92 @@ ever touched statics.</p>
 4000, so fit significances differ by ~65&times;. A significance of 2&ndash;4 in a smoke
 test is not a failure; it corresponds to 130&ndash;260 at batch statistics. This nearly
 caused the opposite call to be made from the smoke test alone.</p>
+
+
+
+<HR>
+<a name="iter2"></a>
+<H1>9. Iteration 2: a 0th-order baseline for the alignment program (2026-09-30)</H1>
+
+<p>The point of this section is <b>not</b> a finished sTGC alignment. It is a large,
+0th-order misalignment applied in the DB tables, so that Xihe's alignment program starts
+from something close rather than from ideal geometry. The fine structure is his to solve.</p>
+
+<H2>Where it lands</H2>
+<p><tt>pentOnStation.20211112.000003</tt> = <tt>.000002</tt> + delta, applied with
+<tt>script/stgcTableAddDelta.py</tt>. 90 jobs, 1.17M events, all 90 on the DB tables.</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>station</th><th>hardcoded</th><th>iteration 1</th><th>iteration 2</th><th>&sigma;</th></tr>
+<tr><td>1</td><td>+1.324</td><td>+0.346</td><td><b>+0.003</b></td><td>227</td></tr>
+<tr><td>2</td><td>+1.296</td><td>+0.346</td><td><b>&minus;0.020</b></td><td>165</td></tr>
+<tr><td>3</td><td>+1.122</td><td>+0.373</td><td><b>&minus;0.002</b></td><td>212</td></tr>
+<tr><td>4</td><td>+1.095</td><td>+0.363</td><td><b>&minus;0.001</b></td><td>188</td></tr>
+</table>
+<p>dy from ~1.3&nbsp;cm to below 200&nbsp;&micro;m, and the fit significances <i>rose</i>
+&mdash; the peak sharpened rather than smeared. Per quadrant, <b>23 of the 32 cells are
+well measured (&sigma;&nbsp;&gt;&nbsp;10) and all of those sit within
+&plusmn;0.10&nbsp;cm, most within &plusmn;0.02&nbsp;cm.</b></p>
+
+<table border="0" cellpadding="3">
+<tr>
+  <td><a href="plots/iter2_radial.png"><img src="plots/iter2_radial.png" height="200"></a></td>
+  <td><a href="plots/iter2_quad_all.png"><img src="plots/iter2_quad_all.png" height="200"></a></td>
+</tr>
+<tr><td>correction vectors after iteration 2 &mdash; compare section 7</td>
+    <td>quadrant split, all 4 stations</td></tr>
+</table>
+<table border="0" cellpadding="3">
+<tr>
+  <td><a href="plots/iter2_quad_disk0.png"><img src="plots/iter2_quad_disk0.png" height="200"></a></td>
+  <td><a href="plots/iter2_quad_disk1.png"><img src="plots/iter2_quad_disk1.png" height="200"></a></td>
+  <td><a href="plots/iter2_quad_disk2.png"><img src="plots/iter2_quad_disk2.png" height="200"></a></td>
+  <td><a href="plots/iter2_quad_disk3.png"><img src="plots/iter2_quad_disk3.png" height="200"></a></td>
+</tr>
+<tr><td>station 1</td><td>station 2</td><td>station 3</td><td>station 4</td></tr>
+</table>
+
+<H2>What is left, and why we are stopping here</H2>
+<p>With the means at zero, a residual <b>radial</b> dependence remains &mdash; the
+per-quadrant translations cannot represent it by construction:</p>
+
+<table border="0" cellpadding="3">
+<tr>
+  <td><a href="plots/resid_vs_r_dy.png"><img src="plots/resid_vs_r_dy.png" height="200"></a></td>
+  <td><a href="plots/resid_vs_r_dx.png"><img src="plots/resid_vs_r_dx.png" height="200"></a></td>
+</tr>
+<tr><td>dy: &minus;0.0108 cm per cm of radius, i.e. ~1%</td>
+    <td>dx: steeper but not monotonic &mdash; see the caveat</td></tr>
+</table>
+
+<p>dy runs from +0.008&nbsp;cm at r&nbsp;=&nbsp;19&nbsp;cm to
+&minus;0.279&nbsp;cm at r&nbsp;=&nbsp;51&nbsp;cm. A translation leaves a residual flat in
+r; this is not flat, so a third iteration on per-quadrant offsets would be chasing its
+own tail. A scale of ~1% is the kind of thing a pitch or a lever-arm mismatch produces,
+not a placement error, and it is <b>exactly the structure an alignment program with the
+right degrees of freedom should solve</b>. That is Xihe's tool, not this one.</p>
+
+<p>Two honest caveats on those slopes, so they are not over-read:</p>
+<ul>
+<li>the per-point errors are statistical only on a background-dominated gaus+pol1 fit and
+    are underestimates, so the nominal 5.7&nbsp;&sigma; should not be quoted. What carries
+    the result is the <i>size</i>, &minus;0.28&nbsp;cm across the radial range.</li>
+<li>dx is not monotonic (&minus;0.02, &minus;0.17, &minus;0.17, &minus;0.11, &minus;0.10,
+    &minus;0.55) and its slope is driven by the last, weakest slice. <b>dy is the clean
+    one</b>; dx only corroborates the sign and rough size.</li>
+</ul>
+
+<H2>Known gaps in the baseline</H2>
+<ul>
+<li><b>Station 1 quadrant A has no V-strip hits at all</b> &mdash; the H/V swap open since
+    2026-07-21. That cell's dx cannot be measured and is left at its previous value.</li>
+<li><b>Quadrant C dx at stations 3 and 4</b> fits at only 2.6 and 2.9&nbsp;&sigma;. The
+    delta generator now holds any coordinate below 5&nbsp;&sigma; rather than writing it,
+    per coordinate &mdash; without that guard iteration 2 would have injected
+    dx&nbsp;=&nbsp;+1.86&nbsp;cm into station 3 quad C from a 1.0&nbsp;&sigma; fit.</li>
+<li>The tables are x&ndash;y only apart from the per-quadrant z in <tt>t2</tt>; there is no
+    rotation and no z alignment from this source.</li>
+</ul>
 
 
 <HR>
