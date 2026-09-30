@@ -44,40 +44,42 @@ One branch per PR, always based on upstream/main:
 Then open the PR in Gitea: akio/star-sw:<topic>  ->  <star>/star-sw:main
 
 
-ACCESS: NOT SOLVED YET -- WITH THE SDCC EXPERTS (2026-09-30)
--------------------------------------------------------------
-Neither SSH nor git-over-HTTPS works from the starsub nodes. What we established:
+ACCESS: SOLVED -- HTTPS WITH YOUR SDCC PASSWORD (2026-09-30)
+--------------------------------------------------------------
+    cd ~/fcstrk14
+    git clone --no-checkout --filter=blob:none \
+        https://akio@git.racf.bnl.gov/gitea/akio/star-sw.git
+    cd star-sw
+    git remote add upstream https://akio@git.racf.bnl.gov/gitea/<ORG>/star-sw.git
 
-  git.racf.bnl.gov resolves to webproxy1.sdcc.bnl.gov -- it is a WEB PROXY alias, not
-  the Gitea host. Ports 22, 2222, 222 and 29418 all time out (drop, not refuse, which is
-  why "git clone git@..." hangs for minutes instead of failing). No SSH is possible via
-  this name no matter what key is installed. gitea.sdcc.bnl.gov, git.sdcc.bnl.gov,
-  gitea.racf.bnl.gov, git1.racf.bnl.gov, gitea1.sdcc.bnl.gov do not resolve at all.
+Confirmed working: 188577 objects. Get <ORG> from the "forked from" line on your fork's
+page rather than guessing.
 
-  Over HTTPS the three path families behave differently:
-      /gitea/api/v1/...                     no auth challenge; a Gitea token WORKS
-      /gitea/<user>/<repo>                  302 to login
-      /gitea/<user>/<repo>.git/info/refs    401, WWW-Authenticate: Basic
-                                            realm="SDCC Server Login"
+The credential that works is your SDCC password, NOT a Gitea access token. This is the
+part that cost an afternoon:
 
-  That realm is the SDCC proxy's, not Gitea's. So the git endpoint is behind the proxy's
-  own authentication, and the proxy turns you away before Gitea is consulted. A valid
-  Gitea access token (confirmed working against /api/v1/user) is rejected there, and so
-  is the SDCC password.
+  - /gitea/<user>/<repo>.git/* is behind the SDCC proxy's own Basic auth
+    (WWW-Authenticate realm "SDCC Server Login"), which wants SDCC credentials.
+  - /gitea/api/v1/* is NOT behind it and takes a Gitea token happily.
+  So a token that demonstrably works against /api/v1/user is rejected by git clone, which
+  reads as "bad token" and sends you off debugging the wrong thing.
 
-Question for the experts:
-  Is git-over-HTTPS supported through webproxy1, and if not, is there an SSH-reachable
-  Gitea host from the starsub nodes? Which credential is the proxy expecting?
+SSH does not work and cannot be made to: git.racf.bnl.gov resolves to
+webproxy1.sdcc.bnl.gov (both 198.125.209.38 and the v6 address), a web proxy with nothing
+on 22. Ports 22/2222/222/29418 all DROP rather than refuse, so "git clone git@..." hangs
+for minutes instead of failing. Registering a key in Gitea changes nothing. No alternative
+gitea/git hostname resolves from the starsub nodes.
 
-WORKAROUND THAT DOES WORK TODAY: the Gitea API. All the endpoints needed for a PR are
-reachable and token-authenticated -- create a branch, GET/PUT a file's contents, POST a
-pull request. Fine for a one-file change like the meanPhiStrip fix; clumsy for the
-two-commit, four-file read-back work, which really wants a clone.
+If you want to avoid retyping the SDCC password, credential.helper "store" needs FULL
+URLs in its file, one per line:
+        https://akio:<sdcc-password>@git.racf.bnl.gov
+  not a bare token or password -- with a bare string the helper matches nothing and git
+  silently falls through to prompting, which again reads as a rejected credential.
+  chmod 600 the file; it is plaintext.
 
-Note credential.helper "store" needs full URLs in the file, one per line:
-      https://<user>:<token>@git.racf.bnl.gov
-  not a bare token -- with a bare token the helper matches nothing and git silently falls
-  through to prompting, which looks like the token being rejected.
+Also useful: the Gitea API works with a token for everything except the git endpoints, so
+branch creation, file edits and opening PRs can all be done over the API if a clone is
+ever unavailable.
 
 
 THE PATCHES  (~/fcstrk13/patches/, all based on 1ef9aaefdf)
