@@ -19,6 +19,9 @@
 #               T = applyFttXYMirror   exchange FTT V/H -> x/y assignment (TEMP)
 #             Default "0,0,0". All three are diagnostics/compensations, not
 #             permanent behaviour -- see the notes in fwd_afterburner_db.C.
+#   GEOM:     cached geometry file in $dir to stage as fGeom.root. Default fGeom.root.
+#             Run24 needs fGeom.y2024.sdt20240622.root -- the cache overrides the run's
+#             own DB timestamp, so the wrong one is silent, not an error.
 #   FTTTIMECUT: StFttClusterMaker time-cut mode passed to the macro.
 #               2 = calibrated time -40..100 (production default)
 #               1 = AcceptAll -- use for sparse data (ZF physics stream),
@@ -38,6 +41,14 @@ set nonomatch
 # reprocess the same first N events.
 set maxevt = $10
 if ( "$maxevt" == "" ) set maxevt = "10000000"
+
+# GEOM ($11): which cached geometry to stage as fGeom.root. The maker loads this file
+# INSTEAD of rebuilding from the DB (StFwdTrackMaker::Init only calls GetDataBase when
+# no cache is set), so the cache silently wins over the run's own timestamp. A Run24
+# campaign run with the Run22 cache would use Run22 alignment and look fine. Default is
+# the Run22 cache so nothing already written changes.
+set geomfile = $11
+if ( "$geomfile" == "" ) set geomfile = "fGeom.root"
 
 set inputdir=$1
 set base=$2
@@ -114,7 +125,9 @@ if ( ! -e $macro ) then
     exit 1
 endif
 /bin/cp $macro .
-/bin/cp $dir/fGeom.root .
+/bin/cp $dir/$geomfile fGeom.root
+echo "staged geometry: $geomfile"
+
 # Per-run FTT time anchors: StFttDbMaker::loadDataWindows() looks for
 # fttDataWindow/fttDataWindow.<run>.txt relative to the working directory and
 # uses it INSTEAD of the DB entry when present (see script/fttDataWindow.C).
@@ -150,7 +163,7 @@ ls -la
 # Full output is far too big to keep, but discarding it entirely made silent fallbacks
 # invisible -- no StFttDb line survived anywhere, so a job running on hardcoded geometry
 # looked identical to one running on the DB. Keep a filtered summary instead.
-root4star -l -b -q fwd_afterburner_db.C'("'$base'",'$maxevt',0,0,"",'$alignArg',false,'$gapArg','$fstmArg','$magfield','$fttmArg','$ftttc',true,450.,'$ftlo','$fthi','$dgtype','$dgNoAddArg','$dgMixArg')' |& tr -d '\000' | grep -aE "StFttDb|quadrant offsets|falling back|FTT chamber planes|geometry source|Cannot access|FATAL|Assertion" > fwd_key.log
+root4star -l -b -q fwd_afterburner_db.C'("'$base'",'$maxevt',0,0,"",'$alignArg',false,'$gapArg','$fstmArg','$magfield','$fttmArg','$ftttc',true,450.,'$ftlo','$fthi','$dgtype','$dgNoAddArg','$dgMixArg')' |& tr -d '\000' | grep -aE "StFttDb|quadrant offsets|falling back|FTT chamber planes|geometry source|Cannot access|FATAL|Assertion|Run number from 1st event|GMT date" > fwd_key.log
 echo "--- key lines from this job ---"
 cat fwd_key.log
 
