@@ -1,0 +1,82 @@
+sTGC survey: what STAR_LARGE_DETECTOR_IN_IP_REPORT.pdf can and cannot give us
+2026-10-01   source: ~/www/fcs/survey/STAR_LARGE_DETECTOR_IN_IP_REPORT.pdf (4 pages)
+
+The PDF has no extractable text (32 chars via ghostscript txtwrite); it was read by
+rendering to PNG at 150 dpi and reading the tables off the images. Numbers below are
+transcribed by eye -- re-check any single value before it goes into a DB table.
+
+STRUCTURE
+  Page n = RIB n = sTGC station n. Each page carries
+    - a Point Group  (3MM_1..20, RIBn_1..10)  x,y,z in mm
+    - eight plane fits: quadrants A,B,C,D, each FRONT and BACK
+      (page 3 calls them "G10 FACE/BACK PLANE 3x", page 4 "4x FRONT/BACK PLN")
+  Plane form is A*x + B*y + C*z + D = 0 with B ~ +-1, so the plane sits at y = -D/B.
+  The survey's Y is the beam axis; the detector sits at |y| ~ 3100-3650 mm.
+
+WHAT IS DIRECTLY USABLE
+
+1. z per station per quadrant -- YES, this is the headline.
+   Chamber thickness comes out 35.2-38.9 mm everywhere, which is what validates the
+   plane interpretation. The BACK plane is the one that matches our geometry:
+
+     station   survey BACK mean   our AGML z    diff
+       1          3122.20 mm      3123.42 mm   -1.22 mm
+       2          3300.57         3299.53      +1.04
+       3          3476.47         3476.37      +0.10
+       4          3654.17         3654.22      -0.05
+
+   Sub-mm to 1.2 mm on all four. Per-quadrant z, referenced to quadrant A (mm):
+
+     station      A        B        C        D
+       1        0.00    -1.71    -0.89    -3.29
+       2        0.00    -3.37    -5.47    -4.77
+       3        0.00    -2.49    -3.88    -4.29
+       4        0.00    -0.19    -1.96    -0.92
+
+   This is exactly the quantity we carry as t2 in pentOnStation.
+
+2. Chamber tilt per station per quadrant -- YES, and we currently ignore it.
+   Normal (A,B,C) gives tilt_x = A/B, tilt_z = C/B. Largest total tilt 8.21 mrad
+   (0.47 deg, station 2 quad A), i.e. a sagitta of ~4.9 mm across a 60 cm half-
+   chamber. Every Survey_st row we write today has an identity rotation matrix, so
+   this information is unused. For a track at eta~3 (tan ~0.1 to the beam) a 4.9 mm
+   z error maps to ~0.5 mm transverse -- small, but not negligible against the
+   2-5 mm residuals we are chasing.
+
+WHAT IS *NOT* IN THIS DOCUMENT
+
+3. x,y per quadrant -- NO. A plane fit carries orientation and one offset along its
+   normal; it has no in-plane position. Nothing in these eight fits per page can say
+   where a chamber sits transversely.
+   The point groups do not rescue this: 3MM_* and RIBn_* are targets on the support
+   RIB (the octagonal frame in the drawings), one set per station, not per quadrant.
+   They could give a station-level transverse position, but only against nominal
+   design positions for each target, which this document does not contain.
+   To get x,y per quadrant we need either the drawing with nominal fiducial
+   positions, or a survey of features on the chambers themselves.
+
+COMPARISON WITH OUR FITTED t2 (pentOnStation.20211112.000003)
+   Both referenced to quadrant A, mm, (ours - survey):
+     station 1:  B -0.06   C +0.64   D +0.85
+     station 2:  B +4.78   C +3.17   D +2.55
+     station 3:  B +1.55   C +0.97   D +2.36
+     station 4:  B +0.06   C +0.85   D +1.25
+   rms 1.35 mm, max 4.78 mm, mean +1.58 mm.
+   Stations 1 and 4 agree to ~1 mm; stations 2 and 3 drift.
+
+   CAUTION, this is not an independent check. Our t2 was built from StFttDb's
+   hardcoded per-quadrant z, which itself came from a survey (#707 used quadrant A's
+   survey value). So a disagreement is more likely a transcription or convention
+   problem inside StFttDb than new physics.
+
+   Quadrant labelling is NOT the problem: testing all 24 permutations of the survey
+   letters against our t2, the identity mapping ranks 2nd of 24 and the best
+   (BACD) is only marginally better (rms 1.25 vs 1.35). No permutation stands out,
+   so survey A,B,C,D matches our A,B,C,D. The data does not discriminate strongly,
+   so do not read the ranking as proof either.
+
+OPEN QUESTION WORTH ASKING THE sTGC PEOPLE
+   Our z matches the BACK plane, not the midplane. The chamber is ~36 mm thick, so
+   if the active gas plane is actually the midplane we are off by ~18 mm -- far
+   larger than everything above. Worth confirming which surface "the chamber z"
+   is meant to be before any of this is used.
