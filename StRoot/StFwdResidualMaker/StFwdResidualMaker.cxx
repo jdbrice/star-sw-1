@@ -180,6 +180,13 @@ void StFwdResidualMaker::bookHistos() {
         }
     }
 
+    for (int d = 0; d < 4; d++) {
+        h2FttProjAllXY[d] = new TH2F(
+            Form("h2FttProjAllXY_disk%d", d),
+            Form("FTT disk %d: projection of ALL tracks (pickup denominator);x [cm];y [cm]", d),
+            NP, -RPOS, RPOS, NP, -RPOS, RPOS);
+    }
+
     mFout->cd();
 }
 
@@ -363,6 +370,10 @@ void StFwdResidualMaker::fillPlaneUsage(
         h2FstHitXY[disk][cq]->Fill(fstPts[is].x, fstPts[is].y);
         h2FstProjXY[disk][cq]->Fill(fstProjs[disk].x, fstProjs[disk].y);
     }
+
+    // every track that reached here projects to each plane exactly once, hit or not
+    for (unsigned int ip = 0; ip < fttProjs.size() && ip < 4; ip++)
+        h2FttProjAllXY[ip]->Fill(fttProjs[ip].x, fttProjs[ip].y);
 
     for (unsigned int is = 0; is < fttPts.size(); is++) {
         const FwdSeedPt& sp = fttPts[is];

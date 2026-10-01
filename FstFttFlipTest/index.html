@@ -1110,6 +1110,42 @@ iteration&nbsp;2 an exact control arm. 90/90 jobs clean.</p>
       so this is the first such measurement on these data.</li>
 </ul>
 
+<H2>Correction: most of that deficit is the design acceptance gap (2026-10-01)</H2>
+<p>The quadrant table above uses <i>all</i> tracks as the denominator, which bakes in the sTGC design
+acceptance gap below the beampipe. FST covers nearly 2&pi; while the four sTGC pentagons cluster above
+and to the sides of the beampipe, so FST-seeded tracks projecting into the gap can never pick up a hit
+and the raw number is diluted by geometry working as designed.</p>
+<p>The existing histograms could not separate the two, because <tt>h2FttProjXY</tt> is filled only inside
+the loop over FTT points &mdash; i.e. only for tracks that already matched. Adding the missing denominator
+(<tt>h2FttProjAllXY</tt>, the projection of <i>every</i> track to each plane) and restricting to cells where
+the detector demonstrably is:</p>
+<table border="1" cellpadding="4">
+<tr><th>disk</th><th>orientation</th><th>top</th><th>bottom</th><th>bot/top</th></tr>
+<tr><td>0</td><td>x (V)</td><td>0.313</td><td>0.224</td><td>0.71</td></tr>
+<tr><td>0</td><td>y (H)</td><td>0.261</td><td>0.236</td><td>0.91</td></tr>
+<tr><td>1</td><td>x (V)</td><td>0.276</td><td>0.268</td><td>0.97</td></tr>
+<tr><td>1</td><td>y (H)</td><td>0.288</td><td>0.206</td><td>0.71</td></tr>
+<tr><td>2</td><td>x (V)</td><td>0.321</td><td>0.212</td><td>0.66</td></tr>
+<tr><td>2</td><td>y (H)</td><td>0.300</td><td>0.265</td><td>0.88</td></tr>
+<tr><td>3</td><td>x (V)</td><td>0.343</td><td>0.254</td><td>0.74</td></tr>
+<tr><td>3</td><td>y (H)</td><td>0.311</td><td>0.272</td><td>0.88</td></tr>
+</table>
+<ul>
+  <li>The factor <b>2.3 raw deficit becomes ~1.2</b> (bot/top ~0.81) once the design gap is removed, and
+      pickup inside the active area is ~0.21&ndash;0.34 rather than ~0.20.</li>
+  <li><b>No evidence of a geometry or mapping fault in quadrants B and C.</b> The hit-side map
+      (<tt>StFttDb</tt>, <tt>{0,3,2,1}</tt>) and the projection-side map
+      (<tt>FwdGeomUtils::fttChamberIndex</tt>, <tt>(4-q)%4</tt>) are identical, raw <tt>FttRawHit</tt>
+      counts are comparable in all four quadrants, and the bottom quadrants match at 66&ndash;97% of the
+      top rate wherever they are instrumented. A mis-mapping would give near-zero matching there, not
+      that.</li>
+  <li>The residual ~20% top/bottom difference is small enough to be edge effects, the leftover
+      misalignment, or statistics (one file, 4000 events) and is not pursued here.</li>
+  <li>Caveat on the method: "active" cells are those where matching already happens, so a region where a
+      quadrant <i>never</i> matched would be excluded rather than flagged. The raw-occupancy and
+      index-mapping checks above are what cover that case.</li>
+</ul>
+
 <H2>&chi;<sup>2</sup> triples, and that is the real result</H2>
 <ul>
   <li>Primary &chi;<sup>2</sup> mean <b>4.33&nbsp;&rarr;&nbsp;16.74</b> (+286%), rms 10.2&nbsp;&rarr;&nbsp;35.1.

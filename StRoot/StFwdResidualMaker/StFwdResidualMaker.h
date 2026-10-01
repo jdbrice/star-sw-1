@@ -105,6 +105,15 @@ private:
     TH2F* h2FstProjXY[3][2];
     TH2F* h2FttProjXY[4][3][2];
 
+    // Denominator for an acceptance-corrected pickup: the projection of EVERY track
+    // of mResidualTrackType to each sTGC plane, whether or not a hit was found.
+    // h2FttProjXY above is filled only inside the loop over FTT points, i.e. only for
+    // tracks that already matched, so on its own it cannot separate "the sTGC is not
+    // there" (the design gap below the beampipe) from "the sTGC is there and we
+    // missed it". The ratio h2FttProjXY / h2FttProjAllXY is that separation, and both
+    // are binned at the PROJECTION position so the ratio is meaningful cell by cell.
+    TH2F* h2FttProjAllXY[4];
+
     void bookHistos();
 
     void fillFst(int disk, float res, float hx, float hy);
