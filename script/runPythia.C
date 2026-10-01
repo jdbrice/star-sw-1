@@ -246,7 +246,7 @@ void runPythia( Int_t nevents=10, Int_t run=1, char* particle="JPsi", float vz=0
   //
   //geometry("fwddev1a");
   //geometry("ftsref6a");
-  geometry("dev2022");
+  geometry(fieldOff ? "dev2022 field=0" : "dev2022 field=-5.0");   // DETP GEOM ... field=: fz header records the field (reversed full, as in 2022+ data)
   //geometry("sitrver0");
   command("gkine -4 0");
   command(Form("gfile o pythia.%s.vz%d.run%d.fzd",particle,int(vz),run));

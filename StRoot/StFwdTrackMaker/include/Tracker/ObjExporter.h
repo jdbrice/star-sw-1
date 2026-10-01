@@ -136,6 +136,8 @@ public:
   static TVector3 projectAsStraightLine( genfit::Track * t, float* xyz0, float* xyz1, float* xyzf, float* planenorm_xyz, float * cov, TVector3 &mom ) {
     TVector3 tv3A = trackPosition( t, xyz0, planenorm_xyz, cov, mom );
     TVector3 tv3B = trackPosition( t, xyz1, planenorm_xyz, cov, mom );
+    // either anchor projection failed (sentinel -990): a line through it is garbage
+    if ( tv3A.Z() < -900 || tv3B.Z() < -900 ) return TVector3( -990, -990, -990 );
 
     if (verbose){
       LOG_INFO << "Straight Line Projection using" << endm;

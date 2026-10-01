@@ -28,6 +28,35 @@ public:
 
     void setUseGeantData( bool useGeantData ) { mUseGeantData = useGeantData; }
 
+    /** @brief Exchange which strip orientation measures X and which measures Y.
+     *
+     * The offline convention is that VERTICAL strips measure X and HORIZONTAL
+     * strips measure Y -- the name refers to the direction the strips RUN, not
+     * the coordinate they measure. The online/hardware map implies the
+     * opposite assignment; as of 2026-09 the online side is believed correct.
+     *
+     * TEMPORARY DIAGNOSTIC. A real fix has to start from the geometry
+     * description and be made consistently everywhere; this switch only
+     * exchanges the assignment at point-building time so the hypothesis can be
+     * tested on real data without touching StFttDb.
+     *
+     * NOTE, and it should be checked rather than assumed: an equivalent swap
+     * was tried in 2026-07 by relabelling in StFttDb::getOrientation(), and at
+     * 101-file statistics it LOWERED FTT matched-hit purity (14.9% -> 7.0%).
+     * That test predates the VMM time-calibration and maxStripLength fixes, so
+     * it is worth repeating, but it is evidence against this hypothesis and
+     * should not be quietly forgotten. See proposal_next_step_20260725.txt.
+     *  @param apply : true to exchange X and Y
+    */
+    void setApplyXYMirror( bool apply ) { mApplyXYMirror = apply; }
+
+    /** @brief Enable this maker's own verbose point dump (mDebug).
+     * Distinct from StMaker::SetDebug(); mDebug was previously fixed to false
+     * in the constructor with no way to turn it on, which made the point
+     * coordinates impossible to inspect without editing the source.
+    */
+    void setPointDebug( bool d ) { mDebug = d; }
+
 private:
     void InjectTestData();
     void MakeLocalPoints(UChar_t Rob);
@@ -40,6 +69,7 @@ private:
     Bool_t               mDebug;
     Bool_t               mUseTestData;
     Bool_t               mUseGeantData; // if true, use the geant hits to make points
+    Bool_t               mApplyXYMirror = kFALSE; // see setApplyXYMirror()
     StFttDb*             mFttDb;
     std::vector<StFttCluster *> clustersPerRob[StFttDb::nRob][StFttDb::nStripOrientations]; //save the cluster for per quadrant
 

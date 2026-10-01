@@ -183,7 +183,7 @@ void jpsi( Int_t nevents=50, Int_t rngSeed=12334342, bool decayToElectrons = tru
   //
   // Setup geometry and set starsim to use agusread for input
   //
-  //geometry("y2012");
+  geometry("y2024");   // DETP GEOM ... field=: fz header records the field (reversed full, as in 2022+ data)
   command("gkine -4 0");
   command("gfile o jpsi.fzd");
 

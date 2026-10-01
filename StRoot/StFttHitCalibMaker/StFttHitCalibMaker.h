@@ -65,6 +65,13 @@ public:
 
     bool mDebug = false;
 
+    // per-run bookkeeping of how each hit's time was obtained (logged in FinishRun)
+    Long64_t mNHitsDbAnchor = 0;
+    Long64_t mNHitsOnTheFly = 0;
+    Long64_t mNHitsNotReady = 0;
+    bool     mBookkeepingPrinted = false;
+    void     printTimeBookkeeping( const char *where );
+
     ClassDef(StFttHitCalibMaker, 1)
 
 };

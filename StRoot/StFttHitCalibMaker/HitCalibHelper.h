@@ -4,6 +4,8 @@
 #include <map>
 #include <vector>
 
+// Minimum number of HITS a VMM must have seen before its on-the-fly anchor is
+// trusted.
 #define MIN_BCID_SAMPLES 200
 
 class HitCalibHelper {
@@ -12,24 +14,36 @@ public:
 
     }
 
+    // FIX (2026-09-14): this used to test dbcidHist[uuid].size() > 200, i.e. the
+    // number of DISTINCT dbcid values seen, not the number of hits. A well-timed
+    // VMM concentrates its hits on a handful of dbcid values and so could stay
+    // "not ready" indefinitely, while a noisy VMM spreading over many values
+    // became ready fast -- the criterion rewarded noise. Harmless while production
+    // ran with an AcceptAll time cut; decisive once the calibrated cut was on.
+    // Measured on zero-field run 23063028 after 300 events: 4 of 373 VMMs ready
+    // (horizontal strips 0/128), ~21 distinct values per VMM against ~212 hits.
+    // Field-on run 23081049 reached the old threshold in <100 events only because
+    // it has 31x more FTT hits per event.
     bool ready( UShort_t uuid ){
-        return ( dbcidHist.count( uuid ) > 0 && dbcidHist[uuid].size() > MIN_BCID_SAMPLES );
+        return ( nSamples.count( uuid ) > 0 && nSamples[uuid] > MIN_BCID_SAMPLES );
     }
 
     void fill( UShort_t uuid, Short_t dbcid ){
+        // dbcid is a 12-bit counter, so a VMM's histogram has at most 4096 keys
+        // and needs no cap. (The previous cap -- stop adding NEW keys once there
+        // were >200 distinct ones -- could freeze a histogram before its real
+        // peak had been seen, if noise filled those keys first.)
         auto& hist = dbcidHist[ uuid ];
-        if ( hist.size() > MIN_BCID_SAMPLES ) {
-            // Map is full: only update existing keys to prevent unbounded growth
-            auto it = hist.find( dbcid );
-            if ( it != hist.end() ) it->second++;
-        } else {
-            hist[ dbcid ]++;
-        }
-        if ( hist.size() > MIN_BCID_SAMPLES ){
-            auto x = std::max_element( hist.begin(), hist.end(),
-                [](const pair<Short_t, Int_t>& p1, const pair<Short_t, Int_t>& p2) {
-                    return p1.second < p2.second; });
-            dbcidAnchor[ uuid ] = x->first;
+        Int_t c = ++hist[ dbcid ];
+        nSamples[ uuid ]++;
+
+        // Anchor = the most populated dbcid, same definition as before, but
+        // maintained incrementally. It used to be a full std::max_element scan of
+        // the map on every hit once past threshold, which is O(keys) per hit.
+        Int_t& best = anchorCount[ uuid ];
+        if ( c > best ) {
+            best = c;
+            dbcidAnchor[ uuid ] = dbcid;
         }
     }
 
@@ -52,13 +66,7 @@ public:
 
     
     size_t samples( UShort_t uuid ) {
-        if (  dbcidHist.count(uuid) > 0 ){
-            size_t n = 0;
-            for ( const auto& kv : dbcidHist[uuid]  ){
-                n += kv.second;
-            }
-            return n;
-        }
+        if ( nSamples.count(uuid) > 0 ) return nSamples[uuid];
         return 0;
     }
 
@@ -73,6 +81,8 @@ public:
     void clear(){
         dbcidHist.clear();
         dbcidAnchor.clear();
+        nSamples.clear();
+        anchorCount.clear();
     }
 
 
@@ -85,6 +95,12 @@ protected:
     // key - unique VMM Id (0, 386]
     // value - dbcid reference
     map< UShort_t, Short_t> dbcidAnchor;
+
+    // key - unique VMM Id; value - total hits seen (what ready() tests)
+    map< UShort_t, Int_t> nSamples;
+
+    // key - unique VMM Id; value - count in the current anchor bin
+    map< UShort_t, Int_t> anchorCount;
 
 };
 

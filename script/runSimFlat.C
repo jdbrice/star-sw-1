@@ -123,7 +123,8 @@ void runSimFlat( Int_t nevents=1000, Int_t run=1,
   StarRandom::seed(run);
 
   // Setup geometry and set starsim to use agusread for input
-  //geometry("dev2022=1");
+  if (fieldOff) field = 0.0;
+  geometry("y2024");   // DETP GEOM ... field=: fz header records the field (reversed full, as in 2022+ data)
   command("gkine -4 0");
   if(e>0.0){
       command(Form("gfile o %s.e%d.vz%d.run%d.fzd",pid,(int)e,(int)vz,run));

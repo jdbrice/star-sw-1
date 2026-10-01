@@ -98,9 +98,16 @@ Int_t StFttClusterPointMaker::Make() {
     mFttCollection=mEvent->fttCollection(); //get the ftt collection from the event and make sure it exists
     if(!mFttCollection) { return kStOk; }
 
-    mFttDb = static_cast<StFttDb*>(GetDataSet("fttDbMkr")); //get the ftt database
+    // "fttDb" is the dataset StFttDbMaker registers (new StFttDb("fttDb") + AddData).
+    // This used to ask for "fttDbMkr" -- the MAKER's name -- and static_cast the result,
+    // so mFttDb pointed at the wrong object. That was invisible for as long as
+    // getGloablOffset_ClusterPoint() only read STATIC members, which need no valid
+    // this; the moment it started reading per-quadrant instance arrays it returned
+    // garbage positions and destroyed the FST->sTGC matching. dynamic_cast so a wrong
+    // name fails loudly instead of silently.
+    mFttDb = dynamic_cast<StFttDb*>(GetDataSet("fttDb")); //get the ftt database
     if ( !mFttDb ) {
-        LOG_ERROR << "StFttClusterPointMaker::Make() - fttDbMkr dataset not found, cannot continue" << endm;
+        LOG_ERROR << "StFttClusterPointMaker::Make() - fttDb dataset not found, cannot continue" << endm;
         return kStErr;
     }
 
@@ -167,11 +174,29 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
     StFttPoint* point;
     size_t nClusters_X = 0;size_t nClusters_Y = 0;size_t nClusters_DX = 0;size_t nClusters_DY = 0;
 
+    // Which strip orientation feeds the X coordinate and which feeds Y.
+    // Normally vertical strips measure X and horizontal strips measure Y (the
+    // NAME refers to the direction the strips RUN, so a "vertical" strip
+    // measures the horizontal coordinate). setApplyXYMirror(true) exchanges
+    // them, to test the hypothesis that the offline V/H -> x/y-sensitive-plane
+    // assignment is inverted with respect to the online/hardware convention.
+    //
+    // Doing it here rather than by relabelling in StFttDb::getOrientation()
+    // keeps the DB honest about what each board physically is: the clusters
+    // keep their true orientation (addCluster below records the collection
+    // they came from), only the coordinate they are assigned to changes.
+    // The covariance follows automatically, because each point's sigma /
+    // maxStripLength are taken from whichever cluster is fed to it.
+    const int oX  = mApplyXYMirror ? kFttHorizontal : kFttVertical;
+    const int oY  = mApplyXYMirror ? kFttVertical   : kFttHorizontal;
+    const int oDX = mApplyXYMirror ? kFttDiagonalH  : kFttDiagonalV;
+    const int oDY = mApplyXYMirror ? kFttDiagonalV  : kFttDiagonalH;
+
     //set nClusters
-    nClusters_X = clustersPerRob[(UChar_t)Rob][kFttVertical].size();
-    nClusters_Y = clustersPerRob[(UChar_t)Rob][kFttHorizontal].size();
-    nClusters_DX = clustersPerRob[(UChar_t)Rob][kFttDiagonalV].size();
-    nClusters_DY = clustersPerRob[(UChar_t)Rob][kFttDiagonalH].size();
+    nClusters_X = clustersPerRob[(UChar_t)Rob][oX].size();
+    nClusters_Y = clustersPerRob[(UChar_t)Rob][oY].size();
+    nClusters_DX = clustersPerRob[(UChar_t)Rob][oDX].size();
+    nClusters_DY = clustersPerRob[(UChar_t)Rob][oDY].size();
 
     if(mDebug)
     {
@@ -181,7 +206,7 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
 
     //loop over x clusters; clustersPerRob[Rob][kFttVertical][iClu_X]
     for (int iClu_X=0; iClu_X < nClusters_X; iClu_X++) {
-        StFttCluster* clu_x = clustersPerRob[(UChar_t)Rob][kFttVertical][iClu_X];
+        StFttCluster* clu_x = clustersPerRob[(UChar_t)Rob][oX][iClu_X];
 
         point = new StFttPoint();
 
@@ -206,14 +231,14 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
 
         point->setQuadrant( clu_x->quadrant() );
         point->setPlane( clu_x->plane() );
-        point->addCluster(clu_x,kFttVertical);
+        point->addCluster(clu_x,oX);
 
         mFttCollection->addPoint(point);
     }
 
     //loop over y clusters; clustersPerRob[Rob][kFttHorizontal][iClu_Y]
     for (int iClu_Y=0; iClu_Y < nClusters_Y; iClu_Y++) {
-        StFttCluster* clu_y = clustersPerRob[(UChar_t)Rob][kFttHorizontal][iClu_Y];
+        StFttCluster* clu_y = clustersPerRob[(UChar_t)Rob][oY][iClu_Y];
 
         point = new StFttPoint();
 
@@ -233,14 +258,14 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
 
         point->setQuadrant( clu_y->quadrant() );
         point->setPlane( clu_y->plane() );
-        point->addCluster(clu_y,kFttHorizontal);
+        point->addCluster(clu_y,oY);
 
         mFttCollection->addPoint(point);
     }
 
     //loop over dx clusters; clustersPerRob[Rob][kFttDiagonalV][iClu_DX]
     for (int iClu_DX=0; iClu_DX<nClusters_DX; iClu_DX++){
-        StFttCluster* clu_dx = clustersPerRob[(UChar_t)Rob][kFttDiagonalV][iClu_DX];
+        StFttCluster* clu_dx = clustersPerRob[(UChar_t)Rob][oDX][iClu_DX];
 
         point = new StFttPoint();
 
@@ -273,14 +298,14 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
 
         point->setQuadrant( clu_dx->quadrant() );
         point->setPlane( clu_dx->plane() );
-        point->addCluster(clu_dx,kFttDiagonalV);
+        point->addCluster(clu_dx,oDX);
 
         mFttCollection->addPoint(point);
     }
 
     //loop over dy clusters; clustersPerRob[Rob][kFttDiagonalH][iClu_DY]
     for (int iClu_DY=0; iClu_DY<nClusters_DY; iClu_DY++){
-        StFttCluster* clu_dy = clustersPerRob[(UChar_t)Rob][kFttDiagonalH][iClu_DY];
+        StFttCluster* clu_dy = clustersPerRob[(UChar_t)Rob][oDY][iClu_DY];
 
         point = new StFttPoint();
 
@@ -313,7 +338,7 @@ void StFttClusterPointMaker::MakeLocalPoints(UChar_t Rob) {
 
         point->setQuadrant( clu_dy->quadrant() );
         point->setPlane( clu_dy->plane() );
-        point->addCluster(clu_dy,kFttDiagonalH);
+        point->addCluster(clu_dy,oDY);
 
         mFttCollection->addPoint(point);
     }

@@ -62,6 +62,7 @@ void genElectron45(int nevents = 20, int seed = 1, float phiDeg = 45.0) {
     _primary->SetSigma(vtxSigmaX, vtxSigmaY, vtxSigmaZ);
     _primary->SetVertex(vtxX, vtxY, vtxZ);
 
+    geometry("y2024");   // gen.C helper, DETP GEOM ... field=-5.0: fz header records the reversed field
     command("gkine -4 0");
     command(TString::Format("gfile o %s", fzdFilename.Data()));
 
