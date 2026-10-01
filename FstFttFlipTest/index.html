@@ -1057,6 +1057,87 @@ right degrees of freedom should solve</b>. That is Xihe's tool, not this one.</p
 
 
 <HR>
+<a name="fttadd"></a>
+<H1>10. FTT hits on the track: the planar measurement runs for the first time (2026-10-01)</H1>
+
+<p>Every campaign up to here ran <tt>fttNoAdd=1</tt>: the tracker searched for sTGC hits and filled
+the diagnostics, but never put one on a track. So the planar FTT <i>measurement</i> had never executed
+in the Kalman fit. This run turns that on. It differs from the iteration-2 campaign in one field
+(<tt>DIAG&nbsp;"2,1,0"&rarr;"2,0,0"</tt>), same 90 files and same 13000 events each, which makes
+iteration&nbsp;2 an exact control arm. 90/90 jobs clean.</p>
+
+<H2>It works</H2>
+<p>Pickup probability per sTGC station, Primary tracks, 4.2M tracks:</p>
+<table border="1" cellpadding="4">
+<tr><th>station</th><th>1</th><th>2</th><th>3</th><th>4</th><th>mean</th></tr>
+<tr><td>x &mdash; V strips</td><td>0.2297</td><td>0.2052</td><td>0.2165</td><td>0.2407</td><td><b>0.223</b></td></tr>
+<tr><td>y &mdash; H strips</td><td>0.1835</td><td>0.1828</td><td>0.1965</td><td>0.2043</td><td><b>0.192</b></td></tr>
+<tr><td>diagonal u/v</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+</table>
+<ul>
+  <li>Errors are &plusmn;0.0002 throughout. The u/v row is exactly zero by construction &mdash; the hit
+      loader skips equal-covariance points, so diagonal strips never enter the fit.</li>
+  <li>Two independent handles agree to 0.5%: the pickup summed over 4 stations &times; 2 orientations is
+      <b>1.659</b> hits/track, and the measured rise in <tt>nSeedPoints</tt> is <b>1.650</b>
+      (4.268&nbsp;&rarr;&nbsp;5.918). The plumbing is right.</li>
+  <li>Track count is unchanged (502027&nbsp;&rarr;&nbsp;502026), so no fit is failing outright.</li>
+  <li>The control arm reads <b>exactly 0.0000</b> in every FTT cell, so these numbers need no baseline
+      subtraction.</li>
+</ul>
+
+<table><tr>
+  <td><a href="plots/ftt_pickup.png"><img src="plots/ftt_pickup.png" height="200"></a></td>
+</tr></table>
+
+<H2>20% is low, and the deficit is structured</H2>
+<p>Pickup split by quadrant (Pos+Neg summed, x/y per station):</p>
+<table border="1" cellpadding="4">
+<tr><th>quadrant</th><th>tracks</th><th>s1</th><th>s2</th><th>s3</th><th>s4</th></tr>
+<tr><td>North-top</td><td>1.22M</td><td>.321/.240</td><td>.318/.285</td><td>.293/.263</td><td>.342/.274</td></tr>
+<tr><td>North-bottom</td><td>0.94M</td><td>.178/.147</td><td>.169/.125</td><td>.126/.134</td><td>.165/.138</td></tr>
+<tr><td>South-top</td><td>1.16M</td><td>.259/.218</td><td>.162/.195</td><td>.281/.247</td><td>.284/.258</td></tr>
+<tr><td>South-bottom</td><td>0.90M</td><td>.122/.100</td><td>.146/.089</td><td>.124/.106</td><td>.127/.110</td></tr>
+</table>
+<ul>
+  <li>Top/bottom is a factor <b>~2.3</b>, uniform across all four stations, so this is geometric rather
+      than a per-chamber efficiency. The pentagon y-offset and the quadrant boundary are the obvious
+      suspects and are the next thing to check.</li>
+  <li>Purity is <b>46.6%</b>: of the hits the tracker attaches, under half are the genuinely correct
+      one. Peak-over-sideband excess is 2.69 (V) and 2.92 (H) &mdash; a real peak, not a dominant one.</li>
+  <li>Station&nbsp;1 quadrant&nbsp;A has no V hits in any arm. That is a known hardware failure and is
+      permanent; it is not a V/H swap, which was investigated separately and settled.</li>
+  <li>No earlier number exists to compare against: every campaign still on disk reads 0.0000 pickup,
+      so this is the first such measurement on these data.</li>
+</ul>
+
+<H2>&chi;<sup>2</sup> triples, and that is the real result</H2>
+<ul>
+  <li>Primary &chi;<sup>2</sup> mean <b>4.33&nbsp;&rarr;&nbsp;16.74</b> (+286%), rms 10.2&nbsp;&rarr;&nbsp;35.1.
+      Not fit failure &mdash; the FTT hits disagree with the FST+vertex fit by far more than their stated
+      precision claims.</li>
+  <li>The FTT measurement sigma is the cluster sigma alone
+      (<tt>StFttClusterPointMaker.cxx</tt>), with <b>no alignment term</b>. FST in the same codebase does
+      the opposite: <tt>&sigma;<sub>total</sub> = sqrt((pitch/&radic;12)&sup2; + &delta;<sub>align</sub>&sup2;)</tt>
+      with <tt>&delta;<sub>align,r</sub> = 1.5&nbsp;cm</tt>.</li>
+  <li>With the true track-to-hit scatter at 3.7&ndash;4.8&nbsp;mm, each FTT hit contributes
+      ~(&delta;/&sigma;)&sup2; &asymp; 7.5 to &chi;<sup>2</sup>, matching the observed +12.4 over 1.65 hits.
+      The 47% purity contributes as well, since a wrong hit is far from the track.</li>
+  <li>Inflating the FTT sigma in quadrature would make &chi;<sup>2</sup> look healthy, but it would hide
+      the misalignment it absorbs. The leftover per-quadrant offsets still reach 0.46&nbsp;cm and the ~1%
+      radial scale is ~0.6&nbsp;cm at r&nbsp;=&nbsp;60&nbsp;cm, both comparable to the scatter &mdash; so the
+      &chi;<sup>2</sup> is arguably reporting the geometry, not the covariance.</li>
+</ul>
+
+<H2>Why these residuals must not feed the next alignment iteration</H2>
+<p>With hits on the track the Primary blind residual is <b>self-biased</b>. The Global refit puts FTT hits
+on the global seed, and the primary fit reuses that seed, so the Primary projection has already been fit
+to hits from the same disks. At identical entry counts the blind dy peak width collapses:</p>
+<pre>  control   0.373  0.400  0.440  0.477 cm
+  hits-on   0.232  0.208  0.207  0.236 cm</pre>
+<p>That is self-fitting, not better alignment. Alignment therefore stays on <tt>fttNoAdd=1</tt>, which is
+what iteration&nbsp;2 used. An unbiased residual <i>with</i> hits on the track is still available from
+<tt>fttDiagType=0</tt> (Global), whose seed is FST-only until its own refit.</p>
+
 <a name="notes"></a>
 <H2>Working notes</H2>
 <ul>
