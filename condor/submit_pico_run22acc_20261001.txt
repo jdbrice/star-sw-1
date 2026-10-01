@@ -1,0 +1,139 @@
+# Run22 pickup arm RE-RUN, 20 files, solely to get the acceptance denominator.
+#
+# pico_fttadd_20260930 was produced before StFwdResidualMaker gained h2FttProjAllXY
+# (the projection of EVERY track, hit or not), so the Run22 side has no acceptance
+# denominator except the single-file acc_Primary run. Without it the Run22 vs Run24
+# pickup comparison can only be made on the raw all-track denominator, which includes
+# the sTGC design acceptance gap.
+#
+# Identical configuration to pico_fttadd_20260930 -- DIAG 2,0,0, timecut 2, window
+# -1..3, magfield 0, geofix 1,0,0, 13000 events, Run22 geometry -- so it can also be
+# cross-checked against that campaign's raw numbers.
+#
+# Submit AFTER the 180 Run24 jobs drain, or accept slot competition.
+Executable   = /bin/env
+Universe     = vanilla
+notification = never
+getenv       = True
+Initialdir   = /star/u/akio/fcstrk11/star-sw-fwd
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_0000004.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_0000004.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_0000004.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_0000004.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_1000008.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000008.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000008.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000008.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_1000010.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000010.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000010.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000010.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_1000012.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000012.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000012.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1000012.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_1500004.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500004.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500004.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500004.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_1500005.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500005.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500005.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500005.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_1500006.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500006.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500006.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500006.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_1500008.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500008.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500008.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500008.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_1500009.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500009.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500009.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_1500009.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_2000001.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2000001.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2000001.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2000001.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_2000004.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2000004.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2000004.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2000004.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_2500005.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2500005.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2500005.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2500005.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_2500006.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2500006.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2500006.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_2500006.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_3000003.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000003.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000003.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000003.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_3000005.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000005.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000005.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000005.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_3000011.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000011.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000011.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3000011.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_3500001.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500001.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500001.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500001.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_3500003.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500003.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500003.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500003.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_3500005.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500005.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500005.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500005.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data110/reco/zeroFieldAligment_2022/FieldOff/DEV_test/2022/063/23063028 st_physics_23063028_raw_3500006.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001 0 0 1,0,0 2 -1,3 2,0,0 13000 fGeom.root"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500006.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500006.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_run22acc_20261001/log/st_physics_23063028_raw_3500006.log
+Queue
+
