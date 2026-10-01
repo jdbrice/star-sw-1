@@ -80,3 +80,31 @@ OPEN QUESTION WORTH ASKING THE sTGC PEOPLE
    if the active gas plane is actually the midplane we are off by ~18 mm -- far
    larger than everything above. Worth confirming which surface "the chamber z"
    is meant to be before any of this is used.
+
+DATE OF THIS SURVEY, AND WHAT TO ASK FOR FOR RUN 24   (added 2026-10-01)
+
+The footer "SA 2022.1.0308.2 ( x64 )" is the SpatialAnalyzer software build (release
+2022.1, build 0308), NOT the measurement date. The document's own metadata settles it:
+
+    /CreationDate (D:20220513105538-04'00')   ->  2022-05-13 10:55:38 EDT
+
+So this is a Run-22 era survey. Note it post-dates the Run 22 ZF data we compare it
+with (2022-03-04) by about two months; assumed immaterial, not established.
+
+A Run 24 survey is worth requesting: our Run 24 data says the sTGC sits ~1 cm from
+where Run 22 left it (see pentOnStation.20231210.000001), and a survey is the only
+independent check on that.
+
+BUT A REPEAT OF THIS DOCUMENT WOULD NOT TEST IT. The per-quadrant plane fits give the
+position along the chamber normal (z) and the two tilts, and nothing else: a plane
+carries no in-plane position. Our ~1 cm is in x and y. The 3MM_*/RIB*_* point groups
+do not rescue it either -- they are targets on the support rib, one set per station,
+with no nominal design positions in the document.
+
+So ask for:
+  1. the same per-quadrant FRONT/BACK plane fits -- directly comparable to 2022, and
+     they test the z and the tilts; plus
+  2. something that pins the chambers TRANSVERSELY: fiducial/target coordinates
+     together with their NOMINAL DESIGN positions, or measurements of features on the
+     chambers themselves rather than on the rib.
+Without (2) a Run 24 survey confirms z and tilt and leaves the x/y claim untested.
