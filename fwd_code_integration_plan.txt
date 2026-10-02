@@ -34,14 +34,15 @@ what it depends on.
   bundling all of it into the single #826 against STAR. The smaller PRs therefore already
   exist. See wave 5 below.
 
-  Separately we have more recent commits that have never been in a PR against "dev": 
-  16 new commits and 46 modified code files, mostly sTGC/FST alignment, the DB-driven 
-  geometry path, and diagnostics in "akio202607" branch.
-
   And five of Akio's pull requests are still open against "dev" inside the fork itself,
   so they are already written up and reviewable: #21 (StFttPointMaker), #23, #24, #25
   (FST sim and hit position) and #26 (magnetic field). They are placed in the waves
   below. Two more open PRs are other people's work and are listed at the end.
+
+  Separately we have more recent commits that have never been in a PR against "dev": 
+  16 new commits and 46 modified code files, mostly sTGC/FST alignment, the DB-driven 
+  geometry path, and diagnostics in "akio202607" branch.
+
 
 2. ALREADY IN PROGRESS ON GITEA
 
@@ -141,6 +142,19 @@ what it depends on.
         to wave 7.
       * FitterUtils: every collinear seed triple is logged at LOG_DEBUG and the seed
         pT at LOG_INFO; in dense MC that was ~660k lines per run.
+      * StFttClusterMaker: two cluster fields are set in akio202607 and are in no PR
+        at all, neither #826 nor the revived #9 --
+            clu->setMaxStripLength( maxAdcHit->stripLength() );
+            clu->setMaxStripCenter( maxAdcHit->stripCenter() );
+        Without them a cluster carries no strip length or centre, so the unmeasured
+        direction of the FTT point covariance (maxStripLength^2/12 in
+        StFttClusterPointMaker) and the point position along the strip have nothing to
+        be built from. This is the fix the July FTT reprocessing was run with.
+      * StFttClusterMaker: floor the cluster sigma at the single-strip value,
+        kSigmaMin = pitch/sqrt(12) = 3.2/sqrt(12) = 0.924 mm. A single-strip cluster
+        has all its charge in one strip, so the computed variance is exactly 0 and the
+        fit weight diverges. The merged #10 took only the sqrt(max(var,0)) NaN guard,
+        which stops the NaN but still allows sigma = 0.
 
   WAVE 6 -- remaining code fixes
     StFwdTrackMaker planar FTT chamber plane index                      (Akio's)
@@ -171,18 +185,14 @@ what it depends on.
   We need to talk with Jerome and ask about lessons we learned from
   StSpinPool :-)
 
+5. OPEN PULL REQUESTS to "DEV" BY OTHERS -- THEIRS TO REVIVE
 
-5. OPEN PULL REQUESTS BY OTHERS -- THEIRS TO REVIVE, NOT OURS
-
-  Two pull requests against "dev" are not in the plan above because they are not our
-  work. Both look right and both would be welcome; we would rather their authors
-  bring them forward than have us carry them.
+  Two pull requests against "dev" are not in the plan above
+  Both look right and both should be made PR on STAR main repo but I would rather see
+  authors bring them to PR.
 
     #22  Fix bug: populate mNdf in GenfitTrackResult   (privdonut123)  1 file, +7
          https://github.com/jdbrice/star-sw-1/pull/22
-         Note for us: this bug is still present in akio202607. mNdf is declared and
-         never assigned, so every forward track is written with NDF = 0 and the
-         chi2/ndf quality cut in FwdTracker.h never fires.
 
     #27  Jdb fwd dev fixes   (dkapukchyan)   16 files, +453/-412
          https://github.com/jdbrice/star-sw-1/pull/27

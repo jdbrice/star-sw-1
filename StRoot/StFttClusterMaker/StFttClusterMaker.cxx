@@ -67,6 +67,22 @@ StFttClusterMaker::InitRun( Int_t runnumber )
     return kStOk;
 }
 
+// Per-file gating of the STAR logging macros on mDebug, back-ported from PR #9
+// (#815). When mDebug==false the whole LOG expression is skipped at the AST level, so
+// nothing is streamed or allocated -- the PR reports a ~312 B leak per LOG_INFO call in
+// the log4cxx pipeline, which a suppressed log level does not avoid because the message
+// is built before the level is tested. Affects only this translation unit. The
+// `if (!mDebug) {} else` form stops a dangling else from attaching to a caller's `if`.
+// LOG_WARN is deliberately left alone so warnings always come out.
+//
+// Placed here, after Init/InitRun, rather than at the top of the file as in the PR: the
+// two messages above are once per run and are what tells us which year's code path ran,
+// so they stay ungated. Everything below is per event or per cluster.
+#undef  LOG_INFO
+#undef  LOG_DEBUG
+#define LOG_INFO  if (!mDebug) {} else LOGGERMESSAGE(Info)
+#define LOG_DEBUG if (!mDebug) {} else LOGGERMESSAGE(Debug)
+
 //_____________________________________________________________
 Int_t
 StFttClusterMaker::FinishRun( Int_t runnumber )
@@ -182,7 +198,7 @@ StFttClusterMaker::Make()
             }
         } // loop on iRob
     } // nStripsHit
-    LOG_INFO << "StFttClusterMaker produced " << nClusters << " clusters this event" << endm;
+    LOG_DEBUG << "Found " << nClusters << " clusters this event" << endm;
 
     return kStOk;
 } // Make
