@@ -4,13 +4,16 @@
 ================================================================================
 
 Reference: all branches are in https://github.com/jdbrice/star-sw-1
-  "dev" branch : Daniel's for developing fwd software, with some of Akio's change merged
-  "akio202607" branch : started from "dev", includes all Akio's recent changes, and up to date "dev"
+
+  - "dev" branch : Daniel's for developing fwd software, with some of Akio's change merged
+
+  - "akio202607" branch : started from "dev", includes all Akio's recent changes, and this is
+    now up to date with "dev"
 
 PROPOSAL IN ONE PARAGRAPH
 
 Much of the forward-upgrade development of the last two years is NOT in the STAR repository. 
-It lives in Daniel Brandenburg's `dev` branch, plus work of Akio's in "akio202607" branch. 
+It lives in Daniel Brandenburg's "dev" branch, plus work of Akio's in "akio202607" branch. 
 We propose to land it as a sequence of small, independent pull requests against STAR Gitea, 
 in a fixed order, rather than as one large merge. This document lists what exists, 
 what it depends on.
@@ -32,9 +35,13 @@ what it depends on.
   exist. See wave 5 below.
 
   Separately we have more recent commits that have never been in a PR against "dev": 
-  16 new and 46 modified code files, mostly sTGC/FST alignment, the DB-driven 
+  16 new commits and 46 modified code files, mostly sTGC/FST alignment, the DB-driven 
   geometry path, and diagnostics in "akio202607" branch.
 
+  And six pull requests are still open against "dev" inside the fork itself, so they are
+  already written up and reviewable: #21 (StFttPointMaker), #23, #24, #25 (FST sim and
+  hit position), #26 (magnetic field) from Akio, and #22 (mNdf) from privdonut123. They
+  are placed in the waves below.
 
 2. ALREADY IN PROGRESS ON GITEA
 
@@ -101,9 +108,9 @@ what it depends on.
           G2THIT -> StFttSimHitMaker -> StFttClusterMaker -> StFttClusterPointMaker.
           The FTT counterpart of the FST slow simulator; the existing
           StFttFastSimMaker does not exercise the real geometry or the clustering.
-    StFstSlowSimMaker                              2 files, +615   (Akio's)
+    StFstSlowSimMaker                              2 files, +615   (Akio's, fork PR #24)
           Runs MC through the real FST reconstruction chain rather than smearing.
-    StFstFastSimMaker: set meanRStrip/meanPhiStrip on simulated hits   (Akio's)
+    StFstFastSimMaker: set meanRStrip/meanPhiStrip on simulated hits   (Akio's, fork PR #23)
     Each of these needs its BFC option in the same PR -- see the note above wave 1.
 
   WAVE 5 -- the tracker core: decompose #826 back into the PRs it was built from
@@ -117,17 +124,36 @@ what it depends on.
       #18 BLC-vertex and FCS-constrained track types     (needs wave 2)
       (#19 StFwdAlignmentMaker and wiring...needs #17, #18, see section 4 below)
 
-    Two further fixes that belong with this wave rather than in a findings list:
-      * FitterUtils: no reversed-field charge correction. The hits determine only the
-        sign of q*Bz, so in a reversed field every seed charge guess is inverted and
-        the fit does not fully recover. Measured on reversed-field single-electron MC
-        at pT 0.5: 68.1% -> 76.1% correct charge.
+    Two further items that belong with this wave rather than in a findings list:
+      * The magnetic field, already written up as fork PR #26 (Akio's, 8 files,
+        +132/-19, two commits that have to move together):
+          - no StarMagField instance was ever created in the afterburner chain, so
+            StarFieldAdaptor's guarded lookups returned nothing and ALL MuDst
+            afterburner forward tracking ran at B = 0;
+          - STARField.h then ignored the field scale, which only became wrong once the
+            first defect was fixed;
+          - FitterUtils: no reversed-field charge correction. The hits determine only
+            the sign of q*Bz, so in a reversed field every seed charge guess was
+            inverted and the fit does not fully recover. Reversed-field single-electron
+            MC at pT 0.5: 68.1% -> 76.1% correct charge.
+        It also touches fwd_afterburner_db.C and four sim macros, which is where the
+        field instance is actually constructed, so the macro part cannot be deferred
+        to wave 7.
       * FitterUtils: every collinear seed triple is logged at LOG_DEBUG and the seed
         pT at LOG_INFO; in dense MC that was ~660k lines per run.
 
-  WAVE 6 -- remaining code fixes (Akio's)
-    StFwdTrackMaker planar FTT chamber plane index
-    StFstHitMaker global position                  (rebase on the merged #2)
+  WAVE 6 -- remaining code fixes
+    StFwdTrackMaker planar FTT chamber plane index                      (Akio's)
+    StFstHitMaker global position   (Akio's, fork PR #25; rebase on the merged #2)
+    StFttPointMaker: rob loop started at iRob=1 (Akio's, fork PR #21). The fill is
+      0-based, so clusters[0] was never read and no StFttPoint was ever made for
+      rob 0 -- quadrant A of plane 0. That region reads as a dead detector in any QA
+      plot built from these points rather than merely sparse.
+    GenfitTrackResult: populate mNdf (privdonut123's fork PR #22, NOT ours, and the
+      bug is still present in akio202607). mNdf is declared and never assigned, so
+      every forward track is written with NDF = 0, and the chi2/ndf quality cut in
+      FwdTracker.h is dead code because its own "mNdf > 0" guard never passes. Small
+      and independent; worth carrying forward with credit to the author.
     StFcsDb: gate the beamline read on mDbAccess. With setDbAccess(0) -- MC and
       particle-gun analysis -- the current code picks up a real, undated DB beamline
       record and corrupts getLorentzVector().
@@ -146,6 +172,6 @@ what it depends on.
     StFwdAlignmentMaker       2 files,  340 lines   unbiased hit-removed residuals
     
   There are some QA makers of Daniel's as well, which is not listed here.
-  We'll need a good place to put those requiring less critical review.
+  We'll need a good place to put those requiring less critical reviews.
   We need to talk with Jerome and ask about lessons we learned from
   StSpinPool :-)
