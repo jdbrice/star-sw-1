@@ -5,6 +5,25 @@
 </HEAD>
 <BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
 
+<a name="contents"></a>
+<H2>Contents</H2>
+<ul>
+  <li><a href="#blind">FST wedge flip and FTT X/Y flip: a blind A/B on zero-field data (2026-09-22)</a></li>
+  <li><a href="#mirror">What the mirror result does and does not settle</a></li>
+  <li><a href="#stripmap">The FST strip mapping, checked directly on hits (2026-09-23)</a></li>
+  <li><a href="#offset">A real FST-to-sTGC misalignment</a></li>
+  <li><a href="#spacepoints">kUseSpacePoints: what the two paths actually use (2026-09-24)</a></li>
+  <li><a href="#next">Consequences for alignment and geometry</a></li>
+  <li><a href="#dbinput">7. Input for the DB-driven step (2026-09-28)</a></li>
+  <li><a href="#tablesin">8. FTT tables in: the residual moves to zero (2026-09-28)</a></li>
+  <li><a href="#iter2">9. Iteration 2: a 0th-order baseline for the alignment program (2026-09-30)</a></li>
+  <li><a href="#fttadd">10. FTT hits on the track: the planar measurement runs for the first time (2026-10-01)</a></li>
+  <li><a href="#run24">11. Run 24 ZF: the sTGC moved ~1 cm, the efficiency did not (2026-10-02)</a></li>
+  <li><a href="#dbtables">DB entries: dates, versions, and the files</a></li>
+  <li><a href="#notes">Working notes</a></li>
+</ul>
+
+<a name="blind"></a>
 <H1>FST wedge flip and FTT X/Y flip: a blind A/B on zero-field data (2026-09-22)</H1>
 
 <p style="background-color:#eeeeff; padding:8px; border:1px solid #99a;">
@@ -1204,23 +1223,26 @@ i.e. what <tt>StFttDb</tt> actually applies. Reproduces the built geometry exact
 (st1 quad A: +2.111, +11.380). Cells reading exactly 0.000 in the difference are the ones
 held by the significance floor.</p>
 <table border="1" cellpadding="3">
-<tr><th>cell</th><th>Run22 x</th><th>Run22 y</th><th>Run24 x</th><th>Run24 y</th><th>&Delta;x</th><th>&Delta;y</th></tr>
-<tr><td>st1 A</td><td>+2.111</td><td>+11.380</td><td>+1.960</td><td>+12.530</td><td>&minus;0.151</td><td>+1.150</td></tr>
-<tr><td>st1 B</td><td>+12.429</td><td>+7.300</td><td>+12.370</td><td>+7.750</td><td>&minus;0.058</td><td>+0.449</td></tr>
-<tr><td>st1 C</td><td>&minus;11.410</td><td>+6.929</td><td>&minus;12.783</td><td>+7.241</td><td>&minus;1.373</td><td>+0.313</td></tr>
-<tr><td>st1 D</td><td>&minus;1.119</td><td>+11.327</td><td>&minus;1.979</td><td>+11.327</td><td>&minus;0.860</td><td>+0.000</td></tr>
-<tr><td>st2 A</td><td>+0.846</td><td>+10.307</td><td>+1.904</td><td>+12.384</td><td>+1.057</td><td>+2.077</td></tr>
-<tr><td>st2 B</td><td>+12.563</td><td>+7.248</td><td>+12.563</td><td>+7.248</td><td>+0.000</td><td>+0.000</td></tr>
-<tr><td>st2 C</td><td>&minus;11.480</td><td>+6.967</td><td>&minus;12.402</td><td>+7.270</td><td>&minus;0.922</td><td>+0.303</td></tr>
-<tr><td>st2 D</td><td>&minus;1.165</td><td>+10.763</td><td>&minus;1.962</td><td>+12.334</td><td>&minus;0.798</td><td>+1.571</td></tr>
-<tr><td>st3 A</td><td>+1.768</td><td>+11.377</td><td>+1.743</td><td>+12.938</td><td>&minus;0.025</td><td>+1.560</td></tr>
-<tr><td>st3 B</td><td>+12.553</td><td>+7.399</td><td>+12.653</td><td>+7.923</td><td>+0.100</td><td>+0.524</td></tr>
-<tr><td>st3 C</td><td>&minus;12.350</td><td>+7.168</td><td>&minus;12.350</td><td>+7.539</td><td>+0.000</td><td>+0.371</td></tr>
-<tr><td>st3 D</td><td>&minus;1.100</td><td>+10.910</td><td>&minus;1.926</td><td>+12.537</td><td>&minus;0.826</td><td>+1.627</td></tr>
-<tr><td>st4 A</td><td>+1.757</td><td>+11.311</td><td>+1.596</td><td>+12.620</td><td>&minus;0.161</td><td>+1.309</td></tr>
-<tr><td>st4 B</td><td>+12.090</td><td>+7.455</td><td>+12.090</td><td>+8.077</td><td>+0.000</td><td>+0.622</td></tr>
-<tr><td>st4 C</td><td>&minus;11.843</td><td>+7.059</td><td>&minus;11.843</td><td>+7.448</td><td>+0.000</td><td>+0.389</td></tr>
-<tr><td>st4 D</td><td>&minus;0.978</td><td>+10.533</td><td>&minus;1.894</td><td>+12.480</td><td>&minus;0.916</td><td>+1.947</td></tr>
+<tr><th>cell</th><th>Run22 x</th><th>Run24 x</th><th>&Delta;x</th><th>Run22 y</th><th>Run24 y</th><th>&Delta;y</th></tr>
+<tr><td>st1 A</td><td>+2.111</td><td>+1.960</td><td>&minus;0.151</td><td>+11.380</td><td>+12.530</td><td>+1.150</td></tr>
+<tr><td>st2 A</td><td>+0.846</td><td>+1.904</td><td>+1.057</td><td>+10.307</td><td>+12.384</td><td>+2.077</td></tr>
+<tr><td>st3 A</td><td>+1.768</td><td>+1.743</td><td>&minus;0.025</td><td>+11.377</td><td>+12.938</td><td>+1.560</td></tr>
+<tr><td>st4 A</td><td>+1.757</td><td>+1.596</td><td>&minus;0.161</td><td>+11.311</td><td>+12.620</td><td>+1.309</td></tr>
+<tr><td colspan="7" style="height:3px;background:#eee"></td></tr>
+<tr><td>st1 B</td><td>+12.429</td><td>+12.370</td><td>&minus;0.058</td><td>+7.300</td><td>+7.750</td><td>+0.449</td></tr>
+<tr><td>st2 B</td><td>+12.563</td><td>+12.563</td><td>+0.000</td><td>+7.248</td><td>+7.248</td><td>+0.000</td></tr>
+<tr><td>st3 B</td><td>+12.553</td><td>+12.653</td><td>+0.100</td><td>+7.399</td><td>+7.923</td><td>+0.524</td></tr>
+<tr><td>st4 B</td><td>+12.090</td><td>+12.090</td><td>+0.000</td><td>+7.455</td><td>+8.077</td><td>+0.622</td></tr>
+<tr><td colspan="7" style="height:3px;background:#eee"></td></tr>
+<tr><td>st1 C</td><td>&minus;11.410</td><td>&minus;12.783</td><td>&minus;1.373</td><td>+6.929</td><td>+7.241</td><td>+0.313</td></tr>
+<tr><td>st2 C</td><td>&minus;11.480</td><td>&minus;12.402</td><td>&minus;0.922</td><td>+6.967</td><td>+7.270</td><td>+0.303</td></tr>
+<tr><td>st3 C</td><td>&minus;12.350</td><td>&minus;12.350</td><td>+0.000</td><td>+7.168</td><td>+7.539</td><td>+0.371</td></tr>
+<tr><td>st4 C</td><td>&minus;11.843</td><td>&minus;11.843</td><td>+0.000</td><td>+7.059</td><td>+7.448</td><td>+0.389</td></tr>
+<tr><td colspan="7" style="height:3px;background:#eee"></td></tr>
+<tr><td>st1 D</td><td>&minus;1.119</td><td>&minus;1.979</td><td>&minus;0.860</td><td>+11.327</td><td>+11.327</td><td>+0.000</td></tr>
+<tr><td>st2 D</td><td>&minus;1.165</td><td>&minus;1.962</td><td>&minus;0.798</td><td>+10.763</td><td>+12.334</td><td>+1.571</td></tr>
+<tr><td>st3 D</td><td>&minus;1.100</td><td>&minus;1.926</td><td>&minus;0.826</td><td>+10.910</td><td>+12.537</td><td>+1.627</td></tr>
+<tr><td>st4 D</td><td>&minus;0.978</td><td>&minus;1.894</td><td>&minus;0.916</td><td>+10.533</td><td>+12.480</td><td>+1.947</td></tr>
 </table>
 <p>Units cm. Generated by <tt>script/stgcTotalOffsets.py</tt>.</p>
 
