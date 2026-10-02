@@ -3,11 +3,9 @@
  A. Ogawa, 2026-10-02        contact: akio@bnl.gov
 ================================================================================
 
-Reference: all branches are in jdbrice/star-sw-1.
-
-Our working branch, which contains everything in wave 6 plus work not yet proposed, is
-https://github.com/jdbrice/star-sw-1/tree/akio202607
-
+Reference: all branches are in Github jdbrice/star-sw-1.
+  "dev" branch : Daniel's for developing fwd software (some of Akio's change is merged)
+  "akio202607" branch : started from "dev" and includes Akio's recent changes, now merged with "dev"
 
 PROPOSAL IN ONE PARAGRAPH
 
@@ -16,8 +14,6 @@ STAR repository. It lives in Daniel Brandenburg's `dev` branch, plus work of our
 has not been proposed yet. We propose to land it as a sequence of small, independent
 pull requests against STAR Gitea, in a fixed order, rather than as one large merge.
 This document lists what exists, what it depends on, and who should own each piece.
-
-
 
 1. THE SITUATION
 
@@ -89,7 +85,12 @@ This document lists what exists, what it depends on, and who should own each pie
 
   WAVE 2 -- StEvent / StPicoEvent schema, alone, nothing else in it
     StFwdTrack track types kBLCVertexConstrained=4 and kFCSConstrained=5,
-    StFwdTrackCollection ownership, StPicoFwdTrack fields. Waves 4-5 depend on this.
+    StFwdTrackCollection ownership, StPicoFwdTrack fields. Wave 5 depends on this.
+
+       Note : StMuFwdTrack's new StMuFwdTrackType enum stops at kForwardVertexConstrained=3.
+       Correct against today's main, but mTrackType is copied straight from
+       StFwdTrack::trackType(), so once kBLCVertexConstrained=4 and kFCSConstrained=5 land
+       here, anything reading this enum mislabels them. Extend it in the same PR.
 
   WAVE 3 -- core, self-contained, fully parallel
     StFttDb: embed strip geometry instead of reading Row*.txt   14 files, +1868
@@ -146,27 +147,18 @@ This document lists what exists, what it depends on, and who should own each pie
 
 4. QA AND DEBUGGING TOOLS -- PROBABLY NOT FOR THE LIBRARY
 
-  Three of the packages above are diagnostics, not reconstruction. Nothing in BFC
-  needs them, and nothing in a production chain calls them:
+  Three of the packages here are diagnostics makers of Akio's, not reconstruction. 
+  Nothing in BFC needs them, and nothing in a production chain calls them:
 
     StFwdResidualMaker        2 files,  677 lines   FST/FTT alignment residuals
     StFttChargeSharingMaker   2 files,  469 lines   sTGC charge-sharing studies
     StFwdAlignmentMaker       2 files,  340 lines   unbiased hit-removed residuals
-
-  We propose NOT putting these through library review, and instead keeping them where
-  QA and analysis makers have historically lived -- the StSpinPool model, i.e. a
-  repository that does not gate on BFC review. They change often, they exist to answer
-  one question at a time, and review bandwidth is better spent on the reconstruction
-  code. We are happy either way, but it should be a conscious choice rather than
-  something that happens by default.
-
-  If they do go in the library, they belong after wave 5, not inside it.
+    
+  There are some QA makers of Daniel's as well, which is not listed here.
+  We'll need a good place to put those requiring less critical review.
+  We need to talk with Jerome and ask about lessons we learned from
+  StSpinPool :-)
 
 
-5. REVIEW FINDINGS STILL OPEN
 
-  StMuFwdTrack's new StMuFwdTrackType enum stops at kForwardVertexConstrained=3.
-  Correct against today's main, but mTrackType is copied straight from
-  StFwdTrack::trackType(), so once kBLCVertexConstrained=4 and kFCSConstrained=5 land
-  in wave 2, anything reading this enum mislabels them. Extend it in the same PR.
 
