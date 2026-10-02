@@ -1,0 +1,169 @@
+================================================================================
+ Forward tracking code: what is not yet in STAR, and a plan to land it
+ A. Ogawa, 2026-10-02        contact: akio@bnl.gov
+================================================================================
+
+PROPOSAL IN ONE PARAGRAPH
+
+Essentially none of the forward-upgrade development of the last two years is in the
+STAR repository. It lives in Daniel Brandenburg's `dev` branch, plus work of ours that
+has not been proposed yet. We propose to land it as a sequence of small, independent
+pull requests against STAR Gitea, in a fixed order, rather than as one large merge.
+This document lists what exists, what it depends on, and who should own each piece.
+
+
+1. THE SITUATION
+
+  Daniel's dev vs the frozen STAR main:  394 commits, 140 code files, +15310 / -818.
+  A patch-id comparison finds 392 of those 394 have no equivalent upstream, i.e. almost
+  nothing was merged before the GitHub repository was frozen.
+
+  Eight of Daniel's pull requests were still open at the freeze and are now unreachable
+  as PRs: #569, #759, #796, #804, #810, #811, #815, #826. Every one of the branches
+  still exists in jdbrice/star-sw-1, so nothing is lost; only the PR threads are.
+
+  PR #826 alone is 125 files and +12890 lines -- about 89% of the whole gap. It should
+  not be re-proposed as one piece.
+
+  Separately we have work that has never been proposed: 16 new and 46 modified code
+  files, mostly sTGC/FST alignment, the DB-driven geometry path, and diagnostics.
+
+
+2. ALREADY IN PROGRESS ON GITEA
+
+  #2  StFstHitMaker: meanPhiStrip must be float, not int        MERGED
+      The cluster mean phi strip was truncated to int, discarding the fractional part
+      of every FST cluster position. Time-critical for productions, now in.
+
+  #3  StFstRawHitMaker / StMuFstUtil: read FST raw hits from a MuDst       open
+      Lets FST be re-clustered from a production MuDst, which is what makes the
+      forward afterburner workflow possible. Purely additive: no existing signature
+      changes, no existing caller touched. Verified on 200 events: clusters rebuilt
+      from the MuDst are identical to the ones production wrote into it -- 5032
+      clusters, 100.00% exact match on wedge/sensor/meanRStrip, none missing or extra.
+
+  #9  StFttClusterMaker correctness fixes (revives #815)                   open
+      Daniel's commit cherry-picked unchanged, plus the four bot review comments that
+      PR collected. See section 4 for the one that matters.
+
+
+3. THE PLAN
+
+  Ordering principle: schema first, because everything depends on it; then
+  self-contained new packages, which nobody depends on; then the tracker core; then
+  the wiring that drives all of it. Within a wave the PRs do not touch each other's
+  files.
+
+  WAVE 1 -- small, independent, recoverable verbatim from Daniel's branches
+    #759  BFC options for FWD productions                      1 file,  +6
+    #796  BFC chain options for FTT sim / FCS track match      1 file,  +6/-22
+          NOTE: as it stands this branch also DELETES four production chain
+          definitions (B2023b, P2023b, B2024b, pp2024b). Cherry-pick the additive
+          part only.
+    #815  StFttClusterMaker correctness fixes                  -> now Gitea #9
+    #804  StMuFwdTrack ClassDef v4                             3 files, +11/-8
+          Schema: adds mTrackType and bumps ClassDef 3->4. Best landed inside a tag
+          rather than after one. Not urgent for a production that writes no forward
+          tracks.
+
+  WAVE 2 -- StEvent / StPicoEvent schema, alone, nothing else in it
+    StFwdTrack track types kBLCVertexConstrained=4 and kFCSConstrained=5,
+    StFwdTrackCollection ownership, StPicoFwdTrack fields. Waves 4-5 depend on this.
+
+  WAVE 3 -- self-contained, fully parallel
+    StFttDb: embed strip geometry instead of reading Row*.txt   14 files, +1868
+    StFwdResidualMaker (new package)                             2 files, +657
+    StFttChargeSharingMaker (new package)                        2 files, +469
+    StarVMC: sTGC zplane int -> float                            1 file,  +11/-2
+          11 lines. `zplane` is declared int in StgmGeo1.xml, so the sTGC station z
+          values are truncated to whole cm: the geometry is built at 312.8385 /
+          330.8385 / 346.8385 / 364.8385 instead of the survey values, errors of
+          +5.0 / +8.9 / -8.0 / -5.8 mm, and the station spacing is not even monotonic.
+          Highest value per line in this document.
+
+  WAVE 4 -- decompose #826 along Daniel's own split
+    He already separated this work in his fork as PRs #13-#19. Re-propose each as its
+    own PR, in this order, each depending only on wave 2:
+      #13 FST/FTT hit-finding and track-fitting fixes
+      #14 seed-curvature fixes + FST warm-start refit
+      #15 FTT diagonal-strip calibration gaps
+      #16 DCA target/method in refitTrack
+      #17 beamline position from DB
+      #18 BLC-vertex and FCS-constrained track types     (needs wave 2)
+      #19 StFwdAlignmentMaker and wiring                 (needs #17, #18)
+
+  WAVE 5 -- ours
+    StarDb/Geometry sTGC + FST survey tables       11 new files
+    StFttDb DB-geometry mode and switch            (needs wave 3 StFttDb)
+    StFwdTrackMaker planar FTT chamber plane index
+    StFstSlowSimMaker / StFstFastSimMaker strips
+    StFstHitMaker global position                  (rebase on #2)
+
+  WAVE 6 -- macros and BFC wiring last, written once against what landed
+    #810 StFttClusterPointMaker and its BFC option   6 files, +759
+    #811 fwd afterburner macro                       1 file,  +401  (needs #810)
+
+  NOT PROPOSED HERE
+    #569 sTGC point maker with diagonal strips (14 files) -- StFttPointMaker is
+    Daniel's area; his call. Xihe Han's FST alignment diagnostics and N. Jindal's QA
+    additions are in dev but have never been proposed upstream; theirs to propose.
+
+
+4. REVIEW FINDINGS
+
+  Reported here because they affect what should be merged, not as criticism.
+
+  a) PR #815 as originally written introduces a use-after-free.
+     `StFttCollection::clusters()` is an StSPtrVec, an owning container whose clear()
+     deletes the elements (StStrArray::clear, StArray.cxx:241), while StFttPoint keeps
+     its parents as raw StFttCluster* (mClusters[4]). Clearing clusters alone leaves
+     every surviving point referencing freed memory. This is not hypothetical for an
+     StEvent rebuilt from a MuDst that already carries production points, which is what
+     the forward afterburner does. Gitea #9 clears the dependent points first.
+
+  b) The NaN this fixes is present in real data.
+     7.49% of Run 22 and 1.94% of Run 24 production FTT clusters have NaN sigma.
+     `sumAdc` is never <= 0, so the divide-by-zero guard in the original PR would not
+     have caught any of them: they come from sqrt() of a variance that goes slightly
+     negative through rounding. The clamp is in the second commit of Gitea #9.
+     Downstream, StFwdHitLoader skips any hit with a NaN covariance, so those clusters
+     are lost to tracking. Recoverable after the fact -- the FTT raw hits are in the
+     MuDst and StFttRawHitMaker::readMuDst() is already in the library -- so this is a
+     "should have" rather than a blocker.
+
+  c) In BFC there is no cross-event accumulation of FTT clusters or points.
+     StEventMaker::Clear() -> StMaker::Clear() -> m_DataSet->Delete() destroys the
+     StEvent each event, and ~StFttCollection deletes its StSPtrVec members. Confirmed
+     in data: Run 24 cluster multiplicity plateaus at ~150/event, which accumulation
+     could not do.
+
+  d) StMuFwdTrack's new StMuFwdTrackType enum stops at kForwardVertexConstrained=3.
+     Correct against today's main, but mTrackType is copied straight from
+     StFwdTrack::trackType(), so once kBLCVertexConstrained=4 and kFCSConstrained=5
+     land (wave 2) anything reading this enum mislabels them. Extend it in the same PR.
+
+  e) StFcsDb::getBeamline has no mDbAccess gate in dev.
+     With setDbAccess(0) -- MC and particle-gun analysis -- it picks up a real, undated
+     DB beamline record and corrupts getLorentzVector(). We carry a gate and will
+     propose it.
+
+  f) FitterUtils logs every collinear seed triple at LOG_DEBUG and the seed pT at
+     LOG_INFO; in dense MC that was ~660k lines per run. We carry the removal.
+
+  g) FitterUtils has no reversed-field charge correction. The hits determine only the
+     sign of q*Bz, so in a reversed field every seed charge guess is inverted and the
+     fit does not fully recover. Measured on reversed-field single-electron MC, pT 0.5:
+     68.1% -> 76.1% correct charge. We carry the fix.
+
+
+5. WHAT WE ARE ASKING FOR
+
+  - Daniel: confirmation that waves 1 and 4 should be re-proposed from your branches
+    with your authorship, and whether you want to own wave 4 or have us open the PRs.
+  - Software: review bandwidth for waves 1-3, which are small and mostly mechanical.
+  - Agreement on the ordering, in particular that the StEvent/Pico schema (wave 2)
+    goes early and alone.
+
+  Reference: all branches are in jdbrice/star-sw-1. Our working branch, which contains
+  everything in wave 5 plus work not yet proposed, is
+  https://github.com/jdbrice/star-sw-1/tree/akio202607
