@@ -38,10 +38,10 @@ what it depends on.
   16 new commits and 46 modified code files, mostly sTGC/FST alignment, the DB-driven 
   geometry path, and diagnostics in "akio202607" branch.
 
-  And six pull requests are still open against "dev" inside the fork itself, so they are
-  already written up and reviewable: #21 (StFttPointMaker), #23, #24, #25 (FST sim and
-  hit position), #26 (magnetic field) from Akio, and #22 (mNdf) from privdonut123. They
-  are placed in the waves below.
+  And five of Akio's pull requests are still open against "dev" inside the fork itself,
+  so they are already written up and reviewable: #21 (StFttPointMaker), #23, #24, #25
+  (FST sim and hit position) and #26 (magnetic field). They are placed in the waves
+  below. Two more open PRs are other people's work and are listed at the end.
 
 2. ALREADY IN PROGRESS ON GITEA
 
@@ -149,11 +149,6 @@ what it depends on.
       0-based, so clusters[0] was never read and no StFttPoint was ever made for
       rob 0 -- quadrant A of plane 0. That region reads as a dead detector in any QA
       plot built from these points rather than merely sparse.
-    GenfitTrackResult: populate mNdf (privdonut123's fork PR #22, NOT ours, and the
-      bug is still present in akio202607). mNdf is declared and never assigned, so
-      every forward track is written with NDF = 0, and the chi2/ndf quality cut in
-      FwdTracker.h is dead code because its own "mNdf > 0" guard never passes. Small
-      and independent; worth carrying forward with credit to the author.
     StFcsDb: gate the beamline read on mDbAccess. With setDbAccess(0) -- MC and
       particle-gun analysis -- the current code picks up a real, undated DB beamline
       record and corrupts getLorentzVector().
@@ -175,3 +170,20 @@ what it depends on.
   We'll need a good place to put those requiring less critical reviews.
   We need to talk with Jerome and ask about lessons we learned from
   StSpinPool :-)
+
+
+5. OPEN PULL REQUESTS BY OTHERS -- THEIRS TO REVIVE, NOT OURS
+
+  Two pull requests against "dev" are not in the plan above because they are not our
+  work. Both look right and both would be welcome; we would rather their authors
+  bring them forward than have us carry them.
+
+    #22  Fix bug: populate mNdf in GenfitTrackResult   (privdonut123)  1 file, +7
+         https://github.com/jdbrice/star-sw-1/pull/22
+         Note for us: this bug is still present in akio202607. mNdf is declared and
+         never assigned, so every forward track is written with NDF = 0 and the
+         chi2/ndf quality cut in FwdTracker.h never fires.
+
+    #27  Jdb fwd dev fixes   (dkapukchyan)   16 files, +453/-412
+         https://github.com/jdbrice/star-sw-1/pull/27
+         Not yet checked for overlap with wave 5.
