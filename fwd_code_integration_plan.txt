@@ -22,8 +22,8 @@ This document lists what exists, what it depends on, and who should own each pie
   as PRs: #569, #759, #796, #804, #810, #811, #815, #826. Every one of the branches
   still exists in jdbrice/star-sw-1, so nothing is lost; only the PR threads are.
 
-  PR #826 alone is 125 files and +12890 lines -- about 89% of the whole gap. It should
-  not be re-proposed as one piece.
+  PR #826 alone is 125 of those 140 files and +12890 of the +15310 lines. It should not
+  be re-proposed as one piece.
 
   Separately we have work that has never been proposed: 16 new and 46 modified code
   files, mostly sTGC/FST alignment, the DB-driven geometry path, and diagnostics.
