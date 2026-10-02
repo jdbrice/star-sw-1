@@ -26,11 +26,12 @@ what it depends on.
   still exists in jdbrice/star-sw-1, so nothing is lost; only the PR threads are.
 
   PR #826 alone is 125 of those 140 files and +12890 of the +15310 lines. It should not
-  be re-proposed as one piece, and it does not need to be: it is a handful of Akio's
-  commits that Daniel had already separated into PRs #13-#19 in his fork, so the smaller
-  PRs already exist. See wave 5 below.
+  be re-proposed as one piece, and it does not need to be. The work is a handful of
+  Akio's commits, which Daniel had already grouped as PRs #13-#19 in his own fork before
+  bundling all of it into the single #826 against STAR. The smaller PRs therefore already
+  exist. See wave 5 below.
 
-  Separately we have more recent work that has never been in PR against "dev": 
+  Separately we have more recent commits that have never been in a PR against "dev": 
   16 new and 46 modified code files, mostly sTGC/FST alignment, the DB-driven 
   geometry path, and diagnostics in "akio202607" branch.
 
@@ -81,8 +82,11 @@ what it depends on.
        here, anything reading this enum mislabels them. Extend it in the same PR.
 
   WAVE 3 -- geometry and DB constants
-    StFttDb: embed strip geometry instead of reading Row*.txt   14 files, +1868
-    StFttDb: DB-geometry mode and switch (ours)   -- same file, so it follows the above
+    StFttDb: ONE PR carrying two commits -- Daniel's "embed strip geometry instead of
+          reading Row*.txt" (14 files, +1868) and Akio's DB-geometry mode and switch.
+          They touch the same file, and review turnaround can be weeks, so splitting
+          them into two PRs would serialise for no benefit. Authorship is preserved per
+          commit.
     StarDb/Geometry sTGC + FST survey tables      11 new files, independent of the rest
     StarVMC: sTGC zplane int -> float                            1 file,  +11/-2
           11 lines. `zplane` is declared int in StgmGeo1.xml, so the sTGC station z
@@ -97,13 +101,13 @@ what it depends on.
           G2THIT -> StFttSimHitMaker -> StFttClusterMaker -> StFttClusterPointMaker.
           The FTT counterpart of the FST slow simulator; the existing
           StFttFastSimMaker does not exercise the real geometry or the clustering.
-    StFstSlowSimMaker                              2 files, +615   (ours)
+    StFstSlowSimMaker                              2 files, +615   (Akio's)
           Runs MC through the real FST reconstruction chain rather than smearing.
-    StFstFastSimMaker: set meanRStrip/meanPhiStrip on simulated hits   (ours)
+    StFstFastSimMaker: set meanRStrip/meanPhiStrip on simulated hits   (Akio's)
     Each of these needs its BFC option in the same PR -- see the note above wave 1.
 
-  WAVE 5 -- the tracker core: decompose #826 along Daniel's own split
-    He already separated this work in his fork as PRs #13-#19. Re-propose each as its
+  WAVE 5 -- the tracker core: decompose #826 back into the PRs it was built from
+    Akio's commits, grouped by Daniel as PRs #13-#19 in his fork. Re-propose each as its
     own PR, in this order, each depending only on wave 2:
       #13 FST/FTT hit-finding and track-fitting fixes
       #14 seed-curvature fixes + FST warm-start refit
@@ -121,7 +125,7 @@ what it depends on.
       * FitterUtils: every collinear seed triple is logged at LOG_DEBUG and the seed
         pT at LOG_INFO; in dense MC that was ~660k lines per run.
 
-  WAVE 6 -- remaining code fixes (ours)
+  WAVE 6 -- remaining code fixes (Akio's)
     StFwdTrackMaker planar FTT chamber plane index
     StFstHitMaker global position                  (rebase on the merged #2)
     StFcsDb: gate the beamline read on mDbAccess. With setDbAccess(0) -- MC and
