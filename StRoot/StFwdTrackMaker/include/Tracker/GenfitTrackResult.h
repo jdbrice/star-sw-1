@@ -210,6 +210,7 @@ public:
         this->mNFailedPoints            = 99; 
         this->mNumFitPoints             = 0;
         this->mChi2                     = -1;
+        this->mNdf                      = 0;
         this->mDCA                      = TVector3(99, 99, 99); // default DCA
         this->mPV                       = TVector3(0, 0, 0); // default primary vertex
         this->mPval                     = 0.0; // default p-value
@@ -232,6 +233,7 @@ public:
             this->mNFailedPoints            = 99;
             this->mCharge                   = 0;
             this->mChi2                     = -1;
+            this->mNdf                      = 0;
             return;
         }
         try {
@@ -248,6 +250,10 @@ public:
             mNFailedPoints           = mTrack->getFitStatus()->getNFailedPoints();
             mCharge                  = mTrack->getFitStatus()->getCharge();
             mChi2                    = mTrack->getFitStatus()->getChi2();
+            // mNdf was declared but never assigned anywhere, so every forward track was
+            // written with NDF = 0 and any chi2/ndf cut silently never fired.
+            // Fix from privdonut123, jdbrice/star-sw-1 PR #22.
+            mNdf                     = mTrack->getFitStatus()->getNdf();
 
             if ( mIsFitConverged ){
                 LOG_DEBUG << "GTR Setting momentum from track" << endm;
@@ -265,6 +271,7 @@ public:
             this->mNFailedPoints            = 99;
             this->mCharge                   = 0;
             this->mChi2                     = -1;
+            this->mNdf                      = 0;
         }
     }
 
@@ -286,6 +293,7 @@ public:
             mNFailedPoints           = fs->getNFailedPoints();
             mCharge                  = fs->getCharge();
             mChi2                    = fs->getChi2();
+            mNdf                     = fs->getNdf();
             if ( mIsFitConverged )
                 mMomentum = cr->getMom( mTrack->getFittedState(0, cr) );
         } catch ( genfit::Exception &e ) {
