@@ -1319,6 +1319,34 @@ beampipe; the corrected column restricts to cells where the detector demonstrabl
       point-making efficiency.</li>
 </ul>
 
+<H2>FST, the other half of the story</H2>
+<p>The sTGC is not the only thing that differs between the runs. The FST r&middot;&Delta;&phi;
+residual &mdash; FST hits seed the track, so this is a fit residual and its width reflects how
+well the whole forward fit is determined &mdash; is far narrower in Run 24, with the
+<i>same</i> FST alignment constants in both (FST did not move, so the Run 22 entries still
+apply). Both panels come from the pickup arm, so the comparison is like for like: adding FTT
+hits to the fit widens the FST residual, and mixing arms would flatter one year.</p>
+<table border="0" cellpadding="3">
+<tr>
+  <td><a href="plots/fst_resid_run22_run24.png"><img src="plots/fst_resid_run22_run24.png" height="200"></a></td>
+</tr>
+<tr><td>FST r&middot;&Delta;&phi; per disk, area-normalised, log scale</td></tr>
+</table>
+<ul>
+  <li>rms 0.309 / 0.304 / 0.312 cm (Run 22) against 0.089 / 0.065 / 0.109 cm (Run 24):
+      narrower by &times;3.5, &times;4.6, &times;2.9.</li>
+  <li><b>The shape differs, not just the width.</b> Run 24 is a single narrow peak. Run 22 is a
+      narrow core <i>plus two side lobes near &plusmn;0.3 cm</i> on every disk. A simple
+      resolution difference would widen the peak, not add lobes at a fixed displacement, so
+      this looks like a subset of hits sitting at a discrete offset &mdash; the signature of a
+      mapping or sensor-level placement problem affecting part of the detector, not of worse
+      hit resolution.</li>
+  <li>Since the FST constants are identical in both runs, whatever produces those lobes is in
+      the Run 22 data or in how it is mapped, not in the alignment tables. This has not been
+      chased down and is the obvious next FST question; it may be related to the sensor-level
+      alignment work.</li>
+</ul>
+
 <a name="dbtables"></a>
 <H2>DB entries: dates, versions, and the files</H2>
 <p>STAR convention: <tt>&lt;table&gt;.&lt;YYYYMMDD&gt;.&lt;HHMMSS&gt;.C</tt>, where the time field
