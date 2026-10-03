@@ -1,0 +1,230 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <TITLE>Forward tracking performance: FTT hits on the track, and the FCS residual</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<p style="background-color:#eeeeff; padding:6px; border:1px solid #99a;">
+STAR forward upgrade, FST/sTGC geometry and alignment &mdash;
+<a href="index.html">Alignment program</a> &nbsp;|&nbsp; <a href="geometry.html">Geometry and mapping</a> &nbsp;|&nbsp; <b>Tracking performance</b>
+</p>
+
+<a name="contents"></a>
+<H2>Contents</H2>
+<ul>
+  <li><a href="#fttadd">10. FTT hits on the track: the planar measurement runs for the first time (2026-10-01)</a></li>
+  <li><a href="#fcsresid">12. The FCS residual, with and without aligned FTT hits (2026-10-03)</a></li>
+</ul>
+
+<p>What putting sTGC hits on the track actually buys. The geometry these rely on is
+on the <a href="geometry.html">geometry page</a>; the alignment that produced the
+constants is on the <a href="index.html">alignment page</a>.</p>
+
+<HR>
+<a name="fttadd"></a>
+<H1>10. FTT hits on the track: the planar measurement runs for the first time (2026-10-01)</H1>
+
+<p>Every campaign up to here ran <tt>fttNoAdd=1</tt>: the tracker searched for sTGC hits and filled
+the diagnostics, but never put one on a track. So the planar FTT <i>measurement</i> had never executed
+in the Kalman fit. This run turns that on. It differs from the iteration-2 campaign in one field
+(<tt>DIAG&nbsp;"2,1,0"&rarr;"2,0,0"</tt>), same 90 files and same 13000 events each, which makes
+iteration&nbsp;2 an exact control arm. 90/90 jobs clean.</p>
+
+<H2>It works</H2>
+<p>Pickup probability per sTGC station, Primary tracks, 4.2M tracks:</p>
+<table border="1" cellpadding="4">
+<tr><th>station</th><th>1</th><th>2</th><th>3</th><th>4</th><th>mean</th></tr>
+<tr><td>x &mdash; V strips</td><td>0.2297</td><td>0.2052</td><td>0.2165</td><td>0.2407</td><td><b>0.223</b></td></tr>
+<tr><td>y &mdash; H strips</td><td>0.1835</td><td>0.1828</td><td>0.1965</td><td>0.2043</td><td><b>0.192</b></td></tr>
+<tr><td>diagonal u/v</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+</table>
+<ul>
+  <li>Errors are &plusmn;0.0002 throughout. The u/v row is exactly zero by construction &mdash; the hit
+      loader skips equal-covariance points, so diagonal strips never enter the fit.</li>
+  <li>Two independent handles agree to 0.5%: the pickup summed over 4 stations &times; 2 orientations is
+      <b>1.659</b> hits/track, and the measured rise in <tt>nSeedPoints</tt> is <b>1.650</b>
+      (4.268&nbsp;&rarr;&nbsp;5.918). The plumbing is right.</li>
+  <li>Track count is unchanged (502027&nbsp;&rarr;&nbsp;502026), so no fit is failing outright.</li>
+  <li>The control arm reads <b>exactly 0.0000</b> in every FTT cell, so these numbers need no baseline
+      subtraction.</li>
+</ul>
+
+<table><tr>
+  <td><a href="plots/ftt_pickup.png"><img src="plots/ftt_pickup.png" height="200"></a></td>
+</tr></table>
+
+<H2>20% is low, and the deficit is structured</H2>
+<p>Pickup split by quadrant (Pos+Neg summed, x/y per station):</p>
+<table border="1" cellpadding="4">
+<tr><th>quadrant</th><th>tracks</th><th>s1</th><th>s2</th><th>s3</th><th>s4</th></tr>
+<tr><td>North-top</td><td>1.22M</td><td>.321/.240</td><td>.318/.285</td><td>.293/.263</td><td>.342/.274</td></tr>
+<tr><td>North-bottom</td><td>0.94M</td><td>.178/.147</td><td>.169/.125</td><td>.126/.134</td><td>.165/.138</td></tr>
+<tr><td>South-top</td><td>1.16M</td><td>.259/.218</td><td>.162/.195</td><td>.281/.247</td><td>.284/.258</td></tr>
+<tr><td>South-bottom</td><td>0.90M</td><td>.122/.100</td><td>.146/.089</td><td>.124/.106</td><td>.127/.110</td></tr>
+</table>
+<ul>
+  <li>Top/bottom is a factor <b>~2.3</b>, uniform across all four stations, so this is geometric rather
+      than a per-chamber efficiency. The pentagon y-offset and the quadrant boundary are the obvious
+      suspects and are the next thing to check.</li>
+  <li>Purity is <b>46.6%</b>: of the hits the tracker attaches, under half are the genuinely correct
+      one. Peak-over-sideband excess is 2.69 (V) and 2.92 (H) &mdash; a real peak, not a dominant one.</li>
+  <li>Station&nbsp;1 quadrant&nbsp;A has no V hits in any arm. That is a known hardware failure and is
+      permanent; it is not a V/H swap, which was investigated separately and settled.</li>
+  <li>No earlier number exists to compare against: every campaign still on disk reads 0.0000 pickup,
+      so this is the first such measurement on these data.</li>
+</ul>
+
+<H2>Correction: most of that deficit is the design acceptance gap (2026-10-01)</H2>
+<p>The quadrant table above uses <i>all</i> tracks as the denominator, which bakes in the sTGC design
+acceptance gap below the beampipe. FST covers nearly 2&pi; while the four sTGC pentagons cluster above
+and to the sides of the beampipe, so FST-seeded tracks projecting into the gap can never pick up a hit
+and the raw number is diluted by geometry working as designed.</p>
+<p>The existing histograms could not separate the two, because <tt>h2FttProjXY</tt> is filled only inside
+the loop over FTT points &mdash; i.e. only for tracks that already matched. Adding the missing denominator
+(<tt>h2FttProjAllXY</tt>, the projection of <i>every</i> track to each plane) and restricting to cells where
+the detector demonstrably is:</p>
+<table border="1" cellpadding="4">
+<tr><th>disk</th><th>orientation</th><th>top</th><th>bottom</th><th>bot/top</th></tr>
+<tr><td>0</td><td>x (V)</td><td>0.313</td><td>0.224</td><td>0.71</td></tr>
+<tr><td>0</td><td>y (H)</td><td>0.261</td><td>0.236</td><td>0.91</td></tr>
+<tr><td>1</td><td>x (V)</td><td>0.276</td><td>0.268</td><td>0.97</td></tr>
+<tr><td>1</td><td>y (H)</td><td>0.288</td><td>0.206</td><td>0.71</td></tr>
+<tr><td>2</td><td>x (V)</td><td>0.321</td><td>0.212</td><td>0.66</td></tr>
+<tr><td>2</td><td>y (H)</td><td>0.300</td><td>0.265</td><td>0.88</td></tr>
+<tr><td>3</td><td>x (V)</td><td>0.343</td><td>0.254</td><td>0.74</td></tr>
+<tr><td>3</td><td>y (H)</td><td>0.311</td><td>0.272</td><td>0.88</td></tr>
+</table>
+<ul>
+  <li>The factor <b>2.3 raw deficit becomes ~1.2</b> (bot/top ~0.81) once the design gap is removed, and
+      pickup inside the active area is ~0.21&ndash;0.34 rather than ~0.20.</li>
+  <li><b>No evidence of a geometry or mapping fault in quadrants B and C.</b> The hit-side map
+      (<tt>StFttDb</tt>, <tt>{0,3,2,1}</tt>) and the projection-side map
+      (<tt>FwdGeomUtils::fttChamberIndex</tt>, <tt>(4-q)%4</tt>) are identical, raw <tt>FttRawHit</tt>
+      counts are comparable in all four quadrants, and the bottom quadrants match at 66&ndash;97% of the
+      top rate wherever they are instrumented. A mis-mapping would give near-zero matching there, not
+      that.</li>
+  <li>The residual ~20% top/bottom difference is small enough to be edge effects, the leftover
+      misalignment, or statistics (one file, 4000 events) and is not pursued here.</li>
+  <li>Caveat on the method: "active" cells are those where matching already happens, so a region where a
+      quadrant <i>never</i> matched would be excluded rather than flagged. The raw-occupancy and
+      index-mapping checks above are what cover that case.</li>
+</ul>
+
+<H2>&chi;<sup>2</sup> triples, and that is the real result</H2>
+<ul>
+  <li>Primary &chi;<sup>2</sup> mean <b>4.33&nbsp;&rarr;&nbsp;16.74</b> (+286%), rms 10.2&nbsp;&rarr;&nbsp;35.1.
+      Not fit failure &mdash; the FTT hits disagree with the FST+vertex fit by far more than their stated
+      precision claims.</li>
+  <li>The FTT measurement sigma is the cluster sigma alone
+      (<tt>StFttClusterPointMaker.cxx</tt>), with <b>no alignment term</b>. FST in the same codebase does
+      the opposite: <tt>&sigma;<sub>total</sub> = sqrt((pitch/&radic;12)&sup2; + &delta;<sub>align</sub>&sup2;)</tt>
+      with <tt>&delta;<sub>align,r</sub> = 1.5&nbsp;cm</tt>.</li>
+  <li>With the true track-to-hit scatter at 3.7&ndash;4.8&nbsp;mm, each FTT hit contributes
+      ~(&delta;/&sigma;)&sup2; &asymp; 7.5 to &chi;<sup>2</sup>, matching the observed +12.4 over 1.65 hits.
+      The 47% purity contributes as well, since a wrong hit is far from the track.</li>
+  <li>Inflating the FTT sigma in quadrature would make &chi;<sup>2</sup> look healthy, but it would hide
+      the misalignment it absorbs. The leftover per-quadrant offsets still reach 0.46&nbsp;cm and the ~1%
+      radial scale is ~0.6&nbsp;cm at r&nbsp;=&nbsp;60&nbsp;cm, both comparable to the scatter &mdash; so the
+      &chi;<sup>2</sup> is arguably reporting the geometry, not the covariance.</li>
+</ul>
+
+<H2>Why these residuals must not feed the next alignment iteration</H2>
+<p>With hits on the track the Primary blind residual is <b>self-biased</b>. The Global refit puts FTT hits
+on the global seed, and the primary fit reuses that seed, so the Primary projection has already been fit
+to hits from the same disks. At identical entry counts the blind dy peak width collapses:</p>
+<pre>  control   0.373  0.400  0.440  0.477 cm
+  hits-on   0.232  0.208  0.207  0.236 cm</pre>
+<p>That is self-fitting, not better alignment. Alignment therefore stays on <tt>fttNoAdd=1</tt>, which is
+what iteration&nbsp;2 used. An unbiased residual <i>with</i> hits on the track is still available from
+<tt>fttDiagType=0</tt> (Global), whose seed is FST-only until its own refit.</p>
+
+<HR>
+<a name="fcsresid"></a>
+<H1>12. The FCS residual, with and without aligned FTT hits (2026-10-03)</H1>
+
+<p>Two Run&nbsp;24 zero-field campaigns that differ in <b>one</b> thing: whether the aligned
+sTGC hits are put on the track. Same iteration-1 geometry
+(<tt>fGeom.y2024.iter1.sdt20240622.root</tt>), same 90 input files, 647&nbsp;117 events in each.
+Primary tracks, projected to the ECAL and matched to FCS clusters.</p>
+
+<ul>
+  <li><b>arm A</b> &mdash; <tt>DIAG 2,1,0</tt>, NOADD=1: FTT hits searched but never added to the track.</li>
+  <li><b>arm B</b> &mdash; <tt>DIAG 2,0,0</tt>, NOADD=0: aligned FTT hits on the track.</li>
+</ul>
+
+<p>Mixed-event is normalised to same-event over |d|&nbsp;=&nbsp;80&ndash;200&nbsp;cm and subtracted,
+so what is plotted is the correlated part only.</p>
+
+<H3>The residual is a core on a wide tail, not a Gaussian</H3>
+
+<p>A single Gaussian does not describe it: the fitted &sigma; follows whatever window it is
+given &mdash; 5.8&nbsp;cm at &plusmn;30&nbsp;cm, 3.5&nbsp;cm at &plusmn;10, 1.9&nbsp;cm at &plusmn;3
+for the same histogram. Fitting a narrow and a wide Gaussian together over one wide window
+gives a number that does not depend on where we cut, and that is what is quoted below.
+<b>Only ~38% of the correlated area is in the core</b>; the rest is a ~10&nbsp;cm tail that
+survives mixed-event subtraction, so it is real same-event structure &mdash; wrong-cluster
+pairing and overlapping showers &mdash; not combinatorics.</p>
+
+<H3>Aligned FTT hits narrow the core by ~11%, and do nothing to the tail</H3>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee">
+  <th>panel</th><th>core &sigma;, FTT off</th><th>core &sigma;, FTT on</th><th>ratio</th>
+  <th>tail &sigma;</th><th>core fraction</th></tr>
+<tr><td>ECAL North, dx</td><td align="right">3.167 &plusmn; 0.022</td>
+    <td align="right">2.770 &plusmn; 0.020</td><td align="right"><b>0.875</b></td>
+    <td align="right">10.6 &rarr; 9.9</td><td align="right">0.38 &rarr; 0.36</td></tr>
+<tr><td>ECAL South, dx</td><td align="right">3.249 &plusmn; 0.027</td>
+    <td align="right">2.901 &plusmn; 0.022</td><td align="right"><b>0.893</b></td>
+    <td align="right">10.4 &rarr; 10.5</td><td align="right">0.37 &rarr; 0.36</td></tr>
+<tr><td>ECAL Top, dy</td><td align="right">2.546 &plusmn; 0.012</td>
+    <td align="right">2.434 &plusmn; 0.013</td><td align="right"><b>0.956</b></td>
+    <td align="right">10.0 &rarr; 9.9</td><td align="right">0.41 &rarr; 0.39</td></tr>
+<tr><td>ECAL Bottom, dy</td><td align="right">2.716 &plusmn; 0.016</td>
+    <td align="right">2.425 &plusmn; 0.014</td><td align="right"><b>0.893</b></td>
+    <td align="right">9.6 &rarr; 9.3</td><td align="right">0.39 &rarr; 0.38</td></tr>
+</table>
+
+<p>&sigma; in cm. The gain is in the core only: the tail width and the core fraction are
+unchanged, and arm&nbsp;B also loses ~1.4% of its tracks to the convergence requirement at the
+higher &chi;<sup>2</sup> that the FTT hits bring. So the sTGC hits carry real information and
+real contamination at the same time, which is the same picture as the &chi;<sup>2</sup>&times;3.9
+in <a href="#fttadd">section&nbsp;10</a>.</p>
+
+<table border="0" cellpadding="6">
+<tr>
+  <td align="center"><a href="plots/fcsresid_panels.png">
+      <img src="plots/fcsresid_panels.png" height="200"></a><br>
+      Mixed-subtracted residual, four ECAL panels.<br>blue = FTT off, red = FTT on, dashed = core+tail fit</td>
+  <td align="center"><a href="plots/fcsresid_core.png">
+      <img src="plots/fcsresid_core.png" height="200"></a><br>
+      Core &sigma; per panel, both arms</td>
+</tr>
+</table>
+
+<H3>What this means for using FCS as an anchor</H3>
+
+<ul>
+  <li><b>A core of 2.4&ndash;3.2&nbsp;cm is workable.</b> MC predicts
+      &radic;(1.2&sup2;&nbsp;+&nbsp;1.5&sup2;)&nbsp;&asymp;&nbsp;1.9&nbsp;cm from the cluster
+      position resolution and the track projection, so the data sit 1.3&ndash;1.7&times; above
+      expectation &mdash; close enough that FCS can serve as the downstream anchor point.</li>
+  <li><b>The 62% tail has to be handled explicitly</b>, by the core+tail fit or a tighter
+      matching cut. A plain mean or RMS of the matched sample is dominated by it.</li>
+  <li><b>Primary is 1.4&ndash;1.5&times; better than BLCVtx</b> on the same events. Where a TPC
+      vertex exists, use Primary; the forward stream, which mostly has none, pays that factor.</li>
+  <li>The sTGC is not the lever here. Finishing the sTGC alignment buys ~11% on the core,
+      not a step change &mdash; the FCS cluster position and the projection over the long lever
+      arm dominate.</li>
+</ul>
+
+<p>Numbers from <tt>script/fcsResidCore.C</tt> and <tt>script/plotFcsResid.C</tt> over
+<tt>picoMatch</tt> output; the 1D residuals are binned at 0.5&nbsp;cm.</p>
+
+<HR>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>
