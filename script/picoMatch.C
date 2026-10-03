@@ -192,15 +192,20 @@ void InitMatch(int run, int set=-1) {
         hydr[tt][eh][cut]=new TH2F(Form("ydr%s%s_%s",EH[eh],CUT[3][cut],TTYPE[tt]),Form("dR(fcsY) %s %s; fcsY[cm]; dr[cm]",      EH[eh],TTYPE[tt]),100,-100,100,100,-100,100);
         hpdr[tt][eh][cut]=new TH2F(Form("pdr%s%s_%s",EH[eh],CUT[3][cut],TTYPE[tt]),Form("dR(fcsR*fcsPhi) %s %s; fcsR*Phi[cm]; dr[cm]",EH[eh],TTYPE[tt]),100,-150,150,100,-100,100);
         hrdr[tt][eh][cut]=new TH2F(Form("rdr%s%s_%s",EH[eh],CUT[3][cut],TTYPE[tt]),Form("dR(fcdR) %s %s; fcsR[cm]; dr[cm]",      EH[eh],TTYPE[tt]),100,   0,180,100,-100,100);
+        // 1D residuals at 800 bins over +-200 cm = 0.5 cm/bin. At the previous 4 cm
+        // the FCS core (MC expects 1-2 cm) could not be resolved at all and the fitted
+        // sigma just tracked the fit window. Range kept so the mixed-event
+        // normalisation region used by script/cmpFcsResid.C (|d| 80-200 cm) survives.
+        // The 2D maps below are still 2 cm on the residual axis.
         for(int nstb=0; nstb<2; nstb++){
           hdx[tt][eh][nstb][cut] = new TH1F(Form("%s%sdx%s_%s",EH[eh],NSTB[0][nstb],CUT[0][cut],TTYPE[tt]),
-                                        Form("%s%s-Trk dX %s %s; dX[cm]",EH[eh],NSTB[0][nstb],CUT[0][cut],TTYPE[tt]),100,-200.0,200.0);
+                                        Form("%s%s-Trk dX %s %s; dX[cm]",EH[eh],NSTB[0][nstb],CUT[0][cut],TTYPE[tt]),800,-200.0,200.0);
           hdy[tt][eh][nstb][cut] = new TH1F(Form("%s%sdy%s_%s",EH[eh],NSTB[1][nstb],CUT[1][cut],TTYPE[tt]),
-                                        Form("%s%s-Trk dY %s %s; dY[cm]",EH[eh],NSTB[1][nstb],CUT[1][cut],TTYPE[tt]),100,-200.0,200.0);
+                                        Form("%s%s-Trk dY %s %s; dY[cm]",EH[eh],NSTB[1][nstb],CUT[1][cut],TTYPE[tt]),800,-200.0,200.0);
           hdp[tt][eh][nstb][cut] = new TH1F(Form("%s%sdp%s_%s",EH[eh],NSTB[2][nstb],CUT[2][cut],TTYPE[tt]),
-                                        Form("%s%s-Trk R*dPhi %s %s; fcsR*dPhi[cm]",EH[eh],NSTB[2][nstb],CUT[2][cut],TTYPE[tt]),100,-200.0,200.0);
+                                        Form("%s%s-Trk R*dPhi %s %s; fcsR*dPhi[cm]",EH[eh],NSTB[2][nstb],CUT[2][cut],TTYPE[tt]),800,-200.0,200.0);
           hdr[tt][eh][nstb][cut] = new TH1F(Form("%s%sdr%s_%s",EH[eh],NSTB[3][nstb],CUT[3][cut],TTYPE[tt]),
-                                        Form("%s%s-Trk dR %s %s; dR[cm]",EH[eh],NSTB[3][nstb],CUT[3][cut],TTYPE[tt]),100,-200.0,200.0);
+                                        Form("%s%s-Trk dR %s %s; dR[cm]",EH[eh],NSTB[3][nstb],CUT[3][cut],TTYPE[tt]),800,-200.0,200.0);
         }
       }
     }
