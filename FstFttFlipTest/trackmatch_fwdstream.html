@@ -12,7 +12,7 @@
 
 <p>Same panels, ranges and 4&nbsp;cm binning as the
 <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/trackmatch/20260706/">2026-07-06
-page</a>. GEOFIX 1,0,0, real magnetic field, FTT hits on the track. BLCVtx is used because most of these events have no TPC vertex, so Primary is unavailable.<br>
+page</a>. GEOFIX 1,0,0, real magnetic field, FTT hits on the track, per-run FTT time anchors for 10 of the 11 runs. BLCVtx is used because most of these events have no TPC vertex, so Primary is unavailable.<br>
 Back to <a href="trackmatch.html">the side-by-side summary</a>.</p>
 
   <li><table border=1>
@@ -57,10 +57,10 @@ Back to <a href="trackmatch.html">the side-by-side summary</a>.</p>
 and signal-to-background inside |d|&lt;15&nbsp;cm, as the two halves:</p>
 <table border=1 cellpadding=4>
 <tr bgcolor="#ccccee"><th>coordinate</th><th>RMS [cm]</th><th>S/B</th></tr>
-<tr><td>dX</td><td align="right">11.55 / 12.07</td><td align="right">0.078 / 0.079</td></tr>
-<tr><td>dY</td><td align="right">9.74 / 8.14</td><td align="right">0.095 / 0.092</td></tr>
-<tr bgcolor="#eeffee"><td>fcsR*dPhi</td><td align="right">7.11 / 6.94</td><td align="right">0.091 / 0.093</td></tr>
-<tr><td>dR</td><td align="right">14.03 / 14.41</td><td align="right">0.095 / 0.232</td></tr>
+<tr><td>dX</td><td align="right">11.46 / 11.92</td><td align="right">0.077 / 0.078</td></tr>
+<tr><td>dY</td><td align="right">9.76 / 8.16</td><td align="right">0.095 / 0.092</td></tr>
+<tr bgcolor="#eeffee"><td>fcsR*dPhi</td><td align="right">7.14 / 6.80</td><td align="right">0.091 / 0.093</td></tr>
+<tr><td>dR</td><td align="right">13.94 / 14.38</td><td align="right">0.094 / 0.229</td></tr>
 </table>
 
 <p>The matched fraction is small by construction: forward tracks are mostly charged hadrons, which ECAL sees only as a MIP for about half of them and as partial energy loss for the rest, while ECAL itself is dominated by photons from pi0 that leave no track. <b>fcsR*dPhi is much narrower than dR</b>, so the mismatch is radial rather than azimuthal &mdash; which is what a wrong z, i.e. the assumed shower-max depth, would produce. <b>HCAL is not quoted</b>: its S/B is 0.03&ndash;0.08 and after subtraction the content inside |d|&lt;30&nbsp;cm cancels, so those widths are artefacts. S/B here is about five times worse than zero field: roughly 90% of the raw histogram is combinatorial.</p>
