@@ -81,10 +81,13 @@ the two halves (North/South, Top/Bottom, R&lt;70/R&gt;70).</p>
       and after subtraction the content inside |d|&lt;30&nbsp;cm cancels &mdash; 10 to 12
       negative bins with a negative sum as large as the positive one. The HCAL widths are
       therefore not quoted; the plots are shown for completeness only.</li>
-  <li><b>Caveat on the forward stream FTT timing:</b> only 2 of the 11 runs
-      (23081015, 23081049) have per-run <tt>fttDataWindow</tt> anchors. The other nine fall
-      back to the global DB window, so the FTT hits on those tracks are not per-run time
-      calibrated.</li>
+  <li><b>FTT time calibration is not the limit.</b> Per-run <tt>fttDataWindow</tt>
+      anchors now exist for 10 of the 11 forward-stream runs, up from 2, with
+      86&ndash;94% of the 384 VMM entries usable. Re-running the whole arm with them
+      changes every panel by 2% or less &mdash; dx 0.99, dy 1.00, fcsR*dPhi 0.98&ndash;1.01,
+      dR 0.99 &mdash; so the FTT timing is not what limits the FCS match. The one run left
+      uncalibrated, 23081053, has a single MuDst that stopped at 14 events and keeps the
+      global DB window on purpose.</li>
 </ul>
 
 <H2>Dependence on fcsX, fcsY, fcsR*fcsPhi and fcsR</H2>
