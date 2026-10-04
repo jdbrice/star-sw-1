@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <TITLE> OGAWA Akio Home page </TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>FcsCluster and FwdTrack matching</H1>
+<hr>
+<H3>2026/10/04 &mdash; Run 22 day 081 forward stream, field on, high luminosity<br>
+  current code, BLCVtx tracks</H3>
+
+<p>Same panels, ranges and 4&nbsp;cm binning as the
+<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/trackmatch/20260706/">2026-07-06
+page</a>. GEOFIX 1,0,0, real magnetic field, FTT hits on the track. BLCVtx is used because most of these events have no TPC vertex, so Primary is unavailable.<br>
+Back to <a href="trackmatch.html">the side-by-side summary</a>.</p>
+
+  <li><table border=1>
+      <tr>
+	<td>Trk NHit</td>
+	<td>XY of fcshit and track projecton</td>
+	<td>fcs/track ET and E</td>
+	<td>track q/pT, eta, phi, DCAz</td>
+	<td>Ecal dx = x(FCS) - x(TRK)<br>and dy , fcsR*dphi , dr</td>
+	<td>Hcal dx = x(FCS) - x(TRK)<br>and dy , fcsR*dphi , dr</td>
+      </tr>
+      <tr><td>&gt= 4</td>
+	<td><a href="trackmatch_fwdstream/fcsTrkxy.png"><img src="trackmatch_fwdstream/fcsTrkxy.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkEt.png"><img src="trackmatch_fwdstream/fcsTrkEt.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkQuality.png"><img src="trackmatch_fwdstream/fcsTrkQuality.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkMatchEcal.png"><img src="trackmatch_fwdstream/fcsTrkMatchEcal.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkMatchHcal.png"><img src="trackmatch_fwdstream/fcsTrkMatchHcal.png" height=200></td>
+      </tr>
+    </table>
+    <table border=1>
+      <tr><td>Trk NHit</td><td>Det</td>
+	<td>Same-Mixed dX</td>
+	<td>Same-Mixed dY</td>
+	<td>Same-Mixed fcsR * dPhi</td>
+	<td>Same-Mixed dR</td>
+      </tr>
+      <tr><td>&gt=4</td><td>Ecal</td>
+	<td><a href="trackmatch_fwdstream/fcsTrkEcaldx.png"><img src="trackmatch_fwdstream/fcsTrkEcaldx.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkEcaldy.png"><img src="trackmatch_fwdstream/fcsTrkEcaldy.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkEcaldp.png"><img src="trackmatch_fwdstream/fcsTrkEcaldp.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkEcaldr.png"><img src="trackmatch_fwdstream/fcsTrkEcaldr.png" height=200></td>
+      </tr>
+      <tr><td>&gt=4</td><td>Hcal</td>
+	<td><a href="trackmatch_fwdstream/fcsTrkHcaldx.png"><img src="trackmatch_fwdstream/fcsTrkHcaldx.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkHcaldy.png"><img src="trackmatch_fwdstream/fcsTrkHcaldy.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkHcaldp.png"><img src="trackmatch_fwdstream/fcsTrkHcaldp.png" height=200></td>
+	<td><a href="trackmatch_fwdstream/fcsTrkHcaldr.png"><img src="trackmatch_fwdstream/fcsTrkHcaldr.png" height=200></td>
+      </tr>
+    </table>
+
+<p><b>Numbers, ECAL.</b> RMS over |d|&lt;30&nbsp;cm of the Same&minus;Mixed distribution,
+and signal-to-background inside |d|&lt;15&nbsp;cm, as the two halves:</p>
+<table border=1 cellpadding=4>
+<tr bgcolor="#ccccee"><th>coordinate</th><th>RMS [cm]</th><th>S/B</th></tr>
+<tr><td>dX</td><td align="right">11.55 / 12.07</td><td align="right">0.078 / 0.079</td></tr>
+<tr><td>dY</td><td align="right">9.74 / 8.14</td><td align="right">0.095 / 0.092</td></tr>
+<tr bgcolor="#eeffee"><td>fcsR*dPhi</td><td align="right">7.11 / 6.94</td><td align="right">0.091 / 0.093</td></tr>
+<tr><td>dR</td><td align="right">14.03 / 14.41</td><td align="right">0.095 / 0.232</td></tr>
+</table>
+
+<p>The matched fraction is small by construction: forward tracks are mostly charged hadrons, which ECAL sees only as a MIP for about half of them and as partial energy loss for the rest, while ECAL itself is dominated by photons from pi0 that leave no track. <b>fcsR*dPhi is much narrower than dR</b>, so the mismatch is radial rather than azimuthal &mdash; which is what a wrong z, i.e. the assumed shower-max depth, would produce. <b>HCAL is not quoted</b>: its S/B is 0.03&ndash;0.08 and after subtraction the content inside |d|&lt;30&nbsp;cm cancels, so those widths are artefacts. S/B here is about five times worse than zero field: roughly 90% of the raw histogram is combinatorial.</p>
+
+<HR>OGAWA, Akio
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

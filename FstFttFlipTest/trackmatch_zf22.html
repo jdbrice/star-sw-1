@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <TITLE> OGAWA Akio Home page </TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<H1>FcsCluster and FwdTrack matching</H1>
+<hr>
+<H3>2026/10/04 &mdash; Run 22 zero field, low luminosity<br>
+  current code, Primary tracks (TPC vertex)</H3>
+
+<p>Same panels, ranges and 4&nbsp;cm binning as the
+<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/trackmatch/20260706/">2026-07-06
+page</a>. GEOFIX 1,0,0, iteration-2 sTGC tables, FTT hits on the track, per-run FTT time anchors. Primary is the best track type here and is 38&ndash;45% better than BLCVtx in dx.<br>
+Back to <a href="trackmatch.html">the side-by-side summary</a>.</p>
+
+  <li><table border=1>
+      <tr>
+	<td>Trk NHit</td>
+	<td>XY of fcshit and track projecton</td>
+	<td>fcs/track ET and E</td>
+	<td>track q/pT, eta, phi, DCAz</td>
+	<td>Ecal dx = x(FCS) - x(TRK)<br>and dy , fcsR*dphi , dr</td>
+	<td>Hcal dx = x(FCS) - x(TRK)<br>and dy , fcsR*dphi , dr</td>
+      </tr>
+      <tr><td>&gt= 4</td>
+	<td><a href="trackmatch_zf22/fcsTrkxy.png"><img src="trackmatch_zf22/fcsTrkxy.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkEt.png"><img src="trackmatch_zf22/fcsTrkEt.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkQuality.png"><img src="trackmatch_zf22/fcsTrkQuality.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkMatchEcal.png"><img src="trackmatch_zf22/fcsTrkMatchEcal.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkMatchHcal.png"><img src="trackmatch_zf22/fcsTrkMatchHcal.png" height=200></td>
+      </tr>
+    </table>
+    <table border=1>
+      <tr><td>Trk NHit</td><td>Det</td>
+	<td>Same-Mixed dX</td>
+	<td>Same-Mixed dY</td>
+	<td>Same-Mixed fcsR * dPhi</td>
+	<td>Same-Mixed dR</td>
+      </tr>
+      <tr><td>&gt=4</td><td>Ecal</td>
+	<td><a href="trackmatch_zf22/fcsTrkEcaldx.png"><img src="trackmatch_zf22/fcsTrkEcaldx.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkEcaldy.png"><img src="trackmatch_zf22/fcsTrkEcaldy.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkEcaldp.png"><img src="trackmatch_zf22/fcsTrkEcaldp.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkEcaldr.png"><img src="trackmatch_zf22/fcsTrkEcaldr.png" height=200></td>
+      </tr>
+      <tr><td>&gt=4</td><td>Hcal</td>
+	<td><a href="trackmatch_zf22/fcsTrkHcaldx.png"><img src="trackmatch_zf22/fcsTrkHcaldx.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkHcaldy.png"><img src="trackmatch_zf22/fcsTrkHcaldy.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkHcaldp.png"><img src="trackmatch_zf22/fcsTrkHcaldp.png" height=200></td>
+	<td><a href="trackmatch_zf22/fcsTrkHcaldr.png"><img src="trackmatch_zf22/fcsTrkHcaldr.png" height=200></td>
+      </tr>
+    </table>
+
+<p><b>Numbers, ECAL.</b> RMS over |d|&lt;30&nbsp;cm of the Same&minus;Mixed distribution,
+and signal-to-background inside |d|&lt;15&nbsp;cm, as the two halves:</p>
+<table border=1 cellpadding=4>
+<tr bgcolor="#ccccee"><th>coordinate</th><th>RMS [cm]</th><th>S/B</th></tr>
+<tr><td>dX</td><td align="right">9.08 / 9.56</td><td align="right">0.41 / 0.45</td></tr>
+<tr><td>dY</td><td align="right">8.80 / 8.39</td><td align="right">0.51 / 0.50</td></tr>
+<tr bgcolor="#eeffee"><td>fcsR*dPhi</td><td align="right">7.73 / 7.72</td><td align="right">0.47 / 0.51</td></tr>
+<tr><td>dR</td><td align="right">10.50 / 11.22</td><td align="right">0.39 / 1.11</td></tr>
+</table>
+
+<p>The matched fraction is small by construction: forward tracks are mostly charged hadrons, which ECAL sees only as a MIP for about half of them and as partial energy loss for the rest, while ECAL itself is dominated by photons from pi0 that leave no track. <b>fcsR*dPhi is much narrower than dR</b>, so the mismatch is radial rather than azimuthal &mdash; which is what a wrong z, i.e. the assumed shower-max depth, would produce. <b>HCAL is not quoted</b>: its S/B is 0.03&ndash;0.08 and after subtraction the content inside |d|&lt;30&nbsp;cm cancels, so those widths are artefacts.</p>
+
+<HR>OGAWA, Akio
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>
