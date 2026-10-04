@@ -53,10 +53,39 @@ the peaks.</p>
   <td><a href="trackmatch_fwdjuly/fcsTrkMatchHcal.png"><img src="trackmatch_fwdjuly/fcsTrkMatchHcal.png" height="200"></a></td></tr>
 </table>
 
+<H2>r*dPhi: match rate, not just shape</H2>
+
+<p>The two forward-stream passes use <b>exactly the same 74 input files</b>. July ran them
+uncapped (674&nbsp;938 events), October at 5000 per file (348&nbsp;984), so October is the
+first part of each of the same files. Normalising <b>per event</b> rather than per area
+therefore keeps the yield, which is what an area-normalised plot throws away.
+ZF&nbsp;22 is different data and a different track type, so its rate is drawn dashed for
+scale only, not for comparison.</p>
+
+<table border="0" cellpadding="6"><tr><td align="center">
+<a href="plots/rdphi_rate.png"><img src="plots/rdphi_rate.png" height="260"></a>
+</td></tr></table>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th>half</th><th>July, matches/event</th><th>Oct, matches/event</th><th>Oct / July</th></tr>
+<tr><td>North</td><td align="right">0.97293</td><td align="right">1.39733</td><td align="right"><b>1.436</b></td></tr>
+<tr><td>South</td><td align="right">1.03253</td><td align="right">1.41206</td><td align="right"><b>1.368</b></td></tr>
+</table>
+<p>Integrated over |fcsR*dPhi|&lt;30&nbsp;cm, ECAL, mixed-event subtracted. Both inputs are
+current picoMatch output on a common 4&nbsp;cm axis; the July one is the old production's
+picoDsts re-analysed, so the tracking code differs between the two and the analysis does
+not.</p>
+
+<p><b>The current chain finds about 40% more matched clusters per event</b>
+&mdash; 1.44&times; north and 1.37&times; south &mdash; on the same input files. An
+area-normalised plot cannot show this, which is why the yield is quoted here. Taken with
+the widths, the picture is that the current code matches noticeably more tracks at a
+slightly worse resolution rather than simply being worse.</p>
+
 <H2>r*dPhi, the north/south shift</H2>
 
-<p>ECAL only, mixed-event subtracted, area normalised on a common 4&nbsp;cm axis, north in
-the left panel and south in the right.</p>
+<p>The same distributions normalised by <b>area</b> instead, which compares shape alone.
+ECAL only, mixed-event subtracted, common 4&nbsp;cm axis, north left and south right.</p>
 
 <table border="0" cellpadding="6"><tr><td align="center">
 <a href="plots/rdphi_overlay.png"><img src="plots/rdphi_overlay.png" height="260"></a>
