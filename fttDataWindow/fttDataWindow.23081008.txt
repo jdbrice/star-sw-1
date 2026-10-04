@@ -1,6 +1,6 @@
 # fttDataWindowsB calibration, run 23081008
 # run 23081008 firstEventDate 20220322 firstEventTime 062641
-# input /tmp/claude-2546/-direct-star-u-akio-fcstrk11-star-sw-fwd/999e4fd5-b5d9-4cdc-bbed-3d4d48f7c08f/scratchpad/anchors/23081008.list nFiles 3 eventsRead 200 rawHits 1897987 stop converged
+# input /tmp/claude-2546/-direct-star-u-akio-fcstrk11-star-sw-fwd/999e4fd5-b5d9-4cdc-bbed-3d4d48f7c08f/scratchpad/anchors2/23081008.list nFiles 4 eventsRead 200 rawHits 1897987 stop converged
 # window min -65 max 100 (dbcid ticks relative to anchor), minPeak 200, goodFrac 0.950
 # conventions: uuid = StFttDb::vmmId() 0..383; mode 0 = calibrated time (the idl mode comment says the opposite)
 # cols 1-5 -> DB: uuid mode min max anchor   (anchor -1 = no usable calibration, use on-the-fly anchor)
