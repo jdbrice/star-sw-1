@@ -16,12 +16,15 @@
 // CINT: unique loop names, fixed arrays (see CLAUDE.md).
 
 double fcCore, fcCoreE, fcBroad, fcMu, fcChi2;
+bool   fcRailed;   // true if a shape parameter sat on its limit -- value unusable
+int    fcRebin = 1; // rebin the histogram before fitting (to match a coarser dataset)
 
 void fcFitH(TH1* h, double win) {
-    fcCore = 0; fcCoreE = 0; fcBroad = 0; fcMu = 0; fcChi2 = 0;
+    fcCore = 0; fcCoreE = 0; fcBroad = 0; fcMu = 0; fcChi2 = 0; fcRailed = false;
     if (!h) return;
     TH1D* d = (TH1D*)h->Clone(Form("fcw_%s", h->GetName()));
     d->SetDirectory(0);
+    if (fcRebin > 1) d->Rebin(fcRebin);   // put a fine dataset on a coarse one's axis
     int pb = d->GetMaximumBin();
     double pk = d->GetXaxis()->GetBinCenter(pb);
     double amp = d->GetBinContent(pb);
@@ -30,15 +33,20 @@ void fcFitH(TH1* h, double win) {
     fn->SetParameters(amp * 0.25, pk, 2.5, amp * 0.75, pk, 20.0, amp * 0.1, 0);
     fn->SetParLimits(0, 0, amp * 5);
     fn->SetParLimits(1, pk - 6, pk + 6);
-    fn->SetParLimits(2, 0.5, 8.0);        // the match
+    // wide enough for the old fwd_stream data, whose core is several times the ZF one;
+    // at 8 cm the old EcalBottom railed and returned a zero error
+    fn->SetParLimits(2, 0.5, 25.0);       // the match
     fn->SetParLimits(3, 0, amp * 5);
-    fn->SetParLimits(4, pk - 20, pk + 20);
-    fn->SetParLimits(5, 9.0, 120.0);      // tail + combinatorics
+    fn->SetParLimits(4, pk - 30, pk + 30);
+    fn->SetParLimits(5, 8.0, 150.0);      // tail + combinatorics
     d->Fit(fn, "QNR");
     fcCore = fabs(fn->GetParameter(2)); fcCoreE = fn->GetParError(2);
     fcBroad = fabs(fn->GetParameter(5));
     fcMu = fn->GetParameter(1);
     fcChi2 = (fn->GetNDF() > 0) ? fn->GetChisquare() / fn->GetNDF() : 0;
+    // with ~1e9 entries the fit error is meaningless -- a 1% shape mismatch dominates.
+    // What matters is whether a parameter sat on a limit, which means it is not measured.
+    fcRailed = (fcCore < 0.51 || fcCore > 24.9 || fcBroad < 8.1 || fcBroad > 149.0);
 }
 
 TH1* fcGet(TFile* f, const char* panel, const char* xy, const char* type, int sub) {
@@ -63,20 +71,22 @@ TH1* fcGet(TFile* f, const char* panel, const char* xy, const char* type, int su
 
 // one file, one track type, all four panels, both methods
 void fcsCoreFit(const char* file, const char* label, const char* type = "Primary",
-                double win = 50.0) {
+                double win = 50.0, int rebin = 1) {
+    fcRebin = rebin;
     TFile* f = TFile::Open(file);
     if (!f || f->IsZombie()) { printf("cannot open %s\n", file); return; }
     const char* pn[4] = {"EcalNorth", "EcalSouth", "EcalTop", "EcalBottom"};
     const char* vx[4] = {"dx", "dx", "dy", "dy"};
-    printf("\n=== %s  [%s] ===\n", label, type);
+    printf("\n=== %s  [%s]%s ===\n", label, type,
+           rebin > 1 ? Form("  rebinned x%d", rebin) : "");
     printf("  %-12s %18s %8s | %18s %8s\n", "panel",
            "core, raw fit", "chi2/ndf", "core, subtracted", "chi2/ndf");
     for (int ip = 0; ip < 4; ip++) {
         fcFitH(fcGet(f, pn[ip], vx[ip], type, 0), win);
-        double cr = fcCore, cre = fcCoreE, x2r = fcChi2;
+        double cr = fcCore, cre = fcCoreE, x2r = fcChi2; bool rr = fcRailed;
         fcFitH(fcGet(f, pn[ip], vx[ip], type, 1), win);
-        double cs = fcCore, cse = fcCoreE, x2s = fcChi2;
-        printf("  %-12s %8.3f +-%6.3f %8.1f | %8.3f +-%6.3f %8.1f\n",
-               pn[ip], cr, cre, x2r, cs, cse, x2s);
+        double cs = fcCore, cse = fcCoreE, x2s = fcChi2; bool rs = fcRailed;
+        printf("  %-12s %8.3f%s+-%6.3f %8.1f | %8.3f%s+-%6.3f %8.1f\n",
+               pn[ip], cr, rr ? "*" : " ", cre, x2r, cs, rs ? "*" : " ", cse, x2s);
     }
 }
