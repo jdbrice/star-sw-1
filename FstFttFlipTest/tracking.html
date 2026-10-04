@@ -15,6 +15,7 @@ STAR forward upgrade, FST/sTGC geometry and alignment &mdash;
 <ul>
   <li><a href="#fttadd">10. FTT hits on the track: the planar measurement runs for the first time (2026-10-01)</a></li>
   <li><a href="#fcsresid">12. The FCS residual, with and without aligned FTT hits (2026-10-03)</a></li>
+  <li><a href="#reconcile">13. Reconciling with the 2026-07-06 result (2026-10-04)</a></li>
 </ul>
 
 <p>What putting sTGC hits on the track actually buys. The geometry these rely on is
@@ -221,6 +222,103 @@ in <a href="#fttadd">section&nbsp;10</a>.</p>
 
 <p>Numbers from <tt>script/fcsResidCore.C</tt> and <tt>script/plotFcsResid.C</tt> over
 <tt>picoMatch</tt> output; the 1D residuals are binned at 0.5&nbsp;cm.</p>
+
+<HR>
+
+<a name="reconcile"></a>
+<H1>13. Reconciling with the 2026-07-06 result (2026-10-04)</H1>
+
+<p>Many things changed at once between
+<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/trackmatch/20260706/">the
+2026-07-06 trackmatch page</a> and section&nbsp;12: run year, beam conditions, track type,
+the magnetic field, the geometry switches, the tracking code, and the binning. This section
+separates them, <b>one variable at a time, with nothing un-fixed</b> &mdash; the old
+histogram files were kept, and they carry the same names and the same six track types as
+today, so the old result is re-measured rather than re-run.</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th>step</th><th>what changes</th><th>how</th></tr>
+<tr><td>1</td><td>track type, BLCVtx &rarr; Primary</td>
+    <td>both types live in every file, old and new</td></tr>
+<tr><td>2</td><td>run year, Run&nbsp;22 ZF &rarr; Run&nbsp;24 ZF</td>
+    <td>two existing campaigns, same code</td></tr>
+<tr><td>3</td><td>geometry switches, GEOFIX 1,1,1 &rarr; 1,0,0</td>
+    <td>two arms on the same fwd_stream data, same code</td></tr>
+<tr><td>4</td><td>tracking code, and the magnetic field</td>
+    <td>a third arm at B=0, to split code from field</td></tr>
+</table>
+
+<H3>Track type is the largest single effect</H3>
+
+<p>Core &sigma; of the FCS residual, BLCVtx &rarr; Primary, measured inside one file so
+nothing else moves:</p>
+
+<ul>
+  <li>Run&nbsp;22 ZF: 7.40&rarr;4.04, 7.05&rarr;4.19, 4.15&rarr;3.39, 3.61&rarr;3.27&nbsp;cm</li>
+  <li>Run&nbsp;24 ZF: 7.18&rarr;4.03, 7.30&rarr;4.50, 3.57&rarr;2.83, 4.22&rarr;3.21&nbsp;cm</li>
+</ul>
+
+<p><b>Primary is 38&ndash;45% better than BLCVtx in dx and 9&ndash;24% in dy, in both run
+years.</b> This is why the forward stream, where most events have no TPC vertex and only
+BLC/BLCVtx are available, is not directly comparable to a zero-field result that uses
+Primary.</p>
+
+<H3>Run 22 and Run 24 agree</H3>
+
+<p>Same code, same track type, same FTT setting: 4.04/4.03, 4.19/4.50, 3.39/2.83,
+3.27/3.21&nbsp;cm. Scattered within the method spread, with no trend. The raw
+distributions agree to under 1%.</p>
+
+<H3>The two extra geometry switches cost 18&ndash;24%</H3>
+
+<p>Same fwd_stream data, same current code, only the GEOFIX chain option different:</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th>panel</th><th>GEOFIX 1,0,0</th><th>GEOFIX 1,1,1</th><th>ratio</th></tr>
+<tr><td>ECAL North dx</td><td align="right">11.970</td><td align="right">14.240</td><td align="right"><b>1.190</b></td></tr>
+<tr><td>ECAL South dx</td><td align="right">11.851</td><td align="right">14.513</td><td align="right"><b>1.225</b></td></tr>
+<tr><td>ECAL Top dy</td><td align="right">10.844</td><td align="right">12.820</td><td align="right"><b>1.182</b></td></tr>
+<tr><td>ECAL Bottom dy</td><td align="right">8.176</td><td align="right">10.164</td><td align="right"><b>1.243</b></td></tr>
+</table>
+
+<p>RMS in cm, mixed-event subtracted, |d|&lt;30&nbsp;cm. <b>Turning the FST mirror and the
+FTT X/Y exchange on makes the FCS residual 18&ndash;24% worse on every panel.</b> That is
+the blind A/B of <a href="geometry.html#blind">section&nbsp;1</a> confirmed independently
+&mdash; different data (field on, high luminosity), a different detector, a different
+observable, same answer.</p>
+
+<table border="0" cellpadding="6">
+<tr>
+  <td align="center"><a href="plots/reconcile_fwdstream.png">
+      <img src="plots/reconcile_fwdstream.png" height="200"></a><br>
+      The three fwd_stream configurations on the same data</td>
+  <td align="center"><a href="plots/reconcile_oldnew.png">
+      <img src="plots/reconcile_oldnew.png" height="200"></a><br>
+      2026-07-06 vs now, common 4&nbsp;cm binning, area normalised</td>
+</tr>
+</table>
+
+<H3>Two things to know before reading any of these numbers</H3>
+
+<ul>
+  <li><b>Mixed-event subtraction is not always valid.</b> It is only a background model
+      where same/mixed is flat. It is flat for all three fwd_stream datasets
+      (1.15&ndash;1.16) and for Run&nbsp;22 ZF (1.22), but for Run&nbsp;24 ZF it slopes
+      from 1.18 to 1.08, so one scale factor over-subtracts near the peak. Check the
+      flatness before subtracting, and compare raw distributions when it fails.</li>
+  <li><b>Binning is not neutral.</b> Fitting the same data at 4&nbsp;cm instead of
+      0.5&nbsp;cm inflates the fitted core by a consistent ~7%, so anything compared
+      against the old files is first put on the old 4&nbsp;cm axis.</li>
+</ul>
+
+<H3>Still running: code and magnetic field</H3>
+
+<p>The 2026-07-06 production predates the magnetic-field fix, so it ran with no
+<tt>StarMagField</tt> at all &mdash; B=0 on field-on data &mdash; while the arms above use
+the real field. Code and field therefore move together and cannot be separated from what
+is on disk. A third arm at <tt>MAGFIELD=-1</tt>, which reproduces that legacy behaviour
+exactly with current code, is running; it splits the remaining difference into the code
+change and the field change.</p>
 
 <HR>
 <ADDRESS>
