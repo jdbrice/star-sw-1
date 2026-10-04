@@ -1,0 +1,465 @@
+# fwd_stream reconciliation, arm legacyB.  Run 22 day 081, ReversedFullField.
+#
+# Same data and same CURRENT code as the cur/old arms, and the same GEOFIX 1,1,1 the
+# 2026-07-06 production ran with. The ONE thing changed is the magnetic field:
+#     MAGFIELD = -1  -- no StarMagField at all, B=0 everywhere
+# which runab documents as exactly what every afterburner production before 2026-09-09
+# actually did, including the one behind ~/www/fcs/trackmatch/20260706.
+#
+# Why this arm is needed: rung 4 compared old code (B=0 on field-on data, because of the
+# bug) against current code (real field), so "code" and "field" moved together. With this
+# arm they separate:
+#     legacyB  vs the 2026-07-06 file      -> the CODE change alone
+#     legacyB  vs the old-GEOFIX arm       -> the MAGNETIC FIELD alone
+#
+# 74 files over the same 11 runs, 5000 events each.
+
+Executable   = /bin/env
+Universe     = vanilla
+notification = never
+getenv       = True
+Initialdir   = /star/u/akio/fcstrk11/star-sw-fwd
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081004 st_fwd_23081004_raw_6000003.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081004_raw_6000003.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081004_raw_6000003.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081004_raw_6000003.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000025.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000025.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000025.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000025.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000031.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000031.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000031.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000031.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000034.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000034.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000034.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000034.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000036.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000036.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000036.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000036.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000041.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000041.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000041.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000041.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000053.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000053.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000053.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000053.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000055.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000055.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000055.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000055.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081008 st_fwd_23081008_raw_1000057.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000057.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000057.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081008_raw_1000057.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_1000066.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1000066.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1000066.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1000066.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_1500040.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1500040.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1500040.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1500040.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_1500048.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1500048.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1500048.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_1500048.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_2000046.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2000046.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2000046.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2000046.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_2500043.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2500043.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2500043.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2500043.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_2500048.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2500048.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2500048.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_2500048.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_3000019.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_3000019.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_3000019.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_3000019.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081015 st_fwd_23081015_raw_3000045.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_3000045.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_3000045.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081015_raw_3000045.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000022.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000022.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000022.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000022.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000024.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000024.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000024.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000024.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000032.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000032.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000032.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000032.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000034.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000034.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000034.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000034.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000040.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000040.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000040.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000040.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000044.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000044.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000044.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000044.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000046.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000046.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000046.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000046.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081019 st_fwd_23081019_raw_1000054.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000054.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000054.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081019_raw_1000054.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1000020.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000020.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000020.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000020.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1000024.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000024.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000024.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000024.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1000031.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000031.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000031.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000031.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1000050.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000050.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000050.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000050.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1000054.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000054.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000054.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000054.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1000059.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000059.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000059.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000059.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1000071.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000071.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000071.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000071.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081023 st_fwd_23081023_raw_1000077.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000077.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000077.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081023_raw_1000077.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000002.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000002.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000002.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000002.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000009.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000009.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000009.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000009.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000015.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000015.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000015.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000015.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000020.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000020.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000020.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000020.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000040.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000040.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000040.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000040.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000044.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000044.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000044.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000044.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000052.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000052.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000052.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000052.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081027 st_fwd_23081027_raw_1000054.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000054.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000054.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081027_raw_1000054.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_1000016.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000016.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000016.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000016.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_1000020.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000020.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000020.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000020.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_1000022.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000022.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000022.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1000022.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_1500002.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500002.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500002.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500002.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_1500003.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500003.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500003.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500003.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_1500011.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500011.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500011.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_1500011.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_2500021.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_2500021.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_2500021.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_2500021.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081031 st_fwd_23081031_raw_2500022.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_2500022.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_2500022.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081031_raw_2500022.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000013.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000013.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000013.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000013.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000025.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000025.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000025.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000025.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000051.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000051.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000051.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000051.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000055.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000055.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000055.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000055.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000060.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000060.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000060.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000060.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000064.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000064.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000064.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000064.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000072.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000072.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000072.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000072.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081045 st_fwd_23081045_raw_1000076.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000076.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000076.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081045_raw_1000076.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_1000002.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000002.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000002.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000002.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_1000025.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000025.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000025.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000025.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_1000029.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000029.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000029.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000029.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_1000037.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000037.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000037.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000037.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_1000042.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000042.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000042.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000042.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_1000050.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000050.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000050.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000050.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_1000051.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000051.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000051.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000051.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081049 st_fwd_23081049_raw_1000063.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000063.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000063.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081049_raw_1000063.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081053 st_fwd_adc_23081053_raw_0000008.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_adc_23081053_raw_0000008.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_adc_23081053_raw_0000008.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_adc_23081053_raw_0000008.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1000002.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000002.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000002.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000002.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1000015.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000015.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000015.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000015.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1000017.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000017.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000017.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000017.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1000037.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000037.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000037.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000037.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1000043.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000043.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000043.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000043.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1000047.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000047.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000047.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000047.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1000072.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000072.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000072.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1000072.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runab /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081063 st_fwd_23081063_raw_1500021.MuDst.root /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004 0 -1 1,1,1 2 -1,3 2,0,0 5000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1500021.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1500021.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/pico_fwdstream_legacyB_20261004/log/st_fwd_23081063_raw_1500021.log
+Queue
