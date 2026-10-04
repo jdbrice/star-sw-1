@@ -311,14 +311,51 @@ observable, same answer.</p>
       against the old files is first put on the old 4&nbsp;cm axis.</li>
 </ul>
 
-<H3>Still running: code and magnetic field</H3>
+<H3>The rest: the magnetic field, and the code</H3>
 
 <p>The 2026-07-06 production predates the magnetic-field fix, so it ran with no
-<tt>StarMagField</tt> at all &mdash; B=0 on field-on data &mdash; while the arms above use
-the real field. Code and field therefore move together and cannot be separated from what
-is on disk. A third arm at <tt>MAGFIELD=-1</tt>, which reproduces that legacy behaviour
-exactly with current code, is running; it splits the remaining difference into the code
-change and the field change.</p>
+<tt>StarMagField</tt> at all &mdash; B=0 on field-on data. A third arm reproduces that
+legacy behaviour exactly with current code, which splits the remaining difference:</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th>panel</th><th>2026-07-06</th><th>current code,<br>B=0</th>
+    <th>+ real field</th><th>+ GEOFIX 1,0,0</th>
+    <th>code</th><th>field</th><th>GEOFIX</th><th>net</th></tr>
+<tr><td>ECAL North dx</td><td align="right">12.500</td><td align="right">13.289</td>
+    <td align="right">14.240</td><td align="right">11.970</td>
+    <td align="right">1.063</td><td align="right">1.072</td><td align="right">0.841</td>
+    <td align="right"><b>0.958</b></td></tr>
+<tr><td>ECAL South dx</td><td align="right">12.701</td><td align="right">13.414</td>
+    <td align="right">14.513</td><td align="right">11.851</td>
+    <td align="right">1.056</td><td align="right">1.082</td><td align="right">0.817</td>
+    <td align="right"><b>0.933</b></td></tr>
+<tr><td>ECAL Top dy</td><td align="right">8.078</td><td align="right">11.085</td>
+    <td align="right">12.820</td><td align="right">10.844</td>
+    <td align="right">1.372</td><td align="right">1.157</td><td align="right">0.846</td>
+    <td align="right"><b>1.342</b></td></tr>
+<tr><td>ECAL Bottom dy</td><td align="right">7.914</td><td align="right">9.122</td>
+    <td align="right">10.164</td><td align="right">8.176</td>
+    <td align="right">1.153</td><td align="right">1.114</td><td align="right">0.804</td>
+    <td align="right"><b>1.033</b></td></tr>
+</table>
+
+<p>RMS in cm. Each column changes one thing and the three factors multiply to the net,
+so the old and current results are now fully accounted for:</p>
+
+<ul>
+  <li><b>GEOFIX 1,0,0 gains 15&ndash;20%</b>, the largest and cleanest of the three.</li>
+  <li><b>The real magnetic field costs 7&ndash;16%.</b> That is the price of being right,
+      not a regression: the narrower B=0 number came from extrapolating every track as a
+      straight line, which carries no momentum-dependent projection error because it
+      ignores the momentum altogether.</li>
+  <li><b>The code change costs 6&ndash;37%</b>, at matched field and geometry switches.
+      dx is 6% and ECAL Top dy is 37%. <b>This one is not understood</b> and is the open
+      item from this reconciliation; the dy panels carry nearly all of it.</li>
+</ul>
+
+<p>Net, the current chain is 4&ndash;7% better than 2026-07-06 in dx and 3&ndash;34% worse
+in dy, and the dy loss is the code term above rather than anything to do with the run
+year, the beam conditions or the track type.</p>
 
 <HR>
 <ADDRESS>
