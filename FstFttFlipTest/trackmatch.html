@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <TITLE>FcsCluster and FwdTrack matching: current best, ZF and forward stream</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<p style="background-color:#eeeeff; padding:6px; border:1px solid #99a;">
+STAR forward upgrade, FST/sTGC geometry and alignment &mdash;
+<a href="index.html">Alignment program</a> &nbsp;|&nbsp;
+<a href="geometry.html">Geometry and mapping</a> &nbsp;|&nbsp;
+<a href="tracking.html">Tracking performance</a> &nbsp;|&nbsp;
+<b>FCS track matching</b>
+</p>
+
+<H1>FcsCluster and FwdTrack matching (2026-10-04)</H1>
+
+<p>Same panels, same ranges and the same 4&nbsp;cm binning as the
+<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/trackmatch/20260706/">2026-07-06
+page</a>, so the plots overlay one for one. Current code throughout, with the best
+configuration for each dataset and the best track type each one can offer. The step by
+step reconciliation against 2026-07-06 is in
+<a href="tracking.html#reconcile">tracking section&nbsp;13</a>.</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th>dataset</th><th>track type</th><th>configuration</th></tr>
+<tr><td><b>ZF 22</b> &mdash; Run&nbsp;22 zero field, low luminosity</td>
+    <td>Primary (TPC vertex)</td>
+    <td>GEOFIX 1,0,0, iteration-2 sTGC tables, FTT hits on the track, per-run FTT time
+        anchors</td></tr>
+<tr><td><b>Forward stream</b> &mdash; Run&nbsp;22 day&nbsp;081, field on, high luminosity</td>
+    <td>BLCVtx (no TPC vertex for most events)</td>
+    <td>GEOFIX 1,0,0, real magnetic field, FTT hits on the track</td></tr>
+</table>
+
+<H2>Matching: Same, Mixed and Same&minus;Mixed</H2>
+
+<table border="1" cellpadding="4">
+<tr bgcolor="#ccccee"><td>dataset</td><td>Ecal</td><td>Hcal</td></tr>
+<tr><td>ZF 22, Primary</td>
+  <td><a href="trackmatch_zf22/fcsTrkMatchEcal.png"><img src="trackmatch_zf22/fcsTrkMatchEcal.png" height="200"></a></td>
+  <td><a href="trackmatch_zf22/fcsTrkMatchHcal.png"><img src="trackmatch_zf22/fcsTrkMatchHcal.png" height="200"></a></td></tr>
+<tr><td>Forward stream, BLCVtx</td>
+  <td><a href="trackmatch_fwdstream/fcsTrkMatchEcal.png"><img src="trackmatch_fwdstream/fcsTrkMatchEcal.png" height="200"></a></td>
+  <td><a href="trackmatch_fwdstream/fcsTrkMatchHcal.png"><img src="trackmatch_fwdstream/fcsTrkMatchHcal.png" height="200"></a></td></tr>
+</table>
+
+<H2>Width and signal-to-background, ECAL</H2>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th rowspan="2">coordinate</th>
+    <th colspan="2">ZF 22, Primary</th><th colspan="2">forward stream, BLCVtx</th></tr>
+<tr bgcolor="#ccccee"><th>RMS [cm]</th><th>S/B</th><th>RMS [cm]</th><th>S/B</th></tr>
+<tr><td>dX</td><td align="right">9.08 / 9.56</td><td align="right">0.41 / 0.45</td>
+    <td align="right">11.55 / 12.07</td><td align="right">0.078 / 0.079</td></tr>
+<tr><td>dY</td><td align="right">8.80 / 8.39</td><td align="right">0.51 / 0.50</td>
+    <td align="right">9.74 / 8.14</td><td align="right">0.095 / 0.092</td></tr>
+<tr bgcolor="#eeffee"><td><b>fcsR*dPhi</b></td><td align="right"><b>7.73 / 7.72</b></td><td align="right">0.47 / 0.51</td>
+    <td align="right"><b>7.11 / 6.94</b></td><td align="right">0.091 / 0.093</td></tr>
+<tr><td>dR</td><td align="right">10.50 / 11.22</td><td align="right">0.39 / 1.11</td>
+    <td align="right">14.03 / 14.41</td><td align="right">0.095 / 0.232</td></tr>
+</table>
+
+<p>Mixed event normalised to same over |d|&nbsp;=&nbsp;80&ndash;160&nbsp;cm and subtracted;
+RMS over |d|&lt;30&nbsp;cm; S/B counted inside |d|&lt;15&nbsp;cm. Two numbers per cell are
+the two halves (North/South, Top/Bottom, R&lt;70/R&gt;70).</p>
+
+<H3>What the numbers say</H3>
+
+<ul>
+  <li><b>The mismatch is radial, not azimuthal.</b> fcsR*dPhi is 7&ndash;7.7&nbsp;cm while
+      dR is 10.5&ndash;14.4, a factor up to two. dX and dY are mixtures of the two, so the
+      radial term is what inflates them. A radial displacement is what a wrong
+      <i>z</i> produces, since tracks come from near the origin &mdash; the assumed
+      shower-max depth (710.16&nbsp;+&nbsp;15&nbsp;cm) is the first thing to test.</li>
+  <li><b>Zero field matches five times more cleanly.</b> S/B is 0.39&ndash;0.51 for ZF 22
+      against 0.078&ndash;0.095 for the forward stream. In the forward stream roughly 90%
+      of the raw histogram is combinatorial, so any number taken from it without
+      background subtraction is meaningless.</li>
+  <li><b>HCAL matching has essentially no signal</b> in either dataset: S/B 0.025&ndash;0.079,
+      and after subtraction the content inside |d|&lt;30&nbsp;cm cancels &mdash; 10 to 12
+      negative bins with a negative sum as large as the positive one. The HCAL widths are
+      therefore not quoted; the plots are shown for completeness only.</li>
+  <li><b>Caveat on the forward stream FTT timing:</b> only 2 of the 11 runs
+      (23081015, 23081049) have per-run <tt>fttDataWindow</tt> anchors. The other nine fall
+      back to the global DB window, so the FTT hits on those tracks are not per-run time
+      calibrated.</li>
+</ul>
+
+<H2>Dependence on fcsX, fcsY, fcsR*fcsPhi and fcsR</H2>
+
+<table border="1" cellpadding="4">
+<tr bgcolor="#ccccee"><td>dataset</td><td>dX</td><td>dY</td><td>fcsR*dPhi</td><td>dR</td></tr>
+<tr><td>ZF 22, Ecal</td>
+  <td><a href="trackmatch_zf22/fcsTrkEcaldx.png"><img src="trackmatch_zf22/fcsTrkEcaldx.png" height="200"></a></td>
+  <td><a href="trackmatch_zf22/fcsTrkEcaldy.png"><img src="trackmatch_zf22/fcsTrkEcaldy.png" height="200"></a></td>
+  <td><a href="trackmatch_zf22/fcsTrkEcaldp.png"><img src="trackmatch_zf22/fcsTrkEcaldp.png" height="200"></a></td>
+  <td><a href="trackmatch_zf22/fcsTrkEcaldr.png"><img src="trackmatch_zf22/fcsTrkEcaldr.png" height="200"></a></td></tr>
+<tr><td>Forward stream, Ecal</td>
+  <td><a href="trackmatch_fwdstream/fcsTrkEcaldx.png"><img src="trackmatch_fwdstream/fcsTrkEcaldx.png" height="200"></a></td>
+  <td><a href="trackmatch_fwdstream/fcsTrkEcaldy.png"><img src="trackmatch_fwdstream/fcsTrkEcaldy.png" height="200"></a></td>
+  <td><a href="trackmatch_fwdstream/fcsTrkEcaldp.png"><img src="trackmatch_fwdstream/fcsTrkEcaldp.png" height="200"></a></td>
+  <td><a href="trackmatch_fwdstream/fcsTrkEcaldr.png"><img src="trackmatch_fwdstream/fcsTrkEcaldr.png" height="200"></a></td></tr>
+<tr><td>ZF 22, Hcal</td>
+  <td><a href="trackmatch_zf22/fcsTrkHcaldx.png"><img src="trackmatch_zf22/fcsTrkHcaldx.png" height="200"></a></td>
+  <td><a href="trackmatch_zf22/fcsTrkHcaldy.png"><img src="trackmatch_zf22/fcsTrkHcaldy.png" height="200"></a></td>
+  <td><a href="trackmatch_zf22/fcsTrkHcaldp.png"><img src="trackmatch_zf22/fcsTrkHcaldp.png" height="200"></a></td>
+  <td><a href="trackmatch_zf22/fcsTrkHcaldr.png"><img src="trackmatch_zf22/fcsTrkHcaldr.png" height="200"></a></td></tr>
+<tr><td>Forward stream, Hcal</td>
+  <td><a href="trackmatch_fwdstream/fcsTrkHcaldx.png"><img src="trackmatch_fwdstream/fcsTrkHcaldx.png" height="200"></a></td>
+  <td><a href="trackmatch_fwdstream/fcsTrkHcaldy.png"><img src="trackmatch_fwdstream/fcsTrkHcaldy.png" height="200"></a></td>
+  <td><a href="trackmatch_fwdstream/fcsTrkHcaldp.png"><img src="trackmatch_fwdstream/fcsTrkHcaldp.png" height="200"></a></td>
+  <td><a href="trackmatch_fwdstream/fcsTrkHcaldr.png"><img src="trackmatch_fwdstream/fcsTrkHcaldr.png" height="200"></a></td></tr>
+</table>
+
+<HR>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>
