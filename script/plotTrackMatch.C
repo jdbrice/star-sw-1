@@ -89,13 +89,8 @@ void plotTrackMatch(const char* file, const char* type, const char* det,
         same->Draw("hist"); mix->Draw("hist same");
         if (d1) { d1->SetLineColor(kRed);   d1->SetLineWidth(2); d1->Draw("hist same"); }
         if (d2) { d2->SetLineColor(kGreen+2); d2->SetLineWidth(2); d2->Draw("hist same"); }
-        TLegend* lg = new TLegend(0.14, 0.66, 0.52, 0.88);
-        lg->SetFillColor(0); lg->SetBorderSize(0); lg->SetTextSize(0.035);
-        lg->AddEntry(same, "Same Event", "l");
-        lg->AddEntry(mix,  "Mixed Event", "l");
-        if (d1) lg->AddEntry(d1, Form("Same-Mixed %s", n1[iv]), "l");
-        if (d2) lg->AddEntry(d2, Form("Same-Mixed %s", n2[iv]), "l");
-        lg->Draw();
+        // no legend: it covered the peaks. black=Same, blue=Mixed,
+        // red/green=Same-Mixed for the two halves; stated in the page text.
     }
     c->SaveAs(Form("%s/fcsTrkMatch%s.png", outdir, det));
 

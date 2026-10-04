@@ -35,15 +35,51 @@ step reconciliation against 2026-07-06 is in
 
 <H2>Matching: Same, Mixed and Same&minus;Mixed</H2>
 
+<p>In every panel: <b>black</b> = same event, <b>blue</b> = mixed event,
+<b><font color="red">red</font></b> and <b><font color="green">green</font></b> =
+same&minus;mixed for the two halves. No legend is drawn on the plots because it covered
+the peaks.</p>
+
 <table border="1" cellpadding="4">
 <tr bgcolor="#ccccee"><td>dataset</td><td>Ecal</td><td>Hcal</td></tr>
 <tr><td>ZF 22, Primary</td>
   <td><a href="trackmatch_zf22/fcsTrkMatchEcal.png"><img src="trackmatch_zf22/fcsTrkMatchEcal.png" height="200"></a></td>
   <td><a href="trackmatch_zf22/fcsTrkMatchHcal.png"><img src="trackmatch_zf22/fcsTrkMatchHcal.png" height="200"></a></td></tr>
-<tr><td>Forward stream, BLCVtx</td>
+<tr><td>Forward stream, BLCVtx<br>Oct, with all fixes</td>
   <td><a href="trackmatch_fwdstream/fcsTrkMatchEcal.png"><img src="trackmatch_fwdstream/fcsTrkMatchEcal.png" height="200"></a></td>
   <td><a href="trackmatch_fwdstream/fcsTrkMatchHcal.png"><img src="trackmatch_fwdstream/fcsTrkMatchHcal.png" height="200"></a></td></tr>
+<tr><td>Forward stream, BLCVtx<br>from July</td>
+  <td><a href="trackmatch_fwdjuly/fcsTrkMatchEcal.png"><img src="trackmatch_fwdjuly/fcsTrkMatchEcal.png" height="200"></a></td>
+  <td><a href="trackmatch_fwdjuly/fcsTrkMatchHcal.png"><img src="trackmatch_fwdjuly/fcsTrkMatchHcal.png" height="200"></a></td></tr>
 </table>
+
+<H2>r*dPhi, the north/south shift</H2>
+
+<p>ECAL only, mixed-event subtracted, area normalised on a common 4&nbsp;cm axis, north in
+the left panel and south in the right.</p>
+
+<table border="0" cellpadding="6"><tr><td align="center">
+<a href="plots/rdphi_overlay.png"><img src="plots/rdphi_overlay.png" height="260"></a>
+</td></tr></table>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th>half</th><th>ZF 22, Primary</th><th>fwd stream July</th><th>fwd stream Oct</th></tr>
+<tr><td>North mean</td><td align="right">&minus;2.31</td><td align="right">&minus;3.08</td><td align="right">&minus;3.25</td></tr>
+<tr><td>South mean</td><td align="right">+1.25</td><td align="right">+2.66</td><td align="right">+2.44</td></tr>
+<tr><td><b>antisymmetric part</b></td><td align="right"><b>&minus;1.78</b></td><td align="right"><b>&minus;2.87</b></td><td align="right"><b>&minus;2.85</b></td></tr>
+</table>
+
+<p>cm, over |d|&lt;30&nbsp;cm. <b>North and south are displaced in opposite directions in
+all three datasets</b>, by about 2&ndash;3&nbsp;cm. That antisymmetry is the signature of a
+<b>relative y offset</b> between the FCS clusters and the track projections, not of a
+rotation: north sits near &phi;=0 where the azimuthal direction is +y, south near
+&phi;=&pi; where it is &minus;y, so a common y shift appears with opposite sign in the two
+halves. A rotation about z would shift both the same way.</p>
+
+<p>It is present in July as well as October and in zero field as well as the forward
+stream, so it is a standing offset rather than anything introduced by the recent code
+work &mdash; and it is the same size in both forward-stream passes. Worth fixing: it is a
+single number.</p>
 
 <H2>Width and signal-to-background, ECAL</H2>
 
@@ -68,11 +104,15 @@ the two halves (North/South, Top/Bottom, R&lt;70/R&gt;70).</p>
 <H3>What the numbers say</H3>
 
 <ul>
-  <li><b>The mismatch is radial, not azimuthal.</b> fcsR*dPhi is 7&ndash;7.7&nbsp;cm while
-      dR is 10.5&ndash;14.4, a factor up to two. dX and dY are mixtures of the two, so the
-      radial term is what inflates them. A radial displacement is what a wrong
-      <i>z</i> produces, since tracks come from near the origin &mdash; the assumed
-      shower-max depth (710.16&nbsp;+&nbsp;15&nbsp;cm) is the first thing to test.</li>
+  <li><b>The dR width is expected, and its centre is fine.</b> fcsR*dPhi is
+      7&ndash;7.7&nbsp;cm while dR is 10.5&ndash;14.4. FST strips run along R, so R is the
+      poorly constrained coordinate; the TPC vertex fixes z to about a cm and helps ZF 22,
+      BLC does not constrain z at all and BLCVtx only loosely, which is why dR is widest
+      there. FTT would help with its x and y, but at the present efficiency only
+      1&ndash;2 FTT hits land on a track. After subtraction dR is centred near zero, so
+      this is understood rather than a defect. It is not a shower-max depth error: that
+      would make dR strictly proportional to r and identical in both datasets, and the
+      measured r dependence is neither.</li>
   <li><b>Zero field matches five times more cleanly.</b> S/B is 0.39&ndash;0.51 for ZF 22
       against 0.078&ndash;0.095 for the forward stream. In the forward stream roughly 90%
       of the raw histogram is combinatorial, so any number taken from it without
