@@ -106,23 +106,27 @@ No ssh key on github? Use this instead:
 
     git clone --no-checkout -b akio202607 https://github.com/jdbrice/star-sw-1.git .
 
-Install the sparse list. Non-cone mode, because the list uses wildcards:
+Install the sparse list, then check out:
 
     git config core.sparseCheckout true
-    git sparse-checkout init --no-cone
     cp /star/u/akio/fcstrk11/star-sw-fwd/sparse-checkout.akio202607 .git/info/sparse-checkout
     git checkout akio202607
     git log --oneline -1
 
-If `git sparse-checkout init' does not exist in your git, the `git config' line
-above is enough on its own -- that is the old mechanism and it still works.
+That is the classic mechanism and it is the one to use. Do NOT use
+`git sparse-checkout init/set' here: the container ships git 2.26.2, where that
+subcommand prints "THIS COMMAND IS EXPERIMENTAL" in its own man page, and where
+`init' overwrites .git/info/sparse-checkout with its own default patterns and
+does a checkout -- so it would undo the cp above and cost a second checkout for
+nothing. The `--cone' / `--no-cone' distinction does not arise either: cone mode
+understands whole directories only, non-cone takes gitignore-style wildcards
+like /StRoot/StFcs*, and non-cone is already the default in 2.26.
 
-The list has comments in it. Older git (< 2.25) ignores `#' lines in
-.git/info/sparse-checkout, newer git does too, but if yours complains, strip
-them:
+Verified against git 2.26.2: the `#' comment lines and blank lines in the list
+are ignored as in .gitignore, and the wildcard patterns match correctly, so the
+file can be copied in as-is. If you ever need it stripped anyway:
 
-    grep -v '^#' /star/u/akio/fcstrk11/star-sw-fwd/sparse-checkout.akio202607 \
-        | grep -v '^$' > .git/info/sparse-checkout
+    grep -vE '^#|^$' /star/u/akio/fcstrk11/star-sw-fwd/sparse-checkout.akio202607 > .git/info/sparse-checkout
     git read-tree -mu HEAD
 
 
