@@ -374,7 +374,32 @@ packages that depend on A. Two symptoms, same cause:
 
 So after editing a shared header, rebuild the dependents: StFwdTrackMaker after
 StMuDSTMaker, StFwdAlignmentMaker and StFwdResidualMaker after StFwdTrackMaker.
-After editing StarVMC/Geometry/*.xml, rebuild StarGeometry AND redo step 6.
+
+After editing an AgML XML under StarVMC/Geometry, two commands, in this order:
+
+    cons +StarVMC/StarGeometry
+    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","fGeom.root",1,"<sdt>")'
+
+The second one is the one that bites. StFwdTrackMaker reads the fGeom.root
+CACHE, not the library, so an XML fix that is correctly compiled into
+StarGeometry.so still does nothing until the cache is rebuilt -- and the stale
+cache is silent, not an error. Use a new <sdt> suffix so the old cache is kept
+rather than skipped ("Geometry file [...] already exists" means it did nothing).
+
+Do NOT bother with `cons +StarVMC/Geometry'. That directory holds the XMLs, two
+headers and macros; its only compilable source is dummy.cc, a single empty
+function, so the library it builds is 9 kB of nothing. The XMLs are compiled
+into obj/StarVMC/StarGeometry/ by the Conscript rule for StarVMC/StarGeometry,
+which finds them via find_xml("StarVMC/Geometry") and declares each XML -> .cxx
+target a priori, so cons sorts the order out in a single pass. Measured in
+fcstrk11: StgmGeo1.xml 10:38:54 -> StgmGeo1.o 10:40:57 -> StarGeometry.so
+10:43:34, one build, with obj/StarVMC/Geometry never created and no link
+dependency on libGeometry. An older two-step "cons +StarVMC/Geometry; cons"
+recipe predates AgML 2.0 and is not needed.
+
+Both directories must still be PRESENT in the checkout -- Geometry as the XML
+source that find_xml scans plus StarGeoLinkDef.h, StarGeometry as the output
+directory -- which is why the sparse list carries both.
 
 
 --------------------------------------------------------------------------------
