@@ -1,0 +1,108 @@
+How to check out, compile and run branch akio202607 from scratch
+(long version with all the diagnostics: instruction_akio202607.txt)
+
+*** Setup
+
+singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif csh
+stardev
+setenv TESTDIR  <your dir>
+mkdir -p $TESTDIR
+cd $TESTDIR
+
+Use a disk with room, NOT your home directory: the checkout is ~700 MB and the
+build adds ~1.5 GB. If quota runs out mid-checkout, git leaves no .git/index
+and a random subset of directories, while git log still shows the right commit.
+
+*** Checkout
+
+git clone --no-checkout -b akio202607 git@github.com:jdbrice/star-sw-1.git .
+git config core.sparseCheckout true
+cp /star/u/akio/fcstrk11/star-sw-fwd/sparse-checkout.akio202607 .git/info/sparse-checkout
+git checkout akio202607
+git log --oneline -1
+
+Do NOT run "git sparse-checkout init" -- it overwrites the list above with its
+own default and you get every top-level file, no subdirectories, and dangling
+symlinks. Check with:
+
+cat .git/info/sparse-checkout
+ls fttDataWindow | wc -l
+
+The first must show the /StRoot/StFcs* ... patterns, not "/*" and "!/*/".
+The second must be 43.
+
+*** Compile
+
+cons +StarVMC/StarGeometry |& tee cons.geom.log
+cons |& tee cons.log
+grep -niE "error|Error 1|undefined reference" cons.log | head -40
+
+*** Build fGeom.root for run22
+
+root4star -l -b -q 'build_geom_misalign.C("dev2022sm","fGeom.root",1,"20211112.000003")' |& tee build_geom.run22.log
+ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+rm -f fGeom.root
+ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
+
+*** Build fGeom.root for run24
+
+root4star -l -b -q 'build_geom_run24.C("y2024","fGeom.y2024.iter1.sdt20240622.root")' |& tee build_geom.run24.log
+ls -la fGeom.y2024.iter1.sdt20240622.root
+
+Name the output explicitly: three Run24 caches exist, all at sdt20240622
+(.sdt / .seeded. / .iter1.), differing only in which pentOnStation.20231210.*
+was latest when they were built. sdt20240622 today gives iteration 1.
+
+Do not symlink this one to fGeom.root. Pass it as runab's 11th argument
+instead, so a Run22 run cannot silently pick up Run24 geometry:
+
+    ... 0  1  1,0,0  2  -1,3  2,0,0  200  fGeom.y2024.iter1.sdt20240622.root
+
+NOTE: build_geom_misalign.C (run22, above) does NOT replace the FCS
+calorimeter volumes with air, build_geom_run24.C does. Measured in the caches:
+the run22 one keeps 7 Wcal + 8 Hcal volumes with material, the run24 one has
+all 15 as AIR_FCS. Both reproduce what the respective productions used, so
+leave them as they are unless you mean to change it.
+
+*** Run Afterburner
+
+mkdir -p out
+mkdir -p scratch
+setenv SCRATCH $TESTDIR/scratch
+
+./script/runab \
+      /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081001 \
+      st_fwd_23081001_raw_0000002.MuDst.root \
+      $TESTDIR/out \
+      0  1  1,0,0  2  -1,3  2,0,0  200 \
+      |& tee runab.log
+
+Arguments, in order:
+
+    INPUTDIR BASE OUTDIR ALIGN MAGFIELD GEOFIX FTTTIMECUT FTTWINDOW DIAG MAXEVT [GEOM]
+
+      ALIGN       0      no StFwdAlignmentMaker
+      MAGFIELD    1      take the field from the MuDst's own stamp
+      GEOFIX      1,0,0  applyFstGapFix only, correct for all current MuDst
+      FTTTIMECUT  2      calibrated time
+      FTTWINDOW   -1,3   dbcid ticks relative to the per-VMM anchor
+      DIAG        2,0,0  FST-blind diagnostic on Primary tracks, hits still added
+      MAXEVT      200
+      GEOM        omitted, so the fGeom.root symlink
+
+$SCRATCH must exist and should be EMPTY -- runab symlinks .$STAR_HOST_SYS and
+StRoot into it and copies the 180 MB MuDst there.
+
+*** Check
+
+ls -la out/ out/residual/ out/blinddiag/
+
+Expect out/<base>.picoDst.root, five out/residual/<base>.FwdDetResidual_*.root
+(Global, BLC, Primary, BLCVtx, FCSConstrained) and one
+out/blinddiag/<base>.fwd_blind_diag.root. runab prints a WARNING line if any
+copy-back got nothing.
+
+cat $SCRATCH/fwd_key.log
+
+Must show StFttDb reading the DB tables and the per-run FTT anchors.
+"falling back" there means StarDb or fttDataWindow was not picked up.
