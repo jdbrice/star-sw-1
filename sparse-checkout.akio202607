@@ -60,4 +60,19 @@
 # Builds fGeom.root. The older StRoot/.../macro/build_geom.C does NOT.
 /build_geom_misalign.C
 /.gitignore
-/CLAUDE.md
+
+# --- deliberately NOT listed -------------------------------------------------
+# No bare top-level pattern, so none of the personal scratch at the top of the
+# repo is shipped: Xihe_response.txt, Xihe_suggestions.txt, the note_*.txt,
+# forwardTrackingSummary*.txt, proposal_*.txt, summary_overall_alignment.txt,
+# fwd_code_integration_plan.txt, instruction_akio202607.txt.
+#
+# That also excludes the 29 tracked top-level symlinks into script/ (runab,
+# picoMatch.C, plotDilep.C, sim.C, ...). They are convenience aliases; use
+# script/<name> directly, as step 7 does. One of them, plot_fcstrk_mom.C, is an
+# ABSOLUTE symlink into /direct/star+u/akio/fcstrk11 and is broken for everyone
+# but akio even in a full checkout -- a repo-hygiene item, not a sparse issue.
+#
+# Do NOT run `git sparse-checkout init': in git 2.26 it overwrites this file
+# with "/*" and "!/*/", i.e. every top-level file and no directories, which is
+# how the scratch files and dangling symlinks appear.

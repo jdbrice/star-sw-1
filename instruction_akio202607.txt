@@ -140,6 +140,29 @@ unrelated.
 
     cd $TESTDIR
 
+FIRST, confirm the sparse list in force is ours. This is the one that actually
+goes wrong in practice:
+
+    cat .git/info/sparse-checkout
+
+It must show the /StRoot/StFcs* ... patterns. If it instead shows
+
+    /*
+    !/*/
+
+then `git sparse-checkout init' overwrote it with its own default, which means
+"every top-level file, no subdirectories". The result looks nothing like a
+sparse checkout of this branch: no StRoot, no StarDb, no script, and instead
+every top-level file in the repo -- Xihe_response.txt, the note_*.txt,
+forwardTrackingSummary*.txt -- plus 29 DANGLING top-level symlinks, because they
+point into script/ which was excluded. Fix it in place, no re-clone:
+
+    cp /star/u/akio/fcstrk11/star-sw-fwd/sparse-checkout.akio202607 .git/info/sparse-checkout
+    git read-tree -mu HEAD
+
+read-tree removes the wrongly-written files and the dangling symlinks, and adds
+the directories. Verified against git 2.26.2.
+
 The index must exist and be a few MB, and must list a few thousand files.
 Zero here is the giveaway for a dead checkout:
 
