@@ -1,0 +1,63 @@
+# Sparse-checkout list for branch akio202607.
+#
+# Derived from the 41 shared libraries fcstrk11 actually builds, not from
+# guesswork: every package below is one whose .so exists in
+# .$STAR_HOST_SYS/lib there. Everything NOT listed is taken from $STAR DEV,
+# which is correct because akio202607 does not change it.
+#
+# ~2830 of the repo's 18168 files, so about 16%.
+#
+# Copy this to .git/info/sparse-checkout (see instruction_akio202607.txt step 2).
+
+# --- the forward upgrade itself -------------------------------------------
+# StFcsClusterMaker StFcsDbMaker StFcsDiLeptonMaker StFcsFastSimulatorMaker
+# StFcsPi0FinderForEcal StFcsPointMaker StFcsRawHitMaker StFcsTrackMatchMaker
+# StFcsWaveformFitMaker
+/StRoot/StFcs*
+# StFstCalibrationMaker StFstClusterMaker StFstDbMaker StFstHitMaker
+# StFstQAMaker StFstRawHitMaker StFstSimMaker StFstUtil
+/StRoot/StFst*
+# StFttChargeSharingMaker StFttClusterMaker StFttClusterPointMaker StFttDbMaker
+# StFttHitCalibMaker StFttPointMaker StFttRawHitMaker StFttSimHitMaker
+# StFttSimMaker
+/StRoot/StFtt*
+# StFwdTrackMaker (incl. the vendored genfit/KiTrack under include/Tracker),
+# StFwdResidualMaker StFwdAlignmentMaker StFwdUtils
+/StRoot/StFwd*
+
+# --- packages akio202607 also modifies ------------------------------------
+# StEvent StEventMaker StEventUtilities StEventCompendiumMaker
+/StRoot/StEvent*
+# StMuDSTMaker StMuAnalysisMaker  -- MISSING from the README's list, and the
+# usual cause of "undefined symbol" at dlopen time
+/StRoot/StMu*
+# StPicoEvent StPicoDstMaker      -- also missing from the README's list
+/StRoot/StPico*
+/StRoot/StBFChain/
+/StRoot/StDbUtilities/
+
+# --- geometry -------------------------------------------------------------
+# StgmGeo1.xml carries the sTGC zplane int->float fix, FstmGeo the FST survey.
+# StarGeoLinkDef.h lives here and the StarGeometry build needs it.
+/StarVMC/Geometry/
+# Holds only a README, but cons writes the AgML-generated TGeo sources into it,
+# so the directory has to exist.
+/StarVMC/StarGeometry/
+
+# --- data, not code -------------------------------------------------------
+# DB table definitions (idl) and the local survey/misalign tables. St_db_Maker
+# searches ./StarDb BEFORE $STAR/StarDb, so without StarDb the job silently
+# falls back to hardcoded geometry and looks like "the tables do nothing".
+/StDb/
+/StarDb/
+# Per-run FTT time anchors. StFttDbMaker::loadDataWindows() reads
+# fttDataWindow/fttDataWindow.<run>.txt relative to the working directory and
+# uses it INSTEAD of the DB entry. Without it, jobs fall back to the global
+# window with no warning.
+/fttDataWindow/
+# runab (the per-file job script) and the analysis macros.
+/script/
+# Builds fGeom.root. The older StRoot/.../macro/build_geom.C does NOT.
+/build_geom_misalign.C
+/.gitignore
+/CLAUDE.md
