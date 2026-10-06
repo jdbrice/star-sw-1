@@ -17,6 +17,7 @@ STAR forward upgrade, FST/sTGC geometry and alignment &mdash;
   <li><a href="#fttadd">10. FTT hits on the track: the planar measurement runs for the first time (2026-10-01)</a></li>
   <li><a href="#fcsresid">12. The FCS residual, with and without aligned FTT hits (2026-10-03)</a></li>
   <li><a href="#reconcile">13. Reconciling with the 2026-07-06 result (2026-10-04)</a></li>
+  <li><a href="#whatlimits">14. What limits the FCS match: a scale, not an offset (2026-10-05)</a></li>
 </ul>
 
 <p>What putting sTGC hits on the track actually buys. The geometry these rely on is
@@ -359,6 +360,97 @@ so the old and current results are now fully accounted for:</p>
 <p>Net, the current chain is 4&ndash;7% better than 2026-07-06 in dx and 3&ndash;34% worse
 in dy, and the dy loss is the code term above rather than anything to do with the run
 year, the beam conditions or the track type.</p>
+
+<HR>
+
+<a name="whatlimits"></a>
+<H1>14. What limits the FCS match: a scale, not an offset (2026-10-05)</H1>
+
+<p>Section&nbsp;13 left one thing unexplained, and the north/south structure in the
+<a href="trackmatch.html">matching plots</a> looked like a simple offset between the FCS
+clusters and the track projections. It is not. Measuring dy as a function of the cluster's
+own y separates the two:</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th>fcsY [cm]</th><th>&minus;75</th><th>&minus;47</th><th>&minus;22</th>
+    <th>+22</th><th>+47</th><th>+75</th></tr>
+<tr><td>dy [cm]</td><td align="right">&minus;5.45</td><td align="right">&minus;4.30</td>
+    <td align="right">&minus;3.14</td><td align="right">+0.30</td><td align="right">+1.87</td>
+    <td align="right">+3.58</td></tr>
+</table>
+
+<p>ZF&nbsp;22, Primary tracks, ECAL, mixed-event subtracted. The fit gives a
+<b>slope of +0.064 cm per cm of y and an intercept of only &minus;1.22&nbsp;cm</b>
+(+0.059 to +0.064 depending on the slicing).
+So the dominant effect is a <b>6% y SCALE</b> and the genuine translation is about
+&minus;1.2&nbsp;cm, not the ~2&nbsp;cm an offset-only reading suggests.</p>
+
+<table border="0" cellpadding="6"><tr><td align="center">
+<a href="plots/dy_vs_y.png"><img src="plots/dy_vs_y.png" height="260"></a><br>
+A translation would be flat. It is not.
+</td></tr></table>
+
+<p>A scale puts dx proportional to x and dy proportional to y, which is exactly the
+per-half antisymmetry seen in every coordinate, and it reproduces the north/south
+r*dPhi signature. The apparent "y offset" was this scale sampled at typical radius.</p>
+
+<H3>It is track-side, and the vertex constraint makes it worse</H3>
+
+<p>The cluster position is computed identically for all six track types. The slope is not:</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+<tr bgcolor="#ccccee"><th>track type</th><th>forward stream Oct</th><th>ZF 22</th></tr>
+<tr><td>Global (no vertex)</td><td align="right">+0.0215</td><td align="right">+0.0160</td></tr>
+<tr><td>Beamline</td><td align="right">+0.0193</td><td align="right">+0.0459</td></tr>
+<tr><td>BLCVtx</td><td align="right">+0.0238</td><td align="right">+0.0170</td></tr>
+<tr><td>Primary (TPC vertex)</td><td align="right">+0.0379</td><td align="right">+0.0590</td></tr>
+</table>
+
+<p>A ~2% baseline is present with <b>no vertex constraint at all</b>, so it comes from the
+hits: either an FST/FTT y scale or an equivalent ~2% error in the z lever arm. On top of
+that, 2&ndash;4% more appears when a vertex constraint is applied, and the ordering
+Global &lt; BLCVtx &asymp; Beamline &lt; Primary holds in both datasets. The same split shows
+in the dx antisymmetry, which is 0.06 for Global and +4.05 for Primary on the
+<i>same hits</i>, reproduced as +0.15 &rarr; +4.18 on ZF&nbsp;22.</p>
+
+<H3>What has been excluded, and how</H3>
+
+<ul>
+  <li><b>FCS geometry.</b> Database offsets are byte-identical for Run&nbsp;22 and
+      Run&nbsp;24 and agree with the compiled-in values to 37&nbsp;&micro;m. FCS rides on
+      rails against a fixed stopper and is surveyed, so its position is reproducible by
+      construction.</li>
+  <li><b>The shower-max depth.</b> Measured directly from the picoDst rather than inferred:
+      ECAL track projection z = 724.465, ECAL cluster z = 723.907. They agree to
+      0.56&nbsp;cm, which predicts a slope of &minus;0.0008 &mdash; a factor 25 too small
+      and the wrong sign. Both sides sit on the same plane. 710.16&nbsp;+&nbsp;15&nbsp;cm
+      is right.</li>
+  <li><b>FTT time calibration.</b> Per-run anchors were built for 43 of the 44
+      forward-stream runs and the whole arm re-run with them, verified loaded in the job
+      logs. Every panel moved by 2% or less.</li>
+  <li><b>A clustering or centroid bias.</b> The offset is flat in cluster energy over
+      0&ndash;50&nbsp;GeV in three independent datasets. A log-weighting or shower-size
+      effect would vary strongly with E.</li>
+  <li><b>A rigid y shift of the trackers.</b> The lever arm (FST at z&nbsp;~165, FTT at
+      ~340, FCS at 725) predicts a Primary/Global ratio of 2.1&ndash;4.4. The measured
+      ratio is 1.44.</li>
+</ul>
+
+<H3>Still open</H3>
+
+<p>The dy term of <a href="#reconcile">section&nbsp;13</a> is <b>not</b> explained by this
+scale. Tested on the same 74 files with one variable &mdash; old code against current code,
+both at B=0 and GEOFIX 1,1,1 &mdash; Primary's scale <i>improved</i> by 17%
+(+0.0694&nbsp;&rarr;&nbsp;+0.0577) while its dy width got 37% <i>worse</i> over the same two
+samples. A smaller scale narrows dy, so the two are separate effects.</p>
+
+<p>What that test did show is that the scale is strongly code-sensitive and
+<b>non-uniform across track types</b>: Global's slope flips sign
+(+0.0071&nbsp;&rarr;&nbsp;&minus;0.0211) and BLCVtx goes from nearly scale-free (+0.0061)
+to +0.0550. A single global geometry or convention change would move every type the same
+way, so something in the per-track-type constraint handling changed. Together with the
++4&nbsp;cm dx term that appears only with a vertex, two independent observations now point
+at the vertex constraint rather than at geometry.</p>
 
 <HR>
 <ADDRESS>
