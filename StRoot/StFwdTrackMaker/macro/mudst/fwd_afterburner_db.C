@@ -239,9 +239,11 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 	// but no StFwdResidualMaker instance was ever created for it, so the pickup
 	// numbers did not exist for the type the residuals were measured on).
 	// Global stays first: it is the baseline every earlier campaign is quoted in.
-	const int kNResidualTypes = 4;
-	int residualTypesToRun[kNResidualTypes] = {0, 1, 2, 4}; // Global, BLC, Primary, BLCVtx
-	StFwdResidualMaker *fwdResiduals[kNResidualTypes] = {NULL, NULL, NULL, NULL};
+	const int kNResidualTypes = 5;
+	// 5 = FCSTRK added 2026-10-06: the charge-asymmetry study wants the evolution
+	// across the whole constraint ladder, and FCSTRK is the end of it.
+	int residualTypesToRun[kNResidualTypes] = {0, 1, 2, 4, 5}; // Global, BLC, Primary, BLCVtx, FCSTRK
+	StFwdResidualMaker *fwdResiduals[kNResidualTypes] = {NULL, NULL, NULL, NULL, NULL};
 	if (runFwdChain){
 		// FwdTrackMaker
 		fwdTrack = new StFwdTrackMaker();
