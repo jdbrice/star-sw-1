@@ -181,20 +181,17 @@ Every path the work needs:
     ls fttDataWindow | wc -l
     ls build_geom_misalign.C script/runab
 
-Expect ~470 files in StDb/idl.
+Expect ~470 files in StDb/idl and ~43 in fttDataWindow (the per-run FTT time
+anchors, added in 9dcd089ecc and on GitHub since the 2026-10-06 push).
 
-fttDataWindow is the exception, and it is NOT a checkout problem: the directory
-does not exist at all in the last commit pushed to GitHub (8959324ca7). The 43
-per-run FTT time anchors were added in 9dcd089ecc, which is still local to
-fcstrk11. On a clone of 8959324ca7 the count above is 0 and the directory is
-absent. See section 11. Until the push, copy them in:
+If fttDataWindow comes back as 0, you are on a commit older than 86018ad849.
+The run in step 7 then still completes, but StFttDbMaker falls back to the
+global DB time window instead of the per-run anchors, so the FTT hit content
+will not match production. runab says nothing about it; the giveaway is the
+absence of a "copied per-run FTT anchors:" line in runab.log. Either update the
+branch or copy them in:
 
     cp -r /star/u/akio/fcstrk11/star-sw-fwd/fttDataWindow $TESTDIR/
-
-Without them the run in step 7 still completes, but StFttDbMaker falls back to
-the global DB time window instead of the per-run anchor, so the FTT hit content
-will not match production. runab says nothing about it; the giveaway is the
-absence of a "copied per-run FTT anchors:" line in runab.log.
 
 If something is missing, the WORKTREE is filtered or truncated, never the
 commit -- a commit hash pins its whole tree, so if `git log' shows the right
@@ -339,10 +336,9 @@ You should get:
                                              ..._FCSConstrained.root
     out/blinddiag/st_fwd_23081001_raw_0000002.fwd_blind_diag.root
 
-Five residual files, one per track type -- but FOUR on a clone of 8959324ca7,
-without ..._FCSConstrained.root, because the fifth type comes from dfa727a208
-which is not pushed yet. Four files there is success, not a failure. See
-section 11.
+Five residual files, one per track type. Only FOUR, missing
+..._FCSConstrained.root, means the checkout predates dfa727a208, which added the
+fifth type -- see section 11.
 
 runab prints a WARNING line if any copy-back got nothing -- those warnings are
 the fast way to see what failed.
@@ -397,25 +393,27 @@ Then the difference is in the checkout, not the branch. Please send:
 
 
 --------------------------------------------------------------------------------
- 11. Note for akio: the branch on GitHub is behind
+ 11. Branch state on GitHub
 --------------------------------------------------------------------------------
 
-As of 2026-10-06 the local fcstrk11 tree is 35 commits ahead of the last push to
-danniel/akio202607 (8959324ca7). Inside the paths this recipe needs, the whole
-difference is three modified files and one missing directory:
+Pushed 2026-10-06: danniel/akio202607 is at 86018ad849, identical to the
+fcstrk11 working tree, so a fresh clone now gets everything this recipe needs.
+Verified with
 
-    M  StRoot/StFttClusterMaker/StFttClusterMaker.cxx       e68280d976
-    M  StRoot/StFwdTrackMaker/include/Tracker/GenfitTrackResult.h  8ed247970f
-    M  StRoot/StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C     dfa727a208
-    A  fttDataWindow/  (43 per-run FTT time anchors)         9dcd089ecc
+    git ls-remote --heads origin akio202607
 
-All three edits are additive and none can break a build, so a clone from GitHub
-compiles. But two things in this recipe behave differently there, and BOTH look
-like failures when they are not:
+from inside the container -- that works over https, whereas `git fetch danniel'
+does not: SSH there fails host-key verification, there is no ssh-agent
+($SSH_AUTH_SOCK unset) and no ssh-askpass for the key passphrase. Push and fetch
+from a normal login shell OUTSIDE singularity.
 
-  - fttDataWindow does not exist, so step 3's count is 0 and the step-7 run uses
-    the global DB FTT time window rather than the per-run anchors;
-  - step 8 yields FOUR residual files, not five -- no FCSConstrained.
+Anyone who cloned before that push is missing four things, and the first two
+look like failures while being nothing of the sort:
 
-So: push before telling anyone the branch is current. After the push both
-discrepancies disappear and this file needs no caveats.
+    fttDataWindow/  (43 per-run FTT anchors)                     9dcd089ecc
+    StRoot/StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C      dfa727a208
+    StRoot/StFwdTrackMaker/include/Tracker/GenfitTrackResult.h   8ed247970f
+    StRoot/StFttClusterMaker/StFttClusterMaker.cxx               e68280d976
+
+so step 3 reports 0 anchors and step 8 writes four residual files instead of
+five. `git pull' in an existing checkout is enough; no re-clone needed.
