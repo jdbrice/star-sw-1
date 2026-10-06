@@ -29,7 +29,7 @@ a line with a trailing `# like this' gives you a pile of
      and leaves a HALF-CHECKED-OUT tree with NO .git/index at all. The symptom
      is deceptive: `git log --oneline -1' prints the right commit, but random
      top-level directories are simply absent -- StarDb, StarVMC, fttDataWindow,
-     script/, build_geom_misalign.C -- while `git ls-files' returns nothing and
+     script/, build_fgeom.C -- while `git ls-files' returns nothing and
      `git status' lists ~18000 deletions. It looks like a broken branch. It is a
      full disk. Step 1 checks quota first; step 2 cuts the checkout to ~16% of
      the tree and puts it on gpfs.
@@ -179,7 +179,7 @@ Every path the work needs:
     ls StarDb/Geometry
     ls StDb/idl | wc -l
     ls fttDataWindow | wc -l
-    ls build_geom_misalign.C script/runab
+    ls build_fgeom.C script/runab
 
 Expect ~470 files in StDb/idl and ~43 in fttDataWindow (the per-run FTT time
 anchors, added in 9dcd089ecc and on GitHub since the 2026-10-06 push).
@@ -266,20 +266,35 @@ Run from the TOP of the checkout, so St_db_Maker picks up the local
 StarDb/Geometry survey tables instead of the ones in $STAR:
 
     cd $TESTDIR
-    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","fGeom.root",1,"20211112.000003")' |& tee build_geom.log
+    root4star -l -b -q 'build_fgeom.C("dev2022sm","20211112.000003",1,0,"fGeom.dev2022sm.misalign1.sdt20211112.000003.root")' |& tee build_fgeom.run22.log
     ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
     ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
 
-Expect a ~380 kB file. "Writing output to geometry file [...]" means it worked;
-"Geometry file [...] already exists" means it did nothing.
+Expect a ~380 kB file, and a "=== build_fgeom done ===" block naming geomtag,
+sdt, misalign and fcsAir. "ALREADY EXISTS" means nothing was built.
 
-The older StRoot/StFwdTrackMaker/macro/build_geom.C does NOT reproduce this
-cache -- it hardcodes sdt20211016 and no misalign, i.e. no survey. Use
-build_geom_misalign.C.
+build_fgeom.C is the only builder; its arguments are
+(geomtag, sdt, misalign, fcsAir, output). fcsAir=1 replaces the FCS ECAL/HCAL
+material with air so Genfit can extrapolate to the shower max at z=725 without
+crossing calorimeter material; fcsAir=0 leaves it in. The Run22 productions
+used 0 and the Run24 ones used 1, which is why the command above passes 0 and
+the legacy output name -- it reproduces the cache those productions ran with.
 
-For Run24 the equivalent is fGeom.y2024.iter1.sdt20240622.root, passed as
-runab's 11th argument. The cache overrides the run's own DB timestamp, so the
-wrong one is silent, not an error.
+Run24 iteration 1, passed as runab's 11th argument:
+
+    root4star -l -b -q 'build_fgeom.C("y2024","20240622",1,1,"fGeom.y2024.iter1.sdt20240622.root")' |& tee build_fgeom.run24.log
+
+Always name a Run24 output explicitly. Three Run24 caches exist, all at
+sdt20240622 (.sdt / .seeded. / .iter1.), differing only in which
+pentOnStation.20231210.* was latest when each was built -- the timestamp does
+not identify the iteration. For anything new, omit the output argument and let
+it auto-name fGeom.<geomtag>.misalign<N>.<air|mat>.sdt<sdt>.root, so two caches
+that differ in content cannot share a name.
+
+The cache overrides the run's own DB timestamp, so the wrong one is silent, not
+an error. StRoot/StFwdTrackMaker/macro/build_geom.C reproduces neither cache
+(sdt20211016, no misalign); build_fgeom.C supersedes the former
+build_geom_misalign.C and build_geom_run24.C.
 
 
 --------------------------------------------------------------------------------
@@ -378,13 +393,13 @@ StMuDSTMaker, StFwdAlignmentMaker and StFwdResidualMaker after StFwdTrackMaker.
 After editing an AgML XML under StarVMC/Geometry, two commands, in this order:
 
     cons +StarVMC/StarGeometry
-    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","fGeom.root",1,"<sdt>")'
+    root4star -l -b -q 'build_fgeom.C("dev2022sm","<sdt>",1,<fcsAir>)'
 
 The second one is the one that bites. StFwdTrackMaker reads the fGeom.root
 CACHE, not the library, so an XML fix that is correctly compiled into
 StarGeometry.so still does nothing until the cache is rebuilt -- and the stale
-cache is silent, not an error. Use a new <sdt> suffix so the old cache is kept
-rather than skipped ("Geometry file [...] already exists" means it did nothing).
+cache is silent, not an error. Use a new <sdt> so the old cache is kept rather
+than skipped ("ALREADY EXISTS" means it did nothing).
 
 Do NOT bother with `cons +StarVMC/Geometry'. That directory holds the XMLs, two
 headers and macros; its only compilable source is dummy.cc, a single empty

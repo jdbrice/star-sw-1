@@ -57,11 +57,12 @@
 /fttDataWindow/
 # runab (the per-file job script) and the analysis macros.
 /script/
-# Build the fGeom.root caches. The older StRoot/.../macro/build_geom.C does not
-# reproduce either of them. Note the two differ in one respect: _misalign does
-# NOT replace the FCS calorimeter volumes with air, _run24 does.
-/build_geom_misalign.C
-/build_geom_run24.C
+# The single builder for the fGeom.root cache, for both Run22 and Run24, with
+# misalign and FCS-material as arguments. Supersedes build_geom_misalign.C and
+# build_geom_run24.C, which were two near-copies differing in FCS material with
+# nothing in either name to say so. StRoot/.../macro/build_geom.C reproduces
+# neither (sdt20211016, no misalign).
+/build_fgeom.C
 /.gitignore
 
 # --- deliberately NOT listed -------------------------------------------------

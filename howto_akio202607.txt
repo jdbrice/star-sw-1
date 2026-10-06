@@ -37,32 +37,40 @@ cons +StarVMC/StarGeometry |& tee cons.geom.log
 cons |& tee cons.log
 grep -niE "error|Error 1|undefined reference" cons.log | head -40
 
-*** Build fGeom.root for run22
+*** Build fGeom.root
 
-root4star -l -b -q 'build_geom_misalign.C("dev2022sm","fGeom.root",1,"20211112.000003")' |& tee build_geom.run22.log
+One macro for both runs: build_fgeom.C(geomtag, sdt, misalign, fcsAir, output).
+fcsAir=1 replaces the FCS ECAL/HCAL material with air so Genfit can extrapolate
+to z=725 without crossing it; fcsAir=0 leaves the material in. The Run22
+productions were built with 0 and the Run24 ones with 1, so the commands below
+pass the legacy output names to reproduce them exactly.
+
+run22:
+
+root4star -l -b -q 'build_fgeom.C("dev2022sm","20211112.000003",1,0,"fGeom.dev2022sm.misalign1.sdt20211112.000003.root")' |& tee build_fgeom.run22.log
 ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
 rm -f fGeom.root
 ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
 
-*** Build fGeom.root for run24
+run24, iteration 1:
 
-root4star -l -b -q 'build_geom_run24.C("y2024","fGeom.y2024.iter1.sdt20240622.root")' |& tee build_geom.run24.log
+root4star -l -b -q 'build_fgeom.C("y2024","20240622",1,1,"fGeom.y2024.iter1.sdt20240622.root")' |& tee build_fgeom.run24.log
 ls -la fGeom.y2024.iter1.sdt20240622.root
 
-Name the output explicitly: three Run24 caches exist, all at sdt20240622
+Name the Run24 output explicitly: three Run24 caches exist, all at sdt20240622
 (.sdt / .seeded. / .iter1.), differing only in which pentOnStation.20231210.*
-was latest when they were built. sdt20240622 today gives iteration 1.
+was latest when each was built. The timestamp does not identify the iteration.
+sdt20240622 today gives iteration 1.
 
-Do not symlink this one to fGeom.root. Pass it as runab's 11th argument
+Do not symlink the Run24 one to fGeom.root. Pass it as runab's 11th argument
 instead, so a Run22 run cannot silently pick up Run24 geometry:
 
     ... 0  1  1,0,0  2  -1,3  2,0,0  200  fGeom.y2024.iter1.sdt20240622.root
 
-NOTE: build_geom_misalign.C (run22, above) does NOT replace the FCS
-calorimeter volumes with air, build_geom_run24.C does. Measured in the caches:
-the run22 one keeps 7 Wcal + 8 Hcal volumes with material, the run24 one has
-all 15 as AIR_FCS. Both reproduce what the respective productions used, so
-leave them as they are unless you mean to change it.
+Omitting the output argument auto-names the file
+fGeom.<geomtag>.misalign<N>.<air|mat>.sdt<sdt>.root, which is what to use for
+anything new -- two caches that differ in content then cannot share a name.
+An existing output file is never overwritten; the macro says so and exits.
 
 *** Run Afterburner
 
