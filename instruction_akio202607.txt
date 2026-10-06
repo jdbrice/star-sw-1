@@ -1,0 +1,279 @@
+================================================================================
+ instruction_akio202607.txt
+ How to check out, compile and run branch akio202607 from scratch
+ (akio, 2026-10-06)
+================================================================================
+
+Purpose: a copy-paste recipe that takes an empty directory to a working
+afterburner run, so a compile failure can be reproduced and located.
+
+Everything below is one block of commands per step. Nothing here needs condor.
+
+
+--------------------------------------------------------------------------------
+ 0. READ THIS FIRST -- three things in the tree are stale or missing
+--------------------------------------------------------------------------------
+
+These are the most likely reasons a fresh checkout fails to build or run.
+None of them is a code problem; they are gaps in the instructions and in what
+is tracked.
+
+ (a) StRoot/StFwdTrackMaker/macro/README.md step 2 says
+
+         source StRoot/StFwdTrackMaker/macro/env.sh
+
+     THAT FILE DOES NOT EXIST in the tree. It has not existed for a long time
+     and it is not needed -- the normal STAR DEV environment is enough (step 1
+     below). Anyone following the README literally stops at this line.
+
+ (b) The same README's "Setup on RCF" tells you to make a SPARSE checkout
+     (StRoot/StFst*, StRoot/StFtt*, StRoot/StFcs*, StRoot/StFwdTrackMaker/,
+     StRoot/StBFChain/, StRoot/StEvent/, StDb, StarDb) and then
+
+         git checkout fwd-tracking
+
+     Both are wrong for this work:
+       - the branch is akio202607, not fwd-tracking;
+       - the sparse list is incomplete. akio202607 also changes
+         StRoot/StMuDSTMaker, StRoot/StPicoDstMaker, StRoot/StPicoEvent,
+         StRoot/StFwdResidualMaker, StRoot/StFwdAlignmentMaker,
+         StRoot/StFwdUtils and StarVMC/Geometry/StgmGeo/StgmGeo1.xml.
+         A sparse checkout from that list builds against the DEV versions of
+         the missing packages and gives exactly the confusing
+         "undefined symbol" / "0 rows written" failures.
+     Use a FULL checkout (step 2). Disk is not the constraint.
+
+ (c) fGeom.root (the cached TGeo geometry the tracker loads) is NOT in git.
+     A fresh clone has no fGeom.root and StFwdTrackMaker will fail to find
+     the geometry. Build it with step 5.
+
+
+--------------------------------------------------------------------------------
+ 1. Shell: get into the container with the DEV environment
+--------------------------------------------------------------------------------
+
+    singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 \
+        /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif csh
+
+    stardev
+    echo $STAR_HOST_SYS        # must print: sl73_x8664_gcc485
+    echo $STAR_LEVEL           # must print: dev
+    which cons root4star       # both must resolve
+
+If STAR_HOST_SYS is empty or different, stop -- nothing below will work.
+(`stardev` is already in akio's ~/.cshrc; run it explicitly if your dotfiles
+default to `pro`.)
+
+Note the container is entered with `csh`, not bash, and stay in csh: the build
+and the run scripts are csh, and $GROUP_DIR only ships csh setup
+($GROUP_DIR/star_login.csh, $GROUP_DIR/star.dev) -- there is no bash equivalent
+here.
+
+
+--------------------------------------------------------------------------------
+ 2. Full checkout of akio202607
+--------------------------------------------------------------------------------
+
+    mkdir -p ~/fcstrk_akio202607_test
+    cd ~/fcstrk_akio202607_test
+    git clone -b akio202607 git@github.com:jdbrice/star-sw-1.git .
+    git log --oneline -1
+
+If you have no ssh key on github, use
+
+    git clone -b akio202607 https://github.com/jdbrice/star-sw-1.git .
+
+Sanity check -- these must all be present after the clone:
+
+    ls StRoot/StFwdTrackMaker StRoot/StFwdResidualMaker StRoot/StFttDbMaker
+    ls StarVMC/Geometry/StgmGeo/StgmGeo1.xml
+    ls StarDb/Geometry                      # local DB tables, must be here
+    ls fttDataWindow | wc -l                # per-run FTT time anchors, ~43 files
+    ls build_geom_misalign.C script/runab
+
+Do NOT set core.sparseCheckout. See 0(b).
+
+
+--------------------------------------------------------------------------------
+ 3. Build
+--------------------------------------------------------------------------------
+
+From the TOP of the checkout:
+
+    cd ~/fcstrk_akio202607_test
+    cons |& tee cons.log
+
+This is the slow step -- a full tree, hours, so run it where the connection
+dropping will not kill it:
+
+    nohup csh -c 'cd ~/fcstrk_akio202607_test && cons' >& cons.log &
+
+A plain full `cons` is deliberate here. It is the actual test of "is this
+branch compilable", and it is also the only command that certainly rebuilds
+StarVMC/StarGeometry, which akio202607 needs because StgmGeo1.xml changed
+(the sTGC zplane int->float fix).
+
+
+--------------------------------------------------------------------------------
+ 4. Check the build
+--------------------------------------------------------------------------------
+
+    cd ~/fcstrk_akio202607_test
+    grep -niE "error|Error 1|undefined reference" cons.log | head -40
+
+    # the 41 libraries this work actually needs:
+    ls .$STAR_HOST_SYS/lib/*.so | sed 's|.*/||; s|^lib||; s|\.so$||' | sort -u | wc -l
+
+The build is good when the list contains at least all of:
+
+    StarGeometry  StEvent  StMuDSTMaker  StPicoEvent  StPicoDstMaker  StBFChain
+    StFcsDbMaker StFcsRawHitMaker StFcsWaveformFitMaker StFcsClusterMaker
+    StFcsPointMaker StFcsTrackMatchMaker StFcsDiLeptonMaker
+    StFstDbMaker StFstRawHitMaker StFstClusterMaker StFstHitMaker StFstUtil
+    StFttDbMaker StFttRawHitMaker StFttClusterMaker StFttHitCalibMaker
+    StFttClusterPointMaker StFttPointMaker StFttChargeSharingMaker
+    StFwdTrackMaker StFwdResidualMaker StFwdAlignmentMaker StFwdUtils
+
+If a compile fails, send back the 40 lines above plus the ~30 lines of cons.log
+around the FIRST error (not the last -- later errors are usually fallout).
+
+
+--------------------------------------------------------------------------------
+ 5. Build the geometry cache fGeom.root  (see 0(c))
+--------------------------------------------------------------------------------
+
+Run from the TOP of the checkout, so that St_db_Maker picks up the local
+StarDb/Geometry survey tables instead of the ones in $STAR:
+
+    cd ~/fcstrk_akio202607_test
+    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","fGeom.root",1,"20211112.000003")' \
+        |& tee build_geom.log
+
+    ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+    ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
+
+Expect a ~380 kB file. "Writing output to geometry file [...]" in the log means
+it worked; "Geometry file [...] already exists" means it did nothing.
+
+(The older StRoot/StFwdTrackMaker/macro/build_geom.C does NOT reproduce this
+cache -- it hardcodes sdt20211016 and no misalign, i.e. no survey. Use
+build_geom_misalign.C.)
+
+For Run24 instead of Run22, the equivalent is
+fGeom.y2024.iter1.sdt20240622.root, passed as runab's 11th argument. The cache
+overrides the run's own DB timestamp, so the wrong one is silent, not an error.
+
+
+--------------------------------------------------------------------------------
+ 6. Run the afterburner on one file
+--------------------------------------------------------------------------------
+
+This is the same script and the same arguments the 3701-job production campaign
+uses, just with 200 events instead of all of them.
+
+    cd ~/fcstrk_akio202607_test
+    mkdir -p ~/fcstrk_akio202607_test/out
+    mkdir -p ~/fcstrk_akio202607_test/scratch
+    setenv SCRATCH ~/fcstrk_akio202607_test/scratch
+
+    ./script/runab \
+      /star/data20/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/081/23081001 \
+      st_fwd_23081001_raw_0000002.MuDst.root \
+      ~/fcstrk_akio202607_test/out \
+      0  1  1,0,0  2  -1,3  2,0,0  200 \
+      |& tee runab.log
+
+Arguments, in order:
+    INPUTDIR  BASE  OUTDIR  ALIGN  MAGFIELD  GEOFIX  FTTTIMECUT  FTTWINDOW \
+    DIAG  MAXEVT  [GEOM]
+      ALIGN      0  no StFwdAlignmentMaker
+      MAGFIELD   1  take the field from the MuDst's own stamp
+      GEOFIX   1,0,0  applyFstGapFix only (correct for all current MuDst)
+      FTTTIMECUT 2  calibrated time
+      FTTWINDOW -1,3  dbcid ticks relative to the per-VMM anchor
+      DIAG   2,0,0  FST-blind diagnostic on Primary tracks, hits still added
+      MAXEVT   200
+      GEOM   omitted -> fGeom.root from step 5
+
+$SCRATCH must exist and should be EMPTY -- runab symlinks .$STAR_HOST_SYS and
+StRoot into it and copies the 180 MB MuDst there.
+
+
+--------------------------------------------------------------------------------
+ 7. What success looks like
+--------------------------------------------------------------------------------
+
+    ls -la ~/fcstrk_akio202607_test/out/
+    ls -la ~/fcstrk_akio202607_test/out/residual/
+    ls -la ~/fcstrk_akio202607_test/out/blinddiag/
+
+You should get:
+    out/st_fwd_23081001_raw_0000002.picoDst.root
+    out/residual/st_fwd_23081001_raw_0000002.FwdDetResidual_Global.root
+                                             ..._BLC.root
+                                             ..._Primary.root
+                                             ..._BLCVtx.root
+                                             ..._FCSConstrained.root
+    out/blinddiag/st_fwd_23081001_raw_0000002.fwd_blind_diag.root
+
+Five residual files, one per track type. runab prints a WARNING line if any
+copy-back got nothing -- those warnings are the fast way to see what failed.
+
+Also check the key-line log runab keeps:
+
+    cat $SCRATCH/fwd_key.log
+
+It must show StFttDb reading the DB tables and staging the per-run anchors.
+"falling back" there means StarDb or fttDataWindow was not picked up.
+
+Full root4star output is NOT kept by runab (it is enormous). To get it, run the
+macro by hand in $SCRATCH after runab has staged everything:
+
+    cd $SCRATCH
+    root4star -l -b -q 'fwd_afterburner_db.C("st_fwd_23081001_raw_0000002.MuDst.root",200,0,0,"",false,false,true,false,1,false,2,true,450.,-1,3,2,false,false)' \
+        |& tr -d '\000' >& full.log
+
+(root4star logs contain NUL bytes, so grep treats them as binary -- the
+`tr -d '\000'` is not optional.)
+
+
+--------------------------------------------------------------------------------
+ 8. The day-to-day rebuild loop (after the full cons has succeeded once)
+--------------------------------------------------------------------------------
+
+    cons +StFttDbMaker          # one package
+
+Rebuild order matters and failures are confusing. `cons +A` does NOT relink the
+packages that depend on A. Two symptoms, same cause:
+    - undefined symbol at dlopen time  -> rebuild the DEPENDENT package too
+    - a maker silently doing nothing   -> stale ABI, same thing
+So after editing a shared header, rebuild the dependents: StFwdTrackMaker after
+StMuDSTMaker, StFwdAlignmentMaker and StFwdResidualMaker after StFwdTrackMaker.
+After editing StarVMC/Geometry/*.xml, rebuild StarGeometry AND redo step 5.
+
+
+--------------------------------------------------------------------------------
+ 9. If this works here but not in your directory
+--------------------------------------------------------------------------------
+
+Then the difference is in the checkout, not the branch. Please send:
+
+    pwd
+    git log --oneline -3
+    git status --short | head -40
+    git config core.sparseCheckout        # must be empty or false
+    echo $STAR_HOST_SYS $STAR_LEVEL
+    # first error in the build:
+    grep -niE "error|Error 1|undefined reference" cons.log | head -20
+
+Note for akio: as of 2026-10-06 the local fcstrk11 tree is 35 commits ahead of
+the last push to danniel/akio202607 (8959324ca7). Three of them touch code:
+
+    dfa727a208  afterburner: write FCSTRK residuals too
+    e68280d976  gate StFttClusterMaker logs on mDebug
+    8ed247970f  GenfitTrackResult: populate mNdf
+
+All three are additive and none of them can break a build, so a clone from
+GitHub should still compile -- but push before telling anyone the branch is
+current, otherwise step 7 produces four residual files instead of five
+(FCSConstrained comes from dfa727a208).
