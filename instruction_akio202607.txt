@@ -266,27 +266,29 @@ Run from the TOP of the checkout, so St_db_Maker picks up the local
 StarDb/Geometry survey tables instead of the ones in $STAR:
 
     cd $TESTDIR
-    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1,0)' |& tee build_geom.run22.log
-    ls -la fGeom.dev2022sm.misalign1.fcs0.sdt20211112.000003.root
-    ln -s fGeom.dev2022sm.misalign1.fcs0.sdt20211112.000003.root fGeom.root
+    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)' |& tee build_geom.run22.log
+    ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+    ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
 
 Expect a ~380 kB file and a "=== build_geom_misalign done ===" block naming
-geomtag, sdt, misalign and fcsAir. "ALREADY EXISTS" means nothing was built.
+geomtag, sdt, misalign and how many FCS volumes were replaced with air (15).
+"ALREADY EXISTS" means nothing was built.
 
 build_geom_misalign.C is the only builder. Its arguments are
-(geomtag, sdt, misalign, fcsAir, label), and the output name is always
-CONSTRUCTED from them, never passed in:
+(geomtag, sdt, misalign, label), and the output name is always CONSTRUCTED from
+them, never passed in:
 
-    fGeom.<geomtag>.misalign<N>.fcs<F>.sdt<sdt>[.<label>].root
+    fGeom.<geomtag>.misalign<N>.sdt<sdt>[.<label>].root
 
-fcsAir=1 replaces the FCS ECAL/HCAL material with air so Genfit can extrapolate
-to the shower max at z=725 without crossing calorimeter material; fcsAir=0
-leaves it in. The Run22 productions used 0 and the Run24 ones used 1 -- that
-asymmetry is real, which is why the command above passes 0.
+The FCS ECAL/HCAL volumes are always replaced with air, so Genfit can
+extrapolate to the shower max at z=725 without crossing calorimeter material.
+It is not an option: GenFit never consults the material anyway, because
+material effects are off in every run (TrackFitter.h:118, and nothing in the
+tree sets TrackFitter:MaterialEffects).
 
 Run24 iteration 1, then passed as runab's 11th argument:
 
-    root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,1,"iter1")' |& tee build_geom.run24.log
+    root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,"iter1")' |& tee build_geom.run24.log
 
 Always pass a label for Run24. sdt does NOT identify the iteration: three Run24
 caches exist, all at sdt20240622, differing only in which
@@ -299,10 +301,11 @@ much older macro that reproduces neither cache (sdt20211016, no misalign, no
 arguments) -- do not confuse the two. build_geom_misalign.C also supersedes the
 former build_geom_run24.C.
 
-The caches already on disk predate this naming and keep their old names
-(fGeom.dev2022sm.misalign1.sdt20211112.000003.root and
-fGeom.y2024.iter1.sdt20240622.root). The content is the same, so there is no
-reason to rebuild them.
+The Run22 name is the same one already on disk, differing only in the FCS
+material, which GenFit never reads -- so either file gives the same tracking and
+there is no reason to rebuild it. The Run24 caches on disk
+(fGeom.y2024.iter1.sdt20240622.root) predate the label and need no rebuild
+either.
 
 
 --------------------------------------------------------------------------------
@@ -401,7 +404,7 @@ StMuDSTMaker, StFwdAlignmentMaker and StFwdResidualMaker after StFwdTrackMaker.
 After editing an AgML XML under StarVMC/Geometry, two commands, in this order:
 
     cons +StarVMC/StarGeometry
-    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","<sdt>",1,<fcsAir>)'
+    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","<sdt>",1)'
 
 The second one is the one that bites. StFwdTrackMaker reads the fGeom.root
 CACHE, not the library, so an XML fix that is correctly compiled into

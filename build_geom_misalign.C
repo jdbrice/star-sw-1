@@ -17,9 +17,20 @@
 //
 // So every Run22 cache was built with FCS material present and every Run24
 // cache without it -- measured with TGeoManager::Import: the Run22 cache keeps
-// 7 WcalGeo + 8 HcalGeo volumes, the Run24 cache has all 15 as AIR_FCS. That
-// difference sat inside the Run22-vs-Run24 comparison with nothing naming it.
-// Here it is the fcsAir argument, and it goes into the output filename.
+// 7 WcalGeo + 8 HcalGeo volumes, the Run24 cache has all 15 as AIR_FCS.
+//
+// That difference turns out not to matter, and is not an option here: the FCS
+// volumes are ALWAYS replaced with air. GenFit never consults the material,
+// because material effects are off in every run --
+// TrackFitter.h:118 does setNoEffects( !get("TrackFitter:MaterialEffects",
+// false) ), nothing in the tree sets that key, and every job logs "Turning OFF
+// GenFit Material Effects in stepper". (The one setter,
+// StFwdTrackMaker::setFittingMaterialEffects, is never called, and writes
+// "TrackFitter:materialEffects" with a lowercase m while the reader asks for
+// an uppercase M -- FwdTrackerConfig::canonize does not fold case, so it would
+// not take effect anyway.) Air is simply the right content for a tracking-only
+// cache; the old Run22 caches kept their material by accident of which macro
+// was used.
 //
 // ARGUMENTS
 //   geomtag   AGML tag passed to StarGeometry::Construct.
@@ -29,12 +40,6 @@
 //             StarDb/Geometry/{fst,stgc} with beginTime <= sdt wins.
 //   misalign  1 = add the bfc "misalign" option so AgPosition reads the survey
 //             tables. 0 = ideal geometry, tables never read.
-//   fcsAir    1 = replace the FCS ECAL/HCAL materials with air, so Genfit can
-//             extrapolate to the shower max at z=725 cm without crossing
-//             calorimeter material. The field is already zero at |z|>450 cm
-//             (STARField.h), so zero-material + zero-field is straight-line
-//             propagation, which Genfit handles trivially.
-//             0 = leave the calorimeter material in the geometry.
 //   label     Optional extra token for the filename ONLY. Use it for anything
 //             the other arguments cannot express -- above all WHICH ITERATION
 //             of the DB tables you got, because sdt does not say. sdt20240622
@@ -45,20 +50,21 @@
 //
 // OUTPUT NAME is always constructed from the arguments, never passed in:
 //
-//     fGeom.<geomtag>.misalign<N>.fcs<F>.sdt<sdt>[.<label>].root
+//     fGeom.<geomtag>.misalign<N>.sdt<sdt>[.<label>].root
 //
-// e.g. Run22 as every Run22 production used it (NO air):
-//        build_geom_misalign.C("dev2022sm","20211112.000003",1,0)
-//        -> fGeom.dev2022sm.misalign1.fcs0.sdt20211112.000003.root
+// e.g. Run22:
+//        build_geom_misalign.C("dev2022sm","20211112.000003",1)
+//        -> fGeom.dev2022sm.misalign1.sdt20211112.000003.root
 //
 //      Run24 iteration 1, as the run24align/run24pickup campaigns used it:
-//        build_geom_misalign.C("y2024","20240622",1,1,"iter1")
-//        -> fGeom.y2024.misalign1.fcs1.sdt20240622.iter1.root
+//        build_geom_misalign.C("y2024","20240622",1,"iter1")
+//        -> fGeom.y2024.misalign1.sdt20240622.iter1.root
 //
-// The caches already on disk predate this naming and keep their old names
-// (fGeom.dev2022sm.misalign1.sdt20211112.000003.root,
-//  fGeom.y2024.iter1.sdt20240622.root). Content is the same; only the name
-// differs, so there is no need to rebuild them.
+// The Run22 name is the same one already on disk, whose only difference is the
+// FCS material -- which GenFit never reads, so either file gives the same
+// tracking and there is no reason to rebuild it. The Run24 caches on disk
+// (fGeom.y2024.iter1.sdt20240622.root) predate this naming and also need no
+// rebuild.
 //
 // An existing output file is NEVER overwritten -- the macro reports it and
 // exits. Delete it first, or change an argument.
@@ -66,7 +72,6 @@
 void build_geom_misalign( TString     geomtag  = "dev2022sm",
                           const char* sdt      = "20211112.000003",
                           int         misalign = 1,
-                          int         fcsAir   = 1,
                           TString     label    = "" )
 {
     gSystem->Load( "libStarRoot.so" );
@@ -85,8 +90,8 @@ void build_geom_misalign( TString     geomtag  = "dev2022sm",
         return;
     }
 
-    TString output = Form( "fGeom.%s.misalign%1d.fcs%1d.sdt%s",
-                           geomtag.Data(), misalign, fcsAir, sdt );
+    TString output = Form( "fGeom.%s.misalign%1d.sdt%s",
+                           geomtag.Data(), misalign, sdt );
     if ( label != "" ) { output += "."; output += label; }
     output += ".root";
 
@@ -132,22 +137,25 @@ void build_geom_misalign( TString     geomtag  = "dev2022sm",
     AgModule::SetStacker( new StarTGeoStacker() );
     AgPosition::SetDebug(2);
     cout << "Building geometry for tag [" << geomtag.Data() << "] sdt" << sdt
-         << " misalign=" << misalign << " fcsAir=" << fcsAir << endl;
+         << " misalign=" << misalign << endl;
     StarGeometry::Construct( geomtag.Data() );
 
+    // Replace the FCS ECAL (WcalGeo1_*) and HCAL (HcalGeo1_*) materials with air
+    // so Genfit can extrapolate to the shower max at z=725 cm without crossing
+    // calorimeter material. The field is already zero at |z|>450 cm
+    // (STARField.h), so zero-material + zero-field is straight-line
+    // propagation, which Genfit handles trivially. Always done -- see header.
+    TGeoMaterial *airMat = new TGeoMaterial("AIR_FCS", 14.61, 7.3, 1.205e-3);
+    TGeoMedium   *airMed = new TGeoMedium("AIR_FCS",
+                               gGeoManager->GetListOfMedia()->GetEntries()+1, airMat);
+    TObjArray *vols = gGeoManager->GetListOfVolumes();
     int nReplaced = 0;
-    if ( fcsAir != 0 ) {
-        TGeoMaterial *airMat = new TGeoMaterial("AIR_FCS", 14.61, 7.3, 1.205e-3);
-        TGeoMedium   *airMed = new TGeoMedium("AIR_FCS",
-                                   gGeoManager->GetListOfMedia()->GetEntries()+1, airMat);
-        TObjArray *vols = gGeoManager->GetListOfVolumes();
-        for ( int iv = 0; iv < vols->GetEntries(); iv++ ) {
-            TGeoVolume *v = (TGeoVolume*)vols->At(iv);
-            TString mname = v->GetMaterial()->GetName();
-            if ( mname.BeginsWith("WcalGeo") || mname.BeginsWith("HcalGeo") ) {
-                v->SetMedium( airMed );
-                nReplaced++;
-            }
+    for ( int iv = 0; iv < vols->GetEntries(); iv++ ) {
+        TGeoVolume *v = (TGeoVolume*)vols->At(iv);
+        TString mname = v->GetMaterial()->GetName();
+        if ( mname.BeginsWith("WcalGeo") || mname.BeginsWith("HcalGeo") ) {
+            v->SetMedium( airMed );
+            nReplaced++;
         }
     }
 
@@ -160,10 +168,9 @@ void build_geom_misalign( TString     geomtag  = "dev2022sm",
     cout << "  geomtag    " << geomtag.Data() << endl;
     cout << "  sdt        " << sdt << endl;
     cout << "  misalign   " << misalign << (misalign ? "  (survey tables read)" : "  (ideal geometry)") << endl;
-    cout << "  fcsAir     " << fcsAir   << "  (" << nReplaced
-         << " FCS calorimeter volumes replaced with air)" << endl;
-    if ( fcsAir != 0 && nReplaced == 0 ) {
-        cout << "  WARNING: fcsAir was requested but NOTHING was replaced --" << endl;
-        cout << "  the geomtag probably has no FCS. Check before using this cache." << endl;
+    cout << "  FCS air    " << nReplaced << " calorimeter volumes replaced with air" << endl;
+    if ( nReplaced == 0 ) {
+        cout << "  WARNING: NOTHING was replaced -- the geomtag probably has no" << endl;
+        cout << "  FCS. Check before using this cache." << endl;
     }
 }

@@ -39,45 +39,46 @@ grep -niE "error|Error 1|undefined reference" cons.log | head -40
 
 *** Build fGeom.root
 
-One macro for both runs:
+One macro, for both runs:
 
-    build_geom_misalign.C(geomtag, sdt, misalign, fcsAir, label)
+    build_geom_misalign.C(geomtag, sdt, misalign, label)
 
-fcsAir=1 replaces the FCS ECAL/HCAL material with air so Genfit can extrapolate
-to z=725 without crossing it; fcsAir=0 leaves the material in. The Run22
-productions were built with 0 and the Run24 ones with 1 -- that asymmetry is
-real, so the commands below keep it.
+The output name is built from the arguments, never passed in:
 
-The output name is always built from the arguments, never passed in:
+    fGeom.<geomtag>.misalign<N>.sdt<sdt>[.<label>].root
 
-    fGeom.<geomtag>.misalign<N>.fcs<F>.sdt<sdt>[.<label>].root
+An existing output file is never overwritten -- the macro says ALREADY EXISTS
+and stops. Run it from the TOP of the checkout, so St_db_Maker picks up the
+local StarDb/Geometry survey tables rather than the ones in $STAR.
 
 run22:
 
-root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1,0)' |& tee build_geom.run22.log
-ls -la fGeom.dev2022sm.misalign1.fcs0.sdt20211112.000003.root
+root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)' |& tee build_geom.run22.log
+ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
 rm -f fGeom.root
-ln -s fGeom.dev2022sm.misalign1.fcs0.sdt20211112.000003.root fGeom.root
+ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
 
 run24, iteration 1:
 
-root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,1,"iter1")' |& tee build_geom.run24.log
-ls -la fGeom.y2024.misalign1.fcs1.sdt20240622.iter1.root
+root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,"iter1")' |& tee build_geom.run24.log
+ls -la fGeom.y2024.misalign1.sdt20240622.iter1.root
 
-Always pass a label for Run24. sdt does NOT identify the iteration: three Run24
+Expect ~380 kB and a "=== build_geom_misalign done ===" block naming geomtag,
+sdt, misalign and how many FCS volumes were replaced with air (15).
+
+Always pass a label for run24. sdt does NOT identify the iteration: three run24
 caches exist, all at sdt20240622, differing only in which
-pentOnStation.20231210.* was latest when each was built. sdt20240622 today gives
-iteration 1.
+pentOnStation.20231210.* was latest when each was built. sdt20240622 today
+gives iteration 1.
 
-Do not symlink the Run24 one to fGeom.root. Pass it as runab's 11th argument
-instead, so a Run22 run cannot silently pick up Run24 geometry:
+Do not symlink the run24 cache to fGeom.root. Pass it as runab's 11th argument,
+so a run22 run cannot silently pick it up:
 
-    ... 0  1  1,0,0  2  -1,3  2,0,0  200  fGeom.y2024.misalign1.fcs1.sdt20240622.iter1.root
+    ... 0  1  1,0,0  2  -1,3  2,0,0  200  fGeom.y2024.misalign1.sdt20240622.iter1.root
 
-An existing output file is never overwritten; the macro says so and exits.
-The caches already on disk predate this naming and keep their old names
-(fGeom.dev2022sm.misalign1.sdt20211112.000003.root,
-fGeom.y2024.iter1.sdt20240622.root) -- same content, so do not rebuild them.
+Note StRoot/StFwdTrackMaker/macro/build_geom.C is a DIFFERENT, much older macro
+that reproduces neither cache (sdt20211016, no misalign, no arguments). Do not
+confuse the two.
 
 *** Run Afterburner
 
