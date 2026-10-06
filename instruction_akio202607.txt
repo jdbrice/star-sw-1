@@ -29,7 +29,7 @@ a line with a trailing `# like this' gives you a pile of
      and leaves a HALF-CHECKED-OUT tree with NO .git/index at all. The symptom
      is deceptive: `git log --oneline -1' prints the right commit, but random
      top-level directories are simply absent -- StarDb, StarVMC, fttDataWindow,
-     script/, build_fgeom.C -- while `git ls-files' returns nothing and
+     script/, build_geom_misalign.C -- while `git ls-files' returns nothing and
      `git status' lists ~18000 deletions. It looks like a broken branch. It is a
      full disk. Step 1 checks quota first; step 2 cuts the checkout to ~16% of
      the tree and puts it on gpfs.
@@ -179,7 +179,7 @@ Every path the work needs:
     ls StarDb/Geometry
     ls StDb/idl | wc -l
     ls fttDataWindow | wc -l
-    ls build_fgeom.C script/runab
+    ls build_geom_misalign.C script/runab
 
 Expect ~470 files in StDb/idl and ~43 in fttDataWindow (the per-run FTT time
 anchors, added in 9dcd089ecc and on GitHub since the 2026-10-06 push).
@@ -266,35 +266,43 @@ Run from the TOP of the checkout, so St_db_Maker picks up the local
 StarDb/Geometry survey tables instead of the ones in $STAR:
 
     cd $TESTDIR
-    root4star -l -b -q 'build_fgeom.C("dev2022sm","20211112.000003",1,0,"fGeom.dev2022sm.misalign1.sdt20211112.000003.root")' |& tee build_fgeom.run22.log
-    ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
-    ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
+    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1,0)' |& tee build_geom.run22.log
+    ls -la fGeom.dev2022sm.misalign1.fcs0.sdt20211112.000003.root
+    ln -s fGeom.dev2022sm.misalign1.fcs0.sdt20211112.000003.root fGeom.root
 
-Expect a ~380 kB file, and a "=== build_fgeom done ===" block naming geomtag,
-sdt, misalign and fcsAir. "ALREADY EXISTS" means nothing was built.
+Expect a ~380 kB file and a "=== build_geom_misalign done ===" block naming
+geomtag, sdt, misalign and fcsAir. "ALREADY EXISTS" means nothing was built.
 
-build_fgeom.C is the only builder; its arguments are
-(geomtag, sdt, misalign, fcsAir, output). fcsAir=1 replaces the FCS ECAL/HCAL
-material with air so Genfit can extrapolate to the shower max at z=725 without
-crossing calorimeter material; fcsAir=0 leaves it in. The Run22 productions
-used 0 and the Run24 ones used 1, which is why the command above passes 0 and
-the legacy output name -- it reproduces the cache those productions ran with.
+build_geom_misalign.C is the only builder. Its arguments are
+(geomtag, sdt, misalign, fcsAir, label), and the output name is always
+CONSTRUCTED from them, never passed in:
 
-Run24 iteration 1, passed as runab's 11th argument:
+    fGeom.<geomtag>.misalign<N>.fcs<F>.sdt<sdt>[.<label>].root
 
-    root4star -l -b -q 'build_fgeom.C("y2024","20240622",1,1,"fGeom.y2024.iter1.sdt20240622.root")' |& tee build_fgeom.run24.log
+fcsAir=1 replaces the FCS ECAL/HCAL material with air so Genfit can extrapolate
+to the shower max at z=725 without crossing calorimeter material; fcsAir=0
+leaves it in. The Run22 productions used 0 and the Run24 ones used 1 -- that
+asymmetry is real, which is why the command above passes 0.
 
-Always name a Run24 output explicitly. Three Run24 caches exist, all at
-sdt20240622 (.sdt / .seeded. / .iter1.), differing only in which
-pentOnStation.20231210.* was latest when each was built -- the timestamp does
-not identify the iteration. For anything new, omit the output argument and let
-it auto-name fGeom.<geomtag>.misalign<N>.<air|mat>.sdt<sdt>.root, so two caches
-that differ in content cannot share a name.
+Run24 iteration 1, then passed as runab's 11th argument:
+
+    root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,1,"iter1")' |& tee build_geom.run24.log
+
+Always pass a label for Run24. sdt does NOT identify the iteration: three Run24
+caches exist, all at sdt20240622, differing only in which
+pentOnStation.20231210.* was latest when each was built. sdt20240622 today gives
+iteration 1.
 
 The cache overrides the run's own DB timestamp, so the wrong one is silent, not
-an error. StRoot/StFwdTrackMaker/macro/build_geom.C reproduces neither cache
-(sdt20211016, no misalign); build_fgeom.C supersedes the former
-build_geom_misalign.C and build_geom_run24.C.
+an error. Note that StRoot/StFwdTrackMaker/macro/build_geom.C is a DIFFERENT,
+much older macro that reproduces neither cache (sdt20211016, no misalign, no
+arguments) -- do not confuse the two. build_geom_misalign.C also supersedes the
+former build_geom_run24.C.
+
+The caches already on disk predate this naming and keep their old names
+(fGeom.dev2022sm.misalign1.sdt20211112.000003.root and
+fGeom.y2024.iter1.sdt20240622.root). The content is the same, so there is no
+reason to rebuild them.
 
 
 --------------------------------------------------------------------------------
@@ -393,7 +401,7 @@ StMuDSTMaker, StFwdAlignmentMaker and StFwdResidualMaker after StFwdTrackMaker.
 After editing an AgML XML under StarVMC/Geometry, two commands, in this order:
 
     cons +StarVMC/StarGeometry
-    root4star -l -b -q 'build_fgeom.C("dev2022sm","<sdt>",1,<fcsAir>)'
+    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","<sdt>",1,<fcsAir>)'
 
 The second one is the one that bites. StFwdTrackMaker reads the fGeom.root
 CACHE, not the library, so an XML fix that is correctly compiled into

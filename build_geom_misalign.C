@@ -1,15 +1,19 @@
 //usr/bin/env root4star -l -b -q  $0; exit $?
 // that is a valid shebang to run script as executable
 
-// build_fgeom.C -- THE builder for the StFwdTrackMaker geometry cache.
+// build_geom_misalign.C -- THE builder for the StFwdTrackMaker geometry cache.
 //
-// Supersedes build_geom_misalign.C and build_geom_run24.C, which were two
-// near-copies that differed in TWO ways neither filename recorded:
+// Not to be confused with StRoot/StFwdTrackMaker/macro/build_geom.C, which
+// reproduces none of our caches: it hardcodes sdt20211016, has no misalign, and
+// takes no arguments.
 //
-//   build_geom_misalign.C   misalign configurable, FCS calorimeter material
-//                           LEFT IN PLACE, St_Survey_Table.h pre-parsed
-//   build_geom_run24.C      misalign + sdt20240622 hardcoded, FCS calorimeter
-//                           material REPLACED WITH AIR, no pre-parse
+// This supersedes the former build_geom_run24.C, which was a near-copy of this
+// file differing in TWO ways neither filename recorded:
+//
+//   this file (before)   misalign configurable, FCS calorimeter material LEFT
+//                        IN PLACE, St_Survey_Table.h pre-parsed
+//   build_geom_run24.C   misalign and sdt20240622 hardcoded, FCS calorimeter
+//                        material REPLACED WITH AIR, no pre-parse
 //
 // So every Run22 cache was built with FCS material present and every Run24
 // cache without it -- measured with TGeoManager::Import: the Run22 cache keeps
@@ -17,47 +21,53 @@
 // difference sat inside the Run22-vs-Run24 comparison with nothing naming it.
 // Here it is the fcsAir argument, and it goes into the output filename.
 //
-// Arguments
+// ARGUMENTS
 //   geomtag   AGML tag passed to StarGeometry::Construct.
 //               dev2022sm  Run22        y2024  Run24
 //   sdt       DB timestamp for the bfc "sdt" option, YYYYMMDD[.HHMMSS]. This
 //             selects the survey/misalign tables: the latest entry in
-//             StarDb/Geometry/{fst,stgc} with beginTime <= sdt wins. It does
-//             NOT identify which iteration you get -- sdt20240622 picks
-//             pentOnStation.20231210.000001 today and picked .000000 before
-//             that table was added. Use the output name to record the
-//             iteration, or you cannot tell two caches apart.
+//             StarDb/Geometry/{fst,stgc} with beginTime <= sdt wins.
 //   misalign  1 = add the bfc "misalign" option so AgPosition reads the survey
 //             tables. 0 = ideal geometry, tables never read.
-//   fcsAir    1 = replace the FCS ECAL/HCAL materials with air so Genfit can
+//   fcsAir    1 = replace the FCS ECAL/HCAL materials with air, so Genfit can
 //             extrapolate to the shower max at z=725 cm without crossing
 //             calorimeter material. The field is already zero at |z|>450 cm
 //             (STARField.h), so zero-material + zero-field is straight-line
 //             propagation, which Genfit handles trivially.
 //             0 = leave the calorimeter material in the geometry.
-//   output    "" (default) auto-names the file from everything above, so two
-//             caches that differ in content cannot share a name:
-//                 fGeom.<geomtag>.misalign<N>.<air|mat>.sdt<sdt>.root
-//             Pass it explicitly to reproduce a legacy name exactly.
+//   label     Optional extra token for the filename ONLY. Use it for anything
+//             the other arguments cannot express -- above all WHICH ITERATION
+//             of the DB tables you got, because sdt does not say. sdt20240622
+//             picks pentOnStation.20231210.000001 today and picked .000000
+//             before that row was added, so two caches built from the same
+//             arguments on different days are different geometries. Pass
+//             "iter1", "seeded", etc.
 //
-// To reproduce the caches already in use, pass the legacy name:
+// OUTPUT NAME is always constructed from the arguments, never passed in:
 //
-//   Run22, as every Run22 production used it (NO air):
-//     build_fgeom.C("dev2022sm","20211112.000003",1,0,
-//                   "fGeom.dev2022sm.misalign1.sdt20211112.000003.root")
+//     fGeom.<geomtag>.misalign<N>.fcs<F>.sdt<sdt>[.<label>].root
 //
-//   Run24 iteration 1, as the run24align/run24pickup campaigns used it (air):
-//     build_fgeom.C("y2024","20240622",1,1,
-//                   "fGeom.y2024.iter1.sdt20240622.root")
+// e.g. Run22 as every Run22 production used it (NO air):
+//        build_geom_misalign.C("dev2022sm","20211112.000003",1,0)
+//        -> fGeom.dev2022sm.misalign1.fcs0.sdt20211112.000003.root
+//
+//      Run24 iteration 1, as the run24align/run24pickup campaigns used it:
+//        build_geom_misalign.C("y2024","20240622",1,1,"iter1")
+//        -> fGeom.y2024.misalign1.fcs1.sdt20240622.iter1.root
+//
+// The caches already on disk predate this naming and keep their old names
+// (fGeom.dev2022sm.misalign1.sdt20211112.000003.root,
+//  fGeom.y2024.iter1.sdt20240622.root). Content is the same; only the name
+// differs, so there is no need to rebuild them.
 //
 // An existing output file is NEVER overwritten -- the macro reports it and
-// exits. Delete it first, or pass a new name.
+// exits. Delete it first, or change an argument.
 
-void build_fgeom( TString     geomtag  = "dev2022sm",
-                  const char* sdt      = "20211112.000003",
-                  int         misalign = 1,
-                  int         fcsAir   = 1,
-                  TString     output   = "" )
+void build_geom_misalign( TString     geomtag  = "dev2022sm",
+                          const char* sdt      = "20211112.000003",
+                          int         misalign = 1,
+                          int         fcsAir   = 1,
+                          TString     label    = "" )
 {
     gSystem->Load( "libStarRoot.so" );
 
@@ -75,16 +85,16 @@ void build_fgeom( TString     geomtag  = "dev2022sm",
         return;
     }
 
-    if ( output == "" ) {
-        output = Form( "fGeom.%s.misalign%1d.%s.sdt%s.root",
-                       geomtag.Data(), misalign, (fcsAir ? "air" : "mat"), sdt );
-    }
+    TString output = Form( "fGeom.%s.misalign%1d.fcs%1d.sdt%s",
+                           geomtag.Data(), misalign, fcsAir, sdt );
+    if ( label != "" ) { output += "."; output += label; }
+    output += ".root";
 
     // Check this BEFORE constructing anything -- the build takes minutes.
     TFile *exists = TFile::Open( output.Data() );
     if ( 0 != exists ) {
-        cout << "=== build_fgeom: [" << output.Data() << "] ALREADY EXISTS ===" << endl;
-        cout << "=== nothing was built. delete it or pass a different output name. ===" << endl;
+        cout << "=== [" << output.Data() << "] ALREADY EXISTS ===" << endl;
+        cout << "=== nothing was built. delete it, or change an argument. ===" << endl;
         delete exists;
         return;
     }
@@ -145,7 +155,7 @@ void build_fgeom( TString     geomtag  = "dev2022sm",
     gGeoManager->Export( output.Data() );
 
     cout << endl;
-    cout << "=== build_fgeom done ===" << endl;
+    cout << "=== build_geom_misalign done ===" << endl;
     cout << "  output     " << output.Data() << endl;
     cout << "  geomtag    " << geomtag.Data() << endl;
     cout << "  sdt        " << sdt << endl;

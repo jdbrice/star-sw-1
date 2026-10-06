@@ -58,11 +58,11 @@
 # runab (the per-file job script) and the analysis macros.
 /script/
 # The single builder for the fGeom.root cache, for both Run22 and Run24, with
-# misalign and FCS-material as arguments. Supersedes build_geom_misalign.C and
-# build_geom_run24.C, which were two near-copies differing in FCS material with
-# nothing in either name to say so. StRoot/.../macro/build_geom.C reproduces
-# neither (sdt20211016, no misalign).
-/build_fgeom.C
+# misalign and FCS-material as arguments; it supersedes the former
+# build_geom_run24.C, a near-copy differing in FCS material with nothing in
+# either name to say so. Not the same as StRoot/.../macro/build_geom.C, which
+# reproduces neither cache (sdt20211016, no misalign, no arguments).
+/build_geom_misalign.C
 /.gitignore
 
 # --- deliberately NOT listed -------------------------------------------------
