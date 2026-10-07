@@ -201,42 +201,13 @@ what it depends on.
     #810 StFttClusterPointMaker and its BFC option   6 files, +759
     #811 fwd afterburner macro                       1 file,  +401  (needs #810)
 
-4. QA AND DEBUGGING TOOLS AND USER ANALYSIS -- PROBABLY NOT FOR THE LIBRARY
+4. QA, DEBUGGING TOOLS, USER ANALYSIS TOOLS -- WHERE SHOULD THEY LIVE?
 
-  Three of the packages here are diagnostics makers of Akio's, not reconstruction. 
-  Nothing in BFC needs them, and nothing in a production chain calls them:
-
-    StFwdResidualMaker        2 files,  677 lines   FST/FTT alignment residuals
-    StFttChargeSharingMaker   2 files,  469 lines   sTGC charge-sharing studies
-    StFwdAlignmentMaker       2 files,  340 lines   unbiased hit-removed residuals
-
-  Four more are USER ANALYSIS rather than QA, and are definitely not core
-  software. They may want a new home rather than a place in the library:
-
-    StFwdUtils/StFwdJPsiMaker        J/psi analysis
-    StFwdUtils/StFwdFitQAMaker       track-fit QA
-    StFwdUtils/StFwdAnalysisMaker    general fwd analysis
-    StFcsDiLeptonMaker               FCS dilepton analysis
-
-  Checked, so the claim is not just an impression:
-    - none of the four is a BFC chain option (0 matches in BigFullChain.h), so
-      no production chain can call them;
-    - StFwdAnalysisMaker and StFwdJPsiMaker are referenced only from macros
-      under StRoot/StFwdTrackMaker/macro/;
-    - StFwdFitQAMaker IS constructed in the live afterburner macro
-      fwd_afterburner_db.C, but behind "if (runFitQa && runFwdChain)" with
-      runFitQa = false, and the 3701-job campaign produced zero .FwdFitQA.root
-      files. Referenced, never enabled;
-    - StFcsDiLeptonMaker is referenced only by two simulation macros,
-      macro/sim/jpsi_ana.C and macro/sim/runSimBfc.C. For data it has been
-      superseded by script/picoDilepton.C running on picoDst, and we no longer
-      do the MuDst-based dilepton analysis at all. So its remaining use is the
-      MC path only -- worth deciding whether even that should move.
-
-  There are some QA makers of Daniel's as well, which is not listed here.
-  We'll need a good place to put those requiring less critical reviews.
-  We need to talk with Jerome and ask about lessons we learned from
-  StSpinPool :-)
+  None of this is reconstruction and none of it belongs in the STAR library, but
+  it does need a home: Akio's diagnostics makers, the QA makers of Daniel's that
+  the afterburner calls, and our picoDst analysis tools. A Gitea private repo or
+  a separate branch both work. Worth asking Jerome, and asking what the lessons
+  from StSpinPool were :-)
 
 5. OPEN PULL REQUESTS to "DEV" BY OTHERS -- THEIRS TO REVIVE
 

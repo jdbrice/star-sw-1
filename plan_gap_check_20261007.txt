@@ -80,3 +80,50 @@ CAVEATS ON THE MATCHING
 
   Two false alarms were removed from an earlier package-level pass:
   StFcsDbMaker (plan says "StFcsDb") and StFttDbMaker (plan says "StFttDb").
+
+
+================================================================================
+WHAT MOVED OUT OF THE PLAN'S SECTION 4   (2026-10-07)
+================================================================================
+
+Section 4 of fwd_code_integration_plan.txt is now one short item asking where
+QA / debugging / user-analysis tools should live (Gitea private repo, or a
+separate branch). The inventory below was removed from the circulated plan and
+kept here, because it is the working detail, not something collaborators need.
+
+NOT RECONSTRUCTION, no home decided yet:
+
+  Akio's diagnostics makers
+    StFwdResidualMaker        2 files,  677 lines   FST/FTT alignment residuals
+    StFttChargeSharingMaker   2 files,  469 lines   sTGC charge-sharing studies
+    StFwdAlignmentMaker       2 files,  340 lines   unbiased hit-removed residuals
+
+  User analysis
+    StFwdUtils/StFwdJPsiMaker        J/psi analysis
+    StFwdUtils/StFwdFitQAMaker       track-fit QA
+    StFwdUtils/StFwdAnalysisMaker    general fwd analysis
+    StFcsDiLeptonMaker               FCS dilepton analysis
+
+  Daniel's QA makers that the afterburner calls -- not inventoried yet, and the
+  one real gap in this list. Worth enumerating before the move, so nothing is
+  left behind in a branch nobody checks out.
+
+  Our picoDst analysis tools, currently in script/: picoDilepton.C, picoMatch.C,
+  plotDilep.C, plotMatch.C and the rest.
+
+EVIDENCE, so none of this has to be re-derived:
+
+  - none of the four user-analysis makers is a BFC chain option: 0 matches for
+    any of them in StRoot/StBFChain/BigFullChain.h, so no production chain can
+    call them;
+  - StFwdAnalysisMaker and StFwdJPsiMaker are referenced only from macros under
+    StRoot/StFwdTrackMaker/macro/;
+  - StFwdFitQAMaker IS constructed in the live afterburner macro
+    fwd_afterburner_db.C (~line 379), but behind "if (runFitQa && runFwdChain)"
+    with runFitQa = false at line 36, and the 3701-job campaign wrote zero
+    .FwdFitQA.root files. Referenced, never enabled -- a grep makes it look live;
+  - StFcsDiLeptonMaker is referenced only by two simulation macros,
+    macro/sim/jpsi_ana.C and macro/sim/runSimBfc.C. For data it is superseded by
+    script/picoDilepton.C on picoDst and the MuDst dilepton analysis has
+    stopped, so its remaining use is the MC path alone. Open question: should
+    the MC path move to picoDst too, which would retire the maker entirely.
