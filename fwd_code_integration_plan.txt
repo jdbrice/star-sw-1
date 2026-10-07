@@ -123,6 +123,22 @@ what it depends on.
       #16 DCA target/method in refitTrack
       #17 beamline position from DB
       #18 BLC-vertex and FCS-constrained track types     (needs wave 2)
+          CANNOT BE SPLIT ACROSS PACKAGES. This one carries a bit-layout change
+          in StEvent, so StEvent, StPicoEvent and StFwdTrackMaker have to be in
+          the SAME PR, or merged together:
+            StFwdTrack::mVtxIndex was packed 6 bits vertex index + 2 bits track
+            type (pack6and2). Two bits hold 0-3, and the enum now runs to
+            kBLCVertexConstrained=4 and kFCSConstrained=5, so it was repacked to
+            5 + 3 (pack5and3). StEnumerations.h also gains kBLCVtxId and
+            StVertex.h setBLCVertex()/isBLCVertex().
+          The packing is inline in StFwdTrack.h and is read by
+          StFwdTrackMaker.cxx and StPicoEvent/StPicoFwdTrack.h. Anything built
+          against the OLD header masks with & 0x03, so type 4 reads back as 0 and
+          type 5 as 1 -- BLCVtx silently becomes Global and FCSTRK becomes
+          Beamline. It compiles, links and runs; only the track types are wrong.
+          Same hazard in the other direction for a MuDst/picoDst written with one
+          layout and read with the other, so this is also a statement about
+          existing production files, not only about build order.
       (#19 StFwdAlignmentMaker and wiring...needs #17, #18, see section 4 below)
 
     Two further items that belong with this wave rather than in a findings list:
