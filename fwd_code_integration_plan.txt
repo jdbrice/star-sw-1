@@ -124,21 +124,35 @@ what it depends on.
       #17 beamline position from DB
       #18 BLC-vertex and FCS-constrained track types     (needs wave 2)
           CANNOT BE SPLIT ACROSS PACKAGES. This one carries a bit-layout change
-          in StEvent, so StEvent, StPicoEvent and StFwdTrackMaker have to be in
-          the SAME PR, or merged together:
+          in StEvent, so StEvent, StPicoDstMaker, StPicoEvent and
+          StFwdTrackMaker have to be in the SAME PR, or merged together:
             StFwdTrack::mVtxIndex was packed 6 bits vertex index + 2 bits track
             type (pack6and2). Two bits hold 0-3, and the enum now runs to
             kBLCVertexConstrained=4 and kFCSConstrained=5, so it was repacked to
             5 + 3 (pack5and3). StEnumerations.h also gains kBLCVtxId and
             StVertex.h setBLCVertex()/isBLCVertex().
-          The packing is inline in StFwdTrack.h and is read by
-          StFwdTrackMaker.cxx and StPicoEvent/StPicoFwdTrack.h. Anything built
+          The packed byte travels: StEvent/StFwdTrack.h defines pack5and3 and
+          hands the raw byte out through vertexIndexRaw(); StPicoDstMaker.cxx
+          copies it verbatim (picoFwdTrack.setVtxIndexRaw(
+          evTrack->vertexIndexRaw() ), ~line 2574); StPicoEvent/StPicoFwdTrack.h
+          unpacks it with >>3 & 0x1F and & 0x07. Anything built
           against the OLD header masks with & 0x03, so type 4 reads back as 0 and
           type 5 as 1 -- BLCVtx silently becomes Global and FCSTRK becomes
           Beamline. It compiles, links and runs; only the track types are wrong.
           Same hazard in the other direction for a MuDst/picoDst written with one
           layout and read with the other, so this is also a statement about
           existing production files, not only about build order.
+
+          RELATED BUT NOT THE SAME: StMuDSTMaker/COMMON/StMuFwdTrack.h does NOT
+          use the packing. It gained its own separate member,
+          "UChar_t mTrackType = 0", alongside the existing mVtxIndex. That is a
+          schema change to StMuFwdTrack rather than a reinterpretation of an
+          existing byte, so ROOT schema evolution covers reading old MuDst with
+          the new class. It still belongs with this PR, because nothing sets
+          mTrackType without the StFwdTrackMaker side.
+          Minor: that member's comment lists the types as
+          0=Global,1=BLC,2=Primary,3=FwdVtx,4=BLCVtx and stops there -- it
+          predates kFCSConstrained=5. Comment only, the UChar_t holds 5 fine.
       (#19 StFwdAlignmentMaker and wiring...needs #17, #18, see section 4 below)
 
     Two further items that belong with this wave rather than in a findings list:
