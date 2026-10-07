@@ -38,9 +38,9 @@ THE 20 UNCLAIMED FILES
       StEventHelper.cxx
   StFcsClusterMaker
       StFcsClusterMaker.h
-  StFcsDiLeptonMaker
+  StFcsDiLeptonMaker              -- RESOLVED 2026-10-07: (C), user analysis.
       StFcsDiLeptonMaker.cxx .h, macro/plotMip.C, macro/runSimBfc.C,
-      macro/runSimFlat.C              -- likely (C), ours
+      macro/runSimFlat.C                 Moved to plan section 4.
   StFcsTrackMatchMaker
       StFcsTrackMatchMaker.cxx
   StFttHitCalibMaker
@@ -49,9 +49,9 @@ THE 20 UNCLAIMED FILES
                                          talk slide 6 ("needs to go to DB"), and
                                          no PR in the plan names it. Most likely
                                          real gap in the list.
-  StFwdUtils
+  StFwdUtils                      -- RESOLVED 2026-10-07: (C), user analysis.
       StFwdAnalysisMaker.cxx, StFwdFitQAMaker.cxx .h, StFwdJPsiMaker.cxx .h
-                                      -- likely (C), ours
+                                         Moved to plan section 4.
   StMuDSTMaker
       StMuFilter.h, StMuPrimaryVertex.h
                                       -- StMuFwdTrack.cxx/.h DID match; these
