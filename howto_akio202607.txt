@@ -1,11 +1,10 @@
-How to check out, compile and run branch akio202607 from scratch
-(long version with all the diagnostics: instruction_akio202607.txt)
+How to check out, compile and run the afterburner from branch akio202607
 
 *** Setup
 
 singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif csh
 stardev
-setenv TESTDIR  <your dir>
+setenv TESTDIR <your dir>
 mkdir -p $TESTDIR
 cd $TESTDIR
 
@@ -21,9 +20,7 @@ cp /star/u/akio/fcstrk11/star-sw-fwd/sparse-checkout.akio202607 .git/info/sparse
 git checkout akio202607
 git log --oneline -1
 
-Do NOT run "git sparse-checkout init" -- it overwrites the list above with its
-own default and you get every top-level file, no subdirectories, and dangling
-symlinks. Check with:
+Do NOT run "git sparse-checkout init"
 
 cat .git/info/sparse-checkout
 ls fttDataWindow | wc -l
@@ -39,26 +36,21 @@ grep -niE "error|Error 1|undefined reference" cons.log | head -40
 
 *** Build fGeom.root
 
-One macro, for both runs:
-
-    build_geom_misalign.C(geomtag, sdt, misalign, label)
-
-The output name is built from the arguments, never passed in:
-
-    fGeom.<geomtag>.misalign<N>.sdt<sdt>[.<label>].root
+build_geom_misalign.C(geomtag, sdt, misalign, label)
+generates fGeom.<geomtag>.misalign<N>.sdt<sdt>[.<label>].root
 
 An existing output file is never overwritten -- the macro says ALREADY EXISTS
 and stops. Run it from the TOP of the checkout, so St_db_Maker picks up the
 local StarDb/Geometry survey tables rather than the ones in $STAR.
 
-run22:
+run22 (with iteration 2 misalign table)
 
 root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)' |& tee build_geom.run22.log
 ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
 rm -f fGeom.root
 ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
 
-run24, iteration 1:
+run24 (with iteration 1 misalign table)
 
 root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,"iter1")' |& tee build_geom.run24.log
 ls -la fGeom.y2024.misalign1.sdt20240622.iter1.root
@@ -71,10 +63,8 @@ caches exist, all at sdt20240622, differing only in which
 pentOnStation.20231210.* was latest when each was built. sdt20240622 today
 gives iteration 1.
 
-Do not symlink the run24 cache to fGeom.root. Pass it as runab's 11th argument,
-so a run22 run cannot silently pick it up:
-
-    ... 0  1  1,0,0  2  -1,3  2,0,0  200  fGeom.y2024.misalign1.sdt20240622.iter1.root
+For now, I do not symlink the run24 cache to fGeom.root. Pass it as runab's
+11th argument instead, so a run22 run cannot silently pick it up.
 
 Note StRoot/StFwdTrackMaker/macro/build_geom.C is a DIFFERENT, much older macro
 that reproduces neither cache (sdt20211016, no misalign, no arguments). Do not
@@ -93,6 +83,10 @@ setenv SCRATCH $TESTDIR/scratch
       0  1  1,0,0  2  -1,3  2,0,0  200 \
       |& tee runab.log
 
+For run24 use
+      0  1  1,0,0  2  -1,3  2,0,0  200  fGeom.y2024.misalign1.sdt20240622.iter1.root
+for the last line, to specify the run24 fGeom file.
+
 Arguments, in order:
 
     INPUTDIR BASE OUTDIR ALIGN MAGFIELD GEOFIX FTTTIMECUT FTTWINDOW DIAG MAXEVT [GEOM]
@@ -104,7 +98,7 @@ Arguments, in order:
       FTTWINDOW   -1,3   dbcid ticks relative to the per-VMM anchor
       DIAG        2,0,0  FST-blind diagnostic on Primary tracks, hits still added
       MAXEVT      200
-      GEOM        omitted, so the fGeom.root symlink
+      GEOM        omitted, so the fGeom.root symlink. Specify for run24.
 
 $SCRATCH must exist and should be EMPTY -- runab symlinks .$STAR_HOST_SYS and
 StRoot into it and copies the 180 MB MuDst there.
