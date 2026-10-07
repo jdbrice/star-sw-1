@@ -1,0 +1,82 @@
+================================================================================
+plan_gap_check_20261007.txt
+Second pass over fwd_code_integration_plan.txt -- working list, not the plan.
+================================================================================
+
+METHOD
+
+Rather than read the plan and ask "is it complete?", invert it: enumerate every
+code file changed against the real STAR main and ask which PR claims it.
+Anything unclaimed is either a gap or a deliberate keep-local, and BOTH need a
+decision written down -- otherwise someone later "fixes" the omission by
+pushing a diagnostic we proved wrong.
+
+  baseline   starbnl/main = 1ef9aaefdf (2026-09-22), i.e. star-bnl/star-sw
+  scope      StRoot, StarVMC, StarDb, StDb; .cxx .h .C .xml .idl
+  result     133 changed code files in 25 packages
+             113 matched a PR in the plan by file stem or package
+              20 matched nothing  <- the list below
+
+THREE BUCKETS, not one. The decision for each file is:
+
+  (A) PUSH AS-IS          a real fix STAR needs
+  (B) PUSH, STRIP THE FLAG a fix that exists behind a compensation switch.
+                          The FST outer 1 deg gap is the case in point:
+                          applyFstGapFix only exists because MuDst written
+                          before the fix needs compensating. Upstream wants the
+                          fix in StFstHitMaker with no switch.
+  (C) KEEP LOCAL          diagnostics and compensations that were PROVEN WRONG
+                          or are ours alone: applyFstMirror (FST wedge mirror),
+                          applyFttXYMirror (FTT V/H), the blind-diagnostic
+                          machinery (fttNoAdd, mix), our analysis makers.
+
+THE 20 UNCLAIMED FILES
+
+  StBFChain
+      BigFullChain.h                  -- chain options for the new makers?
+  StEventUtilities
+      StEventHelper.cxx
+  StFcsClusterMaker
+      StFcsClusterMaker.h
+  StFcsDiLeptonMaker
+      StFcsDiLeptonMaker.cxx .h, macro/plotMip.C, macro/runSimBfc.C,
+      macro/runSimFlat.C              -- likely (C), ours
+  StFcsTrackMatchMaker
+      StFcsTrackMatchMaker.cxx
+  StFttHitCalibMaker
+      HitCalibHelper.h, StFttHitCalibMaker.cxx .h
+                                      -- THE FTT TIME CALIBRATION. Headline on
+                                         talk slide 6 ("needs to go to DB"), and
+                                         no PR in the plan names it. Most likely
+                                         real gap in the list.
+  StFwdUtils
+      StFwdAnalysisMaker.cxx, StFwdFitQAMaker.cxx .h, StFwdJPsiMaker.cxx .h
+                                      -- likely (C), ours
+  StMuDSTMaker
+      StMuFilter.h, StMuPrimaryVertex.h
+                                      -- StMuFwdTrack.cxx/.h DID match; these
+                                         two did not. StMuPrimaryVertex.h is the
+                                         setBLCVertex()/isBLCVertex() pair, so
+                                         it probably belongs to #18.
+  StPicoDstMaker
+      StPicoDstMaker.cxx              -- now known to be part of #18: it copies
+                                         the packed byte, setVtxIndexRaw(
+                                         evTrack->vertexIndexRaw() ) ~L2574.
+                                         Plan updated accordingly.
+
+ALREADY RESOLVED BY THIS PASS
+
+  #18 inseparable set was wrong in the plan: StPicoDstMaker was missing.
+      Corrected 2026-10-07.
+  StMuFwdTrack is NOT part of the packing -- it adds its own mTrackType member.
+      Recorded in the plan as a separate schema change.
+
+CAVEATS ON THE MATCHING
+
+  "Matched" means the plan mentions the file stem or its package somewhere, not
+  that a PR genuinely covers the change. It is a sieve for the obvious misses,
+  not proof of coverage. The 113 matched files still deserve a skim, especially
+  the 57 in StFwdTrackMaker, where one PR name can hide several unrelated edits.
+
+  Two false alarms were removed from an earlier package-level pass:
+  StFcsDbMaker (plan says "StFcsDb") and StFttDbMaker (plan says "StFttDb").
