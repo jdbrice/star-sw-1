@@ -127,3 +127,41 @@ EVIDENCE, so none of this has to be re-derived:
     script/picoDilepton.C on picoDst and the MuDst dilepton analysis has
     stopped, so its remaining use is the MC path alone. Open question: should
     the MC path move to picoDst too, which would retire the maker entirely.
+
+
+================================================================================
+#18 / mVtxIndex -- the full detail, trimmed out of the plan   (2026-10-07)
+================================================================================
+
+The plan keeps only the constraint. The mechanics, for when we actually write
+the PR:
+
+  StEvent/StFwdTrack.h            defines pack5and3 and hands the raw byte out
+                                  through vertexIndexRaw()
+  StPicoDstMaker.cxx  (~L2574)    copies it verbatim:
+                                    picoFwdTrack.setVtxIndexRaw(
+                                        evTrack->vertexIndexRaw() )
+  StPicoEvent/StPicoFwdTrack.h    unpacks with >>3 & 0x1F and & 0x07
+  StFwdTrackMaker.cxx             sets it
+
+  Old layout  pack6and2:  6 bits vtxIndex (0-63) + 2 bits trackType (0-3)
+  New layout  pack5and3:  5 bits vtxIndex (0-31) + 3 bits trackType (0-7)
+
+  Also in the same change: StEnumerations.h gains kBLCVtxId; StVertex.h gains
+  setBLCVertex() / isBLCVertex().
+
+  StMuDSTMaker/COMMON/StMuFwdTrack.h is a DIFFERENT kind of change -- it does not
+  pack. It adds "UChar_t mTrackType = 0" beside the existing mVtxIndex, so ROOT
+  schema evolution covers reading old MuDst with the new class.
+
+  Minor, worth fixing while we are in there: that member's comment enumerates the
+  types as 0=Global,1=BLC,2=Primary,3=FwdVtx,4=BLCVtx and stops -- it predates
+  kFCSConstrained=5. Comment only, the UChar_t holds 5 fine.
+
+  Also noticed and worth a line in some PR: StFwdTrackMaker.h:231
+  setFittingMaterialEffects() writes the config key "TrackFitter:materialEffects"
+  with a lowercase m, while TrackFitter.h:118 reads "TrackFitter:MaterialEffects"
+  with an uppercase M. FwdTrackerConfig::canonize() only strips whitespace and
+  "[0]", so it does not fold case and the setter cannot work. Nothing calls it
+  today, so nothing is broken -- it would bite the first person who tries to turn
+  material effects on.
