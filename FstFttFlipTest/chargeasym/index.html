@@ -1,13 +1,19 @@
-<html><head><title>Charge asymmetry vs track type</title></head><body>
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <TITLE>FST/FTT charge asymmetry vs track type</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
 <h2>FST/FTT charge asymmetry vs track type</h2>
 
 <p>Run22 forward stream, full ~1 day (44 runs, 3701 files,
 <tt>pico_fwdstream_full5_20261006</tt>), afterburner
 <tt>ALIGN=0 MAGFIELD=1 GEOFIX=1,0,0 FTTTIMECUT=2 FTTWINDOW=-1,3</tt>,
 <tt>fGeom.dev2022sm.misalign1.sdt20211112.000003</tt>.
-Supersedes the July page (Global and BLCVtx only,
-<tt>jpsi/ftt_quadrant_charge_fixed_2.html</tt>): all five track types, full
-statistics, one campaign.</p>
+Supersedes the July page,
+<a href="../../jpsi/ftt_quadrant_charge_fixed_2.html">ftt_quadrant_charge_fixed_2.html</a>
+(Global and BLCVtx only, 2026-07-18): all five track types, full statistics,
+one campaign.</p>
 
 <p>A = (N<sup>+</sup> &minus; N<sup>&minus;</sup>) /
 (N<sup>+</sup> + N<sup>&minus;</sup>) per detector quadrant, from
@@ -139,6 +145,17 @@ all five types.</p>
 </tr></table>
 
 <h3>FTT hit XY, charge ratio</h3>
+<p><b>Read these with care.</b> In planar (strip) mode every FTT hit is a ONE
+dimensional measurement, so the stored (x,y) has one real coordinate and one
+placeholder, and these maps show the placeholder locus rather than the detector.
+The covariance agrees: classifying hits by sigX vs sigY puts every FTT hit in the
+x or y category and leaves the "uv" category with zero entries. In the
+<a href="../../jpsi/ftt_quadrant_charge_fixed_2.html">July page</a>, taken in
+space-point mode, the same maps show axis-aligned lines at fixed y; here they are
+at 45 degrees, i.e. the placeholder follows the quadrant local frame. Nothing
+on this page depends on them &mdash; the asymmetry is counted from plane usage,
+not from these coordinates, and the fit residual only uses the measured
+direction. The FTT <i>projection</i> maps below are the meaningful ones.</p>
 <p>FTT disk0 x</p><table border="0" cellpadding="4"><tr>
 <td><a href="Global_hitXY_h2FttHitXY_disk0_x.png"><img src="Global_hitXY_h2FttHitXY_disk0_x.png" height="200"></a><br>Global</td>
 <td><a href="BLC_hitXY_h2FttHitXY_disk0_x.png"><img src="BLC_hitXY_h2FttHitXY_disk0_x.png" height="200"></a><br>BLC</td>
