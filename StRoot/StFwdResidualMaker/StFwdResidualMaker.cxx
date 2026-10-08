@@ -384,7 +384,17 @@ void StFwdResidualMaker::fillPlaneUsage(
         float sigY = sqrt(fabs(sp.cov[4]));
         int ori = (sigY > sigX + 0.01f) ? 0 : (sigX > sigY + 0.01f ? 1 : 2);
         hqc->Fill(base + ori);
-        h2FttHitXY[plane][ori][cq]->Fill(sp.x, sp.y);
+        // A strip hit measures ONE coordinate. StFwdHitLoader skips combined
+        // points, so for every hit here the other coordinate in sp is a
+        // placeholder set by StFttClusterPointMaker that nothing reads -- the
+        // fit uses only the measured direction, and fillFttDx/fillFttDy above
+        // likewise. Filling both made this map show the placeholder locus (a
+        // 45 degree band) instead of the detector. Pair the measured coordinate
+        // from the hit with the track's value for the other. ori: 0 = x-measuring,
+        // 1 = y-measuring, 2 = combined (both real, currently never filled).
+        float hitMapX = (ori == 1) ? fttProjs[plane].x : sp.x;
+        float hitMapY = (ori == 0) ? fttProjs[plane].y : sp.y;
+        h2FttHitXY[plane][ori][cq]->Fill(hitMapX, hitMapY);
         h2FttProjXY[plane][ori][cq]->Fill(fttProjs[plane].x, fttProjs[plane].y);
     }
 
