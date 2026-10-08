@@ -165,3 +165,51 @@ the PR:
   "[0]", so it does not fold case and the setter cannot work. Nothing calls it
   today, so nothing is broken -- it would bite the first person who tries to turn
   material effects on.
+
+
+================================================================================
+GAP CHECK COMPLETED   2026-10-08
+================================================================================
+
+All 133 changed code files are now accounted for. Final classification of the
+seven that no PR claimed, once the section-4 tools are set aside:
+
+  (A) PUSH AS-IS
+      StFttHitCalibMaker   HitCalibHelper.h, StFttHitCalibMaker.cxx/.h  +91/-16
+            THE REAL GAP. Added to wave 3 beside the StFttDb PR it depends on
+            through StFttDb::getAnchor(). Two functional changes, not cosmetics:
+            the per-run DB anchor path, and a correctness fix where the "VMM is
+            ready" test counted distinct dbcid values instead of hits. Measured
+            in the comment: zero-field run 23063028 after 300 events had 4 of 373
+            VMMs ready (horizontal strips 0/128), ~21 distinct values against
+            ~212 hits. Field-on 23081049 passed the old threshold in <100 events
+            only because it has 31x more FTT hits per event.
+      StEventUtilities/StEventHelper.cxx                               +1/-1
+            #include "StEvent.h" -> "StEvent/StEvent.h". Build fix.
+      StFcsTrackMatchMaker.cxx                                         +0/-1
+            Drops a per-track LOG_INFO. Log volume only.
+      StBFChain/BigFullChain.h                                        +11/-1
+            Adds the fstSlowSim, fttSim and FcsTrackMatch options. Already
+            covered by the plan's BFC-options note in prose; the note now says
+            explicitly that every maker's option edits this one file, which makes
+            it the guaranteed conflict point across waves.
+
+  (A) PUSH AS-IS, BUT NOT AS A TRACKING PR
+      StFcsClusterMaker.h                                              +3/-3
+            Seed thresholds 1.0 -> 0.1 / 0.05 / 0.1 GeV, from fb08353227
+            (2025-04-11, akio) "Lowering FCS cluster finder seed threshold".
+            A calorimeter physics change that predates the forward work. Wants
+            FCS-group review on its own.
+
+  (C) KEEP LOCAL -- the section-4 tools, 14 files
+      StFwdResidualMaker, StFttChargeSharingMaker, StFwdUtils (JPsi, FitQA,
+      Analysis), StFcsDiLeptonMaker. These show as "unclaimed" by the matcher
+      only because collapsing section 4 removed their names from the plan; the
+      decision was already taken.
+
+STILL NOT DONE
+  - The 57 changed files in StFwdTrackMaker all matched a PR by name, but one PR
+    name can hide several unrelated edits. That set deserves a read, not a
+    matcher.
+  - Daniel's QA makers that the afterburner calls have never been enumerated.
+    Needed before anything moves to a new home.

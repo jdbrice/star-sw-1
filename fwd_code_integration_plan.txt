@@ -61,6 +61,8 @@ what it depends on.
   A note on BFC options, which cut across several waves below. Every new maker needs a
   chain option before anyone can use it, so each maker should land WITH its own option
   rather than waiting for a separate options PR. Current state:
+    All of these edit the SAME file, StRoot/StBFChain/BigFullChain.h, so it is the one
+    guaranteed conflict point across the waves. Whoever rebases second resolves it.
     StFttSimHitMaker        has no BFC option anywhere -- one has to be written
     StFstSlowSimMaker       option "fstSlowSim" exists only in akio202607
     StFttClusterPointMaker  option comes with #810
@@ -95,6 +97,18 @@ what it depends on.
           They touch the same file, and review turnaround can be weeks, so splitting
           them into two PRs would serialise for no benefit. Authorship is preserved per
           commit.
+    StFttHitCalibMaker: per-run FTT time anchors        3 files, +91/-16
+          Must land WITH or AFTER the StFttDb PR above -- it calls
+          StFttDb::getAnchor(). Two functional changes:
+          (a) take the per-run anchor from Calibrations/ftt/fttDataWindowsB when
+              StFttDbMaker confirms the entry is stamped for this run, which removes
+              the per-file warm-up that never converges on sparse (zero-field) data;
+          (b) a correctness fix in HitCalibHelper.h: the "VMM is ready" test counted
+              DISTINCT dbcid values, not hits, so a well-timed VMM concentrating its
+              hits on a few values could stay "not ready" indefinitely while a noisy
+              one qualified fast -- the criterion rewarded noise. Harmless while
+              production ran AcceptAll, decisive once the calibrated cut was on.
+          This is the "FTT time calibration to DB" item from the CM talk.
     StarDb/Geometry sTGC + FST survey tables      11 new files, independent of the rest
     StarVMC: sTGC zplane int -> float                            1 file,  +11/-2
           11 lines. `zplane` is declared int in StgmGeo1.xml, so the sTGC station z
@@ -171,6 +185,15 @@ what it depends on.
         which stops the NaN but still allows sigma = 0.
 
   WAVE 6 -- remaining code fixes
+      StFcsClusterMaker seed thresholds               1 file, +3/-3   SEPARATE FCS PR
+            mTowerEThreSeed 1.0 -> 0.1, _Ecal 1.0 -> 0.05, _Hcal 1.0 -> 0.1 GeV, from
+            fb08353227 (2025-04-11) "Lowering FCS cluster finder seed threshold". A
+            calorimeter physics change that predates the forward work and has nothing
+            to do with tracking -- it wants FCS-group review on its own rather than
+            riding along with a tracking PR.
+      StEventUtilities/StEventHelper.cxx              1 file, +1/-1
+            #include "StEvent.h" -> "StEvent/StEvent.h". Build fix, trivial.
+      StFcsTrackMatchMaker: drop a per-track LOG_INFO  1 file, +0/-1
     StFwdTrackMaker planar FTT chamber plane index                      (Akio's)
     StFstHitMaker global position   (Akio's, fork PR #25; rebase on the merged #2)
     StFttPointMaker: rob loop started at iRob=1 (Akio's, fork PR #21). The fill is
