@@ -1,0 +1,198 @@
+<html><head><title>Charge asymmetry vs track type</title></head><body>
+<h2>FST/FTT charge asymmetry vs track type</h2>
+
+<p>Run22 forward stream, full ~1 day (44 runs, 3701 files,
+<tt>pico_fwdstream_full5_20261006</tt>), afterburner
+<tt>ALIGN=0 MAGFIELD=1 GEOFIX=1,0,0 FTTTIMECUT=2 FTTWINDOW=-1,3</tt>,
+<tt>fGeom.dev2022sm.misalign1.sdt20211112.000003</tt>.
+Supersedes the July page (Global and BLCVtx only,
+<tt>jpsi/ftt_quadrant_charge_fixed_2.html</tt>): all five track types, full
+statistics, one campaign.</p>
+
+<p>A = (N<sup>+</sup> &minus; N<sup>&minus;</sup>) /
+(N<sup>+</sup> + N<sup>&minus;</sup>) per detector quadrant, from
+<tt>PlaneUsageQuadCharge</tt>, i.e. tracks of each charge that used a given
+plane. Numbers below are the FST1 bin, which is on essentially every track.
+North&ndash;south swing = &lang;A&rang;<sub>S</sub> &minus; &lang;A&rang;<sub>N</sub>.</p>
+
+<h3>Asymmetry per quadrant</h3>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>track type</th><th>Ntop</th><th>Nbot</th><th>Stop</th><th>Sbot</th><th>N&ndash;S swing</th></tr>
+<tr><td>Global</td>        <td>+0.0275</td><td>&minus;0.1969</td><td>&minus;0.0588</td><td>+0.0804</td><td><b>+0.0955</b></td></tr>
+<tr><td>BLC</td>           <td>&minus;0.0531</td><td>&minus;0.3012</td><td>+0.2105</td><td>+0.1711</td><td><b>+0.3680</b></td></tr>
+<tr><td>BLCVtx</td>        <td>&minus;0.0582</td><td>&minus;0.3018</td><td>+0.2410</td><td>+0.1968</td><td><b>+0.3989</b></td></tr>
+<tr><td>Primary</td>       <td>&minus;0.0471</td><td>&minus;0.2521</td><td>+0.1627</td><td>+0.2487</td><td><b>+0.3553</b></td></tr>
+<tr><td>FCSConstrained</td><td>+0.0515</td><td>&minus;0.3525</td><td>+0.1105</td><td>+0.2512</td><td><b>+0.3313</b></td></tr>
+</table>
+
+<p>Raw FST1 counts, millions (q<sup>+</sup> / q<sup>&minus;</sup>):</p>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>track type</th><th>Ntop</th><th>Nbot</th><th>Stop</th><th>Sbot</th></tr>
+<tr><td>Global</td>        <td>42.1 / 39.9</td><td>30.1 / 44.8</td><td>38.7 / 43.6</td><td>42.0 / 35.8</td></tr>
+<tr><td>BLC</td>           <td>44.0 / 48.9</td><td>30.8 / 57.4</td><td>52.5 / 34.2</td><td>49.1 / 34.7</td></tr>
+<tr><td>BLCVtx</td>        <td>51.6 / 58.0</td><td>35.4 / 66.1</td><td>63.3 / 38.7</td><td>58.3 / 39.1</td></tr>
+<tr><td>Primary</td>       <td>37.1 / 40.7</td><td>26.9 / 45.0</td><td>39.7 / 28.6</td><td>43.6 / 26.2</td></tr>
+<tr><td>FCSConstrained</td><td>35.4 / 31.9</td><td>26.2 / 54.7</td><td>36.8 / 29.5</td><td>46.7 / 28.0</td></tr>
+</table>
+
+<h3>Summary plots</h3>
+<table border="0" cellpadding="4">
+<tr>
+<td><a href="chargeasym_vs_type.png"><img src="chargeasym_vs_type.png" height="240"></a></td>
+<td><a href="chargeasym_vs_plane.png"><img src="chargeasym_vs_plane.png" height="240"></a></td>
+</tr>
+<tr>
+<td>A per quadrant vs track type, and the north&ndash;south swing.</td>
+<td>A per detector plane, one pad per quadrant, one curve per type.</td>
+</tr>
+</table>
+
+<h3>Points</h3>
+<ul>
+<li>The asymmetry is <b>already present for Global tracks</b>, which carry no
+vertex constraint. It is not created by the vertex.</li>
+<li>The vertex constraint <b>multiplies the north&ndash;south swing by about
+four</b>, 0.096 &rarr; 0.33&ndash;0.40. All four constrained types land in the
+same band.</li>
+<li><b>Nbot is the most negative in every type</b>, and worst for FCSConstrained
+(&minus;0.353, i.e. 26.2M q<sup>+</sup> against 54.7M q<sup>&minus;</sup>).
+It is the cleanest handle on the effect.</li>
+<li><b>FCS-constrained tracking does not fix it</b> (+0.331, in the same band as
+the others), and is the most top&ndash;bottom and least north&ndash;south
+asymmetric of the constrained set.</li>
+<li>In the per-plane view, <b>Global is the outlier in all four quadrants</b> and
+the four constrained types sit nearly on top of each other.</li>
+</ul>
+
+<h3>FTT x- vs y-measuring planes</h3>
+<p>Mean A over the four FTT x-planes minus the mean over the four y-planes.
+Only Global's top quadrants fall outside &plusmn;0.065, with opposite sign north
+and south; every constrained type is flat by comparison. Since the constrained
+types use the same hits, this points at the unconstrained fit's angular freedom
+rather than a plane-level geometry error &mdash; not yet tested.</p>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>track type</th><th>Ntop</th><th>Nbot</th><th>Stop</th><th>Sbot</th></tr>
+<tr><td>Global</td>        <td><b>+0.1292</b></td><td>&minus;0.0386</td><td><b>&minus;0.0935</b></td><td>+0.0142</td></tr>
+<tr><td>BLC</td>           <td>+0.0324</td><td>&minus;0.0431</td><td>&minus;0.0005</td><td>+0.0510</td></tr>
+<tr><td>BLCVtx</td>        <td>+0.0169</td><td>&minus;0.0497</td><td>+0.0116</td><td>+0.0643</td></tr>
+<tr><td>Primary</td>       <td>+0.0550</td><td>&minus;0.0517</td><td>&minus;0.0274</td><td>+0.0273</td></tr>
+<tr><td>FCSConstrained</td><td>+0.0457</td><td>&minus;0.0488</td><td>&minus;0.0207</td><td>+0.0492</td></tr>
+</table>
+
+<h3>Per-type plane usage</h3>
+<p>Usage fraction per plane, q&gt;0 vs q&lt;0, one pad per quadrant.</p>
+<table border="0" cellpadding="4"><tr>
+<td><a href="Global_usageFraction.png"><img src="Global_usageFraction.png" height="200"></a><br>Global</td>
+<td><a href="BLC_usageFraction.png"><img src="BLC_usageFraction.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_usageFraction.png"><img src="BLCVtx_usageFraction.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_usageFraction.png"><img src="Primary_usageFraction.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_usageFraction.png"><img src="FCSConstrained_usageFraction.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+
+<h3>FST hit XY, charge ratio</h3>
+<p>(N<sup>+</sup>&minus;N<sup>&minus;</sup>)/(N<sup>+</sup>+N<sup>&minus;</sup>)
+per bin. These are the maps shown on slide 15 of the 2026-10-08 talk, now for
+all five types.</p>
+<p>FST disk0</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FstHitXY_disk0.png"><img src="Global_hitXY_h2FstHitXY_disk0.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FstHitXY_disk0.png"><img src="BLC_hitXY_h2FstHitXY_disk0.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FstHitXY_disk0.png"><img src="BLCVtx_hitXY_h2FstHitXY_disk0.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FstHitXY_disk0.png"><img src="Primary_hitXY_h2FstHitXY_disk0.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FstHitXY_disk0.png"><img src="FCSConstrained_hitXY_h2FstHitXY_disk0.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FST disk1</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FstHitXY_disk1.png"><img src="Global_hitXY_h2FstHitXY_disk1.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FstHitXY_disk1.png"><img src="BLC_hitXY_h2FstHitXY_disk1.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FstHitXY_disk1.png"><img src="BLCVtx_hitXY_h2FstHitXY_disk1.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FstHitXY_disk1.png"><img src="Primary_hitXY_h2FstHitXY_disk1.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FstHitXY_disk1.png"><img src="FCSConstrained_hitXY_h2FstHitXY_disk1.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FST disk2</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FstHitXY_disk2.png"><img src="Global_hitXY_h2FstHitXY_disk2.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FstHitXY_disk2.png"><img src="BLC_hitXY_h2FstHitXY_disk2.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FstHitXY_disk2.png"><img src="BLCVtx_hitXY_h2FstHitXY_disk2.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FstHitXY_disk2.png"><img src="Primary_hitXY_h2FstHitXY_disk2.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FstHitXY_disk2.png"><img src="FCSConstrained_hitXY_h2FstHitXY_disk2.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+
+<h3>FST projection XY, charge ratio</h3>
+<p>FST disk0</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_projXY_h2FstProjXY_disk0.png"><img src="Global_projXY_h2FstProjXY_disk0.png" height="200"></a><br>Global</td>
+<td><a href="BLC_projXY_h2FstProjXY_disk0.png"><img src="BLC_projXY_h2FstProjXY_disk0.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_projXY_h2FstProjXY_disk0.png"><img src="BLCVtx_projXY_h2FstProjXY_disk0.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_projXY_h2FstProjXY_disk0.png"><img src="Primary_projXY_h2FstProjXY_disk0.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_projXY_h2FstProjXY_disk0.png"><img src="FCSConstrained_projXY_h2FstProjXY_disk0.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FST disk1</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_projXY_h2FstProjXY_disk1.png"><img src="Global_projXY_h2FstProjXY_disk1.png" height="200"></a><br>Global</td>
+<td><a href="BLC_projXY_h2FstProjXY_disk1.png"><img src="BLC_projXY_h2FstProjXY_disk1.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_projXY_h2FstProjXY_disk1.png"><img src="BLCVtx_projXY_h2FstProjXY_disk1.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_projXY_h2FstProjXY_disk1.png"><img src="Primary_projXY_h2FstProjXY_disk1.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_projXY_h2FstProjXY_disk1.png"><img src="FCSConstrained_projXY_h2FstProjXY_disk1.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FST disk2</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_projXY_h2FstProjXY_disk2.png"><img src="Global_projXY_h2FstProjXY_disk2.png" height="200"></a><br>Global</td>
+<td><a href="BLC_projXY_h2FstProjXY_disk2.png"><img src="BLC_projXY_h2FstProjXY_disk2.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_projXY_h2FstProjXY_disk2.png"><img src="BLCVtx_projXY_h2FstProjXY_disk2.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_projXY_h2FstProjXY_disk2.png"><img src="Primary_projXY_h2FstProjXY_disk2.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_projXY_h2FstProjXY_disk2.png"><img src="FCSConstrained_projXY_h2FstProjXY_disk2.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+
+<h3>FTT hit XY, charge ratio</h3>
+<p>FTT disk0 x</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FttHitXY_disk0_x.png"><img src="Global_hitXY_h2FttHitXY_disk0_x.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FttHitXY_disk0_x.png"><img src="BLC_hitXY_h2FttHitXY_disk0_x.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FttHitXY_disk0_x.png"><img src="BLCVtx_hitXY_h2FttHitXY_disk0_x.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FttHitXY_disk0_x.png"><img src="Primary_hitXY_h2FttHitXY_disk0_x.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FttHitXY_disk0_x.png"><img src="FCSConstrained_hitXY_h2FttHitXY_disk0_x.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FTT disk0 y</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FttHitXY_disk0_y.png"><img src="Global_hitXY_h2FttHitXY_disk0_y.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FttHitXY_disk0_y.png"><img src="BLC_hitXY_h2FttHitXY_disk0_y.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FttHitXY_disk0_y.png"><img src="BLCVtx_hitXY_h2FttHitXY_disk0_y.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FttHitXY_disk0_y.png"><img src="Primary_hitXY_h2FttHitXY_disk0_y.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FttHitXY_disk0_y.png"><img src="FCSConstrained_hitXY_h2FttHitXY_disk0_y.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FTT disk1 x</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FttHitXY_disk1_x.png"><img src="Global_hitXY_h2FttHitXY_disk1_x.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FttHitXY_disk1_x.png"><img src="BLC_hitXY_h2FttHitXY_disk1_x.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FttHitXY_disk1_x.png"><img src="BLCVtx_hitXY_h2FttHitXY_disk1_x.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FttHitXY_disk1_x.png"><img src="Primary_hitXY_h2FttHitXY_disk1_x.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FttHitXY_disk1_x.png"><img src="FCSConstrained_hitXY_h2FttHitXY_disk1_x.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FTT disk1 y</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FttHitXY_disk1_y.png"><img src="Global_hitXY_h2FttHitXY_disk1_y.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FttHitXY_disk1_y.png"><img src="BLC_hitXY_h2FttHitXY_disk1_y.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FttHitXY_disk1_y.png"><img src="BLCVtx_hitXY_h2FttHitXY_disk1_y.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FttHitXY_disk1_y.png"><img src="Primary_hitXY_h2FttHitXY_disk1_y.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FttHitXY_disk1_y.png"><img src="FCSConstrained_hitXY_h2FttHitXY_disk1_y.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FTT disk2 x</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FttHitXY_disk2_x.png"><img src="Global_hitXY_h2FttHitXY_disk2_x.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FttHitXY_disk2_x.png"><img src="BLC_hitXY_h2FttHitXY_disk2_x.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FttHitXY_disk2_x.png"><img src="BLCVtx_hitXY_h2FttHitXY_disk2_x.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FttHitXY_disk2_x.png"><img src="Primary_hitXY_h2FttHitXY_disk2_x.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FttHitXY_disk2_x.png"><img src="FCSConstrained_hitXY_h2FttHitXY_disk2_x.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FTT disk2 y</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FttHitXY_disk2_y.png"><img src="Global_hitXY_h2FttHitXY_disk2_y.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FttHitXY_disk2_y.png"><img src="BLC_hitXY_h2FttHitXY_disk2_y.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FttHitXY_disk2_y.png"><img src="BLCVtx_hitXY_h2FttHitXY_disk2_y.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FttHitXY_disk2_y.png"><img src="Primary_hitXY_h2FttHitXY_disk2_y.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FttHitXY_disk2_y.png"><img src="FCSConstrained_hitXY_h2FttHitXY_disk2_y.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FTT disk3 x</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FttHitXY_disk3_x.png"><img src="Global_hitXY_h2FttHitXY_disk3_x.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FttHitXY_disk3_x.png"><img src="BLC_hitXY_h2FttHitXY_disk3_x.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FttHitXY_disk3_x.png"><img src="BLCVtx_hitXY_h2FttHitXY_disk3_x.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FttHitXY_disk3_x.png"><img src="Primary_hitXY_h2FttHitXY_disk3_x.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FttHitXY_disk3_x.png"><img src="FCSConstrained_hitXY_h2FttHitXY_disk3_x.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+<p>FTT disk3 y</p><table border="0" cellpadding="4"><tr>
+<td><a href="Global_hitXY_h2FttHitXY_disk3_y.png"><img src="Global_hitXY_h2FttHitXY_disk3_y.png" height="200"></a><br>Global</td>
+<td><a href="BLC_hitXY_h2FttHitXY_disk3_y.png"><img src="BLC_hitXY_h2FttHitXY_disk3_y.png" height="200"></a><br>BLC</td>
+<td><a href="BLCVtx_hitXY_h2FttHitXY_disk3_y.png"><img src="BLCVtx_hitXY_h2FttHitXY_disk3_y.png" height="200"></a><br>BLCVtx</td>
+<td><a href="Primary_hitXY_h2FttHitXY_disk3_y.png"><img src="Primary_hitXY_h2FttHitXY_disk3_y.png" height="200"></a><br>Primary</td>
+<td><a href="FCSConstrained_hitXY_h2FttHitXY_disk3_y.png"><img src="FCSConstrained_hitXY_h2FttHitXY_disk3_y.png" height="200"></a><br>FCSConstrained</td>
+</tr></table>
+</body></html>
