@@ -213,3 +213,33 @@ STILL NOT DONE
     matcher.
   - Daniel's QA makers that the afterburner calls have never been enumerated.
     Needed before anything moves to a new home.
+
+
+================================================================================
+FST R-STRIP GROUPING -- expert answer, CM 2026-10-08
+================================================================================
+
+The slide-7 open question ("hit position is assigned from the largest R hit, not
+mean R, not smallest R, not the biggest-charge hit's R ... why?") is half
+answered. The FST expert:
+
+  - the grouping of several R-strip signals at the same phi is FST CROSSTALK,
+    observed in prototype cosmic-ray tests;
+  - the clustering algorithm was written to handle it, so the grouping is
+    intended, not a bug;
+  - why the OUTERMOST R strip is taken as the hit position is still unconfirmed
+    and comes from a historic study;
+  - keep FST raw hits in production so this can be revisited.
+
+Consequences for the PR plan:
+
+  - Do NOT touch the R-position choice in any PR until the historic study is
+    produced. It is deliberate and changing it would move every FST hit.
+  - Keeping FST raw hits in production is already shown to be affordable:
+    Jerome measured the cost at ~1%/event, and slide 2 records "SL26y with PR#2 +
+    fstMuRawHit verified = Fwd Tracking does not block production". This is a
+    production-configuration decision rather than a code-integration item, so it
+    does not belong in fwd_code_integration_plan.txt, but it does constrain the
+    Run23 decision point in early Nov.
+  - The meanRStrip int-vs-float trap stays dormant while r remains maxRStrip and
+    therefore integer. See the fst-meanrstrip-int-hazard note.
