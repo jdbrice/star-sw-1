@@ -109,6 +109,10 @@ what it depends on.
           They touch the same file, and review turnaround can be weeks, so splitting
           them into two PRs would serialise for no benefit. Authorship is preserved per
           commit.
+          This PR also carries the code half of the stgc -> ftt rename:
+          StFttDb::loadGeometry() must read Geometry/ftt/{stgcOnTpc,stationOnStgc,
+          pentOnStation} to match the <Misalign> paths PR#20 already renamed in
+          StgmGeo1.xml. Namespace only; the table names do not change.
     The new StEvent FTT fields are deliberately NOT mirrored into the MuDst.
           StFttCluster gains mMaxADC, mIndexMaxStrip and the four mMaxStrip*;
           StFttPoint gains mD1, mD2, mSigmaX, mSigmaY, mSigmaXY and mCov;
@@ -139,23 +143,43 @@ what it depends on.
           (BigFullChain.h:1733) and the maker has CalibMode::Calibration and
           CalibMode::Production. Production reconstruction runs it to APPLY the anchors,
           so it belongs here rather than in section 4.
-    StarDb/Geometry sTGC + FST survey tables      11 new files, independent of the rest
+    StarDb/Geometry sTGC + FST survey tables                 HELD, not a PR yet
+          11 new files. These do NOT go into the repo as StarDb/Geometry. Dmitry is
+          adding the Geometry/ftt tables to the offline MySQL DB; once they exist the
+          tables must live in MySQL only, because St_db_Maker prefers ./StarDb, then
+          $STAR/StarDb, and only then MySQL -- so a copy left in $STAR/StarDb means
+          production and our own code would never read the DB at all.
+          The agreed route instead:
+            1. review every beginTime/endTime against Gene's per-run-year rule
+               (reference_db_timestamps_gene: Run 22 = 2021-10-10 ideal / -15 survey;
+               we currently use 2021-11-1x),
+            2. write the push macros StRoot/StFstDbMaker/macro/fstGeometry_db.C and
+               StRoot/StFttDbMaker/macro/fttGeometry_db.C, with the table .C files
+               beside them under macro/{fst,ftt}/ -- this follows our own FCS
+               precedent, StRoot/StFcsDbMaker/macro/fcsDetectorPosition_db.C and
+               fcsGain_db.C, and StFmsDbMaker/macros/fPost*_db.C, all of which set
+               DB_ACCESS_MODE=write, setStoreTime() and storeDbTable(),
+            3. push to MySQL,
+            4. only then remove StarDb/Geometry/{fst,stgc} from the repo.
+          The macro/ copies stay version-controlled as the record of what was loaded
+          and must be kept in step with MySQL. The post-merge howto then tells anyone
+          who wants to MODIFY the misalignment tables to copy
+          StRoot/StFstDbMaker/macro/fst into ./StarDb/Geometry/fst in their working
+          directory -- and to remove it again to go back to the DB values.
+          Until step 3 is done, the StarDb/Geometry tables in akio202607 are left
+          exactly as they are.
     StarVMC: sTGC zplane int -> float                               1 file, +11/-2
-          NOT bundled with the stgc -> ftt rename after all. The rename touches the
-          same file -- StgmGeo1.xml has 33 <Misalign table="Geometry/stgc/..."/>
-          entries -- but it cannot be a code-only change: renaming them before the
-          Geometry/ftt namespace exists in the DB makes all 33 lookups fail and the
-          geometry falls back to ideal, silently. The rename needs Dmitry's DB
-          migration first, then StgmGeo1.xml and StFttDbMaker change together. It is
-          also not written yet: akio202607 still has 33 stgc references and 0 ftt.
-          So the zplane fix goes on its own, now.
-          The rename is already agreed: StFttDbMaker.cxx:84 records Dmitry's point that
-          "stgc is not a DB namespace", and that Geometry/stgc moves to Geometry/ftt
-          together with the StgmGeo1.xml <Misalign> paths, agreed for October after the
-          GitHub/Gitea migration. Today StFttDbMaker reads
-          Geometry/stgc/{stgcOnTpc,stationOnStgc,pentOnStation} while the calibration
-          side already uses Calibrations/ftt/fttDataWindowsB, so the two halves of the
-          FTT DB are inconsistently named. The StarDb/Geometry tables above move with it.
+          DONE -- PR#20, and it carried the XML half of the stgc -> ftt rename with it:
+          the 33 <Misalign table="Geometry/stgc/..."/> entries in the same file became
+          Geometry/ftt/..., namespace only, table names unchanged, as agreed with
+          Dmitry ("stgc is not a DB namespace", StFttDbMaker.cxx:84).
+          The OTHER half of the rename -- StFttDb::loadGeometry() reading
+          Geometry/stgc/{stgcOnTpc,stationOnStgc,pentOnStation} -- rides with the
+          StFttDb PR in this wave, not here. Until both halves are in and Dmitry's
+          Geometry/ftt namespace exists in MySQL, the lookups resolve through the local
+          ./StarDb copies, so nothing breaks in the meantime; a mismatched pair would
+          fall back to ideal geometry silently, so the two must not be split across
+          releases.
           11 lines. `zplane` is declared int in StgmGeo1.xml, so the sTGC station z
           values are truncated to whole cm: the geometry is built at 312.8385 /
           330.8385 / 346.8385 / 364.8385 instead of the survey values, errors of
