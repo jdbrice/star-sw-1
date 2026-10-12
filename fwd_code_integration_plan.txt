@@ -140,8 +140,15 @@ what it depends on.
           CalibMode::Production. Production reconstruction runs it to APPLY the anchors,
           so it belongs here rather than in section 4.
     StarDb/Geometry sTGC + FST survey tables      11 new files, independent of the rest
-    StarVMC: sTGC zplane int -> float, WITH the stgc -> ftt rename  1 file, +11/-2
-          Bundled, because both touch StgmGeo1.xml and the DB paths that go with it.
+    StarVMC: sTGC zplane int -> float                               1 file, +11/-2
+          NOT bundled with the stgc -> ftt rename after all. The rename touches the
+          same file -- StgmGeo1.xml has 33 <Misalign table="Geometry/stgc/..."/>
+          entries -- but it cannot be a code-only change: renaming them before the
+          Geometry/ftt namespace exists in the DB makes all 33 lookups fail and the
+          geometry falls back to ideal, silently. The rename needs Dmitry's DB
+          migration first, then StgmGeo1.xml and StFttDbMaker change together. It is
+          also not written yet: akio202607 still has 33 stgc references and 0 ftt.
+          So the zplane fix goes on its own, now.
           The rename is already agreed: StFttDbMaker.cxx:84 records Dmitry's point that
           "stgc is not a DB namespace", and that Geometry/stgc moves to Geometry/ftt
           together with the StgmGeo1.xml <Misalign> paths, agreed for October after the
