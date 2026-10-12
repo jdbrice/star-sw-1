@@ -109,6 +109,20 @@ what it depends on.
           They touch the same file, and review turnaround can be weeks, so splitting
           them into two PRs would serialise for no benefit. Authorship is preserved per
           commit.
+    The new StEvent FTT fields are deliberately NOT mirrored into the MuDst.
+          StFttCluster gains mMaxADC, mIndexMaxStrip and the four mMaxStrip*;
+          StFttPoint gains mD1, mD2, mSigmaX, mSigmaY, mSigmaXY and mCov;
+          StFttRawHit gains the four mStrip*. None of these exist on
+          StMuFtt{Cluster,Point,RawHit}, and they are not being added, because
+          the MuDst -> StEvent direction for FTT clusters and points does not
+          exist at all: StMuFttUtil::fillFtt() calls only fillFttRawHits(), so
+          clusters and points are write-only into the MuDst. Everything that
+          needs them, the afterburner included, rebuilds them from raw hits via
+          StFttClusterMaker and StFttClusterPointMaker. mCov in particular is a
+          std::vector<std::vector<float>> per point and would cost real MuDst
+          size for a field nothing reads back.
+          The consequence to document rather than fix: FTT clusters and points
+          read straight from a MuDst have these fields empty, with no warning.
     StFttHitCalibMaker: per-run FTT time anchors        3 files, +91/-16
           Must land WITH or AFTER the StFttDb PR above -- it calls
           StFttDb::getAnchor(). Two functional changes:
