@@ -68,16 +68,21 @@ what it depends on.
     StFttClusterPointMaker  option comes with #810
     fttSim / FcsTrackMatch / PicoVtxless   are what #759 adds
 
-  WAVE 1 -- BFC options, recoverable verbatim from Daniel's branches
-    #759  BFC options for FWD productions                      1 file,  +6
-          NOTE: the "fttSim" option it adds names StFttFastSimulatorMaker, which does
-          not exist in main, dev or akio202607. The FTT fast simulator is
-          StFttFastSimMaker in package StFttSimMaker. Fix the name or the option will
-          fail to load when used.
-    #796  BFC chain options for FTT sim / FCS track match      1 file,  +6/-22
-          NOTE: as it stands this branch also DELETES four production chain
-          definitions (B2023b, P2023b, B2024b, pp2024b). Cherry-pick the additive
-          part only.
+  WAVE 1 -- (dissolved; BFC options ride with their makers)
+    A BFC option only makes production RUN our code -- the code has to be there and
+    working first, so an options-first wave inverts the dependency. It also matches the
+    note above: each maker lands WITH its own option. What is left of Daniel's two
+    options-only PRs is wiring for makers already in main, so it moves to wave 7 with
+    the rest of the BFC wiring:
+      #759  BFC options for FWD productions                      1 file,  +6
+            NOTE: the "fttSim" option it adds names StFttFastSimulatorMaker, which does
+            not exist in main, dev or akio202607. The FTT fast simulator is
+            StFttFastSimMaker in package StFttSimMaker. Fix the name or the option will
+            fail to load when used.
+      #796  BFC chain options for FTT sim / FCS track match      1 file,  +6/-22
+            NOTE: as it stands this branch also DELETES four production chain
+            definitions (B2023b, P2023b, B2024b, pp2024b). Cherry-pick the additive
+            part only.
 
   WAVE 2 -- all persistent schema, in one place, nothing else in it
     StFwdTrack track types kBLCVertexConstrained=4 and kFCSConstrained=5,
@@ -85,6 +90,13 @@ what it depends on.
     ClassDef 3->4 with mTrackType (3 files, +11/-8). Wave 5 depends on this.
     #804 was listed separately before, but it is the same schema change seen from the
     MuDst side and the note below applies directly to it.
+
+      ORDER WITHIN THE WAVE: StEvent first, then MuDst, then picoDst. Splitting them
+      into three PRs is safe even though all three must agree on the packing, because
+      nothing PRODUCES track types 4 and 5 until StFwdTrackMaker lands in wave 5. Until
+      then no MuDst or picoDst can contain a type that older masking would misread, so a
+      partially updated main cannot mislabel anything. The whole of this wave must
+      therefore be in before StFwdTrackMaker starts emitting those types.
 
        Note : StMuFwdTrack's new StMuFwdTrackType enum stops at kForwardVertexConstrained=3.
        Correct against today's main, but mTrackType is copied straight from
@@ -109,8 +121,20 @@ what it depends on.
               one qualified fast -- the criterion rewarded noise. Harmless while
               production ran AcceptAll, decisive once the calibrated cut was on.
           This is the "FTT time calibration to DB" item from the CM talk.
+          NOT a QA tool, despite being calibration: "FttHitCalib" is a BFC chain option
+          (BigFullChain.h:1733) and the maker has CalibMode::Calibration and
+          CalibMode::Production. Production reconstruction runs it to APPLY the anchors,
+          so it belongs here rather than in section 4.
     StarDb/Geometry sTGC + FST survey tables      11 new files, independent of the rest
-    StarVMC: sTGC zplane int -> float                            1 file,  +11/-2
+    StarVMC: sTGC zplane int -> float, WITH the stgc -> ftt rename  1 file, +11/-2
+          Bundled, because both touch StgmGeo1.xml and the DB paths that go with it.
+          The rename is already agreed: StFttDbMaker.cxx:84 records Dmitry's point that
+          "stgc is not a DB namespace", and that Geometry/stgc moves to Geometry/ftt
+          together with the StgmGeo1.xml <Misalign> paths, agreed for October after the
+          GitHub/Gitea migration. Today StFttDbMaker reads
+          Geometry/stgc/{stgcOnTpc,stationOnStgc,pentOnStation} while the calibration
+          side already uses Calibrations/ftt/fttDataWindowsB, so the two halves of the
+          FTT DB are inconsistently named. The StarDb/Geometry tables above move with it.
           11 lines. `zplane` is declared int in StgmGeo1.xml, so the sTGC station z
           values are truncated to whole cm: the geometry is built at 312.8385 /
           330.8385 / 346.8385 / 364.8385 instead of the survey values, errors of
@@ -137,8 +161,10 @@ what it depends on.
       #16 DCA target/method in refitTrack
       #17 beamline position from DB
       #18 BLC-vertex and FCS-constrained track types     (needs wave 2)
-          CANNOT BE SPLIT ACROSS PACKAGES: StEvent, StPicoDstMaker, StPicoEvent
-          and StFwdTrackMaker must be in the SAME PR, or merged together.
+          The packing must agree across StEvent, StPicoDstMaker, StPicoEvent and
+          StFwdTrackMaker. They do NOT have to be one PR: the schema halves land in
+          wave 2, in the order given there, and this PR is what first EMITS types 4
+          and 5, so it must come after all of wave 2 is in.
           StFwdTrack::mVtxIndex was repacked from 6 bits vertex + 2 bits track
           type to 5 + 3, because two bits hold 0-3 and the enum now runs to
           kBLCVertexConstrained=4 and kFCSConstrained=5. Anything built against
@@ -147,8 +173,11 @@ what it depends on.
           track types are wrong. The same applies to a MuDst/picoDst written with
           one layout and read with the other, so it constrains existing
           production files too, not only build order.
-          StMuDSTMaker ships with this PR as well: StMuFwdTrack gained its own
-          mTrackType member, which nothing fills without the StFwdTrackMaker side.
+          StMuFwdTrack's side is schema and belongs to the MuDst step of wave 2,
+          not here: it gained its own "UChar_t mTrackType = 0" beside the existing
+          mVtxIndex, a schema addition ROOT evolution covers rather than a
+          reinterpretation of an existing byte. Nothing fills it until this PR,
+          which is why wave 2 can land first and sit idle.
           Details in plan_gap_check_20261007.txt.
       (#19 StFwdAlignmentMaker and wiring...needs #17, #18; the maker itself is a
           diagnostics tool, not for the library -- see section 4)
@@ -205,6 +234,8 @@ what it depends on.
       record and corrupts getLorentzVector().
 
   WAVE 7 -- macros and BFC wiring last, written once against what landed
+      Also the two options-only PRs moved down from the old wave 1, #759 and #796;
+      see the notes there before cherry-picking either.
     #810 StFttClusterPointMaker and its BFC option   6 files, +759
     #811 fwd afterburner macro                       1 file,  +401  (needs #810)
 
