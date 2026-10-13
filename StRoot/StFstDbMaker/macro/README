@@ -23,69 +23,72 @@ way to override it locally.
 
 Using these tables locally instead of the database
 --------------------------------------------------
-If you want to MODIFY the geometry parameters -- try a new alignment, test a
-shift, reproduce an old iteration -- do NOT edit the database. St_db_Maker
-St_db_Maker does NOT give ./StarDb priority. This is the most misunderstood
-thing here, so it is measured and quoted rather than asserted:
+To MODIFY the geometry -- try an alignment, test a shift, reproduce an old
+iteration -- do NOT edit the database. Put the tables in your working directory
+and tell the chain to look only there.
 
-  * All .C files found in ANY search directory are pooled, and
-    St_db_Maker::FindLeft() takes the one whose timestamp is LATEST at or
-    before the requested time. Which directory it came from is irrelevant.
-  * When both a file and a MySQL row exist, St_db_Maker.cxx:827 decides:
-        case 3:   // Both SQL and CINT objects
-          if (valsCINT[0].Get()>=valsSQL[0].Get()) { kase = 2; ... }  // file
-          else                                     { kase = 1; ... }  // MySQL
-    again the LATER beginTime wins. Files do not categorically beat the DB.
-  * The list StBFChain builds is MySQL, $STAR/StarDb,
-    $STAR/.$STAR_HOST_SYS/obj/StarDb, $PWD/StarDb, $PWD/obj/StarDb --
-    $PWD/StarDb is FOURTH. Position in that list is not precedence.
+  THE EASY WAY: force local-only with two bfc options.
 
-So "put it in ./StarDb and it wins" is false. What wins is the latest
-beginTime. To override locally, your file needs a timestamp later than every
-other entry for that table, the release's included.
+      NoMySQLDb,NoStarCintDb
 
-  MEASURED 2026-10-13 on FST, requesting a Run 22 date with ./StarDb populated:
-      local files named 2021111x  ->  ours won     fstOnTpc=(+0.14876,-0.31702)
-      local files named 2021101x  ->  RELEASE won  hssOnFst=(+0.07126,-0.30102)
-  The second is the state after the rename into Gene's slots: the release ships
-  hssOnFst at 20211110.000001, LATER than our 20211015.000001, so it wins and
-  edits to our local copies are silently ignored. The resulting geometry is
-  unaffected -- the two decompositions sum to the same translation -- but an
-  edit does nothing, with no warning.
-
-  Until the release copy is gone, override with a later timestamp: copy the
-  file you want to <table>.20211113.000000.C in ./StarDb and edit that.
-
-To put files there at all:
-
+  NoMySQLDb drops MySQL and NoStarCintDb drops $STAR/StarDb, leaving your own
+  $PWD/StarDb as the only place tables come from. Your files then win outright
+  and you never have to think about timestamps. Set-up:
 
       mkdir -p ./StarDb/Geometry
       cp -r $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
       # or: ln -s $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
 
-Then edit the numbers in the copy, or add a new file with a later timestamp.
+  then run the chain with NoMySQLDb,NoStarCintDb among its options. This is the
+  right mode for alignment work and for any test of local table files.
 
-  * REMEMBER TO REMOVE IT when you want the database values back. A forgotten
-    ./StarDb/Geometry/fst silently keeps you on your own numbers forever, and
-    nothing in the log says so loudly.
+  The four options, from BigFullChain.h:1159 (StBFChain.cxx:263-268 empties the
+  matching directory out of the list):
 
-  * CONDOR JOBS: the job runs in its own scratch directory, not where you
-    submitted from, so ./StarDb must exist THERE. Copy or link the fst dir
-    into the job's working/tmp directory as well, or the job silently falls
-    back to the DB and your test does nothing. This is the single most common
-    way an alignment test comes back "no change".
+      NoMySQLDb        drop MySQL
+      NoStarCintDb     drop $STAR/StarDb
+      NoLocalCintDb    drop $PWD/StarDb
+      NoCintDb         drop BOTH $STAR/StarDb and $PWD/StarDb -> MySQL only
 
-  * THE GEOMETRY CACHE MUST MATCH. StFwdTrackMaker does not read these tables
-    at tracking time; it reads the cached fGeom.*.root built from them. If you
-    change the tables you must rebuild the cache and point at the new one:
+  Note NoStarCintDb does not clear $STAR/.$STAR_HOST_SYS/obj/StarDb, which
+  stays in the list. That is harmless for us today -- the release has no
+  Geometry/ tables there -- but it is not literally "nothing from $STAR".
 
-        root4star -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)'
-            -> fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+  WITHOUT those options, ./StarDb does NOT simply win, and this is the most
+  misunderstood thing here, so it is measured and quoted rather than asserted:
 
-    The sdt argument selects which table version AgPosition reads (the latest
-    entry at or before that timestamp), and misalign=1 is what makes it read
-    the survey tables at all. Copy or link the resulting fGeom file next to
-    the job as well -- same scratch-directory trap as above.
+    * all .C files from EVERY search directory are pooled, and
+      St_db_Maker::FindLeft() takes the one whose timestamp is LATEST at or
+      before the requested time. Which directory it came from is irrelevant.
+    * where a file and a MySQL row both exist, St_db_Maker.cxx:827 decides:
+          case 3:   // Both SQL and CINT objects
+            if (valsCINT[0].Get()>=valsSQL[0].Get()) { kase = 2; ... } // file
+            else                                     { kase = 1; ... } // MySQL
+      again the LATER beginTime wins. Files do not categorically beat the DB.
+    * the list StBFChain builds is MySQL, $STAR/StarDb, $STAR/obj/StarDb,
+      $PWD/StarDb, $PWD/obj/StarDb -- $PWD/StarDb is FOURTH. Position in that
+      list is not precedence.
+
+    MEASURED 2026-10-13 on FST, requesting a Run 22 date with ./StarDb holding
+    the renamed tables:
+        with $STAR/StarDb in the list   ->  RELEASE won  (+0.07126,-0.30102)
+        with NoMySQLDb,NoStarCintDb     ->  OURS won     (+0.14876,-0.31702)
+    The first is why the options matter: our files are stamped 20211015.000001
+    and the release ships 20211110.000001, which is LATER and therefore wins, so
+    edits to the local copies are silently ignored. (The resulting geometry is
+    the same either way here -- the two decompositions sum to the same
+    translation -- but an edit does nothing, with no warning.)
+
+    If you cannot pass the options, the other way out is a timestamp later than
+    every other entry: copy the file you want to <table>.20211113.000000.C in
+    ./StarDb and edit that.
+
+  * REMEMBER TO REMOVE IT when you want the database values back.
+
+  * CONDOR JOBS run in their own scratch directory, so ./StarDb must exist
+    THERE, not where you submitted from. Copy or link the directory into the
+    job's working/tmp directory too, and pass the same options, or the job
+    quietly uses something else and your test shows no change.
 
 
 What each timestamp means

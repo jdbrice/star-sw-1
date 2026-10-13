@@ -30,66 +30,72 @@ after, it is ./StarDb/Geometry/ftt. Use the one matching the code you run.
 
 Using these tables locally instead of the database
 --------------------------------------------------
-St_db_Maker does NOT give ./StarDb priority. This is the most misunderstood
-thing here, so it is measured and quoted rather than asserted:
+To MODIFY the geometry -- try an alignment, test a shift, reproduce an old
+iteration -- do NOT edit the database. Put the tables in your working directory
+and tell the chain to look only there.
 
-  * All .C files found in ANY search directory are pooled, and
-    St_db_Maker::FindLeft() takes the one whose timestamp is LATEST at or
-    before the requested time. Which directory it came from is irrelevant.
-  * When both a file and a MySQL row exist, St_db_Maker.cxx:827 decides:
-        case 3:   // Both SQL and CINT objects
-          if (valsCINT[0].Get()>=valsSQL[0].Get()) { kase = 2; ... }  // file
-          else                                     { kase = 1; ... }  // MySQL
-    again the LATER beginTime wins. Files do not categorically beat the DB.
-  * The list StBFChain builds is MySQL, $STAR/StarDb,
-    $STAR/.$STAR_HOST_SYS/obj/StarDb, $PWD/StarDb, $PWD/obj/StarDb --
-    $PWD/StarDb is FOURTH. Position in that list is not precedence.
+  THE EASY WAY: force local-only with two bfc options.
 
-So "put it in ./StarDb and it wins" is false. What wins is the latest
-beginTime. To override locally, your file needs a timestamp later than every
-other entry for that table, the release's included.
+      NoMySQLDb,NoStarCintDb
 
-  MEASURED 2026-10-13 on FST, requesting a Run 22 date with ./StarDb populated:
-      local files named 2021111x  ->  ours won     fstOnTpc=(+0.14876,-0.31702)
-      local files named 2021101x  ->  RELEASE won  hssOnFst=(+0.07126,-0.30102)
-  The second is the state after the rename into Gene's slots: the release ships
-  hssOnFst at 20211110.000001, LATER than our 20211015.000001, so it wins and
-  edits to our local copies are silently ignored. The resulting geometry is
-  unaffected -- the two decompositions sum to the same translation -- but an
-  edit does nothing, with no warning.
-
-  Until the release copy is gone, override with a later timestamp: copy the
-  file you want to <table>.20211113.000000.C in ./StarDb and edit that.
-
-To put files there at all:
-
+  NoMySQLDb drops MySQL and NoStarCintDb drops $STAR/StarDb, leaving your own
+  $PWD/StarDb as the only place tables come from. Your files then win outright
+  and you never have to think about timestamps. Set-up:
 
       mkdir -p ./StarDb/Geometry
       cp -r $STAR/StRoot/StFttDbMaker/macro/ftt ./StarDb/Geometry/ftt
       # or: ln -s $STAR/StRoot/StFttDbMaker/macro/ftt ./StarDb/Geometry/ftt
-      # (./StarDb/Geometry/stgc if you are on code from before the rename)
+
+  then run the chain with NoMySQLDb,NoStarCintDb among its options. This is the
+  right mode for alignment work and for any test of local table files.
+
+  The four options, from BigFullChain.h:1159 (StBFChain.cxx:263-268 empties the
+  matching directory out of the list):
+
+      NoMySQLDb        drop MySQL
+      NoStarCintDb     drop $STAR/StarDb
+      NoLocalCintDb    drop $PWD/StarDb
+      NoCintDb         drop BOTH $STAR/StarDb and $PWD/StarDb -> MySQL only
+
+  Note NoStarCintDb does not clear $STAR/.$STAR_HOST_SYS/obj/StarDb, which
+  stays in the list. That is harmless for us today -- the release has no
+  Geometry/ tables there -- but it is not literally "nothing from $STAR".
+
+  WITHOUT those options, ./StarDb does NOT simply win, and this is the most
+  misunderstood thing here, so it is measured and quoted rather than asserted:
+
+    * all .C files from EVERY search directory are pooled, and
+      St_db_Maker::FindLeft() takes the one whose timestamp is LATEST at or
+      before the requested time. Which directory it came from is irrelevant.
+    * where a file and a MySQL row both exist, St_db_Maker.cxx:827 decides:
+          case 3:   // Both SQL and CINT objects
+            if (valsCINT[0].Get()>=valsSQL[0].Get()) { kase = 2; ... } // file
+            else                                     { kase = 1; ... } // MySQL
+      again the LATER beginTime wins. Files do not categorically beat the DB.
+    * the list StBFChain builds is MySQL, $STAR/StarDb, $STAR/obj/StarDb,
+      $PWD/StarDb, $PWD/obj/StarDb -- $PWD/StarDb is FOURTH. Position in that
+      list is not precedence.
+
+    MEASURED 2026-10-13 on FST, requesting a Run 22 date with ./StarDb holding
+    the renamed tables:
+        with $STAR/StarDb in the list   ->  RELEASE won  (+0.07126,-0.30102)
+        with NoMySQLDb,NoStarCintDb     ->  OURS won     (+0.14876,-0.31702)
+    The first is why the options matter: our files are stamped 20211015.000001
+    and the release ships 20211110.000001, which is LATER and therefore wins, so
+    edits to the local copies are silently ignored. (The resulting geometry is
+    the same either way here -- the two decompositions sum to the same
+    translation -- but an edit does nothing, with no warning.)
+
+    If you cannot pass the options, the other way out is a timestamp later than
+    every other entry: copy the file you want to <table>.20211113.000000.C in
+    ./StarDb and edit that.
 
   * REMEMBER TO REMOVE IT when you want the database values back.
 
   * CONDOR JOBS run in their own scratch directory, so ./StarDb must exist
-    THERE, not where you submitted from. Copy or link the ftt dir into the
-    job's working/tmp directory too, or the job quietly uses the DB and your
-    test shows no change.
-
-  * THE GEOMETRY CACHE MUST MATCH. StFwdTrackMaker reads the cached
-    fGeom.*.root, not these tables. Rebuild it after any change:
-
-        root4star -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)'
-            -> fGeom.dev2022sm.misalign1.sdt20211112.000003.root
-
-    The sdt argument picks which table version AgPosition resolves to (latest
-    entry at or before it) and misalign=1 is what makes it read the survey
-    tables at all. Ship the fGeom file with the job as well.
-
-  * PER-QUADRANT z NEEDS THE FLOAT-ZPLANE GEOMETRY. From iteration 2 onward
-    pentOnStation carries a non-zero t2. That is measured against a geometry
-    built with zplane as float (PR #20); against the old int-truncated zplane
-    the z terms are referenced to the wrong plane positions.
+    THERE, not where you submitted from. Copy or link the directory into the
+    job's working/tmp directory too, and pass the same options, or the job
+    quietly uses something else and your test shows no change.
 
 
 What each tag means
