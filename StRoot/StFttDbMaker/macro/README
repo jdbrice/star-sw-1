@@ -166,37 +166,38 @@ before each run year, with constants measured from real data any time after.
     reference the wrong plane positions.
 
 
-Open questions on beginTime, settle these BEFORE pushing
---------------------------------------------------------
+Notes on beginTime
+------------------
 Gene's rule (database_timestamp.txt) reserves two slots per run year, an
-"ideal" date and a "survey/estimate" date, with measured constants from real
-data going any time after those. Two of our timestamps do not sit cleanly in
-that scheme:
+"ideal" date and a "survey/estimate" date, with constants measured from real
+data going any time after those.
 
-  1. The Run 22 entries use 2021-11-1x. That is in the "real data" range, so it
-     is legal, but the reserved Run 22 slots (ideal 2021-10-10, survey
-     2021-10-15) were never used for anything but the identity entry. Fine as
-     is, but worth stating when we hand these over.
+  * The Run 22 iterations sit at 2021-11-1x. That is the "real data" range and
+    therefore correct for measured constants. The reserved Run 22 slots are
+    used by the identity entry (ideal, 2021-10-10); FTT has nothing to put in
+    the survey slot, since it has no survey-only table.
 
-  2. The Run 24 entries use 2023-12-10 and 2023-12-10 00:00:01 -- which IS
-     Gene's Run 24 *ideal* slot, holding measured constants. The choice was
-     deliberate and is recorded in the file headers: the entry has to precede
-     the Run 24 ZF data (event time 2024-06-22) AND beat the 2022-12-20
-     identity placeholder, and the ideal slot does both. Strictly, measured
-     constants belong after the survey slot. Ask Gene whether he wants these
-     moved to 2023-12-15 or later before they go in.
+  * The Run 24 entries were at 2023-12-10 and 2023-12-10 00:00:01 -- Gene's
+    Run 24 *ideal* slot -- while holding measured constants. The file headers
+    record why: the entry has to precede the Run 24 ZF data (event time
+    2024-06-22) and beat the 2022-12-20 identity placeholder. That is now
+    resolved properly: the carried-over estimate moved to the estimate slot
+    2023-12-15, the first real Run 24 measurement to 2023-12-15 00:00:01, and
+    the freed 2023-12-10 holds an identity link. Resolution for Run 24 is
+    unchanged -- verified, see "What each tag means".
 
-  3. database_timestamp.txt lists the 2024 survey slot as "2024-12-15", which
-     cannot be right -- the same year's ideal slot is 2023-12-10 and Run 24 ran
-     in 2024, so a 2024-12-15 estimate would postdate the run it describes.
-     Almost certainly a typo for 2023-12-15. Confirm with Gene.
+  * The 2024 survey slot is 2023-12-15, not the "2024-12-15" that
+    database_timestamp.txt as received reads. Gene confirmed on 2026-10-13 that
+    this is a typo or paste error. Noted here because the file itself still
+    says the wrong thing.
 
-The filenames have deliberately NOT been renamed to match the slots, so that
-existing local setups and the fGeom caches built against these sdt values keep
-working. fttGeometry_db.C sets beginTime explicitly and does not take it from
-the filename, so the two can be reconciled without touching the files -- but
-decide first, because beginTime is what picks the entry for a given run.
-
+  STILL OPEN, and these are physics calls rather than formatting ones:
+  the Run 23 and Run 25 SURVEY slots (2023-04-15, 2024-12-15) and the Run 25
+  IDEAL slot (2024-12-10) are deliberately empty. FTT has no survey-only table,
+  so filling them means choosing what those runs reconstruct with. Run 23
+  currently resolves to identity, inherited from Daniel's old placeholder. And
+  remember an unpaired ideal entry hijacks its year -- see the measured example
+  under "What each tag means".
 
 
 The "misalign" BFC option is what makes any of this take effect

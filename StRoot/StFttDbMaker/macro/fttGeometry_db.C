@@ -22,13 +22,12 @@
 //     2021       2020-12-10   2020-12-15        any time after
 //     2022       2021-10-10   2021-10-15        any time after
 //     2023       2023-04-10   2023-04-15        any time after
-//     2024       2023-12-10   2023-12-15 (*)    any time after
+//     2024       2023-12-10   2023-12-15        any time after
 //     2025       2024-12-10   2024-12-15        any time after
 //
-//   (*) database_timestamp.txt as received reads "2024-12-15" for the 2024 survey
-//       slot, which cannot be right -- the ideal slot for the same year is
-//       2023-12-10 and Run 24 began in early 2024, so a 2024-12-15 estimate would
-//       land after the run it describes. Read as 2023-12-15, and CONFIRM WITH GENE.
+//   The 2024 survey date is 2023-12-15. database_timestamp.txt as received reads
+//   "2024-12-15" there; Gene confirmed 2026-10-13 that this is a typo / paste
+//   error, so 2023-12-15 is what to use.
 //
 // The timestamps below are the ones already chosen in the filenames, deliberately
 // and with the reasoning recorded in each file's header. Two of them are worth a
