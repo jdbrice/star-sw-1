@@ -64,6 +64,121 @@ Then edit the numbers in the copy, or add a new file with a later timestamp.
 
 What each timestamp means
 -------------------------
+All of these are Run 22 (FST commissioning). Translations are cm; no rotation
+has ever been non-identity. Only fstOnTpc and hssOnFst are ever non-identity --
+fstWedgeOnHss and fstSensorOnWedge are identity in every version to date.
+
+IMPORTANT: none of these is an alignment iteration. Every non-identity number
+here is THE SURVEY. $STAR/StarDb/Geometry/fst has exactly one timestamp,
+20211110.000001, in which hssOnFst carries
+
+      Left  half  t = (+0.07126, -0.30102, 0) cm
+      Right half  t = (+0.22626, -0.33302, 0) cm
+
+i.e. the survey says the FST halves sit 3.0-3.3 mm low in y and 0.7/2.3 mm off
+in x -- the same order as the DB beamline y0 = -2.2 mm. Our files are three
+treatments of that one survey, not successive measurements:
+
+  file timestamp     content                                      meaning
+  ---------------    ------------------------------------------   -----------------
+  20211110.000001    all four tables identity, t = (0,0,0)        MISALIGNMENT OFF.
+                                                                  A local override, NOT
+                                                                  the release content
+                                                                  at this name -- see
+                                                                  the warning below
+  20211111.000001    hssOnFst carries the survey as the release   THE SURVEY, verbatim
+                     ships it; everything else identity:           (byte-identical to
+                       Left  (+0.07126, -0.30102)                  $STAR's 20211110)
+                       Right (+0.22626, -0.33302)
+  20211112.000001    THE SAME SURVEY, re-decomposed: the common   The survey, split into
+                     part lifted into fstOnTpc                     a common shift plus a
+                       fstOnTpc (+0.14876, -0.31702)               differential
+                     leaving a symmetric residual in hssOnFst
+                       Left  (-0.07750, +0.01600)
+                       Right (+0.07750, -0.01600)
+
+  The last two are NOT successive iterations and carry no new information.
+  fstOnTpc + hssOnFst sums to exactly the same total for both halves in both
+  versions (verified element by element). 20211112 exists because the common
+  offset belongs in fstOnTpc physically -- the whole detector sits low, plus a
+  small differential between the halves -- and because an FST-global shift is
+  then one number to iterate instead of two.
+
+  So FST alignment has never been iterated past the survey. If and when it is,
+  add a new timestamp; do not edit these.
+
+  * WARNING, SAME FILENAME, DIFFERENT CONTENT. Our 20211110.000001 files have
+    the same names as the release's, but ours are identity and the release's
+    hssOnFst is the survey. Copying or linking this directory into ./StarDb
+    therefore does not merely ADD entries -- it REPLACES the release survey
+    with identity under the same name. Any run resolving to 20211110 then gets
+    ideal geometry where $STAR would have given it the survey, silently. This
+    is the sharpest form of the shadowing problem described above, and the
+    reason to check for ./StarDb/Geometry/fst before trusting a result.
+
+  The "comment" field in these files reads "Identity Matrix" in all of them,
+  including the non-identity ones. It is stale text, and in any case
+  memcpy(&row.comment,"...",1) copies a single byte, so the field carries no
+  usable information. Do not rely on it; this README is the record.
+
+
+Pushing to the database" below)
+
+These four tables are chained by StFstDb::loadGeometry() to place every FST
+sensor:
+
+      fstOnTpc            FST global position inside the TPC frame   (1 row)
+      hssOnFst            each of the 2 half-support structures      (2 rows)
+      fstWedgeOnHss       each wedge on its HSS                      (36 rows)
+      fstSensorOnWedge    each sensor on its wedge                   (108 rows)
+
+The DB is the truth. These files are the record of what was pushed, and the
+way to override it locally.
+
+
+Using these tables locally instead of the database
+--------------------------------------------------
+If you want to MODIFY the geometry parameters -- try a new alignment, test a
+shift, reproduce an old iteration -- do NOT edit the database. St_db_Maker
+looks for tables in this order:
+
+      ./StarDb                <- your working directory, wins
+      $STAR/StarDb            <- the release
+      MySQL                   <- the database
+
+so a copy in ./StarDb shadows everything else. Put it there:
+
+      mkdir -p ./StarDb/Geometry
+      cp -r $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
+      # or: ln -s $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
+
+Then edit the numbers in the copy, or add a new file with a later timestamp.
+
+  * REMEMBER TO REMOVE IT when you want the database values back. A forgotten
+    ./StarDb/Geometry/fst silently keeps you on your own numbers forever, and
+    nothing in the log says so loudly.
+
+  * CONDOR JOBS: the job runs in its own scratch directory, not where you
+    submitted from, so ./StarDb must exist THERE. Copy or link the fst dir
+    into the job's working/tmp directory as well, or the job silently falls
+    back to the DB and your test does nothing. This is the single most common
+    way an alignment test comes back "no change".
+
+  * THE GEOMETRY CACHE MUST MATCH. StFwdTrackMaker does not read these tables
+    at tracking time; it reads the cached fGeom.*.root built from them. If you
+    change the tables you must rebuild the cache and point at the new one:
+
+        root4star -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)'
+            -> fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+
+    The sdt argument selects which table version AgPosition reads (the latest
+    entry at or before that timestamp), and misalign=1 is what makes it read
+    the survey tables at all. Copy or link the resulting fGeom file next to
+    the job as well -- same scratch-directory trap as above.
+
+
+What each timestamp means
+-------------------------
 All of these are Run 22 (FST commissioning). The numbers are translations in
 cm; no rotations have ever been non-identity in these tables.
 

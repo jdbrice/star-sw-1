@@ -11,6 +11,13 @@
 // so there is exactly one copy of every number and no way for the DB and the
 // local-override path to drift apart. See README for what each file means.
 //
+// WHAT THESE TABLES CONTAIN: not alignment iterations. Every non-identity number
+// in fst/*.C is THE SURVEY -- $STAR/StarDb/Geometry/fst ships it as hssOnFst at
+// 20211110.000001, and our 20211111 is byte-identical to it while 20211112 is the
+// same survey re-decomposed. FST alignment has never been iterated past the
+// survey. Because they are the survey, they belong in Gene's SURVEY slot, not in
+// the real-data range where our filenames happen to sit. See README.
+//
 // beginTime follows Gene Van Buren's rule (database_timestamp.txt). The date is
 // per RUN YEAR, not per calendar date of the work, and each year reserves two
 // slots before the run starts:
@@ -51,23 +58,26 @@ void fstGeometry_db( const char* tag = "", const char* opt = "" )
     TString storeTime;  // the beginTime to store under, per the rule above
     TString what;
 
-    if ( t == "ideal" ) {
+    if ( t == "noalign" ) {
         stamp     = "20211110.000001";
-        storeTime = "2021-10-10 00:00:00";   // Run 22 ideal slot
-        what      = "initial: no shift, no rotation";
-    } else if ( t == "iter1" ) {
+        storeTime = "2021-10-10 00:00:00";   // Run 22 IDEAL slot -- identity is the ideal
+        what      = "misalignment off: identity, no shift, no rotation";
+    } else if ( t == "survey" ) {
         stamp     = "20211112.000001";
-        storeTime = "2021-11-12 00:00:00";   // Run 22 real data, after the survey slot
-        what      = "iteration 1 by Akio (common shift in fstOnTpc)";
-    } else if ( t == "iter1flat" ) {
+        storeTime = "2021-10-15 00:00:01";   // Run 22 SURVEY slot, version 2
+        what      = "the survey, re-decomposed (common shift in fstOnTpc) -- what we run";
+    } else if ( t == "surveyflat" ) {
         stamp     = "20211111.000001";
-        storeTime = "2021-11-11 00:00:00";   // superseded; here for completeness
-        what      = "iteration 1 by Akio, all shift in hssOnFst (same alignment as iter1)";
+        storeTime = "2021-10-15 00:00:00";   // Run 22 SURVEY slot, initial
+        what      = "the survey exactly as the release ships it (all of it in hssOnFst)";
     } else {
         std::cout << "fstGeometry_db: unknown tag \"" << tag << "\"\n"
-                  << "  known tags: ideal       -> " << "2021-10-10 00:00:00\n"
-                  << "              iter1       -> " << "2021-11-12 00:00:00\n"
-                  << "              iter1flat   -> " << "2021-11-11 00:00:00 (superseded)\n";
+                  << "  known tags:\n"
+                  << "    noalign      2021-10-10 00:00:00   identity (misalignment off)\n"
+                  << "    surveyflat   2021-10-15 00:00:00   survey as the release ships it\n"
+                  << "    survey       2021-10-15 00:00:01   same survey, re-decomposed\n"
+                  << "\n  NOTE: survey and surveyflat are the SAME alignment, decomposed\n"
+                  << "  differently. Push ONE of them, not both -- 'survey' is what we run.\n";
         return;
     }
 
