@@ -112,10 +112,9 @@ Filenames are Gene's slots. His rule is kept at
 
       https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
 
-(the corrected copy -- an earlier version had the 2024 survey date as
-2024-12-15, which Gene confirmed was a typo for 2023-12-15). Per run year it
-reserves an "ideal" date and a "survey/estimate" date, both before the run
-starts, with constants measured from real data going any time after. The first
+Per run year it reserves an "ideal" date and a "survey/estimate" date, both
+before the run starts, with constants measured from real data going any time
+after. The first
 entry at a date uses time 000000, and later revisions of the same numbers step
 the time.
 
