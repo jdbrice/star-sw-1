@@ -1,7 +1,9 @@
 // fstGeometry_db.C -- push the Geometry/fst survey tables to the offline MySQL DB.
 //
-//   root4star -b -q 'fstGeometry_db.C("ideal")'            dry run: read + print
-//   root4star -b -q 'fstGeometry_db.C("ideal","writedb")'  actually store
+//   root4star -b -q 'fstGeometry_db.C("survey22")'            dry run: read + print
+//   root4star -b -q 'fstGeometry_db.C("survey22","writedb")'  store one slot
+//   root4star -b -q 'fstGeometry_db.C("all","writedb")'       store every slot
+//   root4star -b -q 'fstGeometry_db.C("bogus")'              list the tags
 //
 // Run the dry form first. It prints every row it would store, and touches
 // nothing.
@@ -13,10 +15,10 @@
 //
 // WHAT THESE TABLES CONTAIN: not alignment iterations. Every non-identity number
 // in fst/*.C is THE SURVEY -- $STAR/StarDb/Geometry/fst ships it as hssOnFst at
-// 20211110.000001, and our 20211111 is byte-identical to it while 20211112 is the
-// same survey re-decomposed. FST alignment has never been iterated past the
-// survey. Because they are the survey, they belong in Gene's SURVEY slot, not in
-// the real-data range where our filenames happen to sit. See README.
+// 20211110.000001. Our 20211015.000000 is byte-identical to it, and our
+// 20211015.000001 is the same survey re-decomposed. FST alignment has never been
+// iterated past the survey, which is why these sit in Gene's SURVEY slot. The
+// later run years are symlinks to the same two files. See README.
 //
 // beginTime follows Gene Van Buren's rule (database_timestamp.txt). The date is
 // per RUN YEAR, not per calendar date of the work, and each year reserves two
@@ -58,33 +60,67 @@ void fstGeometry_db( const char* tag = "", const char* opt = "" )
     TString storeTime;  // the beginTime to store under, per the rule above
     TString what;
 
-    if ( t == "noalign" ) {
-        stamp     = "20211110.000001";
-        storeTime = "2021-10-10 00:00:00";   // Run 22 IDEAL slot -- identity is the ideal
-        what      = "misalignment off: identity, no shift, no rotation";
-    } else if ( t == "survey" ) {
-        stamp     = "20211112.000001";
-        storeTime = "2021-10-15 00:00:01";   // Run 22 SURVEY slot, version 2
-        what      = "the survey, re-decomposed (common shift in fstOnTpc) -- what we run";
-    } else if ( t == "surveyflat" ) {
-        stamp     = "20211111.000001";
-        storeTime = "2021-10-15 00:00:00";   // Run 22 SURVEY slot, initial
-        what      = "the survey exactly as the release ships it (all of it in hssOnFst)";
-    } else {
-        std::cout << "fstGeometry_db: unknown tag \"" << tag << "\"\n"
-                  << "  known tags:\n"
-                  << "    noalign      2021-10-10 00:00:00   identity (misalignment off)\n"
-                  << "    surveyflat   2021-10-15 00:00:00   survey as the release ships it\n"
-                  << "    survey       2021-10-15 00:00:01   same survey, re-decomposed\n"
-                  << "\n  NOTE: survey and surveyflat are the SAME alignment, decomposed\n"
-                  << "  differently. Push ONE of them, not both -- 'survey' is what we run.\n";
-        return;
+    // tag -> (file stamp, beginTime, description). One row per DB slot.
+    // The later years reuse the Run 22 files: fst/ has symlinks at those stamps,
+    // so the same survey is served without a second copy of the numbers.
+    const int NTAG = 9;
+    const char *tg[NTAG] = { "ideal22", "survey22flat", "survey22",
+                             "ideal23", "survey23",
+                             "ideal24", "survey24",
+                             "ideal25", "survey25" };
+    const char *st[NTAG] = { "20211010.000000", "20211015.000000", "20211015.000001",
+                             "20230410.000000", "20230415.000000",
+                             "20231210.000000", "20231215.000000",
+                             "20241210.000000", "20241215.000000" };
+    const char *bt[NTAG] = { "2021-10-10 00:00:00", "2021-10-15 00:00:00", "2021-10-15 00:00:01",
+                             "2023-04-10 00:00:00", "2023-04-15 00:00:00",
+                             "2023-12-10 00:00:00", "2023-12-15 00:00:00",
+                             "2024-12-10 00:00:00", "2024-12-15 00:00:00" };
+    const char *ds[NTAG] = {
+        "Run 22 ideal: identity, misalignment off",
+        "Run 22 survey, exactly as the release ships it (all of it in hssOnFst)",
+        "Run 22 survey, re-decomposed (common shift in fstOnTpc) -- what we run",
+        "Run 23 ideal (link to the Run 22 ideal)",
+        "Run 23 survey (link to the Run 22 re-decomposed survey)",
+        "Run 24 ideal (link to the Run 22 ideal)",
+        "Run 24 survey (link to the Run 22 re-decomposed survey)",
+        "Run 25 ideal (link to the Run 22 ideal)",
+        "Run 25 survey (link to the Run 22 re-decomposed survey)" };
+
+    int itag = -1;
+    for ( int i = 0; i < NTAG; i++ ) if ( t == tg[i] ) itag = i;
+    if ( itag < 0 ) {
+        std::cout << "fstGeometry_db: unknown tag \"" << tag << "\"\n  known tags:\n";
+        for ( int i = 0; i < NTAG; i++ )
+            printf("    %-13s %-22s %s\n", tg[i], bt[i], ds[i]);
+        std::cout << "\n  survey22 and survey22flat are the SAME alignment decomposed\n"
+                  << "  differently -- push ONE of them. survey22 is what we run.\n"
+                  << "  Pass \"all\" to push every slot in order.\n";
+        if ( t != "all" ) return;
     }
 
-    std::cout << "fstGeometry_db: tag=" << tag << "  files=fst/*." << stamp << ".C\n"
-              << "                beginTime=\"" << storeTime << "\"\n"
-              << "                " << what << "\n"
-              << "                writedb=" << writedb << "\n";
+    // "all" loops over every slot; a single tag does just that one.
+    int ifirst = ( t == "all" ) ? 0 : itag;
+    int ilast  = ( t == "all" ) ? NTAG - 1 : itag;
+    // survey22flat is redundant with survey22; skip it in "all".
+    for ( int islot = ifirst; islot <= ilast; islot++ ) {
+        if ( t == "all" && TString(tg[islot]) == "survey22flat" ) continue;
+        stamp     = st[islot];
+        storeTime = bt[islot];
+        what      = ds[islot];
+        fstGeometry_db_one( stamp, storeTime, what, tg[islot], writedb );
+    }
+    return;
+}
+
+// Store (or just print) the four tables at one stamp/beginTime.
+void fstGeometry_db_one( TString stamp, TString storeTime, TString what,
+                         const char *tagname, int writedb )
+{
+    std::cout << "\n==== " << tagname << "  files=fst/*." << stamp << ".C\n"
+              << "     beginTime=\"" << storeTime << "\"\n"
+              << "     " << what << "\n"
+              << "     writedb=" << writedb << "\n";
 
     const char *tables[4] = { "fstOnTpc", "hssOnFst", "fstWedgeOnHss", "fstSensorOnWedge" };
 

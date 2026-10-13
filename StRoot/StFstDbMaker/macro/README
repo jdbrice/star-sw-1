@@ -64,154 +64,78 @@ Then edit the numbers in the copy, or add a new file with a later timestamp.
 
 What each timestamp means
 -------------------------
-All of these are Run 22 (FST commissioning). Translations are cm; no rotation
-has ever been non-identity. Only fstOnTpc and hssOnFst are ever non-identity --
-fstWedgeOnHss and fstSensorOnWedge are identity in every version to date.
+Translations are cm; no rotation has ever been non-identity. Only fstOnTpc and
+hssOnFst are ever non-identity -- fstWedgeOnHss and fstSensorOnWedge are
+identity in every version to date.
 
 IMPORTANT: none of these is an alignment iteration. Every non-identity number
-here is THE SURVEY. $STAR/StarDb/Geometry/fst has exactly one timestamp,
-20211110.000001, in which hssOnFst carries
+here is THE SURVEY. $STAR/StarDb/Geometry/fst ships it as hssOnFst at
+20211110.000001:
 
       Left  half  t = (+0.07126, -0.30102, 0) cm
       Right half  t = (+0.22626, -0.33302, 0) cm
 
-i.e. the survey says the FST halves sit 3.0-3.3 mm low in y and 0.7/2.3 mm off
-in x -- the same order as the DB beamline y0 = -2.2 mm. Our files are three
-treatments of that one survey, not successive measurements:
+i.e. the FST halves sit 3.0-3.3 mm low in y and 0.7/2.3 mm off in x -- the same
+order as the DB beamline y0 = -2.2 mm. FST alignment has never been iterated
+past the survey. If and when it is, add a new timestamp; do not edit these.
 
-  file timestamp     content                                      meaning
-  ---------------    ------------------------------------------   -----------------
-  20211110.000001    all four tables identity, t = (0,0,0)        MISALIGNMENT OFF.
-                                                                  A local override, NOT
-                                                                  the release content
-                                                                  at this name -- see
-                                                                  the warning below
-  20211111.000001    hssOnFst carries the survey as the release   THE SURVEY, verbatim
-                     ships it; everything else identity:           (byte-identical to
-                       Left  (+0.07126, -0.30102)                  $STAR's 20211110)
-                       Right (+0.22626, -0.33302)
-  20211112.000001    THE SAME SURVEY, re-decomposed: the common   The survey, split into
-                     part lifted into fstOnTpc                     a common shift plus a
-                       fstOnTpc (+0.14876, -0.31702)               differential
-                     leaving a symmetric residual in hssOnFst
-                       Left  (-0.07750, +0.01600)
-                       Right (+0.07750, -0.01600)
+Filenames are Gene's slots (database_timestamp.txt): an "ideal" date and a
+"survey/estimate" date reserved before each run year starts, with constants
+measured from real data going any time after. The first entry at a date uses
+time 000000, and later revisions of the same numbers step the time.
 
-  The last two are NOT successive iterations and carry no new information.
-  fstOnTpc + hssOnFst sums to exactly the same total for both halves in both
-  versions (verified element by element). 20211112 exists because the common
+  REAL FILES -- Run 22, where the survey was taken
+      20211010.000000   identity, all four tables.  Run 22 IDEAL slot. Also
+                        serves as "misalignment off", and as the floor
+                        St_db_Maker needs (see FindLeft note below).
+      20211015.000000   the survey as the release ships it, all of it in
+                        hssOnFst.  Run 22 SURVEY slot.
+      20211015.000001   THE SAME SURVEY, re-decomposed: common part lifted into
+                        fstOnTpc (+0.14876, -0.31702), symmetric residual left
+                        in hssOnFst (-/+0.07750, +/-0.01600).
+                        Run 22 SURVEY slot, revision 1.  THIS IS WHAT WE RUN.
+
+  The last two are not successive measurements and carry no new information:
+  fstOnTpc x hssOnFst gives exactly the same total for both halves either way,
+  verified element by element. The re-decomposed form exists because the common
   offset belongs in fstOnTpc physically -- the whole detector sits low, plus a
   small differential between the halves -- and because an FST-global shift is
-  then one number to iterate instead of two.
+  then one number to iterate instead of two. Push one of them, not both.
 
-  So FST alignment has never been iterated past the survey. If and when it is,
-  add a new timestamp; do not edit these.
+  SYMLINKS -- the same survey carried into the later run years
+      20230410.000000 -> 20211010.000000     Run 23 ideal
+      20230415.000000 -> 20211015.000001     Run 23 survey
+      20231210.000000 -> 20211010.000000     Run 24 ideal
+      20231215.000000 -> 20211015.000001     Run 24 survey
+      20241210.000000 -> 20211010.000000     Run 25 ideal
+      20241215.000000 -> 20211015.000001     Run 25 survey
 
-  * WARNING, SAME FILENAME, DIFFERENT CONTENT. Our 20211110.000001 files have
-    the same names as the release's, but ours are identity and the release's
-    hssOnFst is the survey. Copying or linking this directory into ./StarDb
-    therefore does not merely ADD entries -- it REPLACES the release survey
-    with identity under the same name. Any run resolving to 20211110 then gets
-    ideal geometry where $STAR would have given it the survey, silently. This
-    is the sharpest form of the shadowing problem described above, and the
-    reason to check for ./StarDb/Geometry/fst before trusting a result.
+  Symlinks, not copies, so there is one copy of every number and the later
+  years cannot silently drift from Run 22.
 
-  The "comment" field in these files reads "Identity Matrix" in all of them,
-  including the non-identity ones. It is stale text, and in any case
-  memcpy(&row.comment,"...",1) copies a single byte, so the field carries no
-  usable information. Do not rely on it; this README is the record.
+  They are not strictly required for the local path: St_db_Maker::FindLeft()
+  takes the latest entry at or before the requested time, per table and per
+  namespace, so a Run 24 job resolves to the Run 22 survey anyway. They exist
+  so each run year has an explicit entry in Gene's scheme instead of
+  inheriting one by accident, and so the DB shows that intent. If a year ever
+  gets its own FST alignment, replace that year's symlink with a real file.
 
+  The Run 24 survey slot here is 2023-12-15, not the 2024-12-15 that
+  database_timestamp.txt literally says: the same year's ideal slot is
+  2023-12-10 and Run 24 ran in 2024, so a 2024-12-15 estimate would postdate
+  the run it describes. Confirm with Gene.
 
-Pushing to the database" below)
+  * FILENAME COLLISION, now resolved. Before the rename our identity file was
+    called 20211110.000001 -- the same name the release uses for its SURVEY --
+    so dropping this directory into ./StarDb replaced the release survey with
+    identity under the same name. The rename to 20211010.000000 removes that
+    collision. The release file still exists, though, and $STAR/StarDb beats
+    MySQL; see "Pushing to the database".
 
-These four tables are chained by StFstDb::loadGeometry() to place every FST
-sensor:
-
-      fstOnTpc            FST global position inside the TPC frame   (1 row)
-      hssOnFst            each of the 2 half-support structures      (2 rows)
-      fstWedgeOnHss       each wedge on its HSS                      (36 rows)
-      fstSensorOnWedge    each sensor on its wedge                   (108 rows)
-
-The DB is the truth. These files are the record of what was pushed, and the
-way to override it locally.
-
-
-Using these tables locally instead of the database
---------------------------------------------------
-If you want to MODIFY the geometry parameters -- try a new alignment, test a
-shift, reproduce an old iteration -- do NOT edit the database. St_db_Maker
-looks for tables in this order:
-
-      ./StarDb                <- your working directory, wins
-      $STAR/StarDb            <- the release
-      MySQL                   <- the database
-
-so a copy in ./StarDb shadows everything else. Put it there:
-
-      mkdir -p ./StarDb/Geometry
-      cp -r $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
-      # or: ln -s $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
-
-Then edit the numbers in the copy, or add a new file with a later timestamp.
-
-  * REMEMBER TO REMOVE IT when you want the database values back. A forgotten
-    ./StarDb/Geometry/fst silently keeps you on your own numbers forever, and
-    nothing in the log says so loudly.
-
-  * CONDOR JOBS: the job runs in its own scratch directory, not where you
-    submitted from, so ./StarDb must exist THERE. Copy or link the fst dir
-    into the job's working/tmp directory as well, or the job silently falls
-    back to the DB and your test does nothing. This is the single most common
-    way an alignment test comes back "no change".
-
-  * THE GEOMETRY CACHE MUST MATCH. StFwdTrackMaker does not read these tables
-    at tracking time; it reads the cached fGeom.*.root built from them. If you
-    change the tables you must rebuild the cache and point at the new one:
-
-        root4star -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)'
-            -> fGeom.dev2022sm.misalign1.sdt20211112.000003.root
-
-    The sdt argument selects which table version AgPosition reads (the latest
-    entry at or before that timestamp), and misalign=1 is what makes it read
-    the survey tables at all. Copy or link the resulting fGeom file next to
-    the job as well -- same scratch-directory trap as above.
-
-
-What each timestamp means
--------------------------
-All of these are Run 22 (FST commissioning). The numbers are translations in
-cm; no rotations have ever been non-identity in these tables.
-
-  file timestamp     content                                      meaning
-  ---------------    ------------------------------------------   -----------------
-  20211110.000001    all four tables identity, t = (0,0,0)        initial: no shift,
-                                                                  no rotation (ideal)
-  20211111.000001    fstOnTpc identity; hssOnFst carries the      iteration 1 by Akio
-                     full shift per HSS:
-                       HSS0 (+0.07126, -0.30102)
-                       HSS1 (+0.22626, -0.33302)
-  20211112.000001    SAME ALIGNMENT AS 20211111, re-decomposed:   iteration 1 by Akio,
-                     the common part lifted into fstOnTpc          re-decomposed
-                       fstOnTpc (+0.14876, -0.31702)              (numerically
-                     leaving a symmetric residual in hssOnFst      identical to
-                       HSS0 (-0.07750, +0.01600)                   20211111)
-                       HSS1 (+0.07750, -0.01600)
-
-  Note on the last two: they are NOT successive iterations. fstOnTpc +
-  hssOnFst sums to exactly the same total for both HSSs in both versions
-  (verified element by element). 20211112 exists because putting the common
-  offset in fstOnTpc is the physically meaningful split -- the whole detector
-  moved, plus a small differential between the two halves -- and because an
-  FST-global shift is then one number to iterate instead of two.
-
-  No survey-derived FST table has ever been entered; every non-identity entry
-  here comes from track-residual alignment on real data.
-
-  The "comment" field in these files reads "Identity Matrix" in all of them,
-  including the non-identity ones. It is stale text, and in any case
-  memcpy(&row.comment,"...",1) copies a single byte, so the field carries no
-  usable information. Do not rely on it; this README is the record.
-
+  The "comment" field reads "Identity Matrix" in all of these files, including
+  the non-identity ones. It is stale, and memcpy(&row.comment,"...",1) copies a
+  single byte anyway, so the field carries no usable information. Do not rely
+  on it; this README is the record.
 
 
 The "misalign" BFC option is what makes any of this take effect
@@ -278,18 +202,27 @@ arguments of build_geom_misalign.C are for.
 
 Pushing to the database
 -----------------------
-      root4star -b -q 'fstGeometry_db.C("ideal","writedb")'
-      root4star -b -q 'fstGeometry_db.C("iter1","writedb")'
+      root4star -b -q 'fstGeometry_db.C("survey22")'            dry run
+      root4star -b -q 'fstGeometry_db.C("survey22","writedb")'  store one slot
+      root4star -b -q 'fstGeometry_db.C("all","writedb")'       store every slot
 
-Without "writedb" the macro only reads the files and prints what it WOULD
-store, which is the safe thing to run first. See the header of
-fstGeometry_db.C for the tag -> beginTime mapping and for Gene's rule on
-choosing beginTime.
+Dry run first -- it prints every row it would write and touches nothing. Pass a
+bad tag to list them all. "all" walks the eight slots in order, skipping
+survey22flat, which is redundant with survey22.
 
-IMPORTANT, read before pushing: the beginTime a table is stored under decides
-which runs pick it up, and it is NOT taken from the filename -- the macro sets
-it explicitly. The filenames here still use the 2021-11-1x dates we have been
-using locally, which do not sit in the slots Gene reserved for ideal and
-survey entries. The macro maps them to Gene-compliant times; the filenames
-have deliberately NOT been renamed yet, so that existing local setups and
-fGeom caches keep working. Settle the rename before the push, not after.
+Tags: ideal22 survey22flat survey22 ideal23 survey23 ideal24 survey24
+      ideal25 survey25
+
+PUSHING IS NOT ENOUGH ON ITS OWN. St_db_Maker resolves ./StarDb, then
+$STAR/StarDb, then MySQL, and $STAR/StarDb/Geometry/fst still holds the
+release's four files at 20211110.000001. Those beat anything in the database.
+Until they are removed from the STAR repository, production keeps reading the
+release copy and never sees these entries. That removal is a separate PR and
+the last step of this migration -- the push is not done until it has landed.
+
+After the push and that removal:
+  - rebuild any fGeom.*.root whose sdt no longer resolves to the entry you
+    intend. The cache is a frozen snapshot and nothing checks it against the
+    tables (see "The misalign option" above);
+  - these files stay here as the record of what was pushed, and as what to copy
+    into ./StarDb when you want to override it.
