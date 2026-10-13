@@ -30,7 +30,7 @@ The second must be 43.
 
 *** Compile
 
-cons +StarVMC/StarGeometry |& tee cons.geom.log
+cons +StarVMC |& tee cons.geom.log
 cons |& tee cons.log
 grep -niE "error|Error 1|undefined reference" cons.log | head -40
 
@@ -40,8 +40,15 @@ build_geom_misalign.C(geomtag, sdt, misalign, label)
 generates fGeom.<geomtag>.misalign<N>.sdt<sdt>[.<label>].root
 
 An existing output file is never overwritten -- the macro says ALREADY EXISTS
-and stops. Run it from the TOP of the checkout, so St_db_Maker picks up the
-local StarDb/Geometry survey tables rather than the ones in $STAR.
+and stops. Run it from the TOP of the checkout, so the local StarDb/Geometry
+survey tables are among the ones St_db_Maker can see.
+
+Note what "picks up the local tables" does and does not mean. St_db_Maker pools
+the .C files from every search directory and takes the LATEST timestamp at or
+before the sdt you ask for -- the directory is irrelevant, and ./StarDb has no
+priority (StBFChain puts $PWD/StarDb fourth in the list). A local file only
+wins if its timestamp is later than every other entry for that table, the ones
+in $STAR included. See StRoot/StFstDbMaker/macro/README.
 
 run22 (with iteration 2 misalign table)
 
