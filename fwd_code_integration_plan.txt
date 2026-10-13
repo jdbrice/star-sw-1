@@ -417,12 +417,20 @@ what it depends on.
         to wave 7.
       * FitterUtils: every collinear seed triple is logged at LOG_DEBUG and the seed
         pT at LOG_INFO; in dense MC that was ~660k lines per run.
-      * The two StFttClusterMaker items below are NOT tracker core and should not ride
-        with wave 5. Both are fixes to StFttClusterMaker.cxx, the same file as the open
-        #9 (revive-pr815-stfttclustermaker). Checked 2026-10-13: #9's branch has
-        NEITHER of them, and neither is in main. So they are genuinely unproposed, and
-        the right home is #9 or a small follow-up PR on the same file once #9 merges --
-        not a tracker-core PR that happens to carry them.
+      * The two StFttClusterMaker items below are NOT tracker core and must not ride
+        with wave 5. Both touch StFttClusterMaker.cxx, the same file as the open #9
+        (revive-pr815-stfttclustermaker). Checked 2026-10-13: #9's branch has NEITHER,
+        and neither is in main, so both are genuinely unproposed.
+        DECIDED 2026-10-13, and they split by dependency rather than by topic:
+          - the kSigmaMin floor is self-contained (only setSigma, which main has), so it
+            goes to #9 NOW. Written and built on #9's branch.
+          - setMaxStripLength/setMaxStripCenter need FOUR symbols from StEvent #17:
+            StFttCluster::setMaxStripLength, ::setMaxStripCenter, StFttRawHit::stripLength
+            and ::stripCenter (all from commit bff415a136). Measured: the commit fails to
+            compile on #9's base with exactly those four errors. So it is all-or-nothing
+            on #17 -- it cannot even READ the values without it -- and adding it to #9
+            would make an otherwise independent PR depend on #17. HELD until #17 merges,
+            then proposed as its own small StFttClusterMaker PR.
         - two cluster fields are set in akio202607 and are in no PR at all, neither
           #826 nor the revived #9 --
               clu->setMaxStripLength( maxAdcHit->stripLength() );
