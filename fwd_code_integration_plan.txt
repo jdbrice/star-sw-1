@@ -434,9 +434,13 @@ what it depends on.
         - floor the cluster sigma at the single-strip value, kSigmaMin =
           pitch/sqrt(12) = 3.2/sqrt(12) = 0.924 mm. A single-strip cluster has all its
           charge in one strip, so the computed variance is exactly 0 and the fit weight
-          diverges. The merged #10 took only the sqrt(max(var,0)) NaN guard, which
-          stops the NaN but still allows sigma = 0. This one already exists as pr2
-          commit ee7ee27b9f (1 file, +9/-1) -- lift it out of pr2 rather than rewriting.
+          diverges. Verified against merged code 2026-10-13: #10 (Gene's one-line carve-out
+          from #9) left star/main:371 as
+                clu->setSigma( sqrt( var < 0 ? 0 : var ) );
+          which guards only the NEGATIVE case. A single-strip cluster gives var exactly 0,
+          not negative, so sqrt(0)=0 passes straight through and GenFit still gets an
+          infinite weight today. The floor is still needed. It already exists as pr2 commit
+          ee7ee27b9f (1 file, +9/-1) -- lift it out of pr2 rather than rewriting it.
 
   WAVE 6 -- remaining code fixes
       StFcsClusterMaker seed thresholds               1 file, +3/-3   SEPARATE FCS PR
