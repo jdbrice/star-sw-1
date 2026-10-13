@@ -144,6 +144,43 @@ the filename, so the two can be reconciled without touching the files -- but
 decide first, because beginTime is what picks the entry for a given run.
 
 
+
+The "misalign" BFC option is what makes any of this take effect
+---------------------------------------------------------------
+The AGML/XML geometry reads these survey tables ONLY when the bfc "misalign"
+option is on. Its entry in BigFullChain.h is
+
+    {"misalign", "", "", "", "", "-AgMLideal", "Misaligned Geometry", kFALSE},
+
+i.e. it works by taking AgMLideal OUT of the chain, which is what lets
+AgPosition apply the <Misalign> entries in the geometry XML. Without it the
+tables are ignored completely and the geometry is built ideal, however
+carefully you edited them -- no warning, no log line, the numbers simply do not
+matter.
+
+With "misalign" on, these tables feed BOTH of:
+
+  * fGeom.root generation. build_geom_misalign.C passes misalign=1, so the
+    cached geometry is built FROM these tables. The cache is a frozen snapshot:
+    once built it no longer consults the tables at all.
+
+  * MC / simulation. The simulated detector is placed with these same
+    parameters, so changing a table changes where simulated hits land, not just
+    how real hits are reconstructed.
+
+So be careful with these directories, especially if you LINK rather than copy:
+a link means someone else's edit, or your own later edit, silently changes
+every job that resolves through it -- reconstruction, geometry building and MC
+alike -- including jobs you thought were a fixed reference.
+
+And be equally careful about WHICH fGeom.root you are using. The cache and the
+tables are two separate things that can disagree, and nothing checks that they
+match. A stale fGeom built from older tables will quietly keep using the old
+alignment while ./StarDb shows the new numbers, which looks exactly like "the
+new alignment had no effect". If you change a table, rebuild the cache, and
+name it so you can tell the versions apart -- that is what the sdt and label
+arguments of build_geom_misalign.C are for.
+
 Pushing to the database
 -----------------------
       root4star -b -q 'fttGeometry_db.C("run22iter3")'            dry run
