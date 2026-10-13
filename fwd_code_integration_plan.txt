@@ -320,6 +320,15 @@ what it depends on.
             #17      pr5-beamline-from-db                     8     10   +471/-86
             #18      pr6-blcvtx-fcs-constrained-tracks       11     11   +473/-29
             #19      pr7-alignment-maker-macro-wiring        12     21  +1354/-117
+            --       magfield_fix                             2      8   +132/-19
+
+          pr2 is the one to look at closely: its five commits are cleanly separable,
+          and two of them do not belong in wave 5 at all.
+            14833981e6  FST/FTT hit-finding bugs      (= pr1 content, debug#1-12,22,23)
+            c62d643b0a  track-fitting bugs            (= pr1 content, debug#13-19)
+            ee7ee27b9f  FTT single-strip cluster sigma  -> belongs with #9, see below
+            462cb6b536  FST phi-sigma warm-start refit  -> HELD, see below
+            276f774cc5  seed-curvature bugs           (debug#25)  <- this is pr2's real content
 
           So the real work is small and reviewable. #16 (2 files, +29/-10) is the obvious
           first one. Do NOT quote the against-main numbers to anybody.
@@ -333,18 +342,29 @@ what it depends on.
           pr2 already contains pr1 and pr6 already contains pr5, so those two pairs are
           stacked in the fork too.
 
-    Three things to settle per branch before proposing it:
+    Four things to settle per branch before proposing it:
       * The branches are cut from an OLD dev, and akio202607 has moved since -- exactly
         the divergence that bit us in #22/#23 (see 2b). For each one, diff the branch's
         version of the touched files against akio202607 and decide which version we
         actually want to ship. The branch is a starting point, not the answer.
+      * HOLD the FST phi-sigma warm-start refit (pr2 commit 462cb6b536: TrackFitter.h
+        +97, GenfitTrackResult.h +25, FwdTracker.h +16, FitterUtils.h +16). It is a
+        second-pass fit added to recover pT resolution, and we have since questioned
+        whether it is still needed once the other fixes are in and Xihe's alignment
+        makes the tracks themselves better. It is exactly ONE self-contained commit, so
+        dropping it costs nothing: revive pr2 as the seed-curvature fix (276f774cc5)
+        alone, let everything else merge, then re-measure pT resolution with and without
+        the warm-start and propose it separately only if it still earns its place.
+        Decide on evidence, after the rest has landed -- not now.
       * pr6 (#18) touches StEnumerations.h, StFwdTrack.h, StVertex.h, StPicoEvent*,
         StPicoFwdTrack.h and StMuPrimaryVertex.h -- all schema that wave 2 is already
         landing as #17/#18/#19. Strip those; what belongs here is only the code that
         EMITS types 4 and 5. If wave 2 has merged by then it resolves itself, but check.
-      * pr7 (#19) mixes three things: StFwdAlignmentMaker (section-4 diagnostics tool,
-        KEEP LOCAL), fwd_afterburner_db.C (a macro, wave 7), and tracker-core changes.
-        Split it; do not propose it whole.
+      * pr7 (#19) is NOT a wave-5 PR as it stands. It mixes three things, and only one
+        of them belongs here: StFwdAlignmentMaker is a section-4 diagnostics tool and
+        stays local (that decision is already recorded below and in section 4),
+        fwd_afterburner_db.C is a macro and belongs to wave 7, and what is left is the
+        tracker-core part. Split it and propose only that.
       #13 FST/FTT hit-finding and track-fitting fixes
       #14 seed-curvature fixes + FST warm-start refit
       #15 FTT diagonal-strip calibration gaps -- ALREADY SHIPPED inside #22.
@@ -397,19 +417,26 @@ what it depends on.
         to wave 7.
       * FitterUtils: every collinear seed triple is logged at LOG_DEBUG and the seed
         pT at LOG_INFO; in dense MC that was ~660k lines per run.
-      * StFttClusterMaker: two cluster fields are set in akio202607 and are in no PR
-        at all, neither #826 nor the revived #9 --
-            clu->setMaxStripLength( maxAdcHit->stripLength() );
-            clu->setMaxStripCenter( maxAdcHit->stripCenter() );
-        Without them a cluster carries no strip length or centre, so the unmeasured
-        direction of the FTT point covariance (maxStripLength^2/12 in
-        StFttClusterPointMaker) and the point position along the strip have nothing to
-        be built from. This is the fix the July FTT reprocessing was run with.
-      * StFttClusterMaker: floor the cluster sigma at the single-strip value,
-        kSigmaMin = pitch/sqrt(12) = 3.2/sqrt(12) = 0.924 mm. A single-strip cluster
-        has all its charge in one strip, so the computed variance is exactly 0 and the
-        fit weight diverges. The merged #10 took only the sqrt(max(var,0)) NaN guard,
-        which stops the NaN but still allows sigma = 0.
+      * The two StFttClusterMaker items below are NOT tracker core and should not ride
+        with wave 5. Both are fixes to StFttClusterMaker.cxx, the same file as the open
+        #9 (revive-pr815-stfttclustermaker). Checked 2026-10-13: #9's branch has
+        NEITHER of them, and neither is in main. So they are genuinely unproposed, and
+        the right home is #9 or a small follow-up PR on the same file once #9 merges --
+        not a tracker-core PR that happens to carry them.
+        - two cluster fields are set in akio202607 and are in no PR at all, neither
+          #826 nor the revived #9 --
+              clu->setMaxStripLength( maxAdcHit->stripLength() );
+              clu->setMaxStripCenter( maxAdcHit->stripCenter() );
+          Without them a cluster carries no strip length or centre, so the unmeasured
+          direction of the FTT point covariance (maxStripLength^2/12 in
+          StFttClusterPointMaker) and the point position along the strip have nothing
+          to be built from. This is the fix the July FTT reprocessing was run with.
+        - floor the cluster sigma at the single-strip value, kSigmaMin =
+          pitch/sqrt(12) = 3.2/sqrt(12) = 0.924 mm. A single-strip cluster has all its
+          charge in one strip, so the computed variance is exactly 0 and the fit weight
+          diverges. The merged #10 took only the sqrt(max(var,0)) NaN guard, which
+          stops the NaN but still allows sigma = 0. This one already exists as pr2
+          commit ee7ee27b9f (1 file, +9/-1) -- lift it out of pr2 rather than rewriting.
 
   WAVE 6 -- remaining code fixes
       StFcsClusterMaker seed thresholds               1 file, +3/-3   SEPARATE FCS PR
