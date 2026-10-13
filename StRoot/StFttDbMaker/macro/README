@@ -94,48 +94,70 @@ To put files there at all:
 
 What each tag means
 -------------------
-Translations are cm. No rotation has ever been non-identity in these tables.
-stationOnStgc is identity in every version to date.
+Translations are cm; no rotation has ever been non-identity, and stationOnStgc
+is identity in every version to date. Filenames are Gene's slots
+(database_timestamp.txt): an "ideal" date and a "survey/estimate" date reserved
+before each run year, with constants measured from real data any time after.
 
-  tag          files (per table)                beginTime              meaning
-  -----------  -------------------------------  ---------------------  ---------
-  run22ideal   all three .20211110.000001       2021-10-10 00:00:00    initial: no shift,
-                                                                        no rotation
-  run22iter1   onTpc/stat .20211112.000001      2021-11-12 00:00:00    iteration 1 by Akio:
-               pent       .20211112.000001                              per-quadrant x/y from
-                                                                        FST->sTGC residuals
-  run22iter2   onTpc/stat .20211112.000001      2021-11-12 00:00:02    iteration 2: adds the
-               pent       .20211112.000002                              PER-QUADRANT z (t2);
-                                                                        x/y unchanged
-  run22iter3   onTpc/stat .20211112.000001      2021-11-12 00:00:03    iteration 3: iter2 +
-               pent       .20211112.000003                              measured deltas.
-                                                                        FINAL Run 22
-  run23ideal   all three .20221220.000000       2022-12-20 00:00:00    Daniel's identity
-                                                                        placeholder
-  run24seed    all three .20231210.000000       2023-12-10 00:00:00    Run 24 seeded from the
-                                                                        Run 22 finals, copied
-                                                                        verbatim -- NOT a
-                                                                        Run 24 measurement
-  run24iter1   onTpc/stat .20231210.000000      2023-12-10 00:00:01    Run 24 iteration 1:
-               pent       .20231210.000001                              first actual Run 24
-                                                                        measurement
+  REAL FILES
+    20211010.000000   identity, all three tables          Run 22 ideal
+    20211112.000001   iteration 1: per-quadrant x/y from  Run 22 real data
+                      FST->sTGC residuals
+    20211112.000002   iteration 2: adds per-quadrant z    Run 22 real data
+                      (t2); x/y unchanged from iter1
+    20211112.000003   iteration 3: iter2 + measured       Run 22 real data
+                      deltas.  FINAL Run 22
+    20231215.000000   Run 22 finals copied verbatim --    Run 24 estimate
+                      an estimate, NOT a Run 24 measurement
+    20231215.000001   first actual Run 24 measurement     Run 24 real data
+                      (the 90-job campaign)
 
-  Note that pentOnStation was revised on its own several times, so the three
-  tables do NOT all have an entry at every timestamp. Each tag above therefore
-  names a stamp PER TABLE -- the latest entry at or before that time, which is
-  what St_db_Maker itself resolves to. Pushing pentOnStation alone would leave
-  the other two at whatever was there before; fttGeometry_db.C always writes
-  all three together for that reason.
+  The Run 22 iterations keep their 2021-11-12 stamps on purpose. They are
+  measured from real data, so that date is already correct under Gene's rule,
+  and "20211112.000003" is wired into build_geom_misalign.C, howto/instruction,
+  several condor submit files and three fGeom caches. Renumbering them would
+  break all of that for no gain.
 
-  The row.comment strings in the newer files are genuinely informative here,
-  unlike the FST ones -- e.g. "Station=1(Disk=0),Pent=1(Quad=A,x>0,y>0)
-  geo(+0.809,+3.634) + align(+1.331,+1.794)", which separates the geometry term
-  from the alignment term. Each file also has a header comment recording how it
-  was produced and what it requires.
+  SYMLINKS
+    20230410.000000 -> 20211010.000000     Run 23 ideal
+    20231210.000000 -> 20211010.000000     Run 24 ideal
+
+  The Run 23 one replaces Daniel's old 20221220.000000 identity placeholder,
+  whose content was byte-identical to the Run 22 ideal.
+
+  pentOnStation was revised alone several times, so the three tables do NOT all
+  have an entry at every stamp. fttGeometry_db.C therefore carries a stamp PER
+  TABLE -- the latest at or before the tag's time, what St_db_Maker resolves to
+  -- and always writes all three together. Pushing pentOnStation alone would
+  leave the other two behind.
+
+  * AN UNPAIRED "IDEAL" ENTRY HIJACKS ITS YEAR. Because resolution is "latest
+    beginTime at or before the request", an ideal entry in a year that has
+    nothing later silently becomes that year's geometry. Measured while building
+    this: adding a Run 25 ideal link at 2024-12-10 took Run 25 from the Run 24
+    alignment to ZEROS, since 2024-12-10 is later than the Run 24 entries at
+    2023-12-15. The link was removed. Verified after removal, with ./StarDb
+    pointed here:
+        2022-01-01  -> (+2.09845,+4.60535)  Run 22 iter3
+        2023-06-01  -> (0,0,0)              identity, as before
+        2024-06-22  -> (+1.94794,+5.75562)  Run 24 iter1
+        2025-06-01  -> (+1.94794,+5.75562)  Run 24 iter1, as before
+    all four matching the behaviour before the rename. Only ever add ideal and
+    estimate slots as a PAIR, and re-run that check afterwards.
+
+  The row.comment strings in the newer files are informative here, unlike the
+  FST ones -- e.g. "Station=1(Disk=0),Pent=1(Quad=A,x>0,y>0) geo(+0.809,+3.634)
+  + align(+1.331,+1.794)", separating the geometry term from the alignment term.
+  Each file also has a header comment recording how it was produced.
 
   One row to know about: station 2, pentagon 1 (quad A) carries a geometry term
   only, with no alignment term -- "NO V HITS" -- so it is not constrained the
   way the other fifteen are.
+
+  * PER-QUADRANT z NEEDS THE FLOAT-ZPLANE GEOMETRY. From iteration 2 onward
+    pentOnStation carries a non-zero t2, measured against a geometry built with
+    zplane as float (PR #20). Against the old int-truncated zplane the z terms
+    reference the wrong plane positions.
 
 
 Open questions on beginTime, settle these BEFORE pushing

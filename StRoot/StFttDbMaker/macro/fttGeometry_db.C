@@ -62,9 +62,9 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
 
     TString t(tag);
     if ( t == "run22ideal" ) {
-        stamp[0]="20211110.000001"; stamp[1]="20211110.000001"; stamp[2]="20211110.000001";
+        stamp[0]="20211010.000000"; stamp[1]="20211010.000000"; stamp[2]="20211010.000000";
         storeTime = "2021-10-10 00:00:00";
-        what = "Run 22 initial: no shift, no rotation (ideal)";
+        what = "Run 22 ideal: identity, no shift, no rotation";
     } else if ( t == "run22iter1" ) {
         stamp[0]="20211112.000001"; stamp[1]="20211112.000001"; stamp[2]="20211112.000001";
         storeTime = "2021-11-12 00:00:00";
@@ -78,16 +78,20 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
         storeTime = "2021-11-12 00:00:03";
         what = "Run 22 iteration 3: iter2 + measured deltas (FINAL Run 22)";
     } else if ( t == "run23ideal" ) {
-        stamp[0]="20221220.000000"; stamp[1]="20221220.000000"; stamp[2]="20221220.000000";
-        storeTime = "2022-12-20 00:00:00";
-        what = "Daniel's identity placeholder (NOT in a slot Gene reserved -- see README)";
-    } else if ( t == "run24seed" ) {
+        stamp[0]="20230410.000000"; stamp[1]="20230410.000000"; stamp[2]="20230410.000000";
+        storeTime = "2023-04-10 00:00:00";
+        what = "Run 23 ideal (link to the Run 22 ideal; was Daniel's 20221220 placeholder)";
+    } else if ( t == "run24ideal" ) {
         stamp[0]="20231210.000000"; stamp[1]="20231210.000000"; stamp[2]="20231210.000000";
         storeTime = "2023-12-10 00:00:00";
-        what = "Run 24 seed: verbatim copy of the Run 22 finals, not a Run 24 measurement";
+        what = "Run 24 ideal (link to the Run 22 ideal)";
+    } else if ( t == "run24seed" ) {
+        stamp[0]="20231215.000000"; stamp[1]="20231215.000000"; stamp[2]="20231215.000000";
+        storeTime = "2023-12-15 00:00:00";
+        what = "Run 24 estimate: Run 22 finals copied verbatim, not a Run 24 measurement";
     } else if ( t == "run24iter1" ) {
-        stamp[0]="20231210.000000"; stamp[1]="20231210.000000"; stamp[2]="20231210.000001";
-        storeTime = "2023-12-10 00:00:01";
+        stamp[0]="20231215.000000"; stamp[1]="20231215.000000"; stamp[2]="20231215.000001";
+        storeTime = "2023-12-15 00:00:01";
         what = "Run 24 iteration 1: first actual Run 24 measurement (90-job campaign)";
     } else {
         std::cout << "fttGeometry_db: unknown tag \"" << tag << "\"\n"
@@ -96,18 +100,23 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
                   << "    run22iter1   2021-11-12 00:00:00   per-quadrant x/y\n"
                   << "    run22iter2   2021-11-12 00:00:02   + per-quadrant z\n"
                   << "    run22iter3   2021-11-12 00:00:03   + deltas  (FINAL Run 22)\n"
-                  << "    run23ideal   2022-12-20 00:00:00   identity placeholder\n"
-                  << "    run24seed    2023-12-10 00:00:00   Run 22 finals carried over\n"
-                  << "    run24iter1   2023-12-10 00:00:01   first Run 24 measurement\n"
+                  << "    run23ideal   2023-04-10 00:00:00   identity (link)\n"
+                  << "    run24ideal   2023-12-10 00:00:00   identity (link)\n"
+                  << "    run24seed    2023-12-15 00:00:00   Run 22 finals carried over\n"
+                  << "    run24iter1   2023-12-15 00:00:01   first Run 24 measurement\n"
+                  << "\n  NOT SET, deliberately: the Run 23 and Run 25 SURVEY slots\n"
+                  << "  (2023-04-15, 2024-12-15) and the Run 25 IDEAL slot (2024-12-10).\n"
+                  << "  An ideal entry in a year with nothing later HIJACKS that year to\n"
+                  << "  identity -- measured: a Run 25 ideal link took Run 25 from the Run\n"
+                  << "  24 alignment to zeros. Add them only in ideal+estimate PAIRS.\n"
                   << "\n  Pass \"all\" to push every slot in order.\n";
         if ( t != "all" ) return;
     }
 
-    // "all": walk every tag in the order declared above.
     if ( t == "all" ) {
-        const char *every[7] = { "run22ideal","run22iter1","run22iter2","run22iter3",
-                                 "run23ideal","run24seed","run24iter1" };
-        for ( int i = 0; i < 7; i++ ) fttGeometry_db( every[i], opt );
+        const char *every[8] = { "run22ideal","run22iter1","run22iter2","run22iter3",
+                                 "run23ideal","run24ideal","run24seed","run24iter1" };
+        for ( int i = 0; i < 8; i++ ) fttGeometry_db( every[i], opt );
         return;
     }
 
