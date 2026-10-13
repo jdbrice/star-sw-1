@@ -9,7 +9,8 @@ What is here
 ------------
   fttDataWindow.C        produces a calibration from MuDst, one run at a time
   fttDataWindow_db.C     pushes a calibration into the DB, and reads it back
-  data/                  the calibrations we have measured (see below)
+  data/                  the calibrations we have measured (see below).
+                         NOT IN THE REPOSITORY -- see the note at the end.
   writeFttDataWindows.C  Daniel's original: writes ONE global entry with a
                          uniform window and no anchors
   readFttDataWindows.C   Daniel's original: prints whatever the DB holds
@@ -128,3 +129,21 @@ run's start.
 NOTE the namespace is Calibrations/ftt, which already exists and already has
 the global window entry. Unlike Geometry/ftt it is not waiting on the
 stgc -> ftt rename.
+
+
+Why data/ is not in the repository
+----------------------------------
+The geometry tables next door in Geometry/ are small and are committed: 52 kB
+for FST, 100 kB for FTT, a few dozen files that change rarely.
+
+The time calibrations are different. There are 58 today at about 29 kB each,
+and there will be thousands once every run is calibrated -- one per run, by
+construction, because anchors are not slowly varying. That is data rather than
+code, and it does not belong in a source repository. A .gitignore here keeps it
+out.
+
+Where it should live instead is not settled. Until it is, keep the files in
+this directory locally (fttDataWindow_db.C defaults to ./data beside itself) or
+pass dir= to point the macro wherever they end up. Anything here can be
+regenerated from the MuDsts with fttDataWindow.C, so nothing is lost by not
+committing them -- only the convenience of having them to hand.
