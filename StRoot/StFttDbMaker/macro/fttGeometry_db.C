@@ -98,7 +98,16 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
                   << "    run22iter3   2021-11-12 00:00:03   + deltas  (FINAL Run 22)\n"
                   << "    run23ideal   2022-12-20 00:00:00   identity placeholder\n"
                   << "    run24seed    2023-12-10 00:00:00   Run 22 finals carried over\n"
-                  << "    run24iter1   2023-12-10 00:00:01   first Run 24 measurement\n";
+                  << "    run24iter1   2023-12-10 00:00:01   first Run 24 measurement\n"
+                  << "\n  Pass \"all\" to push every slot in order.\n";
+        if ( t != "all" ) return;
+    }
+
+    // "all": walk every tag in the order declared above.
+    if ( t == "all" ) {
+        const char *every[7] = { "run22ideal","run22iter1","run22iter2","run22iter3",
+                                 "run23ideal","run24seed","run24iter1" };
+        for ( int i = 0; i < 7; i++ ) fttGeometry_db( every[i], opt );
         return;
     }
 

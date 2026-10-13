@@ -232,9 +232,15 @@ what it depends on.
     StarDb/Geometry sTGC + FST survey tables                 HELD, not a PR yet
           11 new files. These do NOT go into the repo as StarDb/Geometry. Dmitry is
           adding the Geometry/ftt tables to the offline MySQL DB; once they exist the
-          tables must live in MySQL only, because St_db_Maker prefers ./StarDb, then
-          $STAR/StarDb, and only then MySQL -- so a copy left in $STAR/StarDb means
-          production and our own code would never read the DB at all.
+          tables must live in MySQL only. CORRECTED 2026-10-13 after reading the code:
+          St_db_Maker does NOT prefer ./StarDb over $STAR/StarDb over MySQL. All .C
+          files from every search directory are pooled and FindLeft() takes the LATEST
+          timestamp at or before the requested time; where a file and a MySQL row both
+          exist, St_db_Maker.cxx:827 again takes the later beginTime. Directory order
+          is not precedence, and $PWD/StarDb is fourth in the list StBFChain builds.
+          The conclusion survives but for a different reason: Gene's survey slot is
+          2021-10-15, EARLIER than the release's own file at 20211110.000001, so the
+          release file wins on timestamp and production never sees our DB entries.
           The agreed route instead:
             1. review every beginTime/endTime against Gene's per-run-year rule
                (reference_db_timestamps_gene: Run 22 = 2021-10-10 ideal / -15 survey;

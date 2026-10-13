@@ -25,13 +25,39 @@ Using these tables locally instead of the database
 --------------------------------------------------
 If you want to MODIFY the geometry parameters -- try a new alignment, test a
 shift, reproduce an old iteration -- do NOT edit the database. St_db_Maker
-looks for tables in this order:
+St_db_Maker does NOT give ./StarDb priority. This is the most misunderstood
+thing here, so it is measured and quoted rather than asserted:
 
-      ./StarDb                <- your working directory, wins
-      $STAR/StarDb            <- the release
-      MySQL                   <- the database
+  * All .C files found in ANY search directory are pooled, and
+    St_db_Maker::FindLeft() takes the one whose timestamp is LATEST at or
+    before the requested time. Which directory it came from is irrelevant.
+  * When both a file and a MySQL row exist, St_db_Maker.cxx:827 decides:
+        case 3:   // Both SQL and CINT objects
+          if (valsCINT[0].Get()>=valsSQL[0].Get()) { kase = 2; ... }  // file
+          else                                     { kase = 1; ... }  // MySQL
+    again the LATER beginTime wins. Files do not categorically beat the DB.
+  * The list StBFChain builds is MySQL, $STAR/StarDb,
+    $STAR/.$STAR_HOST_SYS/obj/StarDb, $PWD/StarDb, $PWD/obj/StarDb --
+    $PWD/StarDb is FOURTH. Position in that list is not precedence.
 
-so a copy in ./StarDb shadows everything else. Put it there:
+So "put it in ./StarDb and it wins" is false. What wins is the latest
+beginTime. To override locally, your file needs a timestamp later than every
+other entry for that table, the release's included.
+
+  MEASURED 2026-10-13 on FST, requesting a Run 22 date with ./StarDb populated:
+      local files named 2021111x  ->  ours won     fstOnTpc=(+0.14876,-0.31702)
+      local files named 2021101x  ->  RELEASE won  hssOnFst=(+0.07126,-0.30102)
+  The second is the state after the rename into Gene's slots: the release ships
+  hssOnFst at 20211110.000001, LATER than our 20211015.000001, so it wins and
+  edits to our local copies are silently ignored. The resulting geometry is
+  unaffected -- the two decompositions sum to the same translation -- but an
+  edit does nothing, with no warning.
+
+  Until the release copy is gone, override with a later timestamp: copy the
+  file you want to <table>.20211113.000000.C in ./StarDb and edit that.
+
+To put files there at all:
+
 
       mkdir -p ./StarDb/Geometry
       cp -r $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
