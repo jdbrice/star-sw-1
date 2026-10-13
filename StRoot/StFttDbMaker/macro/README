@@ -101,9 +101,16 @@ and tell the chain to look only there.
 What each tag means
 -------------------
 Translations are cm; no rotation has ever been non-identity, and stationOnStgc
-is identity in every version to date. Filenames are Gene's slots
-(database_timestamp.txt): an "ideal" date and a "survey/estimate" date reserved
-before each run year, with constants measured from real data any time after.
+is identity in every version to date.
+
+Filenames are Gene's slots. His rule is kept at
+
+      https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
+
+(the corrected copy -- an earlier version had the 2024 survey date as
+2024-12-15, which Gene confirmed was a typo for 2023-12-15). Per run year it
+reserves an "ideal" date and a "survey/estimate" date, both before the run
+starts, with constants measured from real data going any time after.
 
   REAL FILES
     20211010.000000   identity, all three tables          Run 22 ideal
@@ -168,7 +175,7 @@ before each run year, with constants measured from real data any time after.
 
 Notes on beginTime
 ------------------
-Gene's rule (database_timestamp.txt) reserves two slots per run year, an
+Gene's rule (linked above) reserves two slots per run year, an
 "ideal" date and a "survey/estimate" date, with constants measured from real
 data going any time after those.
 

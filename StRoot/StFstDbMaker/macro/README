@@ -108,10 +108,16 @@ i.e. the FST halves sit 3.0-3.3 mm low in y and 0.7/2.3 mm off in x -- the same
 order as the DB beamline y0 = -2.2 mm. FST alignment has never been iterated
 past the survey. If and when it is, add a new timestamp; do not edit these.
 
-Filenames are Gene's slots (database_timestamp.txt): an "ideal" date and a
-"survey/estimate" date reserved before each run year starts, with constants
-measured from real data going any time after. The first entry at a date uses
-time 000000, and later revisions of the same numbers step the time.
+Filenames are Gene's slots. His rule is kept at
+
+      https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
+
+(the corrected copy -- an earlier version had the 2024 survey date as
+2024-12-15, which Gene confirmed was a typo for 2023-12-15). Per run year it
+reserves an "ideal" date and a "survey/estimate" date, both before the run
+starts, with constants measured from real data going any time after. The first
+entry at a date uses time 000000, and later revisions of the same numbers step
+the time.
 
   REAL FILES -- Run 22, where the survey was taken
       20211010.000000   identity, all four tables.  Run 22 IDEAL slot. Also
