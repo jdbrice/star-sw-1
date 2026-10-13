@@ -31,10 +31,6 @@
 //     2024       2023-12-10   2023-12-15        any time after
 //     2025       2024-12-10   2024-12-15        any time after
 //
-//   The 2024 survey date is 2023-12-15. database_timestamp.txt as received reads
-//   "2024-12-15" there; Gene confirmed 2026-10-13 that this is a typo / paste
-//   error, so 2023-12-15 is what to use.
-//
 // The first entry at a given date uses time 00:00:00; later revisions of the
 // same numbers step the time, 00:00:01, 00:01:00, and so on.
 //

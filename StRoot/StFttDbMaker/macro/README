@@ -186,11 +186,6 @@ data going any time after those.
     the freed 2023-12-10 holds an identity link. Resolution for Run 24 is
     unchanged -- verified, see "What each tag means".
 
-  * The 2024 survey slot is 2023-12-15, not the "2024-12-15" that
-    database_timestamp.txt as received reads. Gene confirmed on 2026-10-13 that
-    this is a typo or paste error. Noted here because the file itself still
-    says the wrong thing.
-
   STILL OPEN, and these are physics calls rather than formatting ones:
   the Run 23 and Run 25 SURVEY slots (2023-04-15, 2024-12-15) and the Run 25
   IDEAL slot (2024-12-10) are deliberately empty. FTT has no survey-only table,

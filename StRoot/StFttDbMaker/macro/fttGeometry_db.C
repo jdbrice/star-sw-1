@@ -25,18 +25,13 @@
 //     2024       2023-12-10   2023-12-15        any time after
 //     2025       2024-12-10   2024-12-15        any time after
 //
-//   The 2024 survey date is 2023-12-15. database_timestamp.txt as received reads
-//   "2024-12-15" there; Gene confirmed 2026-10-13 that this is a typo / paste
-//   error, so 2023-12-15 is what to use.
-//
-// The timestamps below are the ones already chosen in the filenames, deliberately
-// and with the reasoning recorded in each file's header. Two of them are worth a
-// second look before pushing, and both are flagged in README:
-//   - the Run 22 entries use 2021-11-1x, which is in the "real data" range but not
-//     in either reserved slot;
-//   - the Run 24 entries use 2023-12-10, which IS Gene's Run-24 ideal slot, chosen
-//     so the entry precedes the Run 24 ZF data and beats Daniel's 20221220 identity
-//     placeholder. Strictly, measured constants belong after the survey slot.
+// The Run 22 iterations sit at 2021-11-1x, which is the "real data" range and so
+// correct for measured constants. The reserved Run 22 slots hold the identity
+// entry; FTT has nothing for the survey slot, having no survey-only table.
+// Still empty on purpose, and listed when the macro is given a bad tag: the Run
+// 23 and Run 25 survey slots and the Run 25 ideal slot. Filling those decides
+// what those runs reconstruct with, and an unpaired ideal entry hijacks its
+// year -- see README.
 //
 // Unlike the FST tables, the three FTT tables do NOT all have an entry at every
 // timestamp: pentOnStation was revised on its own several times. The map below

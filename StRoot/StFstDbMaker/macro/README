@@ -149,10 +149,6 @@ time 000000, and later revisions of the same numbers step the time.
   inheriting one by accident, and so the DB shows that intent. If a year ever
   gets its own FST alignment, replace that year's symlink with a real file.
 
-  The Run 24 survey slot here is 2023-12-15. database_timestamp.txt as received
-  reads "2024-12-15" there; Gene confirmed on 2026-10-13 that this is a typo or
-  paste error, so 2023-12-15 is correct.
-
   * FILENAME COLLISION, now resolved. Before the rename our identity file was
     called 20211110.000001 -- the same name the release uses for its SURVEY --
     so dropping this directory into ./StarDb replaced the release survey with
