@@ -1,0 +1,117 @@
+StFstDbMaker/macro -- FST geometry (survey/alignment) tables
+============================================================
+
+What is here
+------------
+  fst/*.C                 the Geometry/fst survey tables, one file per
+                          (table, beginTime) pair, in St_db_Maker's
+                          <table>.<yyyymmdd>.<hhmmss>.C naming
+  fstGeometry_db.C        reads those files and pushes them to the offline
+                          MySQL DB (see "Pushing to the database" below)
+
+These four tables are chained by StFstDb::loadGeometry() to place every FST
+sensor:
+
+      fstOnTpc            FST global position inside the TPC frame   (1 row)
+      hssOnFst            each of the 2 half-support structures      (2 rows)
+      fstWedgeOnHss       each wedge on its HSS                      (36 rows)
+      fstSensorOnWedge    each sensor on its wedge                   (108 rows)
+
+The DB is the truth. These files are the record of what was pushed, and the
+way to override it locally.
+
+
+Using these tables locally instead of the database
+--------------------------------------------------
+If you want to MODIFY the geometry parameters -- try a new alignment, test a
+shift, reproduce an old iteration -- do NOT edit the database. St_db_Maker
+looks for tables in this order:
+
+      ./StarDb                <- your working directory, wins
+      $STAR/StarDb            <- the release
+      MySQL                   <- the database
+
+so a copy in ./StarDb shadows everything else. Put it there:
+
+      mkdir -p ./StarDb/Geometry
+      cp -r $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
+      # or: ln -s $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
+
+Then edit the numbers in the copy, or add a new file with a later timestamp.
+
+  * REMEMBER TO REMOVE IT when you want the database values back. A forgotten
+    ./StarDb/Geometry/fst silently keeps you on your own numbers forever, and
+    nothing in the log says so loudly.
+
+  * CONDOR JOBS: the job runs in its own scratch directory, not where you
+    submitted from, so ./StarDb must exist THERE. Copy or link the fst dir
+    into the job's working/tmp directory as well, or the job silently falls
+    back to the DB and your test does nothing. This is the single most common
+    way an alignment test comes back "no change".
+
+  * THE GEOMETRY CACHE MUST MATCH. StFwdTrackMaker does not read these tables
+    at tracking time; it reads the cached fGeom.*.root built from them. If you
+    change the tables you must rebuild the cache and point at the new one:
+
+        root4star -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)'
+            -> fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+
+    The sdt argument selects which table version AgPosition reads (the latest
+    entry at or before that timestamp), and misalign=1 is what makes it read
+    the survey tables at all. Copy or link the resulting fGeom file next to
+    the job as well -- same scratch-directory trap as above.
+
+
+What each timestamp means
+-------------------------
+All of these are Run 22 (FST commissioning). The numbers are translations in
+cm; no rotations have ever been non-identity in these tables.
+
+  file timestamp     content                                      meaning
+  ---------------    ------------------------------------------   -----------------
+  20211110.000001    all four tables identity, t = (0,0,0)        initial: no shift,
+                                                                  no rotation (ideal)
+  20211111.000001    fstOnTpc identity; hssOnFst carries the      iteration 1 by Akio
+                     full shift per HSS:
+                       HSS0 (+0.07126, -0.30102)
+                       HSS1 (+0.22626, -0.33302)
+  20211112.000001    SAME ALIGNMENT AS 20211111, re-decomposed:   iteration 1 by Akio,
+                     the common part lifted into fstOnTpc          re-decomposed
+                       fstOnTpc (+0.14876, -0.31702)              (numerically
+                     leaving a symmetric residual in hssOnFst      identical to
+                       HSS0 (-0.07750, +0.01600)                   20211111)
+                       HSS1 (+0.07750, -0.01600)
+
+  Note on the last two: they are NOT successive iterations. fstOnTpc +
+  hssOnFst sums to exactly the same total for both HSSs in both versions
+  (verified element by element). 20211112 exists because putting the common
+  offset in fstOnTpc is the physically meaningful split -- the whole detector
+  moved, plus a small differential between the two halves -- and because an
+  FST-global shift is then one number to iterate instead of two.
+
+  No survey-derived FST table has ever been entered; every non-identity entry
+  here comes from track-residual alignment on real data.
+
+  The "comment" field in these files reads "Identity Matrix" in all of them,
+  including the non-identity ones. It is stale text, and in any case
+  memcpy(&row.comment,"...",1) copies a single byte, so the field carries no
+  usable information. Do not rely on it; this README is the record.
+
+
+Pushing to the database
+-----------------------
+      root4star -b -q 'fstGeometry_db.C("ideal","writedb")'
+      root4star -b -q 'fstGeometry_db.C("iter1","writedb")'
+
+Without "writedb" the macro only reads the files and prints what it WOULD
+store, which is the safe thing to run first. See the header of
+fstGeometry_db.C for the tag -> beginTime mapping and for Gene's rule on
+choosing beginTime.
+
+IMPORTANT, read before pushing: the beginTime a table is stored under decides
+which runs pick it up, and it is NOT taken from the filename -- the macro sets
+it explicitly. The filenames here still use the 2021-11-1x dates we have been
+using locally, which do not sit in the slots Gene reserved for ideal and
+survey entries. The macro maps them to Gene-compliant times; the filenames
+have deliberately NOT been renamed yet, so that existing local setups and
+fGeom caches keep working. Settle the rename before the push, not after.

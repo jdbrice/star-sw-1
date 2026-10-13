@@ -1,0 +1,154 @@
+StFttDbMaker/macro -- FTT (sTGC) geometry (survey/alignment) tables
+===================================================================
+
+What is here
+------------
+  ftt/*.C                 the Geometry/ftt survey tables, one file per
+                          (table, beginTime) pair, in St_db_Maker's
+                          <table>.<yyyymmdd>.<hhmmss>.C naming
+  fttGeometry_db.C        reads those files and pushes them to the offline
+                          MySQL DB (see "Pushing to the database" below)
+
+Three tables are chained by StFttDb::loadGeometry():
+
+      stgcOnTpc           whole sTGC inside the TPC frame             (1 row)
+      stationOnStgc       each of the 4 stations on the sTGC          (4 rows)
+      pentOnStation       each of the 16 pentagons on its station     (16 rows)
+
+  row = 4*station + k, with k: 0=A 1=D 2=C 3=B. AGML orders the pentagons by
+  rotation (A,D,C,B) while StFttDb numbers quadrants A,B,C,D, so the two
+  conventions differ and the map was measured from the built geometry, not
+  assumed. See script/pentMap.C.
+
+NAMESPACE: the DB namespace is Geometry/ftt. It used to be Geometry/stgc; the
+rename is PR #20 (the StgmGeo1.xml <Misalign> paths) plus PR #23 (the
+StFttDb::loadGeometry() half). Table NAMES did not change -- only the
+namespace -- which is why stgcOnTpc and stationOnStgc still read "stgc".
+Before those PRs land, the local-override directory is ./StarDb/Geometry/stgc;
+after, it is ./StarDb/Geometry/ftt. Use the one matching the code you run.
+
+
+Using these tables locally instead of the database
+--------------------------------------------------
+St_db_Maker looks for tables in this order:
+
+      ./StarDb                <- your working directory, wins
+      $STAR/StarDb            <- the release
+      MySQL                   <- the database
+
+so a copy in ./StarDb shadows everything else:
+
+      mkdir -p ./StarDb/Geometry
+      cp -r $STAR/StRoot/StFttDbMaker/macro/ftt ./StarDb/Geometry/ftt
+      # or: ln -s $STAR/StRoot/StFttDbMaker/macro/ftt ./StarDb/Geometry/ftt
+      # (./StarDb/Geometry/stgc if you are on code from before the rename)
+
+  * REMEMBER TO REMOVE IT when you want the database values back.
+
+  * CONDOR JOBS run in their own scratch directory, so ./StarDb must exist
+    THERE, not where you submitted from. Copy or link the ftt dir into the
+    job's working/tmp directory too, or the job quietly uses the DB and your
+    test shows no change.
+
+  * THE GEOMETRY CACHE MUST MATCH. StFwdTrackMaker reads the cached
+    fGeom.*.root, not these tables. Rebuild it after any change:
+
+        root4star -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)'
+            -> fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+
+    The sdt argument picks which table version AgPosition resolves to (latest
+    entry at or before it) and misalign=1 is what makes it read the survey
+    tables at all. Ship the fGeom file with the job as well.
+
+  * PER-QUADRANT z NEEDS THE FLOAT-ZPLANE GEOMETRY. From iteration 2 onward
+    pentOnStation carries a non-zero t2. That is measured against a geometry
+    built with zplane as float (PR #20); against the old int-truncated zplane
+    the z terms are referenced to the wrong plane positions.
+
+
+What each tag means
+-------------------
+Translations are cm. No rotation has ever been non-identity in these tables.
+stationOnStgc is identity in every version to date.
+
+  tag          files (per table)                beginTime              meaning
+  -----------  -------------------------------  ---------------------  ---------
+  run22ideal   all three .20211110.000001       2021-10-10 00:00:00    initial: no shift,
+                                                                        no rotation
+  run22iter1   onTpc/stat .20211112.000001      2021-11-12 00:00:00    iteration 1 by Akio:
+               pent       .20211112.000001                              per-quadrant x/y from
+                                                                        FST->sTGC residuals
+  run22iter2   onTpc/stat .20211112.000001      2021-11-12 00:00:02    iteration 2: adds the
+               pent       .20211112.000002                              PER-QUADRANT z (t2);
+                                                                        x/y unchanged
+  run22iter3   onTpc/stat .20211112.000001      2021-11-12 00:00:03    iteration 3: iter2 +
+               pent       .20211112.000003                              measured deltas.
+                                                                        FINAL Run 22
+  run23ideal   all three .20221220.000000       2022-12-20 00:00:00    Daniel's identity
+                                                                        placeholder
+  run24seed    all three .20231210.000000       2023-12-10 00:00:00    Run 24 seeded from the
+                                                                        Run 22 finals, copied
+                                                                        verbatim -- NOT a
+                                                                        Run 24 measurement
+  run24iter1   onTpc/stat .20231210.000000      2023-12-10 00:00:01    Run 24 iteration 1:
+               pent       .20231210.000001                              first actual Run 24
+                                                                        measurement
+
+  Note that pentOnStation was revised on its own several times, so the three
+  tables do NOT all have an entry at every timestamp. Each tag above therefore
+  names a stamp PER TABLE -- the latest entry at or before that time, which is
+  what St_db_Maker itself resolves to. Pushing pentOnStation alone would leave
+  the other two at whatever was there before; fttGeometry_db.C always writes
+  all three together for that reason.
+
+  The row.comment strings in the newer files are genuinely informative here,
+  unlike the FST ones -- e.g. "Station=1(Disk=0),Pent=1(Quad=A,x>0,y>0)
+  geo(+0.809,+3.634) + align(+1.331,+1.794)", which separates the geometry term
+  from the alignment term. Each file also has a header comment recording how it
+  was produced and what it requires.
+
+  One row to know about: station 2, pentagon 1 (quad A) carries a geometry term
+  only, with no alignment term -- "NO V HITS" -- so it is not constrained the
+  way the other fifteen are.
+
+
+Open questions on beginTime, settle these BEFORE pushing
+--------------------------------------------------------
+Gene's rule (database_timestamp.txt) reserves two slots per run year, an
+"ideal" date and a "survey/estimate" date, with measured constants from real
+data going any time after those. Two of our timestamps do not sit cleanly in
+that scheme:
+
+  1. The Run 22 entries use 2021-11-1x. That is in the "real data" range, so it
+     is legal, but the reserved Run 22 slots (ideal 2021-10-10, survey
+     2021-10-15) were never used for anything but the identity entry. Fine as
+     is, but worth stating when we hand these over.
+
+  2. The Run 24 entries use 2023-12-10 and 2023-12-10 00:00:01 -- which IS
+     Gene's Run 24 *ideal* slot, holding measured constants. The choice was
+     deliberate and is recorded in the file headers: the entry has to precede
+     the Run 24 ZF data (event time 2024-06-22) AND beat the 2022-12-20
+     identity placeholder, and the ideal slot does both. Strictly, measured
+     constants belong after the survey slot. Ask Gene whether he wants these
+     moved to 2023-12-15 or later before they go in.
+
+  3. database_timestamp.txt lists the 2024 survey slot as "2024-12-15", which
+     cannot be right -- the same year's ideal slot is 2023-12-10 and Run 24 ran
+     in 2024, so a 2024-12-15 estimate would postdate the run it describes.
+     Almost certainly a typo for 2023-12-15. Confirm with Gene.
+
+The filenames have deliberately NOT been renamed to match the slots, so that
+existing local setups and the fGeom caches built against these sdt values keep
+working. fttGeometry_db.C sets beginTime explicitly and does not take it from
+the filename, so the two can be reconciled without touching the files -- but
+decide first, because beginTime is what picks the entry for a given run.
+
+
+Pushing to the database
+-----------------------
+      root4star -b -q 'fttGeometry_db.C("run22iter3")'            dry run
+      root4star -b -q 'fttGeometry_db.C("run22iter3","writedb")'  store
+
+Dry run first: it prints every row it would write and touches nothing. Do not
+push to Geometry_ftt until #20 and #23 have landed, or production will go on
+reading Geometry/stgc and never see these entries.
