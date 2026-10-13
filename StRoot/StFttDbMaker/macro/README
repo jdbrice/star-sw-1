@@ -168,17 +168,43 @@ With "misalign" on, these tables feed BOTH of:
     parameters, so changing a table changes where simulated hits land, not just
     how real hits are reconstructed.
 
-So be careful with these directories, especially if you LINK rather than copy:
-a link means someone else's edit, or your own later edit, silently changes
-every job that resolves through it -- reconstruction, geometry building and MC
-alike -- including jobs you thought were a fixed reference.
+COPYING IS AS DANGEROUS AS LINKING. Both are, for different reasons, and the
+copy is the one that actually catches people out:
+
+  * a LINK means someone else's edit, or your own later edit, silently changes
+    every job that resolves through it -- reconstruction, geometry building and
+    MC alike -- including jobs you meant as a fixed reference.
+
+  * a COPY gives no hint it exists. A symlink at least announces itself in
+    "ls -l"; a copied directory looks like an ordinary directory and nothing
+    about it says "this is shadowing the release and the database". It also
+    goes stale the moment macro/ or the DB is updated, and it keeps winning
+    anyway. Weeks later the numbers disagree with everyone else's and the
+    reason is a directory you forgot you made.
+
+The real hazard is not copy-versus-link, it is that ./StarDb/Geometry/* EXISTS
+AT ALL and silently takes precedence. There is no log line to catch it:
+St_db_Maker does not report which of the three sources a table came from, and
+StFttDb only says whether it used survey tables, not where they came from
+(StFstDb does not even say that much). So check by hand before you trust a
+result:
+
+      ls -ld ./StarDb/Geometry/* 2>/dev/null
+
+which prints nothing if you are clean, "d..." if you copied, and the "-> ..."
+arrow if you linked. Run it in the job's working directory too, not only where
+you submitted from.
+
+Habits that work: keep one working directory per alignment study rather than
+editing in place, and delete or rename ./StarDb the moment the study is over,
+instead of leaving it for next time.
 
 And be equally careful about WHICH fGeom.root you are using. The cache and the
 tables are two separate things that can disagree, and nothing checks that they
-match. A stale fGeom built from older tables will quietly keep using the old
-alignment while ./StarDb shows the new numbers, which looks exactly like "the
+match. A stale fGeom built from older tables quietly keeps using the old
+alignment while ./StarDb shows the new numbers -- which looks exactly like "the
 new alignment had no effect". If you change a table, rebuild the cache, and
-name it so you can tell the versions apart -- that is what the sdt and label
+name it so the versions are distinguishable: that is what the sdt and label
 arguments of build_geom_misalign.C are for.
 
 Pushing to the database
