@@ -3,7 +3,8 @@
  A. Ogawa, 2026-10-02        contact: akio@bnl.gov
 ================================================================================
 
-Reference: all branches are in https://github.com/jdbrice/star-sw-1
+Reference: the SOURCE branches are in https://github.com/jdbrice/star-sw-1
+           the PR branches we open are pushed to STAR/star-sw on BNL Gitea (see 2b)
 
   - "dev" branch : Daniel's for developing fwd software, with some of Akio's change merged
 
@@ -44,12 +45,93 @@ what it depends on.
   geometry path, and diagnostics in "akio202607" branch.
 
 
-2. ALREADY IN PROGRESS ON GITEA
+2. ALREADY IN PROGRESS ON GITEA        (status as of 2026-10-13)
 
-  #2  StFstHitMaker: MERGED
-  #3  Reading StMuFstRawHit StFstRawHitMaker/StMuFstUtil : open
-  #9  StFttClusterMaker correctness fixes (revives #815) : open
-  #10 StFttClusterMaker only sqrt issue from #9 : MERGED
+  Earlier:
+    #2  StFstHitMaker: MERGED
+    #3  Reading StMuFstRawHit StFstRawHitMaker/StMuFstUtil : open
+    #9  StFttClusterMaker correctness fixes (revives #815) : open
+    #10 StFttClusterMaker only sqrt issue from #9 : MERGED
+
+  Waves 2, 3 and 4, all opened 2026-10-12/13:
+    #17 StEvent schema: track types, FTT members, ClassDef fix   base main   1 approval
+    #18 StMuFwdTrack track type                                  base main   1 approval
+    #19 StPicoFwdTrack track types + mVtxIndex read rule         base main
+    #20 StgmGeo1 zplane int->float + Geometry/ftt <Misalign>     base main
+    #21 CLOSED -- fork-based first attempt at #22, replaced
+    #22 StFttDb strip geometry (mostly Daniel's work)            base main
+    #23 StFttDb DB-geometry mode + Geometry/ftt in the code      base #22
+    #24 FTT per-run time anchors + two HitCalibHelper fixes      base #23
+    #25 StFstSlowSimMaker + fstSlowSim BFC option                base main
+    #26 StFttSimHitMaker + FttSimHit BFC option                  base #22
+    #27 StFstFastSimMaker strip indices + disk/wedge fix         base main
+
+  Merge order, which matters: #17 -> #18 -> #19 -> #22 -> #23 -> #24. #20 must land
+  before or with #23: the XML and code halves of the stgc->ftt rename must not split
+  across releases, because a mismatched pair makes all three survey lookups fail and a
+  missing table is not an error -- the geometry falls back to ideal silently.
+  #25 and #27 are independent of everything. #26 needs #22 and is BASED on it, not
+  merely ordered after it: libStFttSimHitMaker is in the default cons build, so merging
+  #26 first would break the build of main outright.
+
+  Waves 2, 3 and 4 are therefore fully proposed. WAVE 5 is next and is the big one.
+
+2b. HOW TO MAKE THESE PRs -- rules learned doing waves 2-4
+
+  Mechanics that cost time to discover; worth following rather than rediscovering.
+
+  * Branches go to STAR/star-sw, not to a personal fork. Jerome prefers branches he
+    can see over work scattered across forks. It is also what makes stacked PRs
+    possible at all: a PR base must be a branch in the base repo, so a branch living
+    only on a fork cannot be used as a base. Delete the branch after merge. #21 was
+    closed and re-opened as #22 for exactly this reason.
+
+  * STAR Gitea merges with real merge commits, NOT squashes -- PR#2's branch commit
+    b99dd74d12 is an ancestor of main with its SHA intact. So a stacked PR retargets
+    to main cleanly after its parent lands: one base change in the UI, no rebase and
+    no force-push. (Daniel squash-merges in his own GitHub fork; that is what the
+    earlier "git cherry lies" note was about, and it does not apply here.)
+
+  * NEVER take StRoot/StBFChain/BigFullChain.h wholesale from akio202607. Doing so
+    DELETES six production chain definitions -- B2023b, P2023b, B2024b, pp2024b,
+    P2024b -- and drags in the broken "fttSim" option naming StFttFastSimulatorMaker,
+    which exists nowhere. Insert only the one new option, and check the diff has zero
+    deleted lines before committing. #25 and #26 were both built this way.
+
+  * Two options inserted in different parts of BigFullChain.h do NOT conflict. #25
+    inserts at line ~1577 and #26 at ~1734; a test merge of both is clean. The
+    "whoever rebases second resolves it" warning below is about options landing in the
+    same region, not about every pair.
+
+  * Expect to carry Daniel's unsubmitted commits. Every package touched so far --
+    StFttDbMaker, StFttHitCalibMaker, StFstSimMaker -- had unmerged work of his
+    underneath ours. Keep it as its own commit with his authorship and say so in the
+    PR text; do not squash it into ours and do not silently rewrite it. Where our
+    later commit undoes part of his (the HitCalibHelper histogram cap in #24), leave
+    both commits and give the reason in the message.
+
+  * Do not cite in a PR description anything that is not in main. StFttClusterPointMaker
+    is not in main, and main's StFwdHitLoader does not read meanRStrip, so neither can
+    be used to motivate a PR against main. Check with "git show origin/main:<path>"
+    before writing the justification, not after.
+
+  * akio202607 is NOT a superset of dev. It diverged at the 2026-07-09 snapshot and
+    never received Daniel's embedded strip geometry, so our StFttDb work was written
+    against the old file-reading version. Rebasing it onto his layer surfaced a real
+    bug: the constructor needs BOTH initStripGeometry() and resetGeometryToHardcoded(),
+    and ours alone would have left every strip map empty. Assume the same kind of gap
+    for any other package where dev moved after July.
+
+  * Reconstructing commits: for a package whose history is a long tail of web edits,
+    snapshot the package directory at each milestone commit
+    ("git checkout <sha> -- <dir>") and commit that with the original author and date,
+    rather than cherry-picking dozens of commits that also touch other packages. Verify
+    the end state with "git diff --quiet <ref> -- <dir>".
+
+  * "cons +StRoot/StBFChain" regenerates two TRACKED files under StRoot/StBFChain/doc/.
+    Restore them before committing. This is one more reason never to stage broadly.
+
+  * Build every commit of a multi-commit PR, not just the tip, so the PR bisects.
 
 3. THE PLAN
 
@@ -61,12 +143,16 @@ what it depends on.
   A note on BFC options, which cut across several waves below. Every new maker needs a
   chain option before anyone can use it, so each maker should land WITH its own option
   rather than waiting for a separate options PR. Current state:
-    All of these edit the SAME file, StRoot/StBFChain/BigFullChain.h, so it is the one
-    guaranteed conflict point across the waves. Whoever rebases second resolves it.
-    StFttSimHitMaker        has no BFC option anywhere -- one has to be written
-    StFstSlowSimMaker       option "fstSlowSim" exists only in akio202607
-    StFttClusterPointMaker  option comes with #810
+    All of these edit the SAME file, StRoot/StBFChain/BigFullChain.h. It is the one
+    shared file across the waves, but note (measured) that two options inserted in
+    different regions of it merge cleanly -- see 2b. Conflicts arise only for options
+    landing in the same region.
+    StFttSimHitMaker        DONE -- "FttSimHit" written from scratch, shipped in #26
+    StFstSlowSimMaker       DONE -- "fstSlowSim" shipped in #25
+    StFttClusterPointMaker  option still owed; it was to come with #810
     fttSim / FcsTrackMatch / PicoVtxless   are what #759 adds
+    Reminder: StFttFastSimMaker has NO option in main either, and the "fttSim" option
+    #759 adds names StFttFastSimulatorMaker, which exists nowhere -- fix the name.
 
   WAVE 1 -- (dissolved; BFC options ride with their makers)
     A BFC option only makes production RUN our code -- the code has to be there and
@@ -84,7 +170,7 @@ what it depends on.
             definitions (B2023b, P2023b, B2024b, pp2024b). Cherry-pick the additive
             part only.
 
-  WAVE 2 -- all persistent schema, in one place, nothing else in it
+  WAVE 2 -- all persistent schema, in one place, nothing else in it   [PROPOSED: #17,#18,#19]
     StFwdTrack track types kBLCVertexConstrained=4 and kFCSConstrained=5,
     StFwdTrackCollection ownership, StPicoFwdTrack fields, and #804 StMuFwdTrack
     ClassDef 3->4 with mTrackType (3 files, +11/-8). Wave 5 depends on this.
@@ -103,7 +189,7 @@ what it depends on.
        StFwdTrack::trackType(), so once kBLCVertexConstrained=4 and kFCSConstrained=5 land
        here, anything reading this enum mislabels them. Extend it in the same PR.
 
-  WAVE 3 -- geometry and DB constants
+  WAVE 3 -- geometry and DB constants                        [PROPOSED: #20,#22,#23,#24]
     StFttDb: ONE PR carrying two commits -- Daniel's "embed strip geometry instead of
           reading Row*.txt" (14 files, +1868) and Akio's DB-geometry mode and switch.
           They touch the same file, and review turnaround can be weeks, so splitting
@@ -187,25 +273,92 @@ what it depends on.
           Highest value per line in this document.
 
   WAVE 4 -- simulation: both slow sims are new and belong in the library
-    StFttSimHitMaker                               2 files, +429   (in dev, not in main)
+                                               [PROPOSED: #25,#26,#27 -- wave complete]
+    StFttSimHitMaker                   #26, 3 files, +434, base #22 (needs its symbols)
           Real-geometry FTT simulation:
           G2THIT -> StFttSimHitMaker -> StFttClusterMaker -> StFttClusterPointMaker.
-          The FTT counterpart of the FST slow simulator; the existing
-          StFttFastSimMaker does not exercise the real geometry or the clustering.
-    StFstSlowSimMaker                              2 files, +615   (Akio's, fork PR #24)
+          What it supersedes in MAIN is the FAST sim: StFttFastSimMaker goes
+          g2t_stg_hit -> new StFttPoint() -> addPoint(), straight to points, so the
+          geometry transform, the strip map and the clustering are all untested in MC.
+          In the chain it stands in for FttDat+FttHitCalib, which need DAQ data and real
+          timing -- that is chain composition, not what it replaces. And note
+          StFttClusterPointMaker is NOT in main, so it cannot be the stated motivation
+          for a PR against main.
+    StFstSlowSimMaker                  #25, 3 files, +620, base main    (fork PR #24)
           Runs MC through the real FST reconstruction chain rather than smearing.
-    StFstFastSimMaker: set meanRStrip/meanPhiStrip on simulated hits   (Akio's, fork PR #23)
+          Strong supporting fact: StFstRawHitMaker in MAIN already reads an
+          "fstRawAdcSimu" dataset and names StFstSlowSimMaker in its own doc comment,
+          with separate pure-simulation and embedding paths. The consumer has been
+          upstream all along; only the producer was missing. Enables occupancy vs
+          efficiency studies, and embedding.
+    StFstFastSimMaker: strip indices + disk/wedge  #27, 1 file, +106/-2 (fork PR #23)
+          Lower priority than #25 -- for strip-level work use the slow sim. This is a
+          correctness fix so the fast sim is not silently wrong: StFstHit's
+          StThreeVectorF constructor leaves mMeanRStrip/mMeanPhiStrip at -1, and
+          (int)(-1+0.5) truncates to 0, so StFstQAMaker piles every fast-sim hit into
+          strip 0 and the -1 reaches the MuDst through StMuFstHit.
     Each of these needs its BFC option in the same PR -- see the note above wave 1.
+    Both #25 and #26 did, and neither deleted a line of BigFullChain.h.
 
   WAVE 5 -- the tracker core: decompose #826 back into the PRs it was built from
+                                               [NEXT -- go slow here]
     Akio's commits, grouped by Daniel as PRs #13-#19 in his fork. Re-propose each as its
     own PR, in this order, each depending only on wave 2:
+
+    MEASURED 2026-10-13, before starting. The branches exist in jdbrice/star-sw-1 as
+    pr1..pr7 and map to his fork PRs #13..#19 in order. Two traps:
+
+      (a) Each branch diffs 125+ files / +12890 against main, because each one carries
+          all of dev -- they were PRs against DEV, not main. The per-PR content is the
+          branch against the dev commit it was cut from. Measured that way:
+
+            fork PR  branch                              commits  files  +/-
+            #13      pr1-fst-ftt-hit-track-fitting-fixes      3      7   +214/-56
+            #14      pr2-seed-curvature-warmstart-pt          6      4   +181/-14
+            #15      pr3-ftt-diagonal-strip-calib-fix        --     --   SHIPPED in #22
+            #16      pr4-dca-target-method-fix                7      2    +29/-10
+            #17      pr5-beamline-from-db                     8     10   +471/-86
+            #18      pr6-blcvtx-fcs-constrained-tracks       11     11   +473/-29
+            #19      pr7-alignment-maker-macro-wiring        12     21  +1354/-117
+
+          So the real work is small and reviewable. #16 (2 files, +29/-10) is the obvious
+          first one. Do NOT quote the against-main numbers to anybody.
+
+      (b) They are NOT file-disjoint, which is the real difficulty of this wave.
+          FwdTracker.h, GenfitTrackResult.h, TrackFitter.h and FitterUtils.h appear in
+          nearly every one. Unlike waves 2-4 these cannot all simply target main:
+          whichever lands second conflicts in those four headers. Either stack them
+          (base = the previous one, retarget as each lands -- cheap, see 2b) or rebase
+          each by hand as its predecessor merges. Decide BEFORE opening the first one.
+          pr2 already contains pr1 and pr6 already contains pr5, so those two pairs are
+          stacked in the fork too.
+
+    Three things to settle per branch before proposing it:
+      * The branches are cut from an OLD dev, and akio202607 has moved since -- exactly
+        the divergence that bit us in #22/#23 (see 2b). For each one, diff the branch's
+        version of the touched files against akio202607 and decide which version we
+        actually want to ship. The branch is a starting point, not the answer.
+      * pr6 (#18) touches StEnumerations.h, StFwdTrack.h, StVertex.h, StPicoEvent*,
+        StPicoFwdTrack.h and StMuPrimaryVertex.h -- all schema that wave 2 is already
+        landing as #17/#18/#19. Strip those; what belongs here is only the code that
+        EMITS types 4 and 5. If wave 2 has merged by then it resolves itself, but check.
+      * pr7 (#19) mixes three things: StFwdAlignmentMaker (section-4 diagnostics tool,
+        KEEP LOCAL), fwd_afterburner_db.C (a macro, wave 7), and tracker-core changes.
+        Split it; do not propose it whole.
       #13 FST/FTT hit-finding and track-fitting fixes
       #14 seed-curvature fixes + FST warm-start refit
-      #15 FTT diagonal-strip calibration gaps
+      #15 FTT diagonal-strip calibration gaps -- ALREADY SHIPPED inside #22.
+          Daniel's 10585d5e75 fixed Row4 strip 151 (missing from the original
+          calibration data, linearly extrapolated to 272.2) in BOTH the text-file and
+          the compiled-array paths. It rode along as a commit of #22 because it lives
+          in StFttDbMaker. Verified there: a script compares all nine Row*.txt against
+          the nine constexpr arrays -- 0 mismatches, kStripLengthRow4 at 152 entries.
+          Nothing left to do for this one.
       #16 DCA target/method in refitTrack
       #17 beamline position from DB
-      #18 BLC-vertex and FCS-constrained track types     (needs wave 2)
+      #18 BLC-vertex and FCS-constrained track types
+          (needs wave 2 = #17, #18, #19 -- all now open, so this is unblocked as soon
+           as they merge)
           The packing must agree across StEvent, StPicoDstMaker, StPicoEvent and
           StFwdTrackMaker. They do NOT have to be one PR: the schema halves land in
           wave 2, in the order given there, and this PR is what first EMITS types 4
