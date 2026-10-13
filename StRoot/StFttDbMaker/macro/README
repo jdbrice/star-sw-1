@@ -233,6 +233,30 @@ new alignment had no effect". If you change a table, rebuild the cache, and
 name it so the versions are distinguishable: that is what the sdt and label
 arguments of build_geom_misalign.C are for.
 
+
+Proving it is safe to remove the release copy
+---------------------------------------------
+Do not delete $STAR/StarDb/Geometry/* and hope. The chain can simulate the
+removal first, because StBFChain honours these options (BigFullChain.h:1159):
+
+      NoStarCintDb     drops $STAR/StarDb   <- simulates the removal
+      NoLocalCintDb    drops $PWD/StarDb
+      NoCintDb         drops both, leaving MySQL only
+      NoMySQLDb        drops MySQL
+
+So after pushing, and BEFORE opening the removal PR:
+
+  1. run the chain with NoCintDb, i.e. MySQL only, and confirm the survey comes
+     back with the numbers you pushed;
+  2. rebuild a geometry cache the same way and check it against the current one
+     -- the translations should be identical, since the DB entries hold the same
+     survey;
+  3. only then propose deleting the files from the repository.
+
+That sequence is also the evidence the removal PR needs: "with NoCintDb the
+geometry is unchanged, so the release copy is redundant" is reviewable, whereas
+"we pushed it, trust us" is not.
+
 Pushing to the database
 -----------------------
       root4star -b -q 'fttGeometry_db.C("run22iter3")'            dry run
