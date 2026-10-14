@@ -198,17 +198,6 @@ Int_t StFstHitMaker::Make()
 				TGeoHMatrix *geoMSensorOnGlobal = (TGeoHMatrix *) mSensorTransforms->FindObject(Form("R%04i", sensorId));
 				geoMSensorOnGlobal->LocalToMaster(local, global);
 
-				// TEMPORARY DEBUG (remove after wedge-step diagnosis): compare the
-				// correct DB/alignment-based global position (global[], just computed
-				// above by LocalToMaster) against the bogus overwrite below, per hit.
-				double correctPhiDeg = atan2(global[1], global[0]) * 180.0 / TMath::Pi();
-				LOG_INFO << "FSTDEBUG wedge=" << (int)newHit->getWedge()
-				         << " disk=" << (int)newHit->getDisk()
-				         << " sensor=" << (int)newHit->getSensor()
-				         << " local0=" << local[0] << " local1=" << local[1]
-				         << " correctGlobalX=" << global[0] << " correctGlobalY=" << global[1]
-				         << " correctPhiDeg=" << correctPhiDeg << endm;
-
                                 // The three lines that used to sit here overwrote the
                                 // LocalToMaster result above, converting (local[0],
                                 // local[1]) as if they were polar (r,phi). That was only
@@ -224,14 +213,6 @@ Int_t StFstHitMaker::Make()
                                 // exactly its pre-9e70bfd0a9 value. It does NOT start
                                 // applying the DB/survey alignment -- the transforms
                                 // cancel either way.
-
-				// TEMPORARY DEBUG (remove after wedge-step diagnosis)
-				double buggyPhiDeg = atan2(global[1], global[0]) * 180.0 / TMath::Pi();
-				LOG_INFO << "FSTDEBUG wedge=" << (int)newHit->getWedge()
-				         << " disk=" << (int)newHit->getDisk()
-				         << " sensor=" << (int)newHit->getSensor()
-				         << " buggyGlobalX=" << global[0] << " buggyGlobalY=" << global[1]
-				         << " buggyPhiDeg=" << buggyPhiDeg << endm;
 
 				StThreeVectorF vecGlobal(global);
 				newHit->setPosition(vecGlobal); //set global position
