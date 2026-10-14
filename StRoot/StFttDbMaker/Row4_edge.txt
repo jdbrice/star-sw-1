@@ -1,3 +1,4 @@
+nStrip     Strip_LEdge Strip_REdge
 0          23.79      26.49      
 1          26.99      29.69      
 2          30.19      32.89      
