@@ -110,9 +110,16 @@ anyway.
 Deactivating the old entries
 ----------------------------
 Geometry_fst holds 11 entries, all dated 2021-10-25, loaded in 2022, 438 rows,
-flavor ofl. EVERY ONE IS IDENTITY -- t=(0,0,0) and r=I on every row of all four
-tables, checked row by row. So the FST survey has never been in the database
-for real data; Run 22 real-data jobs have all used ideal FST geometry.
+flavor ofl. THEY CARRY NO GEOMETRY -- t=(0,0,0) on every one of the 438 rows,
+and the rotation is identity on every row but one: fstSensorOnWedge at
+00:00:03, dataID 217, elementID 37 (Id 1036), has a +10 mrad rotation about z,
+evidently a test. That entry is superseded by 00:00:04, which is identity, so
+nothing resolves to it. So the FST survey has never been in the database for
+real data; Run 22 real-data jobs have all used ideal FST geometry.
+
+(Caught only when the full push was verified -- the first check sampled one
+beginTime per table for rotations and happened to miss 00:00:03. Check every
+entry, not a representative one.)
 
 2021-10-25 falls inside Gene's "real data: any time after that" window, i.e.
 after the 2021-10-10 ideal and 2021-10-15 survey slots, so those rows win over

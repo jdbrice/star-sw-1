@@ -8,8 +8,11 @@ and 25.
 
 Could the 11 older entries below be deactivated -- not deleted? They are all
 dated 2021-10-25, which falls after the 2021-10-15 survey slot, so they take
-precedence over the new entries for every real-data timestamp. All of them are
-the identity transform: t=(0,0,0) and r=I on all 438 rows of all four tables.
+precedence over the new entries for every real-data timestamp. They carry no
+geometry: t=(0,0,0) on all 438 rows of all four tables, and the rotation is
+identity on every row but one -- fstSensorOnWedge at 00:00:03, dataID 217,
+elementID 37, has a 10 mrad rotation about z, and that entry is itself
+superseded by 00:00:04.
 
   table              beginTime             entryTime             dataID    nrows  nodeID
   ------------------ --------------------- --------------------- -------- ------  ------
