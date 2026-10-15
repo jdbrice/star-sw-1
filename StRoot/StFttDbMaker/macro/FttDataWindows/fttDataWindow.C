@@ -58,7 +58,16 @@
 
 // ---- constants inlined from StFttDb.h (class statics are not reliably visible) --
 const int kNVMM   = 384;
+#include <algorithm>
+
 const int kNDBCID = 4096;
+// Half-range scanned when fitting a VMM's in-time crossing. Must cover the
+// neighbour crossings used for the background: 6 * 4.263 + 1 = 27 ticks.
+const int kWinScan = 40;
+// Half-width of the in-time crossing, in ticks. Used in two places that must agree:
+// neighbours this close to t=0 are excluded from the pileup background, and the
+// signal integral that the stored window is a fraction of runs over the same range.
+const double kInTimeHalf = 3.0;
 const int kNOrient = 5;   // kFttHorizontal=0, kFttVertical=1, kFttDiagonalH=2, kFttDiagonalV=3, unknown=4
 
 int wrapT(int t)
@@ -129,7 +138,10 @@ void fttDataWindow(const char *input,
                    int    minEvents  = 200,
                    int    nActive    = 50,
                    double fracTol    = 0.7,     // accept if inWin fraction >= fracTol * run median
-                   int    fobTol     = 20)      // ...or if own anchor is within this many ticks of FOB median
+                   int    fobTol     = 20,      // ...or if own anchor is within this many ticks of FOB median
+                   double bxPeriod   = 4.263,   // ticks per bunch crossing (40 MHz / 9.383 MHz)
+                   double winKeep    = 0.95,    // window holds this fraction of the in-time crossing
+                   int    winHalfMax = 12)      // widest half-window the per-VMM fit may return
 {
   loadLibsDW();
   gSystem->mkdir(Form("%s/png", outdir), kTRUE);
@@ -270,6 +282,10 @@ void fttDataWindow(const char *input,
   for (int ko = 0; ko < kNOrient; ko++) { orInWin[ko] = 0; orTot[ko] = 0; }
   int dominant[384];
   int sugMin[384], sugMax[384];
+  // Per-VMM window actually written to the DB (columns 3-4). Starts as the wide
+  // default and is replaced below by the in-time bunch crossing where one is found.
+  int winMinV[384], winMaxV[384];
+  int nWinOwn = 0;
 
   for (int jv = 0; jv < kNVMM; jv++) {
     nHitsV[jv] = hV[jv]->GetEntries();
@@ -277,6 +293,7 @@ void fttDataWindow(const char *input,
     double bestO = 0;
     for (int lo = 0; lo < kNOrient; lo++) if (orientCount[jv][lo] > bestO) { bestO = orientCount[jv][lo]; dominant[jv] = lo; }
     sugMin[jv] = winMin; sugMax[jv] = winMax;
+    winMinV[jv] = winMin; winMaxV[jv] = winMax;
 
     if (nHitsV[jv] <= 0) { status[jv] = 3; anchor[jv] = -1; sigV[jv] = 0; bkgV[jv] = 0; inWinV[jv] = 0; nDead++; continue; }
 
@@ -382,6 +399,57 @@ void fttDataWindow(const char *input,
     for (int it2 = -300; it2 <= 400 && tot > 0; it2++) if (cum[it2 + 300] >= 0.01 * tot) { sugMin[pv] = it2; break; }
     for (int it3 = 400; it3 >= -300 && tot > 0; it3--) if (cum[it3 + 300] <= 0.99 * tot) { sugMax[pv] = it3 + 1; break; }
 
+      // ---- the window actually stored: the in-time bunch crossing -----------------
+      // Out-of-time hits arrive in crossings every bxPeriod ticks, so what sits under
+      // the in-time peak is pileup at the SAME phase: bg(t) = mean of counts at
+      // t + k*bxPeriod, k = +-1..+-6, interpolated between ticks, skipping neighbours
+      // that fall inside the in-time crossing itself. A linear slope of the plateau
+      // cancels. sugMin/sugMax above subtract the FAR SIDEBAND instead, which leaves
+      // the whole plateau in -- which is why they land around [-100,+225]: that is the
+      // plateau, not the crossing. One crossing keeps ~83% of the signal at ~8x the
+      // purity of [-65,100]; see ftt_sim_hit_maker/timecut/index.html section 5.
+      {
+        double cntW[2 * kWinScan + 1], sgnW[2 * kWinScan + 1];
+        for (int tw = -kWinScan; tw <= kWinScan; tw++)
+          cntW[tw + kWinScan] = hV[pv]->GetBinContent(((aQ + tw) % kNDBCID + kNDBCID) % kNDBCID + 1);
+        for (int tw = -kWinScan; tw <= kWinScan; tw++) {
+          double bsum = 0; int nb = 0;
+          for (int kk = -6; kk <= 6; kk++) {
+            if (kk == 0) continue;
+            double x = tw + kk * bxPeriod;
+            if (fabs(x) <= kInTimeHalf) continue;
+            int x0 = (int)floor(x);
+            double fx = x - x0;
+            int i0 = ((aQ + x0)     % kNDBCID + kNDBCID) % kNDBCID;
+            int i1 = ((aQ + x0 + 1) % kNDBCID + kNDBCID) % kNDBCID;
+            bsum += (1 - fx) * hV[pv]->GetBinContent(i0 + 1) + fx * hV[pv]->GetBinContent(i1 + 1);
+            nb++;
+          }
+          sgnW[tw + kWinScan] = cntW[tw + kWinScan] - (nb > 0 ? bsum / nb : 0);
+        }
+        // Grow outward from the peak, always taking the richer side, until the window
+        // holds winKeep of the crossing's signal. This is the "signal kept" of the
+        // timecut study, so the parameter means the thing we actually care about
+        // rather than a threshold on an arbitrary shape.
+        int tPk = 0; double sPk = -1e30;
+        for (int tw = -3; tw <= 5; tw++) if (sgnW[tw + kWinScan] > sPk) { sPk = sgnW[tw + kWinScan]; tPk = tw; }
+        int xlo = tPk - (int)kInTimeHalf, xhi = tPk + (int)kInTimeHalf;
+        double totX = 0;
+        for (int tw = xlo; tw <= xhi; tw++)
+          if (sgnW[tw + kWinScan] > 0) totX += sgnW[tw + kWinScan];
+        if (sPk > 0 && totX > 0) {
+          int lo = tPk, hi = tPk;
+          double got = sPk;
+          while (got < winKeep * totX && (lo - 1 >= xlo || hi + 1 <= xhi)) {
+            double sl = (lo - 1 >= xlo) ? sgnW[lo - 1 + kWinScan] : -1e30;
+            double sh = (hi + 1 <= xhi) ? sgnW[hi + 1 + kWinScan] : -1e30;
+            if (sl >= sh) { lo--; if (sl > 0) got += sl; }
+            else          { hi++; if (sh > 0) got += sh; }
+          }
+          winMinV[pv] = lo; winMaxV[pv] = hi; nWinOwn++;
+        }
+      }
+
     for (int dd = 0; dd < kNDBCID; dd++) {
       double c2 = hV[pv]->GetBinContent(dd + 1);
       if (c2 <= 0) continue;
@@ -398,14 +466,38 @@ void fttDataWindow(const char *input,
   fprintf(F, "# fttDataWindowsB calibration, run %d\n", run);
   fprintf(F, "# run %d firstEventDate %d firstEventTime %06d\n", run, date, itime);
   fprintf(F, "# input %s nFiles %d eventsRead %d rawHits %.0f stop %s\n", input, nFiles, nRead, nHitsTot, stopReason.Data());
-  fprintf(F, "# window min %d max %d (dbcid ticks relative to anchor), minPeak %d, goodFrac %.3f\n", winMin, winMax, minPeak, goodFrac);
+  // A calibrated VMM whose crossing could not be fitted takes the run's median
+  // window rather than the wide default -- its anchor is good, only its shape was
+  // too thin to measure. VMMs with anchor -1 keep the wide default: they fall back
+  // to the consumer's on-the-fly anchor, which is not validated to the +-1 tick a
+  // one-crossing window needs.
+  int medLo = winMin, medHi = winMax;
+  {
+    int vlo[384], vhi[384], nv = 0;
+    for (int mv = 0; mv < kNVMM; mv++)
+      if (anchor[mv] >= 0 && winMinV[mv] != winMin) { vlo[nv] = winMinV[mv]; vhi[nv] = winMaxV[mv]; nv++; }
+    if (nv > 0) {
+      std::sort(vlo, vlo + nv); std::sort(vhi, vhi + nv);
+      medLo = vlo[nv / 2]; medHi = vhi[nv / 2];
+      for (int mv2 = 0; mv2 < kNVMM; mv2++)
+        if (anchor[mv2] >= 0 && winMinV[mv2] == winMin) { winMinV[mv2] = medLo; winMaxV[mv2] = medHi; }
+    }
+  }
+  printf("fttDataWindow: per-VMM window fitted for %d VMMs, run median [%d, %d]; "
+         "%d calibrated VMMs took the median, %d uncalibrated kept [%d, %d]\n",
+         nWinOwn, medLo, medHi, nOK + nNoisy + nFromFob - nWinOwn, nRejected, winMin, winMax);
+
+  fprintf(F, "# window: per VMM, the in-time bunch crossing (bxPeriod %.3f, holding %.2f of its signal).\n"
+             "#         run median [%d, %d]; uncalibrated VMMs keep the wide [%d, %d].\n"
+             "#         minPeak %d, goodFrac %.3f\n",
+          bxPeriod, winKeep, medLo, medHi, winMin, winMax, minPeak, goodFrac);
   fprintf(F, "# conventions: uuid = StFttDb::vmmId() 0..383; mode 0 = calibrated time (the idl mode comment says the opposite)\n");
   fprintf(F, "# cols 1-5 -> DB: uuid mode min max anchor   (anchor -1 = no usable calibration, use on-the-fly anchor)\n");
   fprintf(F, "# cols 6+  QA only, ignored by fttDataWindow_db.C: status nHits sig bkgPerBin sigFrac orient sugMin sugMax\n");
   fprintf(F, "# status 0=ok 1=lowstat(<%d hits) 2=rejected(sig<%d or inWin fraction < %.2f x median %.3f) 3=nohits 4=anchor taken from FOB median 5=own anchor kept, agrees with FOB within %d ticks but low in-window fraction (noisy); orient 0=H 1=V 2=dH 3=dV 4=unknown\n", nActive, minPeak, fracTol, fracMed, fobTol);
   for (int wv = 0; wv < kNVMM; wv++) {
     fprintf(F, "%3d %d %4d %4d %5d  %d %9.0f %9.1f %8.3f %6.3f %d %4d %4d\n",
-            wv, 0, winMin, winMax, anchor[wv],
+            wv, 0, winMinV[wv], winMaxV[wv], anchor[wv],
             status[wv], nHitsV[wv], sigV[wv], bkgV[wv],
             nHitsV[wv] > 0 ? sigV[wv] / nHitsV[wv] : 0.0, dominant[wv], sugMin[wv], sugMax[wv]);
   }
