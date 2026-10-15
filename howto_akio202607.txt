@@ -52,10 +52,10 @@ in $STAR included. See StRoot/StFstDbMaker/macro/README.
 
 run22 (with iteration 2 misalign table)
 
-root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)' |& tee build_geom.run22.log
-ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211015.000003",1)' |& tee build_geom.run22.log
+ls -la fGeom.dev2022sm.misalign1.sdt20211015.000003.root
 rm -f fGeom.root
-ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
+ln -s fGeom.dev2022sm.misalign1.sdt20211015.000003.root fGeom.root
 
 run24 (with iteration 1 misalign table)
 

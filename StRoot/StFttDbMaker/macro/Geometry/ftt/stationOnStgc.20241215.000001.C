@@ -1,0 +1,1 @@
+stationOnStgc.20231215.000001.C

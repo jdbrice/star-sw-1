@@ -266,9 +266,9 @@ Run from the TOP of the checkout, so St_db_Maker picks up the local
 StarDb/Geometry survey tables instead of the ones in $STAR:
 
     cd $TESTDIR
-    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000003",1)' |& tee build_geom.run22.log
-    ls -la fGeom.dev2022sm.misalign1.sdt20211112.000003.root
-    ln -s fGeom.dev2022sm.misalign1.sdt20211112.000003.root fGeom.root
+    root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211015.000003",1)' |& tee build_geom.run22.log
+    ls -la fGeom.dev2022sm.misalign1.sdt20211015.000003.root
+    ln -s fGeom.dev2022sm.misalign1.sdt20211015.000003.root fGeom.root
 
 Expect a ~380 kB file and a "=== build_geom_misalign done ===" block naming
 geomtag, sdt, misalign and how many FCS volumes were replaced with air (15).

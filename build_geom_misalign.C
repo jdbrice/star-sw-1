@@ -53,8 +53,8 @@
 //     fGeom.<geomtag>.misalign<N>.sdt<sdt>[.<label>].root
 //
 // e.g. Run22:
-//        build_geom_misalign.C("dev2022sm","20211112.000003",1)
-//        -> fGeom.dev2022sm.misalign1.sdt20211112.000003.root
+//        build_geom_misalign.C("dev2022sm","20211015.000003",1)
+//        -> fGeom.dev2022sm.misalign1.sdt20211015.000003.root
 //
 //      Run24 iteration 1, as the run24align/run24pickup campaigns used it:
 //        build_geom_misalign.C("y2024","20240622",1,"iter1")
@@ -70,7 +70,7 @@
 // exits. Delete it first, or change an argument.
 
 void build_geom_misalign( TString     geomtag  = "dev2022sm",
-                          const char* sdt      = "20211112.000003",
+                          const char* sdt      = "20211015.000003",
                           int         misalign = 1,
                           TString     label    = "" )
 {
