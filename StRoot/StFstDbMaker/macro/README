@@ -18,17 +18,33 @@ The dates and times follow Gene's rule : https://www.star.bnl.gov/protected/spin
       2021-10-10 00:00:00   Run 22 ideal     identity -- misalignment off
       2021-10-15 00:00:00   Run 22 survey    the survey, all of it in hssOnFst
       2021-10-15 00:00:01   Run 22 survey    the same survey, re-decomposed <-Current default for Run22
-      2021-10-15 00:01:01   Run 22 alignment (suggested date & time for alignment iteration 1)
-      2021-10-15 00:01:02   Run 22 alignment (suggested date & time for alignment iteration 2)
+      2021-10-15 00:01:0x   Run 22 alignment (alignment-program lane, see below)
       ...
       2023-04-10 00:00:00   Run 23 ideal    symlink to 2021-10-10
       2023-04-15 00:00:00   Run 23 survey   symlink to 2021-10-15 00:00:01
+      2023-04-15 00:01:0x   Run 23 alignment (alignment-program lane, see below)
       ...
       2023-12-10 00:00:00   Run 24 ideal    symlink to 2021-10-10
       2023-12-15 00:00:00   Run 24 survey   symlink to 2021-10-15 00:00:01
+      2023-12-15 00:01:0x   Run 24 alignment (alignment-program lane, see below)
       ...
       2024-12-10 00:00:00   Run 25 ideal    symlink to 2021-10-10
       2024-12-15 00:00:00   Run 25 survey   symlink to 2021-10-15 00:00:01
+      2024-12-15 00:01:0x   Run 25 alignment (alignment-program lane, see below)
+
+WHICH TIME OF DAY TO USE. The minute field says whose entry it is:
+
+      00:00:0x   the baseline kept in this directory -- here, the survey
+      00:01:0x   the alignment program's, free to add without touching the above
+
+and the second field is the iteration number, so a first Run 22 alignment goes
+in at 2021-10-15 00:01:01 and a second at 00:01:02. The same two lanes apply in
+every run year, on that year's survey/estimate date. Resolution is "latest
+beginTime at or before the requested time", so an alignment entry supersedes
+the survey by itself, and deactivating one brings the survey back with nothing
+to renumber anywhere.
+
+A NEW ALIGNMENT GETS A NEW ENTRY -- never edit these.
 
 
 Using these tables locally instead of the database

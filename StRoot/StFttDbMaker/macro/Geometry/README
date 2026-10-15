@@ -22,32 +22,59 @@ only the namespace moved. Dmitry: "stgc is not a DB namespace".
 The dates and times follow Gene's rule : https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
 
       2021-10-10 00:00:00   Run 22 ideal     identity, all three tables
-      2021-11-12 00:00:00   Run 22 iter 1    per-quadrant x/y from FST->sTGC residuals
-      2021-11-12 00:00:02   Run 22 iter 2    + per-quadrant z (t2); x/y as iter 1
-      2021-11-12 00:00:03   Run 22 iter 3    + measured deltas <-FINAL for Run22
-      2023-04-10 00:00:00   Run 23 ideal     symlink to 2021-10-10
+      2021-10-15 00:00:00   Run 22 Survey    (reserved for survey data)
+      2021-10-15 00:00:01   Run 22 iter 1    per-quadrant x/y from FST->sTGC residuals by Akio
+      2021-10-15 00:00:02   Run 22 iter 2    + per-quadrant z (t2); x/y as iter 1 by Akio
+      2021-10-15 00:00:03   Run 22 iter 3    + measured deltas <- Current best by Akio
+      2021-10-15 00:01:0x   Run 22 alignment (alignment-program lane, see below)
       ...
-      2023-12-10 00:00:00   Run 24 ideal     symlink to 2021-10-10
-      2023-12-15 00:00:00   Run 24 estimate  Run 22 finals copied verbatim
-      2023-12-15 00:00:01   Run 24 iter 1    first actual Run 24 measurement
+      2023-04-10 00:00:00   Run 23 ideal     symlink to Run 22 ideal
+      2023-04-15 00:00:00   Run 23 Survey    (reserved for survey data)
+      2023-04-15 00:00:01   Run 23 estimate  symlink to Run 22 iter 3 (best guess)
+      2023-04-15 00:01:0x   Run 23 alignment (alignment-program lane, see below)
       ...
+      2023-12-10 00:00:00   Run 24 ideal     symlink to Run 22 ideal
+      2023-12-15 00:00:00   Run 24 Survey    (reserved for survey data)
+      2023-12-15 00:00:01   Run 24 estimate  symlink to Run 22 iter 3
+      2023-12-15 00:00:02   Run 24 iter 1    per-quadrant x/y from FST->sTGC residuals by Akio
+      2023-12-15 00:01:0x   Run 24 alignment (alignment-program lane, see below)
+      ...
+      2024-12-10 00:00:00   Run 25 ideal     symlink to Run 22 ideal
+      2024-12-15 00:00:00   Run 25 Survey    (reserved for survey data)
+      2024-12-15 00:00:01   Run 25 estimate  symlink to Run 24 iter 1 (best guess)
+      2024-12-15 00:01:0x   Run 25 alignment (alignment-program lane, see below)
 
-The Run 22 iterations sit in the "real data" range, which is where measured
-constants belong, so 2021-11-12 is already right under Gene's rule. Their file
-stamps are also wired into build_geom_misalign.C, the howto, several condor
-submit files and three fGeom caches, so they are not renumbered.
+WHICH TIME OF DAY TO USE. The minute field says whose entry it is:
 
-EMPTY ON PURPOSE: the Run 23 and Run 25 survey slots (2023-04-15, 2024-12-15)
-and the Run 25 ideal slot (2024-12-10). FTT has no survey-only table, so
-filling them is a physics decision about what those runs reconstruct with --
-Run 23 currently resolves to identity.
+      00:00:0x   the baseline kept in this directory -- the survey where there
+                 is one, our best guess where there is not
+      00:01:0x   the alignment program's, free to add without touching the above
+
+and the second field is the iteration number. The same two lanes apply in every
+run year, on that year's survey/estimate date. Resolution is "latest beginTime
+at or before the requested time", so an alignment entry supersedes the baseline
+by itself, and deactivating one brings the baseline back with nothing to
+renumber anywhere.
+
+Gene's rule puts constants measured from real data "any time after" the
+estimate date. These sit ON that date, one second apart, so that every entry
+for a run year is in one place and the iteration number is the second field.
+It changes nothing about what resolves when, since nothing else lies between.
+
+FTT HAS NO SURVEY, so every 00:00:0x entry here is a best guess, and the
+"Survey" rows are reserved against the day there is one. Where a run year has
+no measurement of its own it carries the nearest one that does: Run 23 and the
+Run 24 estimate take Run 22 iter 3, Run 25 takes Run 24 iter 1. Run 23 was
+identity before this, which was worse -- the Run 22 and Run 24 alignments
+differ by only 0.5-1.4 cm per pentagon, against 2-6 cm for identity.
 
 AN UNPAIRED "IDEAL" ENTRY HIJACKS ITS YEAR. Resolution is "latest beginTime at
 or before the request", so an ideal entry in a year with nothing later silently
-becomes that year's geometry. Measured: adding a Run 25 ideal link at
-2024-12-10 took Run 25 from the Run 24 alignment to ZEROS, because 2024-12-10
-is later than the Run 24 entries at 2023-12-15. Only ever add ideal and
-estimate slots as a PAIR, and check all four run years afterwards.
+becomes that year's geometry. Measured: a Run 25 ideal link at 2024-12-10 on
+its own took Run 25 from the Run 24 alignment to ZEROS, because 2024-12-10 is
+later than the Run 24 entries. That is why every year above has its ideal and
+its estimate together. Add them only as a PAIR, and check all four run years
+afterwards.
 
 THE THREE TABLES DO NOT SHARE EVERY STAMP. pentOnStation was revised on its own
 several times, so fttGeometry_db.C carries a stamp PER TABLE -- the latest at or
@@ -61,7 +88,7 @@ zplane as float (PR #20). Against the old int-truncated zplane those z terms
 reference the wrong plane positions.
 
 A NEW ALIGNMENT GETS A NEW ENTRY -- never edit these. Step the time of day on
-the date for that run year, as the Run 22 and Run 24 iterations do.
+that run year's date, in the lane the entry belongs to.
 
 The DB is the truth. These files are the record of what was pushed, and the
 way to override it locally.
