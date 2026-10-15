@@ -30,6 +30,19 @@
 const char *kReadHost = "star-db01.sdcc.bnl.gov";
 const int   kReadPort = 3316;
 
+// A run's first entry goes kPreRoll seconds BEFORE the run start, not at it.
+// Resolution is "latest beginTime at or before the requested time" and every
+// event of the run is at or after the run start, so an entry anywhere in
+// [start-kPreRoll, start] serves the WHOLE run -- while an entry after the
+// start would leave the first seconds of the run on the previous entry. That
+// gives kPreRoll+1 slots to recalibrate a run into before anything has to be
+// deactivated, each revision one second later than the last.
+//
+// 10 s is safe against landing inside the previous run: measured over 2149
+// runs of 2022 days 060-099, the smallest gap between one run ending and the
+// next starting was 26 s, and none was below 10 s.
+const int kPreRoll = 10;
+
 const int kNVMMdb     = 384;
 const int kStampSlot  = 384;
 const int kStampUuid  = -1;
@@ -87,22 +100,26 @@ TString utcStamp(int t)
   return gSystem->GetFromPipe(Form("date -u -d @%d +'%%Y-%%m-%%d %%H:%%M:%%S'", t));
 }
 
-// Is there already an entry at EXACTLY this beginTime? That is the whole
-// idempotency test: we always store a run at its own start time, and
-// (nodeID, elementID, beginTime, flavor, deactive) is the primary key, so an
-// entry at this beginTime is this run's and a second store cannot be added
-// beside it. Returns rows found, or -1 if the query itself failed.
-int dbEntryExists(int starttime, const char *flavor)
+// Unix time of a UTC "YYYY-MM-DD HH:MM:SS".
+int unixOfStamp(const char *ts)
+{
+  return gSystem->GetFromPipe(Form("date -u -d '%s UTC' +%%s", ts)).Atoi();
+}
+
+// beginTime of the entry that applies at this run -- the latest at or before the
+// run start. Empty if there is none. WHICH run it belongs to is not decided here:
+// dbCompare reads the run stamp, which is the reliable answer.
+TString dbLatestBegin(int starttime, const char *flavor)
 {
   TString ts = utcStamp(starttime);
   TString cmd = Form("mysql -h %s --port=%d -u loader -N -s -e "
-                     "\"SELECT count(*) FROM Calibrations_ftt.fttDataWindowsB "
-                     "WHERE beginTime='%s' AND flavor='%s' AND deactive=0\" 2>/dev/null",
+                     "\"SELECT MAX(beginTime) FROM Calibrations_ftt.fttDataWindowsB "
+                     "WHERE beginTime<='%s' AND flavor='%s' AND deactive=0\" 2>/dev/null",
                      kReadHost, kReadPort, ts.Data(), flavor);
   TString out = gSystem->GetFromPipe(cmd.Data());
   out = out.Strip(TString::kBoth);
-  if (!out.IsDigit()) { printf("WARNING: existence query failed (got \"%s\")\n", out.Data()); return -1; }
-  return out.Atoi();
+  if (out == "NULL") out = "";
+  return out;
 }
 
 // Parse fttDataWindow.<run>.txt into the g* arrays. Returns VMM lines read, <0 on error.
@@ -242,12 +259,16 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
   }
 
   if (!option.Contains("writedb")) {           // look only -- say what a push would do
-    int nLook = dbEntryExists(starttime, flavor);
-    if      (nLook < 0) printf("  would store run %d -- BUT the existence check failed\n", run);
-    else if (nLook > 0) printf("  entry already at %s: a push would compare, not insert\n", utcStamp(starttime).Data());
-    else if (!ok && !option.Contains("force")) printf("  would NOT store run %d: fails the quality gate\n", run);
-    else                printf("  would store run %d at %s\n", run, utcStamp(starttime).Data());
-    dbCompare(run, readDate, readTime, flavor, 1);
+    int cmpL = dbCompare(run, readDate, readTime, flavor, 1);
+    if (!ok && !option.Contains("force"))
+      printf("  would NOT store run %d: fails the quality gate\n", run);
+    else if (cmpL == 0)
+      printf("  nothing to do for run %d: already in the DB and identical\n", run);
+    else if (cmpL > 0)
+      printf("  run %d is in the DB but DIFFERS (%d slots): a push needs \"update\"\n", run, cmpL);
+    else
+      printf("  would store run %d at %s (run start %s minus %d s)\n", run,
+             utcStamp(starttime - kPreRoll).Data(), utcStamp(starttime).Data(), kPreRoll);
     return 0;
   }
 
@@ -256,33 +277,43 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
     return -1;
   }
 
-  // Do not insert blindly. An entry at this run's own start time is this run's,
-  // and the primary key means a second one cannot sit beside it.
-  int nHere = dbEntryExists(starttime, flavor);
-  if (nHere > 0) {
-    int cmp = dbCompare(run, readDate, readTime, flavor, 0);
-    if (cmp == 0) {
-      printf("SKIP run %d: already in the DB at %s, content identical\n", run, utcStamp(starttime).Data());
-      return 0;
-    }
-    printf("SKIP run %d: an entry already exists at %s but the content DIFFERS", run, utcStamp(starttime).Data());
-    if (cmp > 0) printf(" (%d of %d slots)", cmp, kStampSlot + 1);
-    else         printf(" (it is unstamped, or stamped for another run)");
-    printf("\n  Not overwriting -- (nodeID,elementID,beginTime,flavor,deactive) is the primary\n"
-           "  key, so the same beginTime cannot be stored twice. A corrected calibration\n"
-           "  for this run needs a LATER beginTime; see README.\n");
-    dbCompare(run, readDate, readTime, flavor, 1);
-    return -1;
+  // Do not insert blindly. The run stamp in slot 384 says whether what the DB
+  // already serves for this run is this run's entry, and dbCompare reads it.
+  int cmp = dbCompare(run, readDate, readTime, flavor, 0);
+  int storeAt = starttime - kPreRoll;        // first entry for a run
+
+  if (cmp == 0) {
+    printf("SKIP run %d: already in the DB and identical\n", run);
+    return 0;
   }
-  if (nHere < 0) {
-    printf("NOT WRITING run %d: could not check whether an entry already exists\n", run);
-    return -1;
+  if (cmp > 0) {                             // this run's entry, but different numbers
+    TString prev = dbLatestBegin(starttime, flavor);
+    if (prev == "") { printf("NOT WRITING run %d: cannot find the existing entry\n", run); return -1; }
+    if (!option.Contains("update")) {
+      printf("SKIP run %d: it is in the DB already and the content DIFFERS in %d of %d slots.\n"
+             "  The existing entry begins %s. Nothing is overwritten -- "
+             "(nodeID,elementID,beginTime,flavor,deactive)\n"
+             "  is the primary key. Add \"update\" to store the new numbers one second later,\n"
+             "  which then wins for the whole run. See README.\n",
+             run, cmp, kStampSlot + 1, prev.Data());
+      dbCompare(run, readDate, readTime, flavor, 1);
+      return -1;
+    }
+    storeAt = unixOfStamp(prev.Data()) + 1;
+    if (storeAt > starttime) {
+      printf("NOT WRITING run %d: the %d slots from %s to the run start are all used.\n"
+             "  Going later than the run start would leave the first seconds of the run on\n"
+             "  the old entry, so ask the database team to deactivate one instead.\n",
+             run, kPreRoll + 1, utcStamp(starttime - kPreRoll).Data());
+      return -1;
+    }
+    printf("UPDATE run %d: %d slots differ, storing a revision at %s\n", run, cmp, utcStamp(storeAt).Data());
   }
 
   gSystem->Setenv("DB_ACCESS_MODE", "write");
   StDbManager *mgr = StDbManager::Instance();
   StDbConfigNode *node = mgr->initConfig("Calibrations_ftt");
-  mgr->setStoreTime(starttime);
+  mgr->setStoreTime(storeAt);
   fttDataWindowsB_st dw;                 // struct only inside a body (see note at top)
   memset(&dw, 0, sizeof(dw));
   for (int jw = 0; jw <= kStampSlot; jw++) {
@@ -296,10 +327,10 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
   gSystem->Unsetenv("DB_ACCESS_MODE");
   if (!stored) {
     printf("\n*** WRITE FAILED for run %d at %s -- NOTHING WAS STORED ***\n"
-           "    see the MysqlDb/StDbSql errors above\n", run, utcStamp(starttime).Data());
+           "    see the MysqlDb/StDbSql errors above\n", run, utcStamp(storeAt).Data());
     return -2;                           // fatal: stop, do not try the other runs
   }
-  printf("STORE run %d at %d %06d flavor %s: OK\n", run, readDate, readTime, flavor);
+  printf("STORE run %d at %s flavor %s: OK\n", run, utcStamp(storeAt).Data(), flavor);
   dbCompare(run, readDate, readTime, flavor, 1);
   return 0;
 }

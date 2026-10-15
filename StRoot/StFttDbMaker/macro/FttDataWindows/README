@@ -123,19 +123,39 @@ to store even when the calibration looks poor. dir defaults to the data/
 directory beside this macro, so it works from any working directory; pass dir
 explicitly to push a calibration you produced elsewhere.
 
-IT DOES NOT INSERT BLINDLY. Before storing a run it asks the database whether
-an entry already exists at that run's start time, and
-  - no entry            -> stores it;
-  - entry, same content -> says so and moves on, so running over data/ twice
-                           changes nothing;
-  - entry, different    -> refuses, and says why.
+IT DOES NOT INSERT BLINDLY. The run stamp in slot 384 says whether what the DB
+serves for a run is that run's own entry, so before storing, the macro reads it
+back and compares:
+  - nothing for this run    -> stores it;
+  - this run, same numbers  -> says so and moves on, so running over data/
+                               twice changes nothing;
+  - this run, different     -> refuses unless told to update (below).
 Running the whole directory again after a push is therefore safe and cheap.
 
-A CORRECTED CALIBRATION FOR A RUN NEEDS A LATER beginTime. The primary key is
-(nodeID, elementID, beginTime, flavor, deactive), so the same run start time
-cannot hold two entries -- there is no overwriting. If a run has to be
-recalibrated, store the new one a second or two after the run start and it
-wins, being later; the old one stays as the record.
+ENTRIES GO TEN SECONDS BEFORE THE RUN STARTS, not at it. Resolution is "latest
+beginTime at or before the requested time" and every event of a run is at or
+after the run start, so an entry anywhere in [start-10 s, start] serves the
+WHOLE run. An entry after the start would not: the first seconds of the run
+would keep resolving to the previous entry.
+
+That is what makes recalibration possible at all. Nothing is ever overwritten
+-- (nodeID, elementID, beginTime, flavor, deactive) is the primary key -- so a
+corrected calibration has to go in at a different time, and the only times that
+still cover the whole run are the ones up to the run start. So:
+
+    run start - 10 s    first calibration for the run
+    run start -  9 s    second, with "update"
+    ...
+    run start           eleventh
+
+Pass "update" with "writedb" and the macro puts the new numbers one second
+after the existing entry and tells you where. After eleven it stops and says to
+ask the database team to deactivate one instead, rather than going past the run
+start and quietly leaving the first seconds of the run on stale anchors.
+
+Ten is not arbitrary: an entry must not land inside the PREVIOUS run. Measured
+over 2149 runs of 2022 days 060-099, the smallest gap between one run ending
+and the next starting was 26 s, and none was under 10 s.
 
 A failed write stops the whole pass rather than carrying on through the
 remaining runs, so a permission or connection problem shows up once instead of
