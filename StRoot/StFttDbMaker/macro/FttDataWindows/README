@@ -175,19 +175,25 @@ the global window entry. Unlike Geometry/ftt it is not waiting on the
 stgc -> ftt rename.
 
 
-Why data/ is not in the repository
-----------------------------------
-The geometry tables next door in Geometry/ are small and are committed: 52 kB
-for FST, 100 kB for FTT, a few dozen files that change rarely.
+What is in data/, and where the rest should live
+------------------------------------------------
+data/ holds 56 calibrated runs -- 44 from Run 22 and 12 from Run 24 -- plus two
+QA summaries, about 29 kB each and 1.6 MB in all. They are committed as the
+worked examples: enough to run every mode of fttDataWindow_db.C, to see the
+file format against a real file rather than a description, and to reproduce
+what was pushed.
 
-The time calibrations are different. There are 58 today at about 29 kB each,
-and there will be thousands once every run is calibrated -- one per run, by
-construction, because anchors are not slowly varying. That is data rather than
-code, and it does not belong in a source repository. A .gitignore here keeps it
-out.
+They are NOT the eventual home for the full set. There is one calibration per
+run by construction, since anchors are not slowly varying, so calibrating every
+run of a dataset means thousands of files -- data rather than code, and too
+much for a source repository. That set is being produced now from the Run 22
+st_physics MuDsts.
 
-Where it should live instead is not settled. Until it is, keep the files in
-this directory locally (fttDataWindow_db.C defaults to ./data beside itself) or
-pass dir= to point the macro wherever they end up. Anything here can be
-regenerated from the MuDsts with fttDataWindow.C, so nothing is lost by not
-committing them -- only the convenience of having them to hand.
+Where it should live is not settled. Until it is:
+
+  - fttDataWindow_db.C defaults to ./data beside itself, so the examples work
+    with no arguments;
+  - pass dir= to point it at wherever a larger set lives;
+  - anything here can be regenerated from the MuDsts with fttDataWindow.C, and
+    once a run has been pushed the database holds its numbers, so the text file
+    is a convenience and not the only copy.
