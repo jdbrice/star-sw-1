@@ -1,78 +1,58 @@
 StFstDbMaker/macro -- FST geometry (survey/alignment) tables
 ============================================================
 
-What is here
-------------
   fst/*.C                 the Geometry/fst survey tables, one file per
                           (table, beginTime) pair, in St_db_Maker's
                           <table>.<yyyymmdd>.<hhmmss>.C naming
-  fstGeometry_db.C        reads those files and pushes them to the offline
-                          MySQL DB
+  fstGeometry_db.C        reads those files and pushes them to the offline MySQL DB
 
-These four tables are chained by StFstDb::loadGeometry() to place every FST
-sensor:
+These four tables are chained by StFstDb::loadGeometry() to place every FST sensor:
 
       fstOnTpc            FST global position inside the TPC frame   (1 row)
       hssOnFst            each of the 2 half-support structures      (2 rows)
       fstWedgeOnHss       each wedge on its HSS                      (36 rows)
       fstSensorOnWedge    each sensor on its wedge                   (108 rows)
 
-Every entry, one line each. The dates are Gene's slots: one "ideal" and one
-"survey/estimate" per run year, both before that run starts, with constants
-measured from real data going any time after.
+The dates and times follow Gene's rule : https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
 
-      2021-10-10 00:00:00   Run 22 ideal    identity -- misalignment off
-      2021-10-15 00:00:00   Run 22 survey   the survey, all of it in hssOnFst
-      2021-10-15 00:00:01   Run 22 survey   the same survey, re-decomposed
-                                            <-- THIS IS WHAT WE RUN
+      2021-10-10 00:00:00   Run 22 ideal     identity -- misalignment off
+      2021-10-15 00:00:00   Run 22 survey    the survey, all of it in hssOnFst
+      2021-10-15 00:00:01   Run 22 survey    the same survey, re-decomposed <-Current default for Run22
+      2021-10-15 00:01:01   Run 22 alignment (suggested date & time for alignment iteration 1)
+      2021-10-15 00:01:02   Run 22 alignment (suggested date & time for alignment iteration 2)
+      ...
       2023-04-10 00:00:00   Run 23 ideal    symlink to 2021-10-10
       2023-04-15 00:00:00   Run 23 survey   symlink to 2021-10-15 00:00:01
+      ...
       2023-12-10 00:00:00   Run 24 ideal    symlink to 2021-10-10
       2023-12-15 00:00:00   Run 24 survey   symlink to 2021-10-15 00:00:01
+      ...
       2024-12-10 00:00:00   Run 25 ideal    symlink to 2021-10-10
       2024-12-15 00:00:00   Run 25 survey   symlink to 2021-10-15 00:00:01
-
-Symlinks, not copies, so there is one copy of every number and the later years
-cannot silently drift from Run 22. If a year ever gets its own FST alignment,
-replace that year's symlink with a real file.
-
-A NEW ALIGNMENT GETS A NEW ENTRY -- never edit these. Gene's rule is to step
-the time of day on the same date, so a first Run 22 alignment iteration would
-go in as
-
-      2021-10-15 00:01:00   Run 22 alignment, iteration 1
-
-(00:00:00 and 00:00:01 on that date are taken by the two survey decompositions
-above). Gene's full rule:
-https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
-
-The DB is the truth. These files are the record of what was pushed, and the
-way to override it locally.
 
 
 Using these tables locally instead of the database
 --------------------------------------------------
-To MODIFY the geometry -- try an alignment, test a shift, reproduce an old
-iteration -- do NOT edit the database. Put the tables in your working directory
-and tell the chain to look only there.
-
-  THE EASY WAY: force local-only with two bfc options.
+To MODIFY the geometry table - try an alignment, test a shift, reproduce an old
+iteration, etc - put the tables in your working directory and tell the BFC chain 
+to force local-only with two BFC options:
 
       NoMySQLDb,NoStarCintDb
 
-  NoMySQLDb drops MySQL and NoStarCintDb drops $STAR/StarDb, leaving your own
-  $PWD/StarDb as the only place tables come from. Your files then win outright
-  and you never have to think about timestamps. Set-up:
+NoMySQLDb drops MySQL and NoStarCintDb drops $STAR/StarDb, leaving your own
+$PWD/StarDb as the only place tables come from. Your files then win outright
+and you never have to think about timestamps. Set-up:
 
       mkdir -p ./StarDb/Geometry
       cp -r $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
-      # or: ln -s $STAR/StRoot/StFstDbMaker/macro/fst ./StarDb/Geometry/fst
+      Then add new .C files with newer date and time
 
-  then run the chain with NoMySQLDb,NoStarCintDb among its options. This is the
-  right mode for alignment work and for any test of local table files.
+then run the chain with NoMySQLDb,NoStarCintDb among its options, and a date & time
+later than your new files. This is the right mode for alignment work and for any 
+test of local table files.
 
-  The four options, from BigFullChain.h:1159 (StBFChain.cxx:263-268 empties the
-  matching directory out of the list):
+The four options, from BigFullChain.h:1159 (StBFChain.cxx:263-268 empties the
+matching directory out of the list):
 
       NoMySQLDb        drop MySQL
       NoStarCintDb     drop $STAR/StarDb
@@ -98,16 +78,6 @@ and tell the chain to look only there.
       $PWD/StarDb, $PWD/obj/StarDb -- $PWD/StarDb is FOURTH. Position in that
       list is not precedence.
 
-    MEASURED 2026-10-13 on FST, requesting a Run 22 date with ./StarDb holding
-    the renamed tables:
-        with $STAR/StarDb in the list   ->  RELEASE won  (+0.07126,-0.30102)
-        with NoMySQLDb,NoStarCintDb     ->  OURS won     (+0.14876,-0.31702)
-    The first is why the options matter: our files are stamped 20211015.000001
-    and the release ships 20211110.000001, which is LATER and therefore wins, so
-    edits to the local copies are silently ignored. (The resulting geometry is
-    the same either way here -- the two decompositions sum to the same
-    translation -- but an edit does nothing, with no warning.)
-
     If you cannot pass the options, the other way out is a timestamp later than
     every other entry: copy the file you want to <table>.20211113.000000.C in
     ./StarDb and edit that.
@@ -118,38 +88,6 @@ and tell the chain to look only there.
     THERE, not where you submitted from. Copy or link the directory into the
     job's working/tmp directory too, and pass the same options, or the job
     quietly uses something else and your test shows no change.
-
-What each timestamp means
--------------------------
-Translations are cm; no rotation has ever been non-identity. Only fstOnTpc and
-hssOnFst are ever non-identity -- fstWedgeOnHss and fstSensorOnWedge are
-identity in every version to date.
-
-IMPORTANT: none of these is an alignment iteration. Every non-identity number
-here is THE SURVEY. $STAR/StarDb/Geometry/fst ships it as hssOnFst at
-20211110.000001:
-
-      Left  half  t = (+0.07126, -0.30102, 0) cm
-      Right half  t = (+0.22626, -0.33302, 0) cm
-
-i.e. the FST halves sit 3.0-3.3 mm low in y and 0.7/2.3 mm off in x -- the same
-order as the DB beamline y0 = -2.2 mm. FST alignment has never been iterated
-past the survey.
-
-The two Run 22 survey entries are not successive measurements and carry no new
-information. 20211015.000000 is the release form, all of it in hssOnFst;
-20211015.000001 lifts the common part into fstOnTpc (+0.14876, -0.31702) and
-leaves the symmetric residual in hssOnFst (-/+0.07750, +/-0.01600).
-fstOnTpc x hssOnFst gives the same total for both halves either way, verified
-element by element. The re-decomposed form exists because the common offset
-belongs in fstOnTpc physically -- the whole detector sits low, plus a small
-differential between the halves -- and because an FST-global shift is then one
-number to iterate instead of two. Push one of them, not both.
-
-The "comment" field reads "Identity Matrix" in all of these files, including
-the non-identity ones. It is stale, and memcpy(&row.comment,"...",1) copies a
-single byte anyway, so the field carries no usable information. Do not rely on
-it; this README is the record.
 
 
 The "misalign" BFC option is what makes any of this take effect
@@ -175,44 +113,9 @@ With "misalign" on, these tables feed BOTH of:
     parameters, so changing a table changes where simulated hits land, not just
     how real hits are reconstructed.
 
-COPYING IS AS DANGEROUS AS LINKING. Both are, for different reasons, and the
-copy is the one that actually catches people out:
-
-  * a LINK means someone else's edit, or your own later edit, silently changes
-    every job that resolves through it -- reconstruction, geometry building and
-    MC alike -- including jobs you meant as a fixed reference.
-
-  * a COPY gives no hint it exists. A symlink at least announces itself in
-    "ls -l"; a copied directory looks like an ordinary directory and nothing
-    about it says "this is shadowing the release and the database". It also
-    goes stale the moment macro/ or the DB is updated, and it keeps winning
-    anyway. Weeks later the numbers disagree with everyone else's and the
-    reason is a directory you forgot you made.
-
-The real hazard is not copy-versus-link, it is that ./StarDb/Geometry/* EXISTS
-AT ALL and silently takes precedence. There is no log line to catch it:
-St_db_Maker does not report which of the three sources a table came from, and
-StFttDb only says whether it used survey tables, not where they came from
-(StFstDb does not even say that much). So check by hand before you trust a
-result:
-
-      ls -ld ./StarDb/Geometry/* 2>/dev/null
-
-which prints nothing if you are clean, "d..." if you copied, and the "-> ..."
-arrow if you linked. Run it in the job's working directory too, not only where
-you submitted from.
-
-Habits that work: keep one working directory per alignment study rather than
-editing in place, and delete or rename ./StarDb the moment the study is over,
-instead of leaving it for next time.
-
-And be equally careful about WHICH fGeom.root you are using. The cache and the
-tables are two separate things that can disagree, and nothing checks that they
-match. A stale fGeom built from older tables quietly keeps using the old
-alignment while ./StarDb shows the new numbers -- which looks exactly like "the
-new alignment had no effect". If you change a table, rebuild the cache, and
-name it so the versions are distinguishable: that is what the sdt and label
-arguments of build_geom_misalign.C are for.
+COPYING IS AS DANGEROUS AS LINKING if you forget to remove. Check your logfile
+to make sure you are picking up correct tables from correct place. And be equally 
+careful about WHICH fGeom.root you are using. 
 
 Pushing to the database
 -----------------------
@@ -243,8 +146,7 @@ says nothing about whether you can push.
 NEVER STORE THE SAME (table, beginTime) TWICE. The primary key is
 (nodeID, elementID, beginTime, flavor, deactive), so a second store at the same
 beginTime collides with the first. A new entry gets a new time of day, as in
-"What is here" above.
-
+the table at the top.
 
 PUSHING IS NOT ENOUGH ON ITS OWN. St_db_Maker resolves ./StarDb, then
 $STAR/StarDb, then MySQL, and $STAR/StarDb/Geometry/fst still holds the
@@ -253,9 +155,3 @@ Until they are removed from the STAR repository, production keeps reading the
 release copy and never sees these entries. That removal is a separate PR and
 the last step of this migration -- the push is not done until it has landed.
 
-After the push and that removal:
-  - rebuild any fGeom.*.root whose sdt no longer resolves to the entry you
-    intend. The cache is a frozen snapshot and nothing checks it against the
-    tables (see "The misalign option" above);
-  - these files stay here as the record of what was pushed, and as what to copy
-    into ./StarDb when you want to override it.
