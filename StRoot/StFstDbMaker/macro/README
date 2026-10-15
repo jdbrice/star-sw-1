@@ -243,7 +243,11 @@ removal first, because StBFChain honours these options (BigFullChain.h:1159):
 So after pushing, and BEFORE opening the removal PR:
 
   1. run the chain with NoCintDb, i.e. MySQL only, and confirm the survey comes
-     back with the numbers you pushed;
+     back with the numbers you pushed. MIND THE TIMESTAMP: until the 2021-10-25
+     entries are deactivated, a real-data timestamp still resolves to those
+     identity rows and this check fails for the wrong reason. Use a
+     survey-window date (sdt20211019) before deactivation and a real-data date
+     after it -- see "What is already in the database" above;
   2. rebuild a geometry cache the same way and check it against the current one
      -- the translations should be identical, since the DB entries hold the same
      survey;
@@ -252,6 +256,102 @@ So after pushing, and BEFORE opening the removal PR:
 That sequence is also the evidence the removal PR needs: "with NoCintDb the
 geometry is unchanged, so the release copy is redundant" is reviewable, whereas
 "we pushed it, trust us" is not.
+
+What is already in the database, and why it has to be deactivated
+-----------------------------------------------------------------
+Checked 2026-10-15. Geometry_fst already holds eleven entries, all dated
+2021-10-25, loaded in 2022:
+
+      table               beginTime              rows   entryTime
+      fstOnTpc            2021-10-25 00:00:11      1    2022-01-15 16:44:13
+      fstOnTpc            2021-10-25 00:00:12      1    2022-01-15 16:46:38
+      fstOnTpc            2021-10-25 00:00:13      1    2022-01-15 16:50:45
+      fstOnTpc            2021-10-25 00:00:14      1    2022-01-15 17:55:55
+      hssOnFst            2021-10-25 00:00:00      2    2022-01-15 17:42:50
+      fstWedgeOnHss       2021-10-25 00:00:00     36    2022-01-15 17:49:10
+      fstSensorOnWedge    2021-10-25 00:00:00    108    2022-01-15 17:53:09
+      fstSensorOnWedge    2021-10-25 00:00:01     36    2022-07-26 18:24:13
+      fstSensorOnWedge    2021-10-25 00:00:02     36    2022-07-26 18:27:21
+      fstSensorOnWedge    2021-10-25 00:00:03    108    2022-07-26 18:28:11
+      fstSensorOnWedge    2021-10-25 00:00:04    108    2022-07-26 18:51:09
+
+All flavor "ofl", all deactive=0, 438 rows in total. Note the two
+fstSensorOnWedge entries with 36 rows where 108 is right -- malformed, but
+superseded by 00:00:03 and 00:00:04.
+
+EVERY ONE OF THEM IS IDENTITY. Measured, not assumed: t=(0,0,0) on every row,
+r00=r11=r22=1 and all six off-diagonals 0 on every row, in all four tables. So
+the FST survey has never been in the database for real data -- every Run 22
+real-data job to date has been reconstructed with ideal FST geometry.
+
+Re-check it with:
+
+      mysql -h star-db01.sdcc.bnl.gov -P 3316 -u loader -N -e \
+        "select beginTime, min(entryTime), count(*),
+                sum(abs(t0)+abs(t1)+abs(t2)>1e-9) as nonzero_translation
+         from Geometry_fst.fstOnTpc group by beginTime order by beginTime;"
+
+WHY THIS MATTERS. 2021-10-25 sits INSIDE Gene's "real data: any time after
+that" window, i.e. after the 2021-10-10 ideal and 2021-10-15 survey slots.
+St_db_Maker takes the latest entry at or before the requested time, so for any
+real-data timestamp these identity rows win over anything we write at
+2021-10-15. Our entries would be reachable only by MC timestamps.
+
+TWO WAYS OUT, AND WHY THE SECOND ONE IS RIGHT
+
+  (a) Supersede: write the survey a second time at a beginTime after
+      2021-10-25 00:00:14, e.g. 2021-10-26 00:00:00. Non-destructive, needs no
+      admin, works immediately.
+
+      But it is wrong as a standing arrangement. It makes TWO entries the
+      permanent requirement for every future update: one in the survey window
+      (2021-10-15..10-25) for MC, one after 2021-10-25 for real data. The next
+      alignment iteration -- Xihe's, or ours -- has to remember both. Forget
+      either one and MC and real data silently run on different geometry, with
+      no error and no log line saying so. That is the same class of trap as
+      ./StarDb shadowing, and it recurs every single time.
+
+  (b) DEACTIVATE the eleven entries (set deactive != 0; the rows stay, nothing
+      is deleted, and it can be undone). Then the newest entry at or before any
+      real-data timestamp is the 2021-10-15 survey, and from then on ONE entry
+      per update serves both MC and real data:
+
+          2021-10-14  ->  ideal22   (2021-10-10)    MC, misalignment off
+          2021-10-19  ->  survey22  (2021-10-15)    MC, survey
+          any later   ->  survey22  (2021-10-15)    real data
+          next iteration goes in once, at 2021-10-15 00:00:02 or later
+
+      This is the plan. It needs a request to the DB team (Gene / Dmitry) --
+      storeDbTable cannot deactivate, only insert.
+
+NOTHING IS LOST BY DEACTIVATING. The content of those entries is identity, and
+identity is exactly what our ideal22 entry at 2021-10-10 provides. Anyone who
+genuinely wants the old behaviour -- reproducing a Run 22 production that was
+reconstructed without the survey -- asks for a timestamp in
+[2021-10-10, 2021-10-15) and gets the same numbers. Reproducibility survives;
+only the default changes. Deactivation also leaves the rows visible in the DB,
+so the history stays readable.
+
+ORDER OF OPERATIONS. Push first, deactivate second, never the other way round:
+
+  1. push our slots (ideal22 first -- it is also the floor St_db_Maker needs);
+  2. verify with NoCintDb using a SURVEY-window timestamp, e.g. sdt20211019,
+     which resolves below 2021-10-25 and so already reads our entry;
+  3. request deactivation of the eleven entries above;
+  4. re-verify with NoCintDb using a REAL-DATA timestamp -- this is the step
+     that can only pass after (3);
+  5. only then the release-file removal PR.
+
+Between 1 and 3 nothing changes for anybody: real data keeps resolving to the
+identity rows, exactly as today. If the order were reversed there would be a
+window with no Geometry/fst entry at all below a real-data timestamp.
+
+AND IT CHANGES WHAT EVERYONE GETS. Step 3 is the moment the survey becomes the
+default for new Run 22 real-data jobs -- Xihe's alignment work, Daniel's, any
+production re-run. It is the intended effect and it is the right geometry, but
+it is not ours alone to spring on people: tell Gene and Daniel before asking
+for the deactivation, not after.
+
 
 Pushing to the database
 -----------------------
