@@ -25,6 +25,11 @@
 // the anchors only on an exact match. Unstamped entries (the pre-existing global one,
 // uuid[384] == 384) are treated as window-only.
 
+// Read-only host for the "is it already there?" query. Writes go through StDbLib
+// to the load balancer; this is only used to look, so one node is fine.
+const char *kReadHost = "star-db01.sdcc.bnl.gov";
+const int   kReadPort = 3316;
+
 const int kNVMMdb     = 384;
 const int kStampSlot  = 384;
 const int kStampUuid  = -1;
@@ -39,6 +44,11 @@ short gMin[385];
 short gMax[385];
 short gAnchor[385];
 int   gNCal = 0, gNActive = 0, gFileRun = -1;
+
+// One St_db_Maker reused for every run. Creating one per run costs ~30-60 s, which
+// is minutes of MySQL setup over a 56-run pass. Held as TObject* because CINT
+// resolves signatures at load time, before loadDbLibs() makes St_db_Maker known.
+TObject *gDbMk = 0;
 
 int  dbLoaded = 0;
 void loadDbLibs()
@@ -69,6 +79,30 @@ int runStartTime(int run)
                      port, run);
   TString st = gSystem->GetFromPipe(cmd.Data());
   return st.Atoi();
+}
+
+// UTC "YYYY-MM-DD HH:MM:SS" for a unix time -- the form beginTime is stored in.
+TString utcStamp(int t)
+{
+  return gSystem->GetFromPipe(Form("date -u -d @%d +'%%Y-%%m-%%d %%H:%%M:%%S'", t));
+}
+
+// Is there already an entry at EXACTLY this beginTime? That is the whole
+// idempotency test: we always store a run at its own start time, and
+// (nodeID, elementID, beginTime, flavor, deactive) is the primary key, so an
+// entry at this beginTime is this run's and a second store cannot be added
+// beside it. Returns rows found, or -1 if the query itself failed.
+int dbEntryExists(int starttime, const char *flavor)
+{
+  TString ts = utcStamp(starttime);
+  TString cmd = Form("mysql -h %s --port=%d -u loader -N -s -e "
+                     "\"SELECT count(*) FROM Calibrations_ftt.fttDataWindowsB "
+                     "WHERE beginTime='%s' AND flavor='%s' AND deactive=0\" 2>/dev/null",
+                     kReadHost, kReadPort, ts.Data(), flavor);
+  TString out = gSystem->GetFromPipe(cmd.Data());
+  out = out.Strip(TString::kBoth);
+  if (!out.IsDigit()) { printf("WARNING: existence query failed (got \"%s\")\n", out.Data()); return -1; }
+  return out.Atoi();
 }
 
 // Parse fttDataWindow.<run>.txt into the g* arrays. Returns VMM lines read, <0 on error.
@@ -122,47 +156,67 @@ int readCalibFile(const char *fname, int run)
   return nLines;
 }
 
-// Read back what St_db_Maker returns at a given time; compare with expected if given.
-void readBack(int run, int date, int time, const char *flavor, int compare)
+// Read back what St_db_Maker returns at a given time and compare with the parsed
+// file. Returns  -2 nothing there, -1 present but not this run's (unstamped, or
+// stamped for another run), 0 identical, >0 number of differing slots.
+//
+// The stamp makes this self-validating: "stamped for run R and every slot equal
+// to the file for run R" can only be run R's own entry, so a cached or stale
+// read cannot make us skip a write we needed -- it would show the wrong stamp
+// and we would write.
+int dbCompare(int run, int date, int time, const char *flavor, int verbose)
 {
-  St_db_Maker *dbMk = new St_db_Maker(Form("db%d", run), "MySQL:StarDb", "$STAR/StarDb");
-  dbMk->SetDateTime(date, time);
-  dbMk->SetFlavor(flavor);
-  dbMk->Init();
+  St_db_Maker *dbMk = (St_db_Maker *)gDbMk;
+  if (!dbMk) {
+    dbMk = new St_db_Maker("dbFtt", "MySQL:StarDb", "$STAR/StarDb");
+    gDbMk = dbMk;
+    dbMk->SetFlavor(flavor);
+    dbMk->SetDateTime(date, time);
+    dbMk->Init();
+  } else {
+    dbMk->SetFlavor(flavor);
+    dbMk->SetDateTime(date, time);
+  }
   dbMk->Make();
+
   TDataSet *DB = dbMk->GetInputDB("Calibrations/ftt");
-  if (!DB) { printf("READBACK run %d: no Calibrations/ftt\n", run); return; }
+  if (!DB) { if (verbose) printf("READBACK run %d: no Calibrations/ftt\n", run); return -2; }
   St_fttDataWindowsB *t = (St_fttDataWindowsB *)DB->Find("fttDataWindowsB");
-  if (!t) { printf("READBACK run %d: no fttDataWindowsB\n", run); return; }
+  if (!t) { if (verbose) printf("READBACK run %d: no fttDataWindowsB\n", run); return -2; }
   fttDataWindowsB_st *s = t->GetTable();
 
-  bool stamped = (s[0].uuid[kStampSlot] == kStampUuid);
-  int stampRun = stamped ? s[0].min[kStampSlot] * 10000 + s[0].max[kStampSlot] : -1;
-  int nAnch = 0;
+  bool stamped  = (s[0].uuid[kStampSlot] == kStampUuid);
+  int  stampRun = stamped ? s[0].min[kStampSlot] * 10000 + s[0].max[kStampSlot] : -1;
+  int  nAnch    = 0;
   for (int ja = 0; ja < kNVMMdb; ja++) if (s[0].anchor[ja] >= 0) nAnch++;
-  if (stamped)
-    printf("READBACK run %d at %d %06d: stamped for run %d%s, VMMs with anchor %d/%d\n", run, date, time,
-           stampRun, stampRun == run ? " (MATCH)" : " (DIFFERENT RUN -- consumer will ignore its anchors)",
-           nAnch, kNVMMdb);
-  else
-    printf("READBACK run %d at %d %06d: UNSTAMPED legacy entry -- window only, its anchor column is not calibration and is ignored\n",
-           run, date, time);
 
-  if (!compare) return;
+  if (verbose) {
+    if (stamped)
+      printf("READBACK run %d at %d %06d: stamped for run %d%s, VMMs with anchor %d/%d\n", run, date, time,
+             stampRun, stampRun == run ? " (MATCH)" : " (DIFFERENT RUN -- consumer will ignore its anchors)",
+             nAnch, kNVMMdb);
+    else
+      printf("READBACK run %d at %d %06d: UNSTAMPED legacy entry -- window only, its anchor column is not calibration and is ignored\n",
+             run, date, time);
+  }
+  if (!stamped || stampRun != run) return -1;
+
   int nDiff = 0;
   for (int jc = 0; jc <= kStampSlot; jc++) {
     if (s[0].uuid[jc] != gUuid[jc] || (short)s[0].mode[jc] != gMode[jc] ||
         s[0].min[jc]  != gMin[jc]  || s[0].max[jc]  != gMax[jc] ||
         s[0].anchor[jc] != gAnchor[jc]) {
-      if (nDiff < 5)
+      if (verbose && nDiff < 5)
         printf("  DIFF slot %3d  db(u=%d m=%d %d..%d a=%d)  file(u=%d m=%d %d..%d a=%d)\n", jc,
                s[0].uuid[jc], (int)s[0].mode[jc], s[0].min[jc], s[0].max[jc], s[0].anchor[jc],
                gUuid[jc], (int)gMode[jc], gMin[jc], gMax[jc], gAnchor[jc]);
       nDiff++;
     }
   }
-  printf("READBACK run %d: %s (%d of %d slots differ)\n", run,
-         nDiff == 0 ? "DB content IDENTICAL to file" : "DB content DIFFERS from file", nDiff, kStampSlot + 1);
+  if (verbose)
+    printf("READBACK run %d: %s (%d of %d slots differ)\n", run,
+           nDiff == 0 ? "DB content IDENTICAL to file" : "DB content DIFFERS from file", nDiff, kStampSlot + 1);
+  return nDiff;
 }
 
 int doRun(int run, const char *dir, TString option, const char *flavor)
@@ -187,28 +241,66 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
     ok = false;
   }
 
-  if (option.Contains("writedb")) {
-    if (!ok && !option.Contains("force")) {
-      printf("NOT WRITING run %d (add \"force\" to override)\n", run);
-    } else {
-      gSystem->Setenv("DB_ACCESS_MODE", "write");
-      StDbManager *mgr = StDbManager::Instance();
-      StDbConfigNode *node = mgr->initConfig("Calibrations_ftt");
-      mgr->setStoreTime(starttime);
-      fttDataWindowsB_st dw;                 // struct only inside a body (see note at top)
-      memset(&dw, 0, sizeof(dw));
-      for (int jw = 0; jw <= kStampSlot; jw++) {
-        dw.uuid[jw] = gUuid[jw]; dw.mode[jw] = (unsigned char)gMode[jw];
-        dw.min[jw] = gMin[jw]; dw.max[jw] = gMax[jw]; dw.anchor[jw] = gAnchor[jw];
-      }
-      StDbTable *table = node->addDbTable("fttDataWindowsB");
-      table->SetTable((char *)&dw, 1);
-      table->setFlavor(flavor);
-      bool stored = mgr->storeDbTable(table);
-      printf("STORE run %d at %d %06d flavor %s: %s\n", run, readDate, readTime, flavor, stored ? "OK" : "FAILED");
-    }
+  if (!option.Contains("writedb")) {           // look only -- say what a push would do
+    int nLook = dbEntryExists(starttime, flavor);
+    if      (nLook < 0) printf("  would store run %d -- BUT the existence check failed\n", run);
+    else if (nLook > 0) printf("  entry already at %s: a push would compare, not insert\n", utcStamp(starttime).Data());
+    else if (!ok && !option.Contains("force")) printf("  would NOT store run %d: fails the quality gate\n", run);
+    else                printf("  would store run %d at %s\n", run, utcStamp(starttime).Data());
+    dbCompare(run, readDate, readTime, flavor, 1);
+    return 0;
   }
-  readBack(run, readDate, readTime, flavor, 1);
+
+  if (!ok && !option.Contains("force")) {
+    printf("NOT WRITING run %d (add \"force\" to override)\n", run);
+    return -1;
+  }
+
+  // Do not insert blindly. An entry at this run's own start time is this run's,
+  // and the primary key means a second one cannot sit beside it.
+  int nHere = dbEntryExists(starttime, flavor);
+  if (nHere > 0) {
+    int cmp = dbCompare(run, readDate, readTime, flavor, 0);
+    if (cmp == 0) {
+      printf("SKIP run %d: already in the DB at %s, content identical\n", run, utcStamp(starttime).Data());
+      return 0;
+    }
+    printf("SKIP run %d: an entry already exists at %s but the content DIFFERS", run, utcStamp(starttime).Data());
+    if (cmp > 0) printf(" (%d of %d slots)", cmp, kStampSlot + 1);
+    else         printf(" (it is unstamped, or stamped for another run)");
+    printf("\n  Not overwriting -- (nodeID,elementID,beginTime,flavor,deactive) is the primary\n"
+           "  key, so the same beginTime cannot be stored twice. A corrected calibration\n"
+           "  for this run needs a LATER beginTime; see README.\n");
+    dbCompare(run, readDate, readTime, flavor, 1);
+    return -1;
+  }
+  if (nHere < 0) {
+    printf("NOT WRITING run %d: could not check whether an entry already exists\n", run);
+    return -1;
+  }
+
+  gSystem->Setenv("DB_ACCESS_MODE", "write");
+  StDbManager *mgr = StDbManager::Instance();
+  StDbConfigNode *node = mgr->initConfig("Calibrations_ftt");
+  mgr->setStoreTime(starttime);
+  fttDataWindowsB_st dw;                 // struct only inside a body (see note at top)
+  memset(&dw, 0, sizeof(dw));
+  for (int jw = 0; jw <= kStampSlot; jw++) {
+    dw.uuid[jw] = gUuid[jw]; dw.mode[jw] = (unsigned char)gMode[jw];
+    dw.min[jw] = gMin[jw]; dw.max[jw] = gMax[jw]; dw.anchor[jw] = gAnchor[jw];
+  }
+  StDbTable *table = node->addDbTable("fttDataWindowsB");
+  table->SetTable((char *)&dw, 1);
+  table->setFlavor(flavor);
+  bool stored = mgr->storeDbTable(table);
+  gSystem->Unsetenv("DB_ACCESS_MODE");
+  if (!stored) {
+    printf("\n*** WRITE FAILED for run %d at %s -- NOTHING WAS STORED ***\n"
+           "    see the MysqlDb/StDbSql errors above\n", run, utcStamp(starttime).Data());
+    return -2;                           // fatal: stop, do not try the other runs
+  }
+  printf("STORE run %d at %d %06d flavor %s: OK\n", run, readDate, readTime, flavor);
+  dbCompare(run, readDate, readTime, flavor, 1);
   return 0;
 }
 
@@ -237,8 +329,11 @@ void fttDataWindow_db(int run = 0, const char *opt = "", const char *dir = "",
     base.ReplaceAll("fttDataWindow.", "");
     base.ReplaceAll(".txt", "");
     if (!base.IsDigit()) continue;
-    doRun(base.Atoi(), dir, option, flavor);
+    if (doRun(base.Atoi(), sdir.Data(), option, flavor) == -2) {
+      printf("*** STOPPING -- %d run(s) processed before the failure ***\n", nDone);
+      return;
+    }
     nDone++;
   }
-  printf("fttDataWindow_db: processed %d run(s) from %s\n", nDone, dir);
+  printf("fttDataWindow_db: processed %d run(s) from %s\n", nDone, sdir.Data());
 }

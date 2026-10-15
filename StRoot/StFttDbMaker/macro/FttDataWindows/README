@@ -111,17 +111,41 @@ better: the QA summary shows runs with a few hundred events converging and the
 
 Pushing to the database
 -----------------------
-    root4star -l -b -q 'fttDataWindow_db.C(23063028)'           read back only
+    root4star -l -b -q 'fttDataWindow_db.C(23063028)'           dry run, one run
+    root4star -l -b -q 'fttDataWindow_db.C(0)'                  dry run, all of data/
     root4star -l -b -q 'fttDataWindow_db.C(23063028,"writedb")' store one run
     root4star -l -b -q 'fttDataWindow_db.C(0,"writedb")'        store all of data/
 
-With no "writedb" it only reads the DB and reports how it differs from the
-file, which is the safe thing to run first. Options are substrings: "writedb"
-to store, "force" to store even when the calibration looks poor. dir defaults
-to the data/ directory beside this macro, so it works from any working
-directory; pass dir explicitly to push a calibration you produced elsewhere.
+Dry run first. It touches nothing and says, per run, whether a push would store
+it, skip it, or fail the quality gate, then reads the DB back and reports how
+it differs from the file. Options are substrings: "writedb" to store, "force"
+to store even when the calibration looks poor. dir defaults to the data/
+directory beside this macro, so it works from any working directory; pass dir
+explicitly to push a calibration you produced elsewhere.
 
-The beginTime comes from the run's own start time, looked up from the DB -- not
+IT DOES NOT INSERT BLINDLY. Before storing a run it asks the database whether
+an entry already exists at that run's start time, and
+  - no entry            -> stores it;
+  - entry, same content -> says so and moves on, so running over data/ twice
+                           changes nothing;
+  - entry, different    -> refuses, and says why.
+Running the whole directory again after a push is therefore safe and cheap.
+
+A CORRECTED CALIBRATION FOR A RUN NEEDS A LATER beginTime. The primary key is
+(nodeID, elementID, beginTime, flavor, deactive), so the same run start time
+cannot hold two entries -- there is no overwriting. If a run has to be
+recalibrated, store the new one a second or two after the run start and it
+wins, being later; the old one stays as the record.
+
+A failed write stops the whole pass rather than carrying on through the
+remaining runs, so a permission or connection problem shows up once instead of
+fifty-six times.
+
+Writing needs INSERT permission on Calibrations_ftt, granted per account -- ask
+Dmitry Arkhipkin <arkhipkin@bnl.gov>. Reads work without it, so a clean dry run
+says nothing about whether you can push.
+
+The beginTime comes from the run's own start time, looked up from RunLog -- not
 from Gene's per-run-year slots, which govern the GEOMETRY tables next door in
 Geometry/. A time calibration belongs to one run, so its begin time is that
 run's start.
