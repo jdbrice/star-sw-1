@@ -366,6 +366,87 @@ survey22flat, which is redundant with survey22.
 Tags: ideal22 survey22flat survey22 ideal23 survey23 ideal24 survey24
       ideal25 survey25
 
+An optional third argument restricts the push to ONE of the four tables:
+
+      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstOnTpc")'
+
+That exists only for the first push, to test write permission on the smallest
+possible change. A partial update leaves the geometry inconsistent at that
+timestamp -- StFstDb::loadGeometry() chains all four tables -- so finish the
+other three straight away.
+
+
+FIRST PUSH -- testing write permission
+--------------------------------------
+Nothing here has ever been written to the database, so test with the smallest,
+least consequential thing first: ideal22 / fstOnTpc. One row, identity content,
+beginTime 2021-10-10, which is BELOW every entry that currently exists
+(2021-10-25), so even a completely successful push cannot change what any job
+reads today. It is also the first thing we want in the database anyway -- it is
+the floor St_db_Maker needs.
+
+  1. push one table of one tag
+
+      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstOnTpc")'
+
+     On success the log says: stored fstOnTpc at 2021-10-10 00:00:00
+     If write permission is missing, StDbManager reports it and nothing is
+     written -- the dry run has already proved the file reading works, so any
+     failure at this point is the database side.
+
+  2. confirm it landed, independently of the macro
+
+      mysql -h star-db01.sdcc.bnl.gov -P 3316 -u loader -N -e \
+        "select beginTime, entryTime, dataID, nodeID, elementID, flavor,
+                deactive, Id, t0, t1, t2, r00, r11, r22
+           from Geometry_fst.fstOnTpc where beginTime='2021-10-10 00:00:00';"
+
+     Expect exactly ONE row: entryTime = now, flavor ofl, deactive 0,
+     t=(0,0,0), r00=r11=r22=1.
+
+  3. then the other three tables of the same tag, one at a time
+
+      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","hssOnFst")'
+      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstWedgeOnHss")'
+      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstSensorOnWedge")'
+
+     and check 2 / 36 / 108 rows respectively at 2021-10-10 00:00:00.
+
+  4. then the remaining seven tags, each in full. Do NOT use "all" at this
+     point -- it would redo ideal22:
+
+      root4star -b -q 'fstGeometry_db.C("survey22","writedb")'
+      root4star -b -q 'fstGeometry_db.C("ideal23","writedb")'
+      root4star -b -q 'fstGeometry_db.C("survey23","writedb")'
+      root4star -b -q 'fstGeometry_db.C("ideal24","writedb")'
+      root4star -b -q 'fstGeometry_db.C("survey24","writedb")'
+      root4star -b -q 'fstGeometry_db.C("ideal25","writedb")'
+      root4star -b -q 'fstGeometry_db.C("survey25","writedb")'
+
+  NEVER STORE THE SAME (table, beginTime) TWICE. The primary key of these
+  tables is (nodeID, elementID, beginTime, flavor, deactive), so a second store
+  at the same beginTime collides with the first -- it cannot quietly become a
+  duplicate entry, but whether it errors or overwrites has not been tested
+  here, and there is no reason to find out. That is also why every revision in
+  the existing database stepped the time by a second (00:00:11, :12, :13, :14)
+  rather than rewriting in place.
+
+  Final check, all four tables:
+
+      for t in fstOnTpc hssOnFst fstWedgeOnHss fstSensorOnWedge ; do
+        mysql -h star-db01.sdcc.bnl.gov -P 3316 -u loader -N -e \
+          "select '$t', beginTime, count(*) from Geometry_fst.$t
+             group by beginTime order by beginTime;"
+      done
+
+     Expect 8 new beginTimes per table (2021-10-10, 2021-10-15, 2023-04-10,
+     2023-04-15, 2023-12-10, 2023-12-15, 2024-12-10, 2024-12-15) with
+     1 / 2 / 36 / 108 rows, alongside the old 2021-10-25 ones.
+
+  Then: deactivation (see "What is already in the database" above and
+  deactivate.txt, which is the request to send to Dmitry), and only after that
+  the release-file removal PR.
+
 PUSHING IS NOT ENOUGH ON ITS OWN. St_db_Maker resolves ./StarDb, then
 $STAR/StarDb, then MySQL, and $STAR/StarDb/Geometry/fst still holds the
 release's four files at 20211110.000001. Those beat anything in the database.

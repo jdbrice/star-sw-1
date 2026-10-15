@@ -38,7 +38,7 @@
 // StFstDb::loadGeometry() chains all four and a partial update leaves the
 // geometry inconsistent.
 
-void fstGeometry_db( const char* tag = "", const char* opt = "" )
+void fstGeometry_db( const char* tag = "", const char* opt = "", const char* onlyTable = "" )
 {
     gROOT->Macro("LoadLogger.C");
     gSystem->Load("St_base.so");
@@ -47,6 +47,14 @@ void fstGeometry_db( const char* tag = "", const char* opt = "" )
 
     TString option(opt);
     const int writedb = option.Contains("writedb");
+
+    // onlyTable: restrict to ONE of the four tables. Only for the first
+    // permission test against the database -- a partial update leaves the
+    // geometry inconsistent at that timestamp, so push the other three
+    // immediately after.
+    TString only(onlyTable);
+    if ( only.Length() ) std::cout << "\n*** onlyTable=\"" << only
+                                   << "\" -- partial, finish the other three ***\n";
 
     // ---- tag -> (which files, what beginTime) --------------------------------
     TString t(tag);
@@ -102,14 +110,15 @@ void fstGeometry_db( const char* tag = "", const char* opt = "" )
         stamp     = st[islot];
         storeTime = bt[islot];
         what      = ds[islot];
-        fstGeometry_db_one( stamp, storeTime, what, tg[islot], writedb );
+        fstGeometry_db_one( stamp, storeTime, what, tg[islot], writedb, only );
     }
     return;
 }
 
 // Store (or just print) the four tables at one stamp/beginTime.
+// only != "" restricts to that single table (first-push permission test).
 void fstGeometry_db_one( TString stamp, TString storeTime, TString what,
-                         const char *tagname, int writedb )
+                         const char *tagname, int writedb, TString only )
 {
     std::cout << "\n==== " << tagname << "  files=fst/*." << stamp << ".C\n"
               << "     beginTime=\"" << storeTime << "\"\n"
@@ -122,6 +131,8 @@ void fstGeometry_db_one( TString stamp, TString storeTime, TString what,
     TString here = gSystem->DirName( __FILE__ );
 
     for ( int it = 0; it < 4; it++ ) {
+
+        if ( only.Length() && only != tables[it] ) continue;
 
         TString fn = Form( "%s/fst/%s.%s.C", here.Data(), tables[it], stamp.Data() );
         if ( gSystem->AccessPathName( fn.Data() ) ) {

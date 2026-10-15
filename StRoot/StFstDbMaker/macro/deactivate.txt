@@ -1,0 +1,94 @@
+Geometry_fst entries to DEACTIVATE
+==================================
+Request for Dmitry Arkhipkin / Gene Van Buren.
+Prepared 2026-10-15 from star-db01.sdcc.bnl.gov:3316, read-only.
+
+WHAT WE ARE ASKING FOR
+  Set deactive != 0 on the 11 entries listed below (438 rows).
+  DEACTIVATE, NOT DELETE -- we want the rows to stay in the database so the
+  history remains readable and the change can be undone.
+
+WHY
+  All 11 entries are dated 2021-10-25 and every one of them is the IDENTITY
+  transform: t=(0,0,0) on every row, r00=r11=r22=1 and all six off-diagonal
+  elements 0, in all four tables. Verified row by row, not assumed.
+
+  2021-10-25 falls inside Gene's "real data: any time after that" window for
+  run year 2022, i.e. after the 2021-10-10 ideal slot and the 2021-10-15
+  survey slot (database_timestamp.txt). St_db_Maker takes the latest entry at
+  or before the requested time, so these identity rows win over the FST survey
+  we are about to write at 2021-10-15, for every real-data timestamp.
+
+  Leaving them active would force two database entries for every future FST
+  alignment update -- one inside the MC survey window and one after
+  2021-10-25 -- and if either is forgotten, MC and real data silently run on
+  different geometry with no error and no log line. Deactivating these keeps
+  it at one entry per update.
+
+NOTHING IS LOST
+  The content of these entries is identity, and identity is exactly what the
+  new ideal22 entry at 2021-10-10 00:00:00 provides. Anyone reproducing a
+  Run 22 production that was reconstructed without the survey asks for a
+  timestamp in [2021-10-10, 2021-10-15) and gets the same numbers.
+
+WHEN
+  Only AFTER we have pushed the new entries, never before. Between the push
+  and the deactivation nothing changes for anybody: real data keeps resolving
+  to these identity rows exactly as it does today. If it were done first there
+  would be a window with no Geometry/fst entry at all below a real-data
+  timestamp.
+
+THE ENTRIES
+
+  table              beginTime             entryTime             dataID   nrows  nodeID
+  ------------------ --------------------- --------------------- ------- ------  ------
+  fstOnTpc           2021-10-25 00:00:11   2022-01-15 16:44:13   11           1  2
+  fstOnTpc           2021-10-25 00:00:12   2022-01-15 16:46:38   12           1  2
+  fstOnTpc           2021-10-25 00:00:13   2022-01-15 16:50:45   13           1  2
+  fstOnTpc           2021-10-25 00:00:14   2022-01-15 17:55:55   14           1  2
+  hssOnFst           2021-10-25 00:00:00   2022-01-15 17:42:50   1-2          2  3
+  fstWedgeOnHss      2021-10-25 00:00:00   2022-01-15 17:49:10   1-36        36  4
+  fstSensorOnWedge   2021-10-25 00:00:00   2022-01-15 17:53:09   1-108      108  5
+  fstSensorOnWedge   2021-10-25 00:00:01   2022-07-26 18:24:13   109-144     36  5
+  fstSensorOnWedge   2021-10-25 00:00:02   2022-07-26 18:27:21   145-180     36  5
+  fstSensorOnWedge   2021-10-25 00:00:03   2022-07-26 18:28:11   181-288    108  5
+  fstSensorOnWedge   2021-10-25 00:00:04   2022-07-26 18:51:09   289-396    108  5
+
+  11 entries, 438 rows. All flavor 'ofl', all deactive=0 today.
+
+  dataID ranges are verified contiguous within each entry (count == max-min+1),
+  so the ranges above are exact and complete.
+
+  Note fstSensorOnWedge at 00:00:01 and 00:00:02 carry only 36 rows where 108
+  is correct -- they are malformed and superseded by 00:00:03 and 00:00:04, but
+  they should be deactivated along with the rest.
+
+  fstOnTpc dataIDs start at 11; there are no rows with dataID 1-10 in that
+  table.
+
+SUGGESTED SQL -- please adapt to whatever the standard procedure is.
+Keyed on beginTime rather than dataID, since beginTime is the meaningful
+identifier and every entry to deactivate is dated 2021-10-25:
+
+      UPDATE Geometry_fst.fstOnTpc         SET deactive=1 WHERE beginTime LIKE '2021-10-25%';
+      UPDATE Geometry_fst.hssOnFst         SET deactive=1 WHERE beginTime LIKE '2021-10-25%';
+      UPDATE Geometry_fst.fstWedgeOnHss    SET deactive=1 WHERE beginTime LIKE '2021-10-25%';
+      UPDATE Geometry_fst.fstSensorOnWedge SET deactive=1 WHERE beginTime LIKE '2021-10-25%';
+
+  Those four statements cover exactly the 11 entries / 438 rows above and
+  nothing else: 2021-10-25 is the ONLY date present in Geometry_fst today.
+  After our push the tables will also hold entries at 2021-10-10, 2021-10-15,
+  2023-04-10, 2023-04-15, 2023-12-10, 2023-12-15, 2024-12-10 and 2024-12-15 --
+  none of those should be touched.
+
+TO CONFIRM AFTERWARDS
+
+      SELECT beginTime, count(*), min(deactive), max(deactive)
+        FROM Geometry_fst.fstOnTpc GROUP BY beginTime ORDER BY beginTime;
+
+  expected: the 2021-10-25 rows show deactive=1, the 2021-10-10 and 2021-10-15
+  rows show deactive=0. Same for the other three tables.
+
+CONTACT
+  Akio Ogawa <akio@bnl.gov>
+
