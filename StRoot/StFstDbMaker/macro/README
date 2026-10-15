@@ -148,10 +148,17 @@ NEVER STORE THE SAME (table, beginTime) TWICE. The primary key is
 beginTime collides with the first. A new entry gets a new time of day, as in
 the table at the top.
 
-PUSHING IS NOT ENOUGH ON ITS OWN. St_db_Maker resolves ./StarDb, then
-$STAR/StarDb, then MySQL, and $STAR/StarDb/Geometry/fst still holds the
-release's four files at 20211110.000001. Those beat anything in the database.
-Until they are removed from the STAR repository, production keeps reading the
-release copy and never sees these entries. That removal is a separate PR and
-the last step of this migration -- the push is not done until it has landed.
+PUSHING IS NOT ENOUGH ON ITS OWN. St_db_Maker pools every candidate and takes
+the LATEST beginTime at or before the requested time, whichever source it came
+from, so files do not lose to the database by being files. The release copy in
+$STAR/StarDb/Geometry/fst was stamped 20211110.000001, later than every
+database entry, so while it existed production read it and never saw
+Geometry_fst at all. It is removed in the same commit that added this
+directory.
+
+ORDER MATTERS when doing this again for another subsystem. Removing the file
+copy while an older, higher-timestamped database entry is still active makes
+the geometry fall back to that entry silently -- no error, no log line. Get the
+database side right first, confirm it with NoCintDb at a real-data timestamp,
+and only then remove the files.
 
