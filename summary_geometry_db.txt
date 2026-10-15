@@ -1,0 +1,173 @@
+FST geometry -> database: our working notes
+===========================================
+2026-10-15. Not the README -- StRoot/StFstDbMaker/macro/README is for whoever
+picks this up next. This is the part that is only about getting our push done.
+
+Status: BLOCKED on write permission. Nothing has been stored.
+
+
+Write access
+------------
+Reads and writes go to DIFFERENT servers. The mysql checks below use
+star-db01.sdcc.bnl.gov:3316 (user "loader"). StDbLib routes writes through the
+load balancer to robinson.star.bnl.gov:3306, and that is where the privilege
+has to exist.
+
+First real attempt, 2026-10-15:
+
+    BFC:INFO - MysqlDb::Connect: ... will use robinson.star.bnl.gov:3306
+    Query Failed  INSERT command denied to user 'akio'@'starsub06.sdcc.bnl.gov'
+                  for table 'fstOnTpc'
+    Write failed for table= fstOnTpc
+
+What akio has today:
+
+    mysql -h robinson.star.bnl.gov -P 3306 -u akio -e "show grants for current_user();"
+
+    GRANT SELECT ON *.* TO 'akio'@'%.bnl.gov'
+    GRANT SELECT, INSERT ON `Calibrations_fgt`.* TO 'akio'@'%.bnl.gov'
+    GRANT SELECT, INSERT ON `Calibrations_fps`.* TO 'akio'@'%.bnl.gov'
+    GRANT SELECT, INSERT ON `Calibrations_fms`.* TO 'akio'@'%.bnl.gov'
+    GRANT SELECT, INSERT ON `Calibrations_fcs`.* TO 'akio'@'%.bnl.gov'
+    GRANT SELECT, INSERT ON `Geometry_fcs`.*     TO 'akio'@'%.bnl.gov'
+    GRANT SELECT, INSERT ON `Geometry_fms`.*     TO 'akio'@'%.bnl.gov'
+    GRANT SELECT, INSERT ON `Geometry_fgt`.*     TO 'akio'@'%.bnl.gov'
+    GRANT SELECT, INSERT ON `Geometry_fps`.*     TO 'akio'@'%.bnl.gov'
+
+i.e. the older detectors only. The host pattern '%.bnl.gov' already covers
+starsub*, so it is purely the database list. Asked Dmitry (arkhipkin@bnl.gov)
+2026-10-15 for the same pattern on the three forward databases:
+
+    Geometry_fst         FST geometry -- blocking this push
+    Calibrations_ftt     FTT time anchors (fttDataWindowsB)
+    Geometry_ftt         FTT geometry -- next
+
+Two things found while checking:
+  * Geometry_ftt exists but holds only fttFobToHV, fttFobToStation and
+    fttHardwareMap. The FTT geometry push also needs Dmitry to create the
+    survey tables there.
+  * Geometry_stgc DOES NOT EXIST, yet StFttDbMaker.cxx:90-92 still asks for
+    Geometry/stgc/{stgcOnTpc,stationOnStgc,pentOnStation}. Those can never
+    resolve from MySQL. Check PR #23 covers it.
+
+
+The macro used to report success after a refused write
+------------------------------------------------------
+StDbManager::storeDbTable returns bool and fstGeometry_db.C ignored it, so the
+first attempt printed
+
+    stored fstOnTpc at 2021-10-10 00:00:00
+    Done with database upload.
+
+directly under the "INSERT command denied" error. With "all" that would have
+been eight tags of false confirmation over a database that never changed.
+Fixed 2026-10-15 (21db9ace6d): it checks the return value, prints
+"*** WRITE FAILED ... NOTHING WAS STORED ***" and stops the tag loop.
+
+ANY PUSH LOG OLDER THAN 2026-10-15 SAYING "stored ..." IS NOT EVIDENCE THAT
+ANYTHING LANDED.
+
+
+First push, once permission is granted
+--------------------------------------
+Test on the smallest possible change first: ideal22 / fstOnTpc. One row,
+identity content, beginTime 2021-10-10, which is below every entry that exists
+today, so even a fully successful push cannot change what any job reads. It is
+also the floor St_db_Maker needs, so it is the first thing we want stored
+anyway.
+
+  1.  root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstOnTpc")'
+
+  2.  confirm independently of the macro -- do not trust the log:
+
+      mysql -h star-db01.sdcc.bnl.gov -P 3316 -u loader -N -e \
+        "select beginTime, entryTime, dataID, flavor, deactive, Id, t0, t1, t2
+           from Geometry_fst.fstOnTpc where beginTime='2021-10-10 00:00:00';"
+
+      expect ONE row, entryTime = now, ofl, deactive 0, t=(0,0,0).
+
+  3.  the other three tables of ideal22, one at a time:
+        ...("ideal22","writedb","hssOnFst")          ->   2 rows
+        ...("ideal22","writedb","fstWedgeOnHss")     ->  36 rows
+        ...("ideal22","writedb","fstSensorOnWedge")  -> 108 rows
+
+  4.  then the remaining seven tags in full -- NOT "all", which would redo
+      ideal22 and collide on (table, beginTime):
+        survey22  ideal23  survey23  ideal24  survey24  ideal25  survey25
+
+  5.  final check, all four tables:
+
+      for t in fstOnTpc hssOnFst fstWedgeOnHss fstSensorOnWedge ; do
+        mysql -h star-db01.sdcc.bnl.gov -P 3316 -u loader -N -e \
+          "select '$t', beginTime, count(*) from Geometry_fst.$t
+             group by beginTime order by beginTime;"
+      done
+
+      expect 8 new beginTimes per table at 1 / 2 / 36 / 108 rows, alongside the
+      old 2021-10-25 ones.
+
+
+Deactivating the old entries
+----------------------------
+Geometry_fst holds 11 entries, all dated 2021-10-25, loaded in 2022, 438 rows,
+flavor ofl. EVERY ONE IS IDENTITY -- t=(0,0,0) and r=I on every row of all four
+tables, checked row by row. So the FST survey has never been in the database
+for real data; Run 22 real-data jobs have all used ideal FST geometry.
+
+2021-10-25 falls inside Gene's "real data: any time after that" window, i.e.
+after the 2021-10-10 ideal and 2021-10-15 survey slots, so those rows win over
+anything we write at 2021-10-15 and our entries would be reachable only by MC
+timestamps.
+
+Why deactivate rather than write a second copy after 2021-10-25: the second
+copy would make TWO entries the standing requirement for every future alignment
+update, one in the MC survey window and one for real data. The next iteration
+-- Xihe's or ours -- has to remember both, and forgetting either puts MC and
+real data on different geometry with no error and no log line. Deactivating
+keeps it at one entry per update:
+
+    2021-10-14  ->  ideal22   (2021-10-10)    MC, misalignment off
+    2021-10-19  ->  survey22  (2021-10-15)    MC, survey
+    any later   ->  survey22  (2021-10-15)    real data
+
+Nothing is lost. The content is identity, which is exactly what ideal22 at
+2021-10-10 provides, so a Run 22 production reconstructed without the survey is
+reproduced by asking for a timestamp in [2021-10-10, 2021-10-15).
+
+ORDER: push everything first, ask for the deactivation second. Between the two
+nothing changes for anybody -- real data keeps resolving to the identity rows
+exactly as today. Reversed, there would be a window with no Geometry/fst entry
+at all below a real-data timestamp.
+
+deactivate.txt in StRoot/StFstDbMaker/macro is the request to send to Dmitry
+(drafted, not sent -- it opens with "we have just pushed", so it goes after the
+push). Tell Gene and Daniel first: deactivation is the moment the survey
+becomes the default for everyone's new Run 22 real-data jobs.
+
+
+Last step: removing the release copy
+------------------------------------
+Do not delete $STAR/StarDb/Geometry/* and hope. The chain can simulate the
+removal first, because StBFChain honours these options (BigFullChain.h:1159):
+
+      NoStarCintDb     drops $STAR/StarDb   <- simulates the removal
+      NoLocalCintDb    drops $PWD/StarDb
+      NoCintDb         drops both, leaving MySQL only
+      NoMySQLDb        drops MySQL
+
+So after pushing, and BEFORE opening the removal PR:
+
+  1. run the chain with NoCintDb, i.e. MySQL only, and confirm the survey comes
+     back with the numbers you pushed. MIND THE TIMESTAMP: until the 2021-10-25
+     entries are deactivated, a real-data timestamp still resolves to those
+     identity rows and this check fails for the wrong reason. Use a
+     survey-window date (sdt20211019) before deactivation and a real-data date
+     after it -- see "Deactivating the old entries" above;
+  2. rebuild a geometry cache the same way and check it against the current one
+     -- the translations should be identical, since the DB entries hold the same
+     survey;
+  3. only then propose deleting the files from the repository.
+
+That sequence is also the evidence the removal PR needs: "with NoCintDb the
+geometry is unchanged, so the release copy is redundant" is reviewable, whereas
+"we pushed it, trust us" is not.

@@ -7,7 +7,7 @@ What is here
                           (table, beginTime) pair, in St_db_Maker's
                           <table>.<yyyymmdd>.<hhmmss>.C naming
   fstGeometry_db.C        reads those files and pushes them to the offline
-                          MySQL DB (see "Pushing to the database" below)
+                          MySQL DB
 
 These four tables are chained by StFstDb::loadGeometry() to place every FST
 sensor:
@@ -16,6 +16,35 @@ sensor:
       hssOnFst            each of the 2 half-support structures      (2 rows)
       fstWedgeOnHss       each wedge on its HSS                      (36 rows)
       fstSensorOnWedge    each sensor on its wedge                   (108 rows)
+
+Every entry, one line each. The dates are Gene's slots: one "ideal" and one
+"survey/estimate" per run year, both before that run starts, with constants
+measured from real data going any time after.
+
+      2021-10-10 00:00:00   Run 22 ideal    identity -- misalignment off
+      2021-10-15 00:00:00   Run 22 survey   the survey, all of it in hssOnFst
+      2021-10-15 00:00:01   Run 22 survey   the same survey, re-decomposed
+                                            <-- THIS IS WHAT WE RUN
+      2023-04-10 00:00:00   Run 23 ideal    symlink to 2021-10-10
+      2023-04-15 00:00:00   Run 23 survey   symlink to 2021-10-15 00:00:01
+      2023-12-10 00:00:00   Run 24 ideal    symlink to 2021-10-10
+      2023-12-15 00:00:00   Run 24 survey   symlink to 2021-10-15 00:00:01
+      2024-12-10 00:00:00   Run 25 ideal    symlink to 2021-10-10
+      2024-12-15 00:00:00   Run 25 survey   symlink to 2021-10-15 00:00:01
+
+Symlinks, not copies, so there is one copy of every number and the later years
+cannot silently drift from Run 22. If a year ever gets its own FST alignment,
+replace that year's symlink with a real file.
+
+A NEW ALIGNMENT GETS A NEW ENTRY -- never edit these. Gene's rule is to step
+the time of day on the same date, so a first Run 22 alignment iteration would
+go in as
+
+      2021-10-15 00:01:00   Run 22 alignment, iteration 1
+
+(00:00:00 and 00:00:01 on that date are taken by the two survey decompositions
+above). Gene's full rule:
+https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
 
 The DB is the truth. These files are the record of what was pushed, and the
 way to override it locally.
@@ -90,7 +119,6 @@ and tell the chain to look only there.
     job's working/tmp directory too, and pass the same options, or the job
     quietly uses something else and your test shows no change.
 
-
 What each timestamp means
 -------------------------
 Translations are cm; no rotation has ever been non-identity. Only fstOnTpc and
@@ -106,65 +134,22 @@ here is THE SURVEY. $STAR/StarDb/Geometry/fst ships it as hssOnFst at
 
 i.e. the FST halves sit 3.0-3.3 mm low in y and 0.7/2.3 mm off in x -- the same
 order as the DB beamline y0 = -2.2 mm. FST alignment has never been iterated
-past the survey. If and when it is, add a new timestamp; do not edit these.
+past the survey.
 
-Filenames are Gene's slots. His rule is kept at
+The two Run 22 survey entries are not successive measurements and carry no new
+information. 20211015.000000 is the release form, all of it in hssOnFst;
+20211015.000001 lifts the common part into fstOnTpc (+0.14876, -0.31702) and
+leaves the symmetric residual in hssOnFst (-/+0.07750, +/-0.01600).
+fstOnTpc x hssOnFst gives the same total for both halves either way, verified
+element by element. The re-decomposed form exists because the common offset
+belongs in fstOnTpc physically -- the whole detector sits low, plus a small
+differential between the halves -- and because an FST-global shift is then one
+number to iterate instead of two. Push one of them, not both.
 
-      https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
-
-Per run year it reserves an "ideal" date and a "survey/estimate" date, both
-before the run starts, with constants measured from real data going any time
-after. The first
-entry at a date uses time 000000, and later revisions of the same numbers step
-the time.
-
-  REAL FILES -- Run 22, where the survey was taken
-      20211010.000000   identity, all four tables.  Run 22 IDEAL slot. Also
-                        serves as "misalignment off", and as the floor
-                        St_db_Maker needs (see FindLeft note below).
-      20211015.000000   the survey as the release ships it, all of it in
-                        hssOnFst.  Run 22 SURVEY slot.
-      20211015.000001   THE SAME SURVEY, re-decomposed: common part lifted into
-                        fstOnTpc (+0.14876, -0.31702), symmetric residual left
-                        in hssOnFst (-/+0.07750, +/-0.01600).
-                        Run 22 SURVEY slot, revision 1.  THIS IS WHAT WE RUN.
-
-  The last two are not successive measurements and carry no new information:
-  fstOnTpc x hssOnFst gives exactly the same total for both halves either way,
-  verified element by element. The re-decomposed form exists because the common
-  offset belongs in fstOnTpc physically -- the whole detector sits low, plus a
-  small differential between the halves -- and because an FST-global shift is
-  then one number to iterate instead of two. Push one of them, not both.
-
-  SYMLINKS -- the same survey carried into the later run years
-      20230410.000000 -> 20211010.000000     Run 23 ideal
-      20230415.000000 -> 20211015.000001     Run 23 survey
-      20231210.000000 -> 20211010.000000     Run 24 ideal
-      20231215.000000 -> 20211015.000001     Run 24 survey
-      20241210.000000 -> 20211010.000000     Run 25 ideal
-      20241215.000000 -> 20211015.000001     Run 25 survey
-
-  Symlinks, not copies, so there is one copy of every number and the later
-  years cannot silently drift from Run 22.
-
-  They are not strictly required for the local path: St_db_Maker::FindLeft()
-  takes the latest entry at or before the requested time, per table and per
-  namespace, so a Run 24 job resolves to the Run 22 survey anyway. They exist
-  so each run year has an explicit entry in Gene's scheme instead of
-  inheriting one by accident, and so the DB shows that intent. If a year ever
-  gets its own FST alignment, replace that year's symlink with a real file.
-
-  * FILENAME COLLISION, now resolved. Before the rename our identity file was
-    called 20211110.000001 -- the same name the release uses for its SURVEY --
-    so dropping this directory into ./StarDb replaced the release survey with
-    identity under the same name. The rename to 20211010.000000 removes that
-    collision. The release file still exists, though, and $STAR/StarDb beats
-    MySQL; see "Pushing to the database".
-
-  The "comment" field reads "Identity Matrix" in all of these files, including
-  the non-identity ones. It is stale, and memcpy(&row.comment,"...",1) copies a
-  single byte anyway, so the field carries no usable information. Do not rely
-  on it; this README is the record.
+The "comment" field reads "Identity Matrix" in all of these files, including
+the non-identity ones. It is stale, and memcpy(&row.comment,"...",1) copies a
+single byte anyway, so the field carries no usable information. Do not rely on
+it; this README is the record.
 
 
 The "misalign" BFC option is what makes any of this take effect
@@ -229,66 +214,6 @@ new alignment had no effect". If you change a table, rebuild the cache, and
 name it so the versions are distinguishable: that is what the sdt and label
 arguments of build_geom_misalign.C are for.
 
-
-Proving it is safe to remove the release copy
----------------------------------------------
-Do not delete $STAR/StarDb/Geometry/* and hope. The chain can simulate the
-removal first, because StBFChain honours these options (BigFullChain.h:1159):
-
-      NoStarCintDb     drops $STAR/StarDb   <- simulates the removal
-      NoLocalCintDb    drops $PWD/StarDb
-      NoCintDb         drops both, leaving MySQL only
-      NoMySQLDb        drops MySQL
-
-So after pushing, and BEFORE opening the removal PR:
-
-  1. run the chain with NoCintDb, i.e. MySQL only, and confirm the survey comes
-     back with the numbers you pushed. MIND THE TIMESTAMP: until the 2021-10-25
-     entries are deactivated, a real-data timestamp still resolves to those
-     identity rows and this check fails for the wrong reason. Use a
-     survey-window date (sdt20211019) before deactivation and a real-data date
-     after it -- see "What is already in the database" above;
-  2. rebuild a geometry cache the same way and check it against the current one
-     -- the translations should be identical, since the DB entries hold the same
-     survey;
-  3. only then propose deleting the files from the repository.
-
-That sequence is also the evidence the removal PR needs: "with NoCintDb the
-geometry is unchanged, so the release copy is redundant" is reviewable, whereas
-"we pushed it, trust us" is not.
-
-What is already in the database
--------------------------------
-Geometry_fst holds 11 entries, all dated 2021-10-25, loaded in 2022: fstOnTpc
-at 00:00:11-:14, hssOnFst and fstWedgeOnHss at 00:00:00, fstSensorOnWedge at
-00:00:00-:04. 438 rows in all, flavor ofl.
-
-EVERY ONE OF THEM IS IDENTITY -- t=(0,0,0) and r=I on every row of all four
-tables, checked row by row. So the FST survey has never been in the database
-for real data; Run 22 real-data jobs have all used ideal FST geometry.
-
-2021-10-25 falls inside Gene's "real data: any time after that" window, i.e.
-AFTER the 2021-10-10 ideal and 2021-10-15 survey slots. St_db_Maker takes the
-latest entry at or before the requested time, so these rows win over anything
-written at 2021-10-15 and our entries would be reachable only by MC timestamps.
-
-They therefore have to be DEACTIVATED (deactive != 0; the rows stay, nothing is
-deleted). The alternative -- writing the survey a second time after 2021-10-25
--- would make two entries the standing requirement for every future alignment
-update, one for MC and one for real data, and forgetting either puts MC and
-real data on different geometry with no error and no log line.
-
-Nothing is lost: the content is identity, which is exactly what the ideal22
-entry at 2021-10-10 provides, so an old production is reproduced by asking for
-a timestamp in [2021-10-10, 2021-10-15).
-
-Order: push everything first, then ask for the deactivation -- never the other
-way round, or there is a window with no Geometry/fst entry below a real-data
-timestamp. deactivate.txt in this directory is the request to send. Tell Gene
-and Daniel first: deactivation is the moment the survey becomes the default for
-everyone's new Run 22 real-data jobs.
-
-
 Pushing to the database
 -----------------------
       root4star -b -q 'fstGeometry_db.C("survey22")'            dry run
@@ -311,38 +236,14 @@ possible change. A partial update leaves the geometry inconsistent at that
 timestamp -- StFstDb::loadGeometry() chains all four tables -- so finish the
 other three straight away.
 
-
-Write access, and the first push
---------------------------------
-Writes do NOT go to the host the mysql checks above use. StDbLib routes them
-through the load balancer to robinson.star.bnl.gov:3306, and the account needs
-SELECT,INSERT on the database in question:
-
-    GRANT SELECT, INSERT ON `Geometry_fst`.* TO 'akio'@'%.bnl.gov'
-
-Check with:  mysql -h robinson.star.bnl.gov -P 3306 -u $USER -e \
-                   "show grants for current_user();"
-
-Test write permission on the smallest possible change before pushing anything
-else -- one table of one tag, using the optional third argument:
-
-    root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstOnTpc")'
-
-ideal22/fstOnTpc is the right test: one row, identity, beginTime 2021-10-10,
-which is below every entry that currently exists, so even a fully successful
-push cannot change what any job reads today. On failure the macro says
-WRITE FAILED / NOTHING WAS STORED and stops. Confirm success independently with
-a mysql query rather than trusting the log -- before 2026-10-15 this macro
-ignored storeDbTable's return value and printed "stored ..." after writes that
-were refused, so older logs prove nothing.
-
-Then the other three tables of ideal22 one at a time, then the remaining seven
-tags in full -- not "all", which would redo ideal22.
+Writing needs INSERT permission on Geometry_fst, granted per account -- ask
+Dmitry Arkhipkin <arkhipkin@bnl.gov>. Reads work without it, so a clean dry run
+says nothing about whether you can push.
 
 NEVER STORE THE SAME (table, beginTime) TWICE. The primary key is
 (nodeID, elementID, beginTime, flavor, deactive), so a second store at the same
-beginTime collides with the first. That is why the existing entries stepped the
-time by a second (00:00:11, :12, :13, :14) instead of rewriting in place.
+beginTime collides with the first. A new entry gets a new time of day, as in
+"What is here" above.
 
 
 PUSHING IS NOT ENOUGH ON ITS OWN. St_db_Maker resolves ./StarDb, then
