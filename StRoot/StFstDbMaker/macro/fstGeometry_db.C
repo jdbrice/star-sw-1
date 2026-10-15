@@ -110,14 +110,20 @@ void fstGeometry_db( const char* tag = "", const char* opt = "", const char* onl
         stamp     = st[islot];
         storeTime = bt[islot];
         what      = ds[islot];
-        fstGeometry_db_one( stamp, storeTime, what, tg[islot], writedb, only );
+        if ( !fstGeometry_db_one( stamp, storeTime, what, tg[islot], writedb, only ) ) {
+            std::cout << "\n*** STOPPING at tag \"" << tg[islot]
+                      << "\" -- nothing further was attempted ***\n";
+            return;
+        }
     }
     return;
 }
 
 // Store (or just print) the four tables at one stamp/beginTime.
 // only != "" restricts to that single table (first-push permission test).
-void fstGeometry_db_one( TString stamp, TString storeTime, TString what,
+// Returns false if any write failed, so the caller can stop instead of
+// reporting success it did not get.
+bool fstGeometry_db_one( TString stamp, TString storeTime, TString what,
                          const char *tagname, int writedb, TString only )
 {
     std::cout << "\n==== " << tagname << "  files=fst/*." << stamp << ".C\n"
@@ -137,7 +143,7 @@ void fstGeometry_db_one( TString stamp, TString storeTime, TString what,
         TString fn = Form( "%s/fst/%s.%s.C", here.Data(), tables[it], stamp.Data() );
         if ( gSystem->AccessPathName( fn.Data() ) ) {
             std::cout << "ERROR: cannot read " << fn << " -- nothing stored\n";
-            return;
+            return false;
         }
 
         // Each file defines CreateTable(); load one at a time and unload after,
@@ -147,7 +153,7 @@ void fstGeometry_db_one( TString stamp, TString storeTime, TString what,
         if ( !ds ) {
             std::cout << "ERROR: CreateTable() returned 0 for " << fn << "\n";
             gROOT->ProcessLine( Form( ".U %s", fn.Data() ) );
-            return;
+            return false;
         }
 
         St_Survey *tableSet = (St_Survey *) ds;
@@ -170,8 +176,19 @@ void fstGeometry_db_one( TString stamp, TString storeTime, TString what,
             StDbTable     *table = node->addDbTable( tables[it] );
             mgr->setStoreTime( storeTime.Data() );
             table->SetTable( (char*)rows, nrows );
-            mgr->storeDbTable( table );
+            // storeDbTable returns false when the write is refused -- e.g.
+            // "INSERT command denied to user ...". Without this check the
+            // macro printed "stored ..." and "Done with database upload"
+            // after a write that never happened.
+            const bool ok = mgr->storeDbTable( table );
             gSystem->Unsetenv("DB_ACCESS_MODE");
+            if ( !ok ) {
+                std::cout << "\n*** WRITE FAILED for " << tables[it] << " at "
+                          << storeTime << " -- NOTHING WAS STORED ***\n"
+                          << "    see the MysqlDb/StDbSql errors above\n";
+                gROOT->ProcessLine( Form( ".U %s", fn.Data() ) );
+                return false;
+            }
             std::cout << "    stored " << tables[it] << " at " << storeTime << "\n";
         }
 
@@ -180,4 +197,5 @@ void fstGeometry_db_one( TString stamp, TString storeTime, TString what,
 
     if ( writedb ) std::cout << "\nDone with database upload.\n";
     else           std::cout << "\nDry run only -- pass \"writedb\" to store.\n";
+    return true;
 }

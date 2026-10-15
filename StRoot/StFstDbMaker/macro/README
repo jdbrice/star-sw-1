@@ -390,9 +390,38 @@ the floor St_db_Maker needs.
       root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstOnTpc")'
 
      On success the log says: stored fstOnTpc at 2021-10-10 00:00:00
-     If write permission is missing, StDbManager reports it and nothing is
-     written -- the dry run has already proved the file reading works, so any
-     failure at this point is the database side.
+     On failure it says, loudly:
+
+         *** WRITE FAILED for fstOnTpc at 2021-10-10 00:00:00 -- NOTHING WAS STORED ***
+         *** STOPPING at tag "ideal22" -- nothing further was attempted ***
+
+     The dry run has already proved the file reading works, so any failure at
+     this point is the database side.
+
+  WRITE ACCESS IS SEPARATE, AND WE DO NOT HAVE IT YET (tried 2026-10-15):
+
+      BFC:INFO - MysqlDb::Connect: ... will use robinson.star.bnl.gov:3306
+      Query Failed  INSERT command denied to user 'akio'@'starsub05.sdcc.bnl.gov'
+                    for table 'fstOnTpc'
+      Write failed for table= fstOnTpc
+
+     Note the write goes to robinson.star.bnl.gov:3306, NOT the read host
+     star-db01.sdcc.bnl.gov:3316 used by the mysql checks in this README. The
+     account needs INSERT on Geometry_fst.*; ask Dmitry. Nothing was stored --
+     verified afterwards: Geometry_fst still holds only the 2021-10-25 entries,
+     4 / 2 / 36 / 396 rows.
+
+  THE MACRO USED TO LIE ABOUT THIS, fixed 2026-10-15. StDbManager::storeDbTable
+  returns bool and the macro ignored it, so the very first real attempt printed
+
+         stored fstOnTpc at 2021-10-10 00:00:00
+         Done with database upload.
+
+     directly below the "INSERT command denied" error, having written nothing.
+     It now checks the return value, says NOTHING WAS STORED, and stops instead
+     of walking the remaining tables and tags. Worth remembering when reading
+     any older log: "stored ..." in those is not evidence that anything landed,
+     only that the call was made.
 
   2. confirm it landed, independently of the macro
 
