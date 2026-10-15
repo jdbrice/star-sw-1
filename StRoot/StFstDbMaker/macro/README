@@ -257,100 +257,36 @@ That sequence is also the evidence the removal PR needs: "with NoCintDb the
 geometry is unchanged, so the release copy is redundant" is reviewable, whereas
 "we pushed it, trust us" is not.
 
-What is already in the database, and why it has to be deactivated
------------------------------------------------------------------
-Checked 2026-10-15. Geometry_fst already holds eleven entries, all dated
-2021-10-25, loaded in 2022:
+What is already in the database
+-------------------------------
+Geometry_fst holds 11 entries, all dated 2021-10-25, loaded in 2022: fstOnTpc
+at 00:00:11-:14, hssOnFst and fstWedgeOnHss at 00:00:00, fstSensorOnWedge at
+00:00:00-:04. 438 rows in all, flavor ofl.
 
-      table               beginTime              rows   entryTime
-      fstOnTpc            2021-10-25 00:00:11      1    2022-01-15 16:44:13
-      fstOnTpc            2021-10-25 00:00:12      1    2022-01-15 16:46:38
-      fstOnTpc            2021-10-25 00:00:13      1    2022-01-15 16:50:45
-      fstOnTpc            2021-10-25 00:00:14      1    2022-01-15 17:55:55
-      hssOnFst            2021-10-25 00:00:00      2    2022-01-15 17:42:50
-      fstWedgeOnHss       2021-10-25 00:00:00     36    2022-01-15 17:49:10
-      fstSensorOnWedge    2021-10-25 00:00:00    108    2022-01-15 17:53:09
-      fstSensorOnWedge    2021-10-25 00:00:01     36    2022-07-26 18:24:13
-      fstSensorOnWedge    2021-10-25 00:00:02     36    2022-07-26 18:27:21
-      fstSensorOnWedge    2021-10-25 00:00:03    108    2022-07-26 18:28:11
-      fstSensorOnWedge    2021-10-25 00:00:04    108    2022-07-26 18:51:09
+EVERY ONE OF THEM IS IDENTITY -- t=(0,0,0) and r=I on every row of all four
+tables, checked row by row. So the FST survey has never been in the database
+for real data; Run 22 real-data jobs have all used ideal FST geometry.
 
-All flavor "ofl", all deactive=0, 438 rows in total. Note the two
-fstSensorOnWedge entries with 36 rows where 108 is right -- malformed, but
-superseded by 00:00:03 and 00:00:04.
+2021-10-25 falls inside Gene's "real data: any time after that" window, i.e.
+AFTER the 2021-10-10 ideal and 2021-10-15 survey slots. St_db_Maker takes the
+latest entry at or before the requested time, so these rows win over anything
+written at 2021-10-15 and our entries would be reachable only by MC timestamps.
 
-EVERY ONE OF THEM IS IDENTITY. Measured, not assumed: t=(0,0,0) on every row,
-r00=r11=r22=1 and all six off-diagonals 0 on every row, in all four tables. So
-the FST survey has never been in the database for real data -- every Run 22
-real-data job to date has been reconstructed with ideal FST geometry.
+They therefore have to be DEACTIVATED (deactive != 0; the rows stay, nothing is
+deleted). The alternative -- writing the survey a second time after 2021-10-25
+-- would make two entries the standing requirement for every future alignment
+update, one for MC and one for real data, and forgetting either puts MC and
+real data on different geometry with no error and no log line.
 
-Re-check it with:
+Nothing is lost: the content is identity, which is exactly what the ideal22
+entry at 2021-10-10 provides, so an old production is reproduced by asking for
+a timestamp in [2021-10-10, 2021-10-15).
 
-      mysql -h star-db01.sdcc.bnl.gov -P 3316 -u loader -N -e \
-        "select beginTime, min(entryTime), count(*),
-                sum(abs(t0)+abs(t1)+abs(t2)>1e-9) as nonzero_translation
-         from Geometry_fst.fstOnTpc group by beginTime order by beginTime;"
-
-WHY THIS MATTERS. 2021-10-25 sits INSIDE Gene's "real data: any time after
-that" window, i.e. after the 2021-10-10 ideal and 2021-10-15 survey slots.
-St_db_Maker takes the latest entry at or before the requested time, so for any
-real-data timestamp these identity rows win over anything we write at
-2021-10-15. Our entries would be reachable only by MC timestamps.
-
-TWO WAYS OUT, AND WHY THE SECOND ONE IS RIGHT
-
-  (a) Supersede: write the survey a second time at a beginTime after
-      2021-10-25 00:00:14, e.g. 2021-10-26 00:00:00. Non-destructive, needs no
-      admin, works immediately.
-
-      But it is wrong as a standing arrangement. It makes TWO entries the
-      permanent requirement for every future update: one in the survey window
-      (2021-10-15..10-25) for MC, one after 2021-10-25 for real data. The next
-      alignment iteration -- Xihe's, or ours -- has to remember both. Forget
-      either one and MC and real data silently run on different geometry, with
-      no error and no log line saying so. That is the same class of trap as
-      ./StarDb shadowing, and it recurs every single time.
-
-  (b) DEACTIVATE the eleven entries (set deactive != 0; the rows stay, nothing
-      is deleted, and it can be undone). Then the newest entry at or before any
-      real-data timestamp is the 2021-10-15 survey, and from then on ONE entry
-      per update serves both MC and real data:
-
-          2021-10-14  ->  ideal22   (2021-10-10)    MC, misalignment off
-          2021-10-19  ->  survey22  (2021-10-15)    MC, survey
-          any later   ->  survey22  (2021-10-15)    real data
-          next iteration goes in once, at 2021-10-15 00:00:02 or later
-
-      This is the plan. It needs a request to the DB team (Gene / Dmitry) --
-      storeDbTable cannot deactivate, only insert.
-
-NOTHING IS LOST BY DEACTIVATING. The content of those entries is identity, and
-identity is exactly what our ideal22 entry at 2021-10-10 provides. Anyone who
-genuinely wants the old behaviour -- reproducing a Run 22 production that was
-reconstructed without the survey -- asks for a timestamp in
-[2021-10-10, 2021-10-15) and gets the same numbers. Reproducibility survives;
-only the default changes. Deactivation also leaves the rows visible in the DB,
-so the history stays readable.
-
-ORDER OF OPERATIONS. Push first, deactivate second, never the other way round:
-
-  1. push our slots (ideal22 first -- it is also the floor St_db_Maker needs);
-  2. verify with NoCintDb using a SURVEY-window timestamp, e.g. sdt20211019,
-     which resolves below 2021-10-25 and so already reads our entry;
-  3. request deactivation of the eleven entries above;
-  4. re-verify with NoCintDb using a REAL-DATA timestamp -- this is the step
-     that can only pass after (3);
-  5. only then the release-file removal PR.
-
-Between 1 and 3 nothing changes for anybody: real data keeps resolving to the
-identity rows, exactly as today. If the order were reversed there would be a
-window with no Geometry/fst entry at all below a real-data timestamp.
-
-AND IT CHANGES WHAT EVERYONE GETS. Step 3 is the moment the survey becomes the
-default for new Run 22 real-data jobs -- Xihe's alignment work, Daniel's, any
-production re-run. It is the intended effect and it is the right geometry, but
-it is not ours alone to spring on people: tell Gene and Daniel before asking
-for the deactivation, not after.
+Order: push everything first, then ask for the deactivation -- never the other
+way round, or there is a window with no Geometry/fst entry below a real-data
+timestamp. deactivate.txt in this directory is the request to send. Tell Gene
+and Daniel first: deactivation is the moment the survey becomes the default for
+everyone's new Run 22 real-data jobs.
 
 
 Pushing to the database
@@ -376,105 +312,38 @@ timestamp -- StFstDb::loadGeometry() chains all four tables -- so finish the
 other three straight away.
 
 
-FIRST PUSH -- testing write permission
---------------------------------------
-Nothing here has ever been written to the database, so test with the smallest,
-least consequential thing first: ideal22 / fstOnTpc. One row, identity content,
-beginTime 2021-10-10, which is BELOW every entry that currently exists
-(2021-10-25), so even a completely successful push cannot change what any job
-reads today. It is also the first thing we want in the database anyway -- it is
-the floor St_db_Maker needs.
+Write access, and the first push
+--------------------------------
+Writes do NOT go to the host the mysql checks above use. StDbLib routes them
+through the load balancer to robinson.star.bnl.gov:3306, and the account needs
+SELECT,INSERT on the database in question:
 
-  1. push one table of one tag
+    GRANT SELECT, INSERT ON `Geometry_fst`.* TO 'akio'@'%.bnl.gov'
 
-      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstOnTpc")'
+Check with:  mysql -h robinson.star.bnl.gov -P 3306 -u $USER -e \
+                   "show grants for current_user();"
 
-     On success the log says: stored fstOnTpc at 2021-10-10 00:00:00
-     On failure it says, loudly:
+Test write permission on the smallest possible change before pushing anything
+else -- one table of one tag, using the optional third argument:
 
-         *** WRITE FAILED for fstOnTpc at 2021-10-10 00:00:00 -- NOTHING WAS STORED ***
-         *** STOPPING at tag "ideal22" -- nothing further was attempted ***
+    root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstOnTpc")'
 
-     The dry run has already proved the file reading works, so any failure at
-     this point is the database side.
+ideal22/fstOnTpc is the right test: one row, identity, beginTime 2021-10-10,
+which is below every entry that currently exists, so even a fully successful
+push cannot change what any job reads today. On failure the macro says
+WRITE FAILED / NOTHING WAS STORED and stops. Confirm success independently with
+a mysql query rather than trusting the log -- before 2026-10-15 this macro
+ignored storeDbTable's return value and printed "stored ..." after writes that
+were refused, so older logs prove nothing.
 
-  WRITE ACCESS IS SEPARATE, AND WE DO NOT HAVE IT YET (tried 2026-10-15):
+Then the other three tables of ideal22 one at a time, then the remaining seven
+tags in full -- not "all", which would redo ideal22.
 
-      BFC:INFO - MysqlDb::Connect: ... will use robinson.star.bnl.gov:3306
-      Query Failed  INSERT command denied to user 'akio'@'starsub05.sdcc.bnl.gov'
-                    for table 'fstOnTpc'
-      Write failed for table= fstOnTpc
+NEVER STORE THE SAME (table, beginTime) TWICE. The primary key is
+(nodeID, elementID, beginTime, flavor, deactive), so a second store at the same
+beginTime collides with the first. That is why the existing entries stepped the
+time by a second (00:00:11, :12, :13, :14) instead of rewriting in place.
 
-     Note the write goes to robinson.star.bnl.gov:3306, NOT the read host
-     star-db01.sdcc.bnl.gov:3316 used by the mysql checks in this README. The
-     account needs INSERT on Geometry_fst.*; ask Dmitry. Nothing was stored --
-     verified afterwards: Geometry_fst still holds only the 2021-10-25 entries,
-     4 / 2 / 36 / 396 rows.
-
-  THE MACRO USED TO LIE ABOUT THIS, fixed 2026-10-15. StDbManager::storeDbTable
-  returns bool and the macro ignored it, so the very first real attempt printed
-
-         stored fstOnTpc at 2021-10-10 00:00:00
-         Done with database upload.
-
-     directly below the "INSERT command denied" error, having written nothing.
-     It now checks the return value, says NOTHING WAS STORED, and stops instead
-     of walking the remaining tables and tags. Worth remembering when reading
-     any older log: "stored ..." in those is not evidence that anything landed,
-     only that the call was made.
-
-  2. confirm it landed, independently of the macro
-
-      mysql -h star-db01.sdcc.bnl.gov -P 3316 -u loader -N -e \
-        "select beginTime, entryTime, dataID, nodeID, elementID, flavor,
-                deactive, Id, t0, t1, t2, r00, r11, r22
-           from Geometry_fst.fstOnTpc where beginTime='2021-10-10 00:00:00';"
-
-     Expect exactly ONE row: entryTime = now, flavor ofl, deactive 0,
-     t=(0,0,0), r00=r11=r22=1.
-
-  3. then the other three tables of the same tag, one at a time
-
-      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","hssOnFst")'
-      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstWedgeOnHss")'
-      root4star -b -q 'fstGeometry_db.C("ideal22","writedb","fstSensorOnWedge")'
-
-     and check 2 / 36 / 108 rows respectively at 2021-10-10 00:00:00.
-
-  4. then the remaining seven tags, each in full. Do NOT use "all" at this
-     point -- it would redo ideal22:
-
-      root4star -b -q 'fstGeometry_db.C("survey22","writedb")'
-      root4star -b -q 'fstGeometry_db.C("ideal23","writedb")'
-      root4star -b -q 'fstGeometry_db.C("survey23","writedb")'
-      root4star -b -q 'fstGeometry_db.C("ideal24","writedb")'
-      root4star -b -q 'fstGeometry_db.C("survey24","writedb")'
-      root4star -b -q 'fstGeometry_db.C("ideal25","writedb")'
-      root4star -b -q 'fstGeometry_db.C("survey25","writedb")'
-
-  NEVER STORE THE SAME (table, beginTime) TWICE. The primary key of these
-  tables is (nodeID, elementID, beginTime, flavor, deactive), so a second store
-  at the same beginTime collides with the first -- it cannot quietly become a
-  duplicate entry, but whether it errors or overwrites has not been tested
-  here, and there is no reason to find out. That is also why every revision in
-  the existing database stepped the time by a second (00:00:11, :12, :13, :14)
-  rather than rewriting in place.
-
-  Final check, all four tables:
-
-      for t in fstOnTpc hssOnFst fstWedgeOnHss fstSensorOnWedge ; do
-        mysql -h star-db01.sdcc.bnl.gov -P 3316 -u loader -N -e \
-          "select '$t', beginTime, count(*) from Geometry_fst.$t
-             group by beginTime order by beginTime;"
-      done
-
-     Expect 8 new beginTimes per table (2021-10-10, 2021-10-15, 2023-04-10,
-     2023-04-15, 2023-12-10, 2023-12-15, 2024-12-10, 2024-12-15) with
-     1 / 2 / 36 / 108 rows, alongside the old 2021-10-25 ones.
-
-  Then: deactivation (see "What is already in the database" above and
-  deactivate.txt, which is the request to send to Dmitry), and only after that
-  the release-file removal PR.
 
 PUSHING IS NOT ENOUGH ON ITS OWN. St_db_Maker resolves ./StarDb, then
 $STAR/StarDb, then MySQL, and $STAR/StarDb/Geometry/fst still holds the
