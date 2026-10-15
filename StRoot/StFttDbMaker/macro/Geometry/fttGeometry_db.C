@@ -2,6 +2,9 @@
 //
 //   root4star -b -q 'fttGeometry_db.C("run22iter3")'            dry run: read + print
 //   root4star -b -q 'fttGeometry_db.C("run22iter3","writedb")'  actually store
+//   root4star -b -q 'fttGeometry_db.C("all","writedb")'         store every slot
+//   root4star -b -q 'fttGeometry_db.C("run22ideal","writedb","stgcOnTpc")'
+//                                                     one table only, for a first push
 //
 // Run the dry form first. It prints every row it would store and touches nothing.
 //
@@ -40,7 +43,9 @@
 // the easy mistake here: storing pentOnStation alone leaves the other two at
 // whatever was there before.
 
-void fttGeometry_db( const char* tag = "", const char* opt = "" )
+// Returns false if anything failed, so "all" stops instead of reporting success
+// it did not get.
+bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onlyTable = "" )
 {
     gROOT->Macro("LoadLogger.C");
     gSystem->Load("St_base.so");
@@ -49,6 +54,14 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
 
     TString option(opt);
     const int writedb = option.Contains("writedb");
+
+    // onlyTable: restrict to ONE of the three tables. Only for a first push, to
+    // test write permission on the smallest possible change. All three are
+    // chained by StFttDb::loadGeometry(), so a partial update leaves the
+    // geometry inconsistent at that timestamp -- finish the others at once.
+    TString only(onlyTable);
+    if ( only.Length() ) std::cout << "\n*** onlyTable=\"" << only
+                                   << "\" -- partial, finish the other two ***\n";
 
     const char *tables[3] = { "stgcOnTpc", "stationOnStgc", "pentOnStation" };
     TString stamp[3];     // per-table file stamp
@@ -104,14 +117,20 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
                   << "  identity -- measured: a Run 25 ideal link took Run 25 from the Run\n"
                   << "  24 alignment to zeros. Add them only in ideal+estimate PAIRS.\n"
                   << "\n  Pass \"all\" to push every slot in order.\n";
-        if ( t != "all" ) return;
+        if ( t != "all" ) return false;
     }
 
     if ( t == "all" ) {
         const char *every[8] = { "run22ideal","run22iter1","run22iter2","run22iter3",
                                  "run23ideal","run24ideal","run24seed","run24iter1" };
-        for ( int i = 0; i < 8; i++ ) fttGeometry_db( every[i], opt );
-        return;
+        for ( int i = 0; i < 8; i++ ) {
+            if ( !fttGeometry_db( every[i], opt, onlyTable ) ) {
+                std::cout << "\n*** STOPPING at tag \"" << every[i]
+                          << "\" -- nothing further was attempted ***\n";
+                return false;
+            }
+        }
+        return true;
     }
 
     std::cout << "fttGeometry_db: tag=" << tag << "\n"
@@ -123,10 +142,12 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
 
     for ( int it = 0; it < 3; it++ ) {
 
+        if ( only.Length() && only != tables[it] ) continue;
+
         TString fn = Form( "%s/ftt/%s.%s.C", here.Data(), tables[it], stamp[it].Data() );
         if ( gSystem->AccessPathName( fn.Data() ) ) {
             std::cout << "ERROR: cannot read " << fn << " -- nothing stored\n";
-            return;
+            return false;
         }
 
         gROOT->ProcessLine( Form( ".L %s", fn.Data() ) );
@@ -134,7 +155,7 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
         if ( !ds ) {
             std::cout << "ERROR: CreateTable() returned 0 for " << fn << "\n";
             gROOT->ProcessLine( Form( ".U %s", fn.Data() ) );
-            return;
+            return false;
         }
 
         St_Survey *tableSet = (St_Survey *) ds;
@@ -144,8 +165,9 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
         std::cout << "\n  " << tables[it] << ": " << nrows << " row(s) from "
                   << gSystem->BaseName( fn.Data() ) << "\n";
         for ( int i = 0; i < nrows; i++ ) {
-            printf("    Id=%3d  t=(%9.5f,%9.5f,%9.5f)\n",
-                   rows[i].Id, rows[i].t0, rows[i].t1, rows[i].t2 );
+            printf("    Id=%3d  t=(%9.5f,%9.5f,%9.5f)  r00,r11,r22=(%6.3f,%6.3f,%6.3f)\n",
+                   rows[i].Id, rows[i].t0, rows[i].t1, rows[i].t2,
+                   rows[i].r00, rows[i].r11, rows[i].r22 );
         }
 
         if ( writedb ) {
@@ -156,8 +178,19 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
             StDbTable      *table = node->addDbTable( tables[it] );
             mgr->setStoreTime( storeTime.Data() );
             table->SetTable( (char*)rows, nrows );
-            mgr->storeDbTable( table );
+            // storeDbTable returns false when the write is refused -- e.g.
+            // "INSERT command denied to user ...". Without this check the macro
+            // printed "stored ..." and "Done with database upload" after a write
+            // that never happened.
+            const bool ok = mgr->storeDbTable( table );
             gSystem->Unsetenv("DB_ACCESS_MODE");
+            if ( !ok ) {
+                std::cout << "\n*** WRITE FAILED for " << tables[it] << " at "
+                          << storeTime << " -- NOTHING WAS STORED ***\n"
+                          << "    see the MysqlDb/StDbSql errors above\n";
+                gROOT->ProcessLine( Form( ".U %s", fn.Data() ) );
+                return false;
+            }
             std::cout << "    stored " << tables[it] << " at " << storeTime << "\n";
         }
 
@@ -166,4 +199,5 @@ void fttGeometry_db( const char* tag = "", const char* opt = "" )
 
     if ( writedb ) std::cout << "\nDone with database upload.\n";
     else           std::cout << "\nDry run only -- pass \"writedb\" to store.\n";
+    return true;
 }

@@ -1,56 +1,94 @@
-StFttDbMaker/macro -- FTT (sTGC) geometry (survey/alignment) tables
-===================================================================
+StFttDbMaker/macro/Geometry -- FTT (sTGC) geometry (survey/alignment) tables
+============================================================================
 
-What is here
-------------
   ftt/*.C                 the Geometry/ftt survey tables, one file per
                           (table, beginTime) pair, in St_db_Maker's
                           <table>.<yyyymmdd>.<hhmmss>.C naming
-  fttGeometry_db.C        reads those files and pushes them to the offline
-                          MySQL DB (see "Pushing to the database" below)
+  fttGeometry_db.C        reads those files and pushes them to the offline MySQL DB
 
-Three tables are chained by StFttDb::loadGeometry():
+These three tables are chained by StFttDb::loadGeometry() to place every sTGC
+pentagon:
 
-      stgcOnTpc           whole sTGC inside the TPC frame             (1 row)
+      stgcOnTpc           sTGC global position inside the TPC frame   (1 row)
       stationOnStgc       each of the 4 stations on the sTGC          (4 rows)
-      pentOnStation       each of the 16 pentagons on its station     (16 rows)
-
-  row = 4*station + k, with k: 0=A 1=D 2=C 3=B. AGML orders the pentagons by
-  rotation (A,D,C,B) while StFttDb numbers quadrants A,B,C,D, so the two
-  conventions differ and the map was measured from the built geometry, not
-  assumed. See script/pentMap.C.
+      pentOnStation       each pentagon on its station                (16 rows)
 
 NAMESPACE: the DB namespace is Geometry/ftt. It used to be Geometry/stgc; the
-rename is PR #20 (the StgmGeo1.xml <Misalign> paths) plus PR #23 (the
-StFttDb::loadGeometry() half). Table NAMES did not change -- only the
-namespace -- which is why stgcOnTpc and stationOnStgc still read "stgc".
-Before those PRs land, the local-override directory is ./StarDb/Geometry/stgc;
-after, it is ./StarDb/Geometry/ftt. Use the one matching the code you run.
+rename is PR #20 (the StgmGeo1.xml <Misalign> paths) plus #23 (the
+StFttDb::loadGeometry() half), which go together. Table NAMES did not change --
+stgcOnTpc and stationOnStgc keep their stgc-flavoured names on purpose, because
+only the namespace moved. Dmitry: "stgc is not a DB namespace".
+
+The dates and times follow Gene's rule : https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
+
+      2021-10-10 00:00:00   Run 22 ideal     identity, all three tables
+      2021-11-12 00:00:00   Run 22 iter 1    per-quadrant x/y from FST->sTGC residuals
+      2021-11-12 00:00:02   Run 22 iter 2    + per-quadrant z (t2); x/y as iter 1
+      2021-11-12 00:00:03   Run 22 iter 3    + measured deltas <-FINAL for Run22
+      2023-04-10 00:00:00   Run 23 ideal     symlink to 2021-10-10
+      ...
+      2023-12-10 00:00:00   Run 24 ideal     symlink to 2021-10-10
+      2023-12-15 00:00:00   Run 24 estimate  Run 22 finals copied verbatim
+      2023-12-15 00:00:01   Run 24 iter 1    first actual Run 24 measurement
+      ...
+
+The Run 22 iterations sit in the "real data" range, which is where measured
+constants belong, so 2021-11-12 is already right under Gene's rule. Their file
+stamps are also wired into build_geom_misalign.C, the howto, several condor
+submit files and three fGeom caches, so they are not renumbered.
+
+EMPTY ON PURPOSE: the Run 23 and Run 25 survey slots (2023-04-15, 2024-12-15)
+and the Run 25 ideal slot (2024-12-10). FTT has no survey-only table, so
+filling them is a physics decision about what those runs reconstruct with --
+Run 23 currently resolves to identity.
+
+AN UNPAIRED "IDEAL" ENTRY HIJACKS ITS YEAR. Resolution is "latest beginTime at
+or before the request", so an ideal entry in a year with nothing later silently
+becomes that year's geometry. Measured: adding a Run 25 ideal link at
+2024-12-10 took Run 25 from the Run 24 alignment to ZEROS, because 2024-12-10
+is later than the Run 24 entries at 2023-12-15. Only ever add ideal and
+estimate slots as a PAIR, and check all four run years afterwards.
+
+THE THREE TABLES DO NOT SHARE EVERY STAMP. pentOnStation was revised on its own
+several times, so fttGeometry_db.C carries a stamp PER TABLE -- the latest at or
+before the tag's time, which is what St_db_Maker resolves to -- and always
+writes all three together. Pushing pentOnStation alone would leave the other two
+behind.
+
+PER-QUADRANT z NEEDS THE FLOAT-ZPLANE GEOMETRY. From iteration 2 onward
+pentOnStation carries a non-zero t2, measured against a geometry built with
+zplane as float (PR #20). Against the old int-truncated zplane those z terms
+reference the wrong plane positions.
+
+A NEW ALIGNMENT GETS A NEW ENTRY -- never edit these. Step the time of day on
+the date for that run year, as the Run 22 and Run 24 iterations do.
+
+The DB is the truth. These files are the record of what was pushed, and the
+way to override it locally.
 
 
 Using these tables locally instead of the database
 --------------------------------------------------
-To MODIFY the geometry -- try an alignment, test a shift, reproduce an old
-iteration -- do NOT edit the database. Put the tables in your working directory
-and tell the chain to look only there.
-
-  THE EASY WAY: force local-only with two bfc options.
+To MODIFY the geometry table - try an alignment, test a shift, reproduce an old
+iteration, etc - put the tables in your working directory and tell the BFC chain 
+to force local-only with two BFC options:
 
       NoMySQLDb,NoStarCintDb
 
-  NoMySQLDb drops MySQL and NoStarCintDb drops $STAR/StarDb, leaving your own
-  $PWD/StarDb as the only place tables come from. Your files then win outright
-  and you never have to think about timestamps. Set-up:
+NoMySQLDb drops MySQL and NoStarCintDb drops $STAR/StarDb, leaving your own
+$PWD/StarDb as the only place tables come from. Your files then win outright
+and you never have to think about timestamps. Set-up:
 
       mkdir -p ./StarDb/Geometry
-      cp -r $STAR/StRoot/StFttDbMaker/macro/ftt ./StarDb/Geometry/ftt
-      # or: ln -s $STAR/StRoot/StFttDbMaker/macro/ftt ./StarDb/Geometry/ftt
+      cp -r $STAR/StRoot/StFttDbMaker/macro/Geometry/ftt ./StarDb/Geometry/ftt
+      Then add new .C files with newer date and time
 
-  then run the chain with NoMySQLDb,NoStarCintDb among its options. This is the
-  right mode for alignment work and for any test of local table files.
+then run the chain with NoMySQLDb,NoStarCintDb among its options, and a date & time
+later than your new files. This is the right mode for alignment work and for any 
+test of local table files.
 
-  The four options, from BigFullChain.h:1159 (StBFChain.cxx:263-268 empties the
-  matching directory out of the list):
+The four options, from BigFullChain.h:1159 (StBFChain.cxx:263-268 empties the
+matching directory out of the list):
 
       NoMySQLDb        drop MySQL
       NoStarCintDb     drop $STAR/StarDb
@@ -76,18 +114,8 @@ and tell the chain to look only there.
       $PWD/StarDb, $PWD/obj/StarDb -- $PWD/StarDb is FOURTH. Position in that
       list is not precedence.
 
-    MEASURED 2026-10-13 on FST, requesting a Run 22 date with ./StarDb holding
-    the renamed tables:
-        with $STAR/StarDb in the list   ->  RELEASE won  (+0.07126,-0.30102)
-        with NoMySQLDb,NoStarCintDb     ->  OURS won     (+0.14876,-0.31702)
-    The first is why the options matter: our files are stamped 20211015.000001
-    and the release ships 20211110.000001, which is LATER and therefore wins, so
-    edits to the local copies are silently ignored. (The resulting geometry is
-    the same either way here -- the two decompositions sum to the same
-    translation -- but an edit does nothing, with no warning.)
-
     If you cannot pass the options, the other way out is a timestamp later than
-    every other entry: copy the file you want to <table>.20211113.000000.C in
+    every other entry: copy the file you want to <table>.20241216.000000.C in
     ./StarDb and edit that.
 
   * REMEMBER TO REMOVE IT when you want the database values back.
@@ -96,110 +124,6 @@ and tell the chain to look only there.
     THERE, not where you submitted from. Copy or link the directory into the
     job's working/tmp directory too, and pass the same options, or the job
     quietly uses something else and your test shows no change.
-
-
-What each tag means
--------------------
-Translations are cm; no rotation has ever been non-identity, and stationOnStgc
-is identity in every version to date.
-
-Filenames are Gene's slots. His rule is kept at
-
-      https://www.star.bnl.gov/protected/spin/akio/fcs/database_timestamp.txt
-
-Per run year it reserves an "ideal" date and a "survey/estimate" date, both
-before the run starts, with constants measured from real data going any time
-after.
-
-  REAL FILES
-    20211010.000000   identity, all three tables          Run 22 ideal
-    20211112.000001   iteration 1: per-quadrant x/y from  Run 22 real data
-                      FST->sTGC residuals
-    20211112.000002   iteration 2: adds per-quadrant z    Run 22 real data
-                      (t2); x/y unchanged from iter1
-    20211112.000003   iteration 3: iter2 + measured       Run 22 real data
-                      deltas.  FINAL Run 22
-    20231215.000000   Run 22 finals copied verbatim --    Run 24 estimate
-                      an estimate, NOT a Run 24 measurement
-    20231215.000001   first actual Run 24 measurement     Run 24 real data
-                      (the 90-job campaign)
-
-  The Run 22 iterations keep their 2021-11-12 stamps on purpose. They are
-  measured from real data, so that date is already correct under Gene's rule,
-  and "20211112.000003" is wired into build_geom_misalign.C, howto/instruction,
-  several condor submit files and three fGeom caches. Renumbering them would
-  break all of that for no gain.
-
-  SYMLINKS
-    20230410.000000 -> 20211010.000000     Run 23 ideal
-    20231210.000000 -> 20211010.000000     Run 24 ideal
-
-  The Run 23 one replaces Daniel's old 20221220.000000 identity placeholder,
-  whose content was byte-identical to the Run 22 ideal.
-
-  pentOnStation was revised alone several times, so the three tables do NOT all
-  have an entry at every stamp. fttGeometry_db.C therefore carries a stamp PER
-  TABLE -- the latest at or before the tag's time, what St_db_Maker resolves to
-  -- and always writes all three together. Pushing pentOnStation alone would
-  leave the other two behind.
-
-  * AN UNPAIRED "IDEAL" ENTRY HIJACKS ITS YEAR. Because resolution is "latest
-    beginTime at or before the request", an ideal entry in a year that has
-    nothing later silently becomes that year's geometry. Measured while building
-    this: adding a Run 25 ideal link at 2024-12-10 took Run 25 from the Run 24
-    alignment to ZEROS, since 2024-12-10 is later than the Run 24 entries at
-    2023-12-15. The link was removed. Verified after removal, with ./StarDb
-    pointed here:
-        2022-01-01  -> (+2.09845,+4.60535)  Run 22 iter3
-        2023-06-01  -> (0,0,0)              identity, as before
-        2024-06-22  -> (+1.94794,+5.75562)  Run 24 iter1
-        2025-06-01  -> (+1.94794,+5.75562)  Run 24 iter1, as before
-    all four matching the behaviour before the rename. Only ever add ideal and
-    estimate slots as a PAIR, and re-run that check afterwards.
-
-  The row.comment strings in the newer files are informative here, unlike the
-  FST ones -- e.g. "Station=1(Disk=0),Pent=1(Quad=A,x>0,y>0) geo(+0.809,+3.634)
-  + align(+1.331,+1.794)", separating the geometry term from the alignment term.
-  Each file also has a header comment recording how it was produced.
-
-  One row to know about: station 2, pentagon 1 (quad A) carries a geometry term
-  only, with no alignment term -- "NO V HITS" -- so it is not constrained the
-  way the other fifteen are.
-
-  * PER-QUADRANT z NEEDS THE FLOAT-ZPLANE GEOMETRY. From iteration 2 onward
-    pentOnStation carries a non-zero t2, measured against a geometry built with
-    zplane as float (PR #20). Against the old int-truncated zplane the z terms
-    reference the wrong plane positions.
-
-
-Notes on beginTime
-------------------
-Gene's rule (linked above) reserves two slots per run year, an
-"ideal" date and a "survey/estimate" date, with constants measured from real
-data going any time after those.
-
-  * The Run 22 iterations sit at 2021-11-1x. That is the "real data" range and
-    therefore correct for measured constants. The reserved Run 22 slots are
-    used by the identity entry (ideal, 2021-10-10); FTT has nothing to put in
-    the survey slot, since it has no survey-only table.
-
-  * The Run 24 entries were at 2023-12-10 and 2023-12-10 00:00:01 -- Gene's
-    Run 24 *ideal* slot -- while holding measured constants. The file headers
-    record why: the entry has to precede the Run 24 ZF data (event time
-    2024-06-22) and beat the 2022-12-20 identity placeholder. That is now
-    resolved properly: the carried-over estimate moved to the estimate slot
-    2023-12-15, the first real Run 24 measurement to 2023-12-15 00:00:01, and
-    the freed 2023-12-10 holds an identity link. Resolution for Run 24 is
-    unchanged -- verified, see "What each tag means".
-
-  STILL OPEN, and these are physics calls rather than formatting ones:
-  the Run 23 and Run 25 SURVEY slots (2023-04-15, 2024-12-15) and the Run 25
-  IDEAL slot (2024-12-10) are deliberately empty. FTT has no survey-only table,
-  so filling them means choosing what those runs reconstruct with. Run 23
-  currently resolves to identity, inherited from Daniel's old placeholder. And
-  remember an unpaired ideal entry hijacks its year -- see the measured example
-  under "What each tag means".
-
 
 The "misalign" BFC option is what makes any of this take effect
 ---------------------------------------------------------------
@@ -224,74 +148,48 @@ With "misalign" on, these tables feed BOTH of:
     parameters, so changing a table changes where simulated hits land, not just
     how real hits are reconstructed.
 
-COPYING IS AS DANGEROUS AS LINKING. Both are, for different reasons, and the
-copy is the one that actually catches people out:
-
-  * a LINK means someone else's edit, or your own later edit, silently changes
-    every job that resolves through it -- reconstruction, geometry building and
-    MC alike -- including jobs you meant as a fixed reference.
-
-  * a COPY gives no hint it exists. A symlink at least announces itself in
-    "ls -l"; a copied directory looks like an ordinary directory and nothing
-    about it says "this is shadowing the release and the database". It also
-    goes stale the moment macro/ or the DB is updated, and it keeps winning
-    anyway. Weeks later the numbers disagree with everyone else's and the
-    reason is a directory you forgot you made.
-
-The real hazard is not copy-versus-link, it is that ./StarDb/Geometry/* EXISTS
-AT ALL and silently takes precedence. There is no log line to catch it:
-St_db_Maker does not report which of the three sources a table came from, and
-StFttDb only says whether it used survey tables, not where they came from
-(StFstDb does not even say that much). So check by hand before you trust a
-result:
-
-      ls -ld ./StarDb/Geometry/* 2>/dev/null
-
-which prints nothing if you are clean, "d..." if you copied, and the "-> ..."
-arrow if you linked. Run it in the job's working directory too, not only where
-you submitted from.
-
-Habits that work: keep one working directory per alignment study rather than
-editing in place, and delete or rename ./StarDb the moment the study is over,
-instead of leaving it for next time.
-
-And be equally careful about WHICH fGeom.root you are using. The cache and the
-tables are two separate things that can disagree, and nothing checks that they
-match. A stale fGeom built from older tables quietly keeps using the old
-alignment while ./StarDb shows the new numbers -- which looks exactly like "the
-new alignment had no effect". If you change a table, rebuild the cache, and
-name it so the versions are distinguishable: that is what the sdt and label
-arguments of build_geom_misalign.C are for.
-
-
-Proving it is safe to remove the release copy
----------------------------------------------
-Do not delete $STAR/StarDb/Geometry/* and hope. The chain can simulate the
-removal first, because StBFChain honours these options (BigFullChain.h:1159):
-
-      NoStarCintDb     drops $STAR/StarDb   <- simulates the removal
-      NoLocalCintDb    drops $PWD/StarDb
-      NoCintDb         drops both, leaving MySQL only
-      NoMySQLDb        drops MySQL
-
-So after pushing, and BEFORE opening the removal PR:
-
-  1. run the chain with NoCintDb, i.e. MySQL only, and confirm the survey comes
-     back with the numbers you pushed;
-  2. rebuild a geometry cache the same way and check it against the current one
-     -- the translations should be identical, since the DB entries hold the same
-     survey;
-  3. only then propose deleting the files from the repository.
-
-That sequence is also the evidence the removal PR needs: "with NoCintDb the
-geometry is unchanged, so the release copy is redundant" is reviewable, whereas
-"we pushed it, trust us" is not.
+COPYING IS AS DANGEROUS AS LINKING if you forget to remove. Check your logfile
+to make sure you are picking up correct tables from correct place. And be equally 
+careful about WHICH fGeom.root you are using.
 
 Pushing to the database
 -----------------------
       root4star -b -q 'fttGeometry_db.C("run22iter3")'            dry run
-      root4star -b -q 'fttGeometry_db.C("run22iter3","writedb")'  store
+      root4star -b -q 'fttGeometry_db.C("run22iter3","writedb")'  store one slot
+      root4star -b -q 'fttGeometry_db.C("all","writedb")'         store every slot
 
-Dry run first: it prints every row it would write and touches nothing. Do not
-push to Geometry_ftt until #20 and #23 have landed, or production will go on
-reading Geometry/stgc and never see these entries.
+Dry run first -- it prints every row it would write and touches nothing. Pass a
+bad tag to list them all. "all" walks the eight slots in order.
+
+Tags: run22ideal run22iter1 run22iter2 run22iter3
+      run23ideal run24ideal run24seed run24iter1
+
+An optional third argument restricts the push to ONE of the three tables:
+
+      root4star -b -q 'fttGeometry_db.C("run22ideal","writedb","stgcOnTpc")'
+
+That exists only for a first push, to test write permission on the smallest
+possible change. A partial update leaves the geometry inconsistent at that
+timestamp -- StFttDb::loadGeometry() chains all three -- so finish the other two
+straight away.
+
+Writing needs INSERT permission on Geometry_ftt, granted per account -- ask
+Dmitry Arkhipkin <arkhipkin@bnl.gov>. Reads work without it, so a clean dry run
+says nothing about whether you can push.
+
+The three tables do not exist in Geometry_ftt yet; Dmitry is adding them. Until
+they do, a push fails with "Table ... doesn't exist" and the macro says
+NOTHING WAS STORED rather than claiming success.
+
+NEVER STORE THE SAME (table, beginTime) TWICE. The primary key is
+(nodeID, elementID, beginTime, flavor, deactive), so a second store at the same
+beginTime collides with the first. A new entry gets a new time of day, as in
+the table at the top.
+
+PUSHING IS NOT ENOUGH ON ITS OWN. St_db_Maker pools every candidate and takes
+the LATEST beginTime at or before the requested time, whichever source it came
+from, so files do not lose to the database by being files. $STAR/StarDb holds
+three files under Geometry/stgc at 20221220.000000. After the Geometry/stgc ->
+Geometry/ftt rename nothing looks there any more, and all three are identity in
+every row, so they are dead weight; they are removed in the same PR that adds
+this directory.
