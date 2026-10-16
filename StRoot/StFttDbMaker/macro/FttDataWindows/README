@@ -53,6 +53,12 @@ The calibrations in data/
                                         harder, and this is what the anchors buy
                                         back. Read from the forward DEV
                                         reconstruction, 4 MuDsts per run.
+  fttDataWindow.241920 1[67].txt (2)    Au+Au 2023, 2023-07-11. The runs the forward
+                                        memory and occupancy study was done on, and
+                                        the only heavy-ion runs here. 349-353 VMMs
+                                        calibrated. Their in-window fraction splits
+                                        by orientation far more than pp does
+                                        (H/V ~0.68, dH ~0.49), worth a look.
   fttDataWindow.2517[34]*.txt (12 runs) ZERO FIELD 2024, event date 2024-06-22.
                                         zeroFieldAlignment_2024. The same data
                                         the Run 24 sTGC geometry iteration was

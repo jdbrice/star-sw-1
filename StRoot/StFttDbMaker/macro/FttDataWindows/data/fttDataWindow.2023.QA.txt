@@ -1,0 +1,3 @@
+#    run     date   time nF  events    rawHits  nOK noisy fFob lowS  rej dead   wLo   wHi nFit nFlr   all     H     V    dH    dV stop
+24192017 20230711 201612  1     200     384103  349     8    0    0   11   16    -1     2  357  233 0.633 0.679 0.691 0.521 0.645 converged
+24192016 20230711 185635  1     400     672944  353     3    0    0   12   16    -1     2  356  277 0.614 0.675 0.680 0.488 0.630 converged
