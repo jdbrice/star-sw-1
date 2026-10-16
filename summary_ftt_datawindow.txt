@@ -59,16 +59,22 @@ The 56 committed files carry the old uniform [-65,100]. To remake them:
     condor_submit condor/submit_fttcal_regen_window.txt    # from OUTSIDE singularity
     script/mergeFttCalQA.sh                                 # then check every stop reason
 
-54 of the 56 are queued. Caveats, which is why this has not just been done:
+All 56 runs are queued, on the same data they were calibrated from: the 13
+zero-field runs keep the exact MuDst named in their header, and the 43 field-on
+2022 runs read 4 st_fwd MuDsts each.
 
-  - the st_fwd stream the 43 field-on 2022 runs were calibrated from is no
-    longer on any /star disk, only in HPSS. They fall back to st_physics, about
-    31x fewer FTT hits per event. 23081049 still converges on 200 events; the
-    small files (23081062 is 5 MB, 23081047 50 MB, 23081002 75 MB) may not.
-  - 23081027 and 23081028 have no MuDst on disk at all.
-  - the 13 zero-field runs still have their original input and will reproduce.
+**Do not use get_file_list.pl to find the Run 22 fwd-stream MuDsts.** The file
+catalog knows only the P24ia st_fwd files, which are HPSS-only, and its P23if
+st_physics entries are stale -- of 160 it lists on NFS for 23081049, exactly one
+is still on disk. The data is in the forward DEV reconstruction, which the
+catalog does not index at all:
 
-So a regenerated file should replace its committed one only if it converged.
+    /star/data2[0-3]/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/...
+    /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2_freeze/...
+
+17621 st_fwd MuDsts over these 43 runs, 18 to 588 per run, every run covered.
+List that area from disk.
+
 David's campaign over the Run 22 st_physics MuDsts will produce the real set
 anyway, with this macro.
 
