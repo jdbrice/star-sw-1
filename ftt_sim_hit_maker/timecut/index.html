@@ -494,25 +494,61 @@ the exception &mdash; <tt>fwd_afterburner_db.C</tt> sets mode 2 with its own
 </ul>
 
 <H2>and why it is only allowed to OPEN</H2>
-<p>The fitted window is then <b>widened, never tightened, to contain [-1,3]</b> &mdash; the
-one-crossing window of section 5. The fit may only open a VMM's cut further.</p>
+<p>The fitted window is then <b>widened, never tightened, to contain [-1,2]</b>. The fit
+may only open a VMM's cut further.</p>
 <ul>
   <li>The fit is per VMM, per run, from a few hundred events. The two errors it can make do
       not cost the same: a window one tick too wide costs a little pileup, a window one tick
       too narrow <b>throws away real hits, in production, silently</b>.
-  <li>So the floor is the number already trusted from the summed-over-all-VMM study, and the
-      fit only ever says "this VMM needs more room".
+  <li>So the floor is the number we trust without the fit, and the fit only ever says "this
+      VMM needs more room".
 </ul>
 
+<H3>Why [-1,2] and not [-1,3]</H3>
+<p>Section 5 concluded [-1,3] from the distribution summed over all VMMs. Per VMM the
+crossing is narrower, and the extra tick does not pay. Summed over every calibrated VMM in
+its own anchor frame, with the same phase-matched background the fit uses:</p>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
-<TR BGCOLOR="#c0c0f0"><TH>the fit asks for less than the floor, and the floor holds it open</TH></TR>
-<TR><TD><a href="plots/fttWindow_floor_23081049.png"><img src="plots/fttWindow_floor_23081049.png" height="200"></a></TD></TR>
+<TR BGCOLOR="#c0c0f0"><TH>t</TH><TH COLSPAN=2>pp 23081049</TH><TH COLSPAN=2>AuAu 24192017</TH><TH COLSPAN=2>zero field 25174011</TH></TR>
+<TR BGCOLOR="#e0e0f0"><TH></TH><TH>signal</TH><TH>bkg</TH><TH>signal</TH><TH>bkg</TH><TH>signal</TH><TH>bkg</TH></TR>
+<TR><TD>-1</TD><TD>18165</TD><TD>7887</TD><TD>38068</TD><TD>859</TD><TD>368870</TD><TD>7027</TD></TR>
+<TR><TD>0</TD><TD>64610</TD><TD>15556</TD><TD>93254</TD><TD>895</TD><TD>805234</TD><TD>9793</TD></TR>
+<TR><TD>+1</TD><TD>15342</TD><TD>6821</TD><TD>26784</TD><TD>496</TD><TD>318857</TD><TD>6037</TD></TR>
+<TR><TD>+2</TD><TD>2411</TD><TD>1512</TD><TD>7145</TD><TD>333</TD><TD>33000</TD><TD>4600</TD></TR>
+<TR><TD><b>+3</b></TD><TD><b>-660</b></TD><TD>4795</TD><TD>5477</TD><TD>380</TD><TD>6676</TD><TD>4956</TD></TR>
+<TR><TD>+4</TD><TD>4625</TD><TD>14699</TD><TD>3207</TD><TD>630</TD><TD>213</TD><TD>8772</TD></TR>
 </TABLE>
-<p>Run 23081049, 200 events, three of the busiest VMMs in the run (9.3-9.4k hits each).
-Black = raw counts at <tt>t = dbcid - anchor</tt>, red dashed = the phase-matched pileup
-background, grey = the floor, blue = what the fit asked for, green = what is stored. The
-crossing structure is visible either side: the bumps at t = &plusmn;4 are the neighbouring
-bunch crossings.</p>
+<ul>
+  <li><b>Tick +3 is not signal on the field-on data [-1,3] came from</b>: 4135 raw counts
+      against 4795 of background, negative after subtraction. On zero field it is 0.4% of
+      the crossing. Only AuAu shows a real +3.3%, and there the tail keeps going past it
+      (+4 2.0%, +5 1.0%, +6 0.9%), so +3 is an arbitrary stopping point rather than an edge.
+  <li>It costs <b>15-18% more background</b> in all three.
+  <li>One bunch crossing is 4.263 ticks. <b>[-1,2] is four ticks</b>, narrower than the
+      period and unable to hold two crossings; [-1,3] is five, and must hold part of a
+      neighbour for some events. A floor wider than the bunch period contradicts everything
+      else here.
+  <li>The apparent safety margin of [-1,3] is mostly illusory. If an anchor is one tick
+      late the crossing moves to -2,-1,0 and both windows clip the same tick; [-1,3] only
+      helps when an anchor is <em>early</em> by two.
+</ul>
+<p>The summed distribution of section 5 is broader than any single VMM's because it mixes in
+the per-VMM anchor offsets measured below &mdash; some VMMs sit up to 12 ticks from their
+board. Per VMM the crossing really is the three ticks -1, 0, +1.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>pp field on, run 23081049</TH></TR>
+<TR><TD><a href="plots/fttWindow_floor_23081049.png"><img src="plots/fttWindow_floor_23081049.png" height="200"></a></TD></TR>
+<TR BGCOLOR="#c0c0f0"><TH>Au+Au, run 24192017</TH></TR>
+<TR><TD><a href="plots/fttWindow_floor_24192017.png"><img src="plots/fttWindow_floor_24192017.png" height="200"></a></TD></TR>
+</TABLE>
+<p>The busiest VMMs of each run, 200 events. Black = raw counts at
+<tt>t = dbcid - anchor</tt>, red dashed = the phase-matched pileup background, grey = the
+floor, blue = what the fit asked for, green = what is stored. On the pp run the crossing
+structure is visible either side &mdash; the bumps at t = &plusmn;4 are the neighbouring
+bunch crossings. The Au+Au run is the same measurement on far cleaner data: its background
+is around 1% of the peak against roughly 25% for pp, so the crossing stands almost alone.
+In both the fit asks for [-1,1] or [-1,2] and the floor holds the window at [-1,2].</p>
 
 <H2>Some VMMs are genuinely offset from their board</H2>
 <p>Anchors are set per front-end board, so the 4 VMMs of a FOB normally share one &mdash;
@@ -537,16 +573,21 @@ stored per VMM.</p>
 <H2>What comes out</H2>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>stored windows</TH><TH>what the fit alone said</TH></TR>
-<TR><TD>23081049, 2022 field on</TD><TD><b>360 [-1,3]</b>, nothing else</TD>
+<TR><TD>23081049, 2022 field on</TD><TD>359 [-1,2], 1 [-1,3]</TD>
     <TD>mostly [-1,1] and [-1,2]</TD></TR>
-<TR><TD>24192017, 2023 AuAu</TD><TD>355 [-1,3], 2 [-2,3]</TD>
+<TR><TD>24192017, 2023 Au+Au</TD><TD>355 [-1,2], 2 [-2,2]</TD>
     <TD>mostly [-1,2] and [-1,1]</TD></TR>
+<TR><TD>25174011, 2024 zero field</TD><TD>310 [-1,2], 38 [-2,2]</TD>
+    <TD>mostly [-1,1] and [-1,2]</TD></TR>
+<TR><TD COLSPAN=3><b>all 56 calibrated runs</b>: 19376 VMM entries [-1,2], 626 [-2,2],
+    3 [-1,3], 2 [-1,6], 1 [-4,2], 1 [-1,7]</TD></TR>
 </TABLE>
 <ul>
-  <li>Stored median <b>[-1,3] on every run tried</b>, pp and AuAu, so the floor is what a
-      VMM gets unless its own crossing genuinely sits outside it.
-  <li>Once the fit cannot reach a neighbouring crossing, almost nothing does sit outside it:
-      the window is at most one bunch period wide and the floor already spans one.
+  <li>Stored median <b>[-1,2] on every one of the 56 runs</b>, pp, Au+Au and zero field,
+      so the floor is what a VMM gets unless its own crossing genuinely sits outside it.
+  <li>About 3% do sit outside it, almost all on the low side ([-2,2]: a peak one tick
+      early). The handful at [-1,6] and [-1,7] are the whole-chip offsets below, where the
+      window has travelled with the VMM's own peak.
   <li>A VMM with <tt>anchor = -1</tt> keeps the wide [-65,100]: it falls back to the
       consumer's on-the-fly anchor, which is not validated to the &plusmn;1 tick a
       one-crossing window needs.
@@ -657,8 +698,9 @@ all, holds 17621 <tt>st_fwd</tt> MuDsts over the day-081 runs alone:</p>
   <li><tt>nOK</tt> of 384, and <tt>rej</tt> / <tt>dead</tt> &mdash; how many VMMs got a
       usable anchor. A VMM that did not gets <tt>anchor = -1</tt> and the wide [-65,100],
       and the consumer falls back to its on-the-fly anchor for that VMM alone.
-  <li><tt>wLo wHi</tt> &mdash; the run's median stored window. Expect <tt>-1 3</tt>.
-      Anything else is worth a look before the run is used.
+  <li><tt>wLo wHi</tt> &mdash; the run's median stored window. Expect <tt>-1 2</tt>; all
+      56 runs of the 2026-10-16 campaign give exactly that. Anything else is worth a look
+      before the run is used.
   <li><tt>all</tt> &mdash; the fraction of raw hits inside the window. Comparable between
       runs of the same dataset; a run well below its neighbours is suspect.
 </ul>
