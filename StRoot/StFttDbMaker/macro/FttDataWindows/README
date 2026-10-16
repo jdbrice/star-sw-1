@@ -42,42 +42,41 @@ the entry is stamped for the run it is reconstructing (PR #24).
 
 The calibrations in data/
 -------------------------
-  fttDataWindow.23063028.txt            ZERO FIELD 2022, run 23063028,
-                                        2022-03-04. zeroFieldAligment_2022.
-                                        352 VMMs calibrated; in-window fraction
-                                        0.906, much the best of any run here.
-  fttDataWindow.23081*.txt   (43 runs)  2022 FIELD ON, 2022-03-22/23, the fwd
-                                        stream test runs. 345-367 VMMs
-                                        calibrated, in-window fraction
-                                        0.56-0.59 -- the field-on runs are
-                                        harder, and this is what the anchors buy
-                                        back. Read from the forward DEV
-                                        reconstruction, 4 MuDsts per run.
-  fttDataWindow.241920 1[67].txt (2)    Au+Au 2023, 2023-07-11. The runs the forward
-                                        memory and occupancy study was done on, and
-                                        the only heavy-ion runs here. 349-353 VMMs
-                                        calibrated. Their in-window fraction splits
-                                        by orientation far more than pp does
-                                        (H/V ~0.68, dH ~0.49), worth a look.
-  fttDataWindow.2517[34]*.txt (12 runs) ZERO FIELD 2024, event date 2024-06-22.
-                                        zeroFieldAlignment_2024. The same data
-                                        the Run 24 sTGC geometry iteration was
-                                        measured from. 340-342 VMMs calibrated.
-  fttDataWindow.<year>.QA.txt           one summary line per run: events,
-                                        rawHits, nOK, noisy, lowStat, rejected,
-                                        dead, the stored window wLo/wHi, how
-                                        many VMMs were fitted and how many the
-                                        floor widened, in-window fractions per
-                                        orientation, and whether the fit
-                                        converged. Read this before trusting a
-                                        run. Every one of the 56 converged, with
-                                        wLo/wHi = -1/2.
-  fttDataWindow.<year>.header.qa.txt    the column header for those files.
+FOUR runs, one per beam condition, as worked examples -- enough to run every
+mode of fttDataWindow_db.C and to see the file format against a real file
+rather than a description:
 
-  Not copied here: the png/ and root/ QA output, which is large. Keep the ROOT
-  files of a campaign though -- every question about the WINDOW can be re-asked
-  from them without reading a MuDst again, see below.
+  fttDataWindow.23063028.txt   ZERO FIELD 2022, 2022-03-04, zeroFieldAligment_2022.
+                               352 VMMs calibrated; in-window fraction 0.906, the
+                               best of any run measured.
+  fttDataWindow.23081049.txt   2022 FIELD ON, 2022-03-22, the fwd stream test runs,
+                               read from the forward DEV reconstruction, 4 MuDsts.
+                               360 VMMs calibrated. This is the run every figure
+                               in the macros and on the timecut page comes from.
+  fttDataWindow.24192017.txt   Au+Au 2023, 2023-07-11. The run the forward memory
+                               and occupancy study was done on. 349 VMMs. Its
+                               in-window fraction splits by orientation far more
+                               than pp does (H/V ~0.68, dH ~0.49).
+  fttDataWindow.25174011.txt   ZERO FIELD 2024, 2024-06-22, zeroFieldAlignment_2024.
+                               The same data the Run 24 sTGC geometry iteration was
+                               measured from. 341 VMMs.
 
+  fttDataWindow.<year>.QA.txt  ONE LINE PER RUN for all 58 that were measured, not
+                               just the four kept here: events, rawHits, nOK, noisy,
+                               lowStat, rejected, dead, the stored window wLo/wHi,
+                               how many VMMs were fitted and how many the floor
+                               widened, in-window fractions per orientation, and
+                               whether the fit converged. Read this before trusting
+                               a run. Every one of the 58 converged with
+                               wLo/wHi = -1/2.
+  fttDataWindow.<year>.header.qa.txt   the column header for those files.
+
+THE OTHER 54 ARE NOT HERE ON PURPOSE. They are in the database, which is the
+copy that matters, and one calibration per run means a full dataset runs to
+thousands of files -- data rather than code. Keeping all 58 here made the
+directory 2.4 MB and the review diff 25k lines for no benefit. Any of them can
+be read back out of the DB with fttDataWindow_db.C, or remade from the MuDst
+named in each file's own header.
 
 File format
 -----------
@@ -342,12 +341,12 @@ worked examples: enough to run every mode of fttDataWindow_db.C, to see the
 file format against a real file rather than a description, and to reproduce
 what was pushed.
 
-These are the 2026-10-16 campaign: one condor job per run, all 56 converged,
-every run with a median window of [-1,2]. The window was then refit to the
-[-1,2] floor from the saved histograms rather than by reading the MuDsts again,
-so each file carries the header of its original pass followed by a REFIT line
-saying so -- where the two disagree about the window, the REFIT line is the one
-that describes the file.
+These came from the 2026-10-16 campaign: one condor job per run, all 58
+converged, every run with a median window of [-1,2]. The window was then refit
+to the [-1,2] floor from the saved histograms rather than by reading the MuDsts
+again, so a file may carry the header of its original pass followed by a REFIT
+line saying so -- where the two disagree about the window, the REFIT line is
+the one that describes the file.
 
 Note what pushing them does: min/max IS production's time cut, so these replace
 [-65,100] with one bunch crossing. That takes signal kept from essentially all
