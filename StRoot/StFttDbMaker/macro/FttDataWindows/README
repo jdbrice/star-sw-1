@@ -226,6 +226,14 @@ worked examples: enough to run every mode of fttDataWindow_db.C, to see the
 file format against a real file rather than a description, and to reproduce
 what was pushed.
 
+NOTE ON min/max IN THESE FILES. They were produced before the window was
+measured, so every line carries the uniform [-65, 100]: good anchors, default
+window. Pushing them as they stand gives production the measured anchors and
+leaves its time cut exactly as it is today, which is a reasonable way to
+sequence the two changes -- but do not read their min/max as a measurement.
+Rerunning fttDataWindow.C on the same runs remakes them with the per-VMM window;
+each file's header records the MuDst it came from.
+
 They are NOT the eventual home for the full set. There is one calibration per
 run by construction, since anchors are not slowly varying, so calibrating every
 run of a dataset means thousands of files -- data rather than code, and too
