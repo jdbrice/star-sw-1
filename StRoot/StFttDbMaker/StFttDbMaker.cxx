@@ -136,19 +136,40 @@ void StFttDbMaker::loadDataWindows( int runNumber ){
   // Run-stamp guard. VMM anchors are reset at random at every run start, so an entry
   // measured for another run must never supply anchors. St_db_Maker correctly returns
   // the latest entry at or before this run's start -- which for a run without its own
-  // entry is the previous run's. The windows (min/max) are still applied either way.
+  // entry is the previous run's.
+  //
+  // THE WINDOWS ARE GATED TOO, not just the anchors. A per-VMM window is a few ticks
+  // wide and is only meaningful against the anchor it was measured with; applied to a
+  // run whose anchors come from StFttHitCalibMaker on the fly, an anchor off by one
+  // tick throws away real in-time hits. The wide default is the safe answer for a run
+  // with no calibration of its own, and dropping the entry gives exactly that:
+  // StFttDb::getTimeCut falls back to mode CalibratedBunchCrossing, [-65, 100], which
+  // is the global DB entry that has been in use since 2021-10-01.
+  //
+  // Without this, pushing per-run calibrations silently changes the time cut of every
+  // LATER run as well, for years, since resolution is "latest entry at or before".
+  // Measured after the first 56 runs went in: run 24192017, sixteen months after the
+  // newest of them, was being served run 23081064's windows.
+  //
+  // An UNSTAMPED entry is different and still applies: it is a global default by
+  // construction, not a measurement of one run.
   int stamp = mFttDb->dataWindowStampRun();
   bool valid = ( stamp == runNumber );
+  if ( stamp >= 0 && !valid ) {
+    LOG_WARN << "StFttDbMaker::loadDataWindows - data-window entry is stamped for run " << stamp
+             << " but this is run " << runNumber << ": it is IGNORED ENTIRELY (anchors are not "
+             << "valid across runs, and its windows were measured against those anchors). This "
+             << "run falls back to the default time cut and to anchors derived on the fly by "
+             << "StFttHitCalibMaker." << endm;
+    mFttDb->clearDataWindows();
+    return;
+  }
   mFttDb->setDataWindowAnchorsValid( valid );
   if ( valid ) {
     LOG_INFO << "StFttDbMaker::loadDataWindows - per-VMM time anchors ENABLED: entry stamped for run "
              << stamp << endm;
-  } else if ( stamp < 0 ) {
+  } else {
     LOG_INFO << "StFttDbMaker::loadDataWindows - unstamped (legacy) data-window entry: windows used, "
              << "anchors ignored; StFttHitCalibMaker derives anchors on the fly" << endm;
-  } else {
-    LOG_WARN << "StFttDbMaker::loadDataWindows - data-window entry is stamped for run " << stamp
-             << " but this is run " << runNumber << ": its anchors are IGNORED (they are not valid "
-             << "across runs); StFttHitCalibMaker derives anchors on the fly" << endm;
   }
 }
