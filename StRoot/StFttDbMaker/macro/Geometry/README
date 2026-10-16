@@ -26,40 +26,53 @@ The dates and times follow Gene's rule : https://www.star.bnl.gov/protected/spin
       2021-10-15 00:00:01   Run 22 iter 1    per-quadrant x/y from FST->sTGC residuals by Akio
       2021-10-15 00:00:02   Run 22 iter 2    + per-quadrant z (t2); x/y as iter 1 by Akio
       2021-10-15 00:00:03   Run 22 iter 3    + measured deltas <- Current best by Akio
-      2021-10-15 00:01:0x   Run 22 alignment (alignment-program lane, see below)
+      2021-10-16 00:00:0x   Run 22 alignment (alignment-program lane, see below)
       ...
       2023-04-10 00:00:00   Run 23 ideal     symlink to Run 22 ideal
       2023-04-15 00:00:00   Run 23 Survey    (reserved for survey data)
       2023-04-15 00:00:01   Run 23 estimate  symlink to Run 22 iter 3 (best guess)
-      2023-04-15 00:01:0x   Run 23 alignment (alignment-program lane, see below)
+      2023-04-16 00:00:0x   Run 23 alignment (alignment-program lane, see below)
       ...
       2023-12-10 00:00:00   Run 24 ideal     symlink to Run 22 ideal
       2023-12-15 00:00:00   Run 24 Survey    (reserved for survey data)
       2023-12-15 00:00:01   Run 24 estimate  symlink to Run 22 iter 3
       2023-12-15 00:00:02   Run 24 iter 1    per-quadrant x/y from FST->sTGC residuals by Akio
-      2023-12-15 00:01:0x   Run 24 alignment (alignment-program lane, see below)
+      2023-12-16 00:00:0x   Run 24 alignment (alignment-program lane, see below)
       ...
       2024-12-10 00:00:00   Run 25 ideal     symlink to Run 22 ideal
       2024-12-15 00:00:00   Run 25 Survey    (reserved for survey data)
       2024-12-15 00:00:01   Run 25 estimate  symlink to Run 24 iter 1 (best guess)
-      2024-12-15 00:01:0x   Run 25 alignment (alignment-program lane, see below)
+      2024-12-16 00:00:0x   Run 25 alignment (alignment-program lane, see below)
 
-WHICH TIME OF DAY TO USE. The minute field says whose entry it is:
+WHICH DAY TO USE. There are two lanes, one day apart:
 
-      00:00:0x   the baseline kept in this directory -- the survey where there
-                 is one, our best guess where there is not
-      00:01:0x   the alignment program's, free to add without touching the above
+      <year>-<mm>-15 00:00:0x   the baseline kept in this directory -- the
+                                survey where there is one, our best guess
+                                where there is not
+      <year>-<mm>-16 00:00:0x   the alignment program's, free to add without
+                                touching the above
 
-and the second field is the iteration number. The same two lanes apply in every
-run year, on that year's survey/estimate date. Resolution is "latest beginTime
-at or before the requested time", so an alignment entry supersedes the baseline
-by itself, and deactivating one brings the baseline back with nothing to
-renumber anywhere.
+and the seconds field is the iteration number. The same two lanes apply in
+every run year. Resolution is "latest beginTime at or before the requested
+time", so an alignment entry supersedes the baseline by itself, and
+deactivating one brings the baseline back with nothing to renumber anywhere.
 
-Gene's rule puts constants measured from real data "any time after" the
-estimate date. These sit ON that date, one second apart, so that every entry
-for a run year is in one place and the iteration number is the second field.
-It changes nothing about what resolves when, since nothing else lies between.
+A WHOLE DAY, not a minute, because Gene's answer (2026-10-16) is that a FIVE-DAY
+WINDOW is safe: "We generally use the timestamps of real data, so you generally
+have up until the first event. But a 5-day window (e.g. 2021-10-15 through
+2021-10-20) is considered safe." So -15 through -20 is ours to divide as we
+like, and "the baseline, before any alignment" is then a whole day wide rather
+than a sub-minute gap. The spare days leave room: -20 is kept for "ask with
+this one", and -10 stays outside the window for the ideal geometry, which is
+not a measurement of that year at all.
+
+The alignment day's 00:00:00 is deliberately left EMPTY, so that an sdt naming
+just that date resolves to the baseline rather than to an alignment. It is not
+hypothetical: StFwdTrackMaker/macro/build_geom.C builds its cache at
+sdt20211016. Iterations start at 00:00:01.
+
+The baseline entries themselves sit ON the -15 date, one second apart, so that
+every baseline iteration for a run year is in one place.
 
 FTT HAS NO SURVEY, so every 00:00:0x entry here is a best guess, and the
 "Survey" rows are reserved against the day there is one. Where a run year has
@@ -87,8 +100,8 @@ pentOnStation carries a non-zero t2, measured against a geometry built with
 zplane as float (PR #20). Against the old int-truncated zplane those z terms
 reference the wrong plane positions.
 
-A NEW ALIGNMENT GETS A NEW ENTRY -- never edit these. Step the time of day on
-that run year's date, in the lane the entry belongs to.
+A NEW ALIGNMENT GETS A NEW ENTRY -- never edit these. Step the seconds field
+on that lane's date for the run year the entry belongs to.
 
 The DB is the truth. These files are the record of what was pushed, and the
 way to override it locally.

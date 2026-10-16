@@ -32,7 +32,8 @@
 //     2025       2024-12-10   2024-12-15        any time after
 //
 // The first entry at a given date uses time 00:00:00; later revisions of the
-// same numbers step the time, 00:00:01, 00:01:00, and so on.
+// same numbers step the seconds, 00:00:01, 00:00:02, and so on -- in the baseline
+// lane on the -15 date, or the alignment lane on the -16 date.
 //
 // All four FST tables are St_Survey. They are stored together, because
 // StFstDb::loadGeometry() chains all four and a partial update leaves the

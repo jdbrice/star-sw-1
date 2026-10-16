@@ -18,31 +18,46 @@ The dates and times follow Gene's rule : https://www.star.bnl.gov/protected/spin
       2021-10-10 00:00:00   Run 22 ideal     identity -- misalignment off
       2021-10-15 00:00:00   Run 22 survey    the survey, all of it in hssOnFst
       2021-10-15 00:00:01   Run 22 survey    the same survey, re-decomposed <-Current default for Run22
-      2021-10-15 00:01:0x   Run 22 alignment (alignment-program lane, see below)
+      2021-10-16 00:00:0x   Run 22 alignment (alignment-program lane, see below)
       ...
       2023-04-10 00:00:00   Run 23 ideal    symlink to 2021-10-10
       2023-04-15 00:00:00   Run 23 survey   symlink to 2021-10-15 00:00:01
-      2023-04-15 00:01:0x   Run 23 alignment (alignment-program lane, see below)
+      2023-04-16 00:00:0x   Run 23 alignment (alignment-program lane, see below)
       ...
       2023-12-10 00:00:00   Run 24 ideal    symlink to 2021-10-10
       2023-12-15 00:00:00   Run 24 survey   symlink to 2021-10-15 00:00:01
-      2023-12-15 00:01:0x   Run 24 alignment (alignment-program lane, see below)
+      2023-12-16 00:00:0x   Run 24 alignment (alignment-program lane, see below)
       ...
       2024-12-10 00:00:00   Run 25 ideal    symlink to 2021-10-10
       2024-12-15 00:00:00   Run 25 survey   symlink to 2021-10-15 00:00:01
-      2024-12-15 00:01:0x   Run 25 alignment (alignment-program lane, see below)
+      2024-12-16 00:00:0x   Run 25 alignment (alignment-program lane, see below)
 
-WHICH TIME OF DAY TO USE. The minute field says whose entry it is:
+WHICH DAY TO USE. There are two lanes, one day apart:
 
-      00:00:0x   the baseline kept in this directory -- here, the survey
-      00:01:0x   the alignment program's, free to add without touching the above
+      <year>-<mm>-15 00:00:0x   the baseline kept in this directory -- here,
+                                the survey
+      <year>-<mm>-16 00:00:0x   the alignment program's, free to add without
+                                touching the above
 
-and the second field is the iteration number, so a first Run 22 alignment goes
-in at 2021-10-15 00:01:01 and a second at 00:01:02. The same two lanes apply in
-every run year, on that year's survey/estimate date. Resolution is "latest
-beginTime at or before the requested time", so an alignment entry supersedes
-the survey by itself, and deactivating one brings the survey back with nothing
-to renumber anywhere.
+and the seconds field is the iteration number, so a first Run 22 alignment goes
+in at 2021-10-16 00:00:01 and a second at 00:00:02. The same two lanes apply in
+every run year. Resolution is "latest beginTime at or before the requested
+time", so an alignment entry supersedes the survey by itself, and deactivating
+one brings the survey back with nothing to renumber anywhere.
+
+A WHOLE DAY, not a minute, because Gene's answer (2026-10-16) is that a FIVE-DAY
+WINDOW is safe: "We generally use the timestamps of real data, so you generally
+have up until the first event. But a 5-day window (e.g. 2021-10-15 through
+2021-10-20) is considered safe." So -15 through -20 is ours to divide as we
+like, and "the baseline, before any alignment" is then a whole day wide rather
+than a sub-minute gap. The spare days leave room: -20 is kept for "ask with
+this one", and -10 stays outside the window for the ideal geometry, which is
+not a measurement of that year at all.
+
+The alignment day's 00:00:00 is deliberately left EMPTY, so that an sdt naming
+just that date resolves to the baseline rather than to an alignment. It is not
+hypothetical: StFwdTrackMaker/macro/build_geom.C builds its cache at
+sdt20211016. Iterations start at 00:00:01.
 
 A NEW ALIGNMENT GETS A NEW ENTRY -- never edit these.
 

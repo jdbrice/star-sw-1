@@ -124,7 +124,7 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
                   << "    run25ideal   2024-12-10 00:00:00   identity (link)\n"
                   << "    run25est     2024-12-15 00:00:01   Run 24 iter 1 carried over\n"
                   << "\n  The 00:00:0x lane is the baseline kept in this directory; the\n"
-                  << "  00:01:0x lane on the same dates is the alignment program's.\n"
+                  << "  The next day, <year>-<mm>-16 00:00:0x, is the alignment program's lane.\n"
                   << "  Reserved and empty: 00:00:00 on each estimate date, against the\n"
                   << "  day there is a real sTGC survey.\n"
                   << "  Add ideal and estimate slots only in PAIRS -- an ideal entry in a\n"
