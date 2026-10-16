@@ -77,10 +77,6 @@ const int kNDBCID = 4096;
 // Half-range scanned when fitting a VMM's in-time crossing. Must cover the
 // neighbour crossings used for the background: 6 * 4.263 + 1 = 27 ticks.
 const int kWinScan = 40;
-// Half-width of the in-time crossing, in ticks. Used in two places that must agree:
-// neighbours this close to t=0 are excluded from the pileup background, and the
-// signal integral that the stored window is a fraction of runs over the same range.
-const double kInTimeHalf = 3.0;
 const int kNOrient = 5;   // kFttHorizontal=0, kFttVertical=1, kFttDiagonalH=2, kFttDiagonalV=3, unknown=4
 
 // ---- the window fit, used by fttDataWindow.C and by fttDataWindowRefit.C ------
@@ -105,8 +101,21 @@ int gFitLo = 0, gFitHi = 0;
 double gFitSig[2 * kWinScan + 1], gFitBkg[2 * kWinScan + 1];
 int    gFitPeak = 0;
 
-bool fitFttWindow(TH1 *h, int aQ, double bxPeriod, double winKeep)
+bool fitFttWindow(TH1 *h, int aQ, double bxPeriod, double winKeep, double inTimeHalf = 0)
 {
+  // inTimeHalf is the half-width of the in-time crossing, in ticks. It is used in two
+  // places that must agree: neighbours this close to t are left out of the pileup
+  // background, and the signal integral that the window is a fraction of runs over
+  // the same range. It must not exceed HALF A BUNCH CROSSING, which is the default --
+  // beyond that the range reaches into the neighbouring crossings, and on a VMM with
+  // a weak peak the "95% of the crossing" criterion is then met by admitting their
+  // shoulders rather than real in-time hits. Measured on run 23081049: the in-time
+  // crossing is the three ticks t = -1, 0, +1, ticks +-2 and +-3 are an empty gap,
+  // and the next crossings stand up clearly at t = +-4. At 3.0 ticks the fit reached
+  // into that gap and out to the neighbours -- VMM 193 came out [-3,3], 7 ticks wide
+  // for one 4.263-tick crossing, gaining 7 counts of "signal" at t=+3 while admitting
+  // 16 of background. Half a period cannot reach a neighbour, by construction.
+  if (inTimeHalf <= 0) inTimeHalf = 0.5 * bxPeriod;
   double cntW[2 * kWinScan + 1];
   for (int tw = -kWinScan; tw <= kWinScan; tw++)
     cntW[tw + kWinScan] = h->GetBinContent(((aQ + tw) % kNDBCID + kNDBCID) % kNDBCID + 1);
@@ -115,7 +124,7 @@ bool fitFttWindow(TH1 *h, int aQ, double bxPeriod, double winKeep)
     for (int kk = -6; kk <= 6; kk++) {
       if (kk == 0) continue;
       double x = tw2 + kk * bxPeriod;
-      if (fabs(x) <= kInTimeHalf) continue;
+      if (fabs(x) <= inTimeHalf) continue;
       int x0 = (int)floor(x);
       double fx = x - x0;
       int i0 = ((aQ + x0)     % kNDBCID + kNDBCID) % kNDBCID;
@@ -129,7 +138,7 @@ bool fitFttWindow(TH1 *h, int aQ, double bxPeriod, double winKeep)
   int tPk = 0; double sPk = -1e30;
   for (int tw3 = -3; tw3 <= 5; tw3++) if (gFitSig[tw3 + kWinScan] > sPk) { sPk = gFitSig[tw3 + kWinScan]; tPk = tw3; }
   gFitPeak = tPk;
-  int xlo = tPk - (int)kInTimeHalf, xhi = tPk + (int)kInTimeHalf;
+  int xlo = tPk - (int)inTimeHalf, xhi = tPk + (int)inTimeHalf;
   double totX = 0;
   for (int tw4 = xlo; tw4 <= xhi; tw4++)
     if (gFitSig[tw4 + kWinScan] > 0) totX += gFitSig[tw4 + kWinScan];
