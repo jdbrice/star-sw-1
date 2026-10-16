@@ -41,6 +41,19 @@
 // (one with 13773 hits); the other 6, and all 10 on field-on run 23081049, were
 // 250-2000 ticks away. VMMs 200 and 369 were ~500 off in BOTH runs -- likely a
 // chip/configuration problem, not statistics.
+// SAFETY FLOOR. The fitted window is only ever allowed to GROW. Whatever the fit
+// returns, the stored window is widened to contain [winFloorMin, winFloorMax],
+// default [-1, 3] -- the one-crossing window of the summed-over-all-VMM study
+// (ftt_sim_hit_maker/timecut/index.html section 5). Rationale: the measurement is
+// per VMM and per run, from a few hundred events, so a VMM whose crossing is a
+// tick thin for want of statistics must not end up with a cut TIGHTER than the
+// number we already trust. A window that is one tick too wide costs a little
+// pileup; one that is a tick too narrow throws real hits away, in production,
+// silently. The fit therefore only ever tells us where to open the window FURTHER.
+// Measured (runs 24192016/17): the fit lands on [-1,2] for about half the VMMs, so
+// the floor's upper edge is what is usually stored and the fit mostly decides the
+// tail -- which is the intended asymmetry.
+//
 // Stops when goodFrac of ACTIVE VMMs (>= nActive hits) have signal >= minPeak, and
 // at least minEvents were read; or at maxEvents; or at end of input. So dense runs
 // stop after a few hundred events and sparse ones run as long as they need.
@@ -131,8 +144,8 @@ void fttDataWindow(const char *input,
                    int    maxEvents  = 50000,
                    int    minPeak    = 200,     // bkg-subtracted in-window hits per VMM
                    double goodFrac   = 0.95,
-                   int    winMin     = -65,     // current DB entry uses -65..100
-                   int    winMax     = 100,
+                   int    winMin     = -65,     // wide fallback, kept by VMMs with no
+                   int    winMax     = 100,     // usable anchor; also the DB entry today
                    const char *outdir = "fttDataWindow",
                    int    checkEvery = 200,
                    int    minEvents  = 200,
@@ -141,7 +154,8 @@ void fttDataWindow(const char *input,
                    int    fobTol     = 20,      // ...or if own anchor is within this many ticks of FOB median
                    double bxPeriod   = 4.263,   // ticks per bunch crossing (40 MHz / 9.383 MHz)
                    double winKeep    = 0.95,    // window holds this fraction of the in-time crossing
-                   int    winHalfMax = 12)      // widest half-window the per-VMM fit may return
+                   int    winFloorMin = -1,     // the stored window always CONTAINS
+                   int    winFloorMax = 3)      // [winFloorMin, winFloorMax] -- see below
 {
   loadLibsDW();
   gSystem->mkdir(Form("%s/png", outdir), kTRUE);
@@ -285,7 +299,10 @@ void fttDataWindow(const char *input,
   // Per-VMM window actually written to the DB (columns 3-4). Starts as the wide
   // default and is replaced below by the in-time bunch crossing where one is found.
   int winMinV[384], winMaxV[384];
-  int nWinOwn = 0;
+  // What the fit itself returned, before the safety floor -- QA columns 14-15, so
+  // that a run's real per-VMM measurement stays visible in the file we push from.
+  int fitLoV[384], fitHiV[384];
+  int nWinOwn = 0, nWinFloor = 0;
 
   for (int jv = 0; jv < kNVMM; jv++) {
     nHitsV[jv] = hV[jv]->GetEntries();
@@ -294,6 +311,7 @@ void fttDataWindow(const char *input,
     for (int lo = 0; lo < kNOrient; lo++) if (orientCount[jv][lo] > bestO) { bestO = orientCount[jv][lo]; dominant[jv] = lo; }
     sugMin[jv] = winMin; sugMax[jv] = winMax;
     winMinV[jv] = winMin; winMaxV[jv] = winMax;
+    fitLoV[jv] = 0; fitHiV[jv] = 0;
 
     if (nHitsV[jv] <= 0) { status[jv] = 3; anchor[jv] = -1; sigV[jv] = 0; bkgV[jv] = 0; inWinV[jv] = 0; nDead++; continue; }
 
@@ -446,6 +464,11 @@ void fttDataWindow(const char *input,
             if (sl >= sh) { lo--; if (sl > 0) got += sl; }
             else          { hi++; if (sh > 0) got += sh; }
           }
+          fitLoV[pv] = lo; fitHiV[pv] = hi;
+          // Grow-only: never store a window tighter than the floor.
+          if (lo > winFloorMin || hi < winFloorMax) nWinFloor++;
+          if (lo > winFloorMin) lo = winFloorMin;
+          if (hi < winFloorMax) hi = winFloorMax;
           winMinV[pv] = lo; winMaxV[pv] = hi; nWinOwn++;
         }
       }
@@ -472,6 +495,8 @@ void fttDataWindow(const char *input,
   // to the consumer's on-the-fly anchor, which is not validated to the +-1 tick a
   // one-crossing window needs.
   int medLo = winMin, medHi = winMax;
+  int nNoAnchor = 0;
+  for (int nv0 = 0; nv0 < kNVMM; nv0++) if (anchor[nv0] < 0) nNoAnchor++;
   {
     int vlo[384], vhi[384], nv = 0;
     for (int mv = 0; mv < kNVMM; mv++)
@@ -484,22 +509,29 @@ void fttDataWindow(const char *input,
     }
   }
   printf("fttDataWindow: per-VMM window fitted for %d VMMs, run median [%d, %d]; "
-         "%d calibrated VMMs took the median, %d uncalibrated kept [%d, %d]\n",
-         nWinOwn, medLo, medHi, nOK + nNoisy + nFromFob - nWinOwn, nRejected, winMin, winMax);
+         "%d widened to the floor [%d, %d]; %d calibrated VMMs took the median, "
+         "%d uncalibrated kept [%d, %d]\n",
+         nWinOwn, medLo, medHi, nWinFloor, winFloorMin, winFloorMax,
+         nOK + nNoisy + nFromFob - nWinOwn, nNoAnchor, winMin, winMax);
 
-  fprintf(F, "# window: per VMM, the in-time bunch crossing (bxPeriod %.3f, holding %.2f of its signal).\n"
+  fprintf(F, "# window: per VMM, the in-time bunch crossing (bxPeriod %.3f, holding %.2f of its signal),\n"
+             "#         then widened if needed to contain the floor [%d, %d] -- grow-only, a fit\n"
+             "#         is never allowed to make the cut tighter than that. %d VMMs were widened.\n"
              "#         run median [%d, %d]; uncalibrated VMMs keep the wide [%d, %d].\n"
              "#         minPeak %d, goodFrac %.3f\n",
-          bxPeriod, winKeep, medLo, medHi, winMin, winMax, minPeak, goodFrac);
+          bxPeriod, winKeep, winFloorMin, winFloorMax, nWinFloor,
+          medLo, medHi, winMin, winMax, minPeak, goodFrac);
   fprintf(F, "# conventions: uuid = StFttDb::vmmId() 0..383; mode 0 = calibrated time (the idl mode comment says the opposite)\n");
   fprintf(F, "# cols 1-5 -> DB: uuid mode min max anchor   (anchor -1 = no usable calibration, use on-the-fly anchor)\n");
-  fprintf(F, "# cols 6+  QA only, ignored by fttDataWindow_db.C: status nHits sig bkgPerBin sigFrac orient sugMin sugMax\n");
+  fprintf(F, "# cols 6+  QA only, ignored by fttDataWindow_db.C: status nHits sig bkgPerBin sigFrac orient sugMin sugMax fitLo fitHi\n");
+  fprintf(F, "#           fitLo/fitHi = what the crossing fit returned before the floor was applied (0 0 = not fitted)\n");
   fprintf(F, "# status 0=ok 1=lowstat(<%d hits) 2=rejected(sig<%d or inWin fraction < %.2f x median %.3f) 3=nohits 4=anchor taken from FOB median 5=own anchor kept, agrees with FOB within %d ticks but low in-window fraction (noisy); orient 0=H 1=V 2=dH 3=dV 4=unknown\n", nActive, minPeak, fracTol, fracMed, fobTol);
   for (int wv = 0; wv < kNVMM; wv++) {
-    fprintf(F, "%3d %d %4d %4d %5d  %d %9.0f %9.1f %8.3f %6.3f %d %4d %4d\n",
+    fprintf(F, "%3d %d %4d %4d %5d  %d %9.0f %9.1f %8.3f %6.3f %d %4d %4d %4d %4d\n",
             wv, 0, winMinV[wv], winMaxV[wv], anchor[wv],
             status[wv], nHitsV[wv], sigV[wv], bkgV[wv],
-            nHitsV[wv] > 0 ? sigV[wv] / nHitsV[wv] : 0.0, dominant[wv], sugMin[wv], sugMax[wv]);
+            nHitsV[wv] > 0 ? sigV[wv] / nHitsV[wv] : 0.0, dominant[wv], sugMin[wv], sugMax[wv],
+            fitLoV[wv], fitHiV[wv]);
   }
   fclose(F);
   printf("fttDataWindow: wrote %s\n", fout.Data());
@@ -511,14 +543,16 @@ void fttDataWindow(const char *input,
   FILE *Q = fopen(fqa.Data(), "a");
   // Fixed-width columns so that "cat *.qa" is readable as a table. The header is written
   // as its own fragment, 0_header.qa, which sorts before any run number so it lands first.
-  const char *qaHdrFmt = "#%7s %8s %6s %2s %7s %10s %4s %5s %4s %4s %4s %4s %5s %5s %5s %5s %5s %s\n";
-  const char *qaRowFmt = "%8d %8d %06d %2d %7d %10.0f %4d %5d %4d %4d %4d %4d %5.3f %5.3f %5.3f %5.3f %5.3f %s\n";
+  const char *qaHdrFmt = "#%7s %8s %6s %2s %7s %10s %4s %5s %4s %4s %4s %4s %5s %5s %4s %4s %5s %5s %5s %5s %5s %s\n";
+  const char *qaRowFmt = "%8d %8d %06d %2d %7d %10.0f %4d %5d %4d %4d %4d %4d %5d %5d %4d %4d %5.3f %5.3f %5.3f %5.3f %5.3f %s\n";
   if (newQa) fprintf(Q, qaHdrFmt, "run", "date", "time", "nF", "events", "rawHits",
-                     "nOK", "noisy", "fFob", "lowS", "rej", "dead", "all", "H", "V", "dH", "dV", "stop");
+                     "nOK", "noisy", "fFob", "lowS", "rej", "dead", "wLo", "wHi", "nFit", "nFlr",
+                     "all", "H", "V", "dH", "dV", "stop");
   double allIn = 0, allTot = 0;
   for (int qo = 0; qo < 4; qo++) { allIn += orInWin[qo]; allTot += orTot[qo]; }
   fprintf(Q, qaRowFmt,
           run, date, itime, nFiles, nRead, nHitsTot, nOK, nNoisy, nFromFob, nLow, nNoPeak, nDead,
+          medLo, medHi, nWinOwn, nWinFloor,
           allTot > 0 ? allIn / allTot : 0.0,
           orTot[0] > 0 ? orInWin[0] / orTot[0] : 0.0, orTot[1] > 0 ? orInWin[1] / orTot[1] : 0.0,
           orTot[2] > 0 ? orInWin[2] / orTot[2] : 0.0, orTot[3] > 0 ? orInWin[3] / orTot[3] : 0.0,
@@ -532,7 +566,8 @@ void fttDataWindow(const char *input,
     FILE *H = fopen(fhd.Data(), "w");
     if (H) {
       fprintf(H, qaHdrFmt, "run", "date", "time", "nF", "events", "rawHits",
-              "nOK", "noisy", "fFob", "lowS", "rej", "dead", "all", "H", "V", "dH", "dV", "stop");
+              "nOK", "noisy", "fFob", "lowS", "rej", "dead", "wLo", "wHi", "nFit", "nFlr",
+              "all", "H", "V", "dH", "dV", "stop");
       fclose(H);
     }
   }
@@ -546,8 +581,12 @@ void fttDataWindow(const char *input,
   hAligned->SetTitle(Form("run %d: all ok VMMs, t = dbcid - anchor", run));
   hAligned->Draw("hist");
   double ymax = hAligned->GetMaximum() * 2, ymin = 0.5;
+  // red = the wide default kept by uncalibrated VMMs; green = the run's median stored
+  // window, which is what a calibrated VMM actually gets.
   TLine *l1 = new TLine(winMin, ymin, winMin, ymax); l1->SetLineColor(kRed); l1->Draw();
   TLine *l2 = new TLine(winMax, ymin, winMax, ymax); l2->SetLineColor(kRed); l2->Draw();
+  TLine *l3 = new TLine(medLo, ymin, medLo, ymax); l3->SetLineColor(kGreen + 2); l3->Draw();
+  TLine *l4 = new TLine(medHi, ymin, medHi, ymax); l4->SetLineColor(kGreen + 2); l4->Draw();
 
   c1->cd(2); gPad->SetLogz();
   hTvsV->Draw("colz");
@@ -574,7 +613,9 @@ void fttDataWindow(const char *input,
   pt->AddText(Form("VMM ok %d  noisy(FOB-ok) %d  fromFob %d", nOK, nNoisy, nFromFob));
   pt->AddText(Form("lowstat %d  rejected %d  nohits %d", nLow, nNoPeak, nDead));
   pt->AddText(Form("median in-window fraction %.3f (accept >= %.2f x)", fracMed, fracTol));
-  pt->AddText(Form("window [%d, %d]   minPeak %d", winMin, winMax, minPeak));
+  pt->AddText(Form("window: median [%d, %d] stored, floor [%d, %d], %d fitted %d widened",
+                   medLo, medHi, winFloorMin, winFloorMax, nWinOwn, nWinFloor));
+  pt->AddText(Form("uncalibrated keep [%d, %d]   minPeak %d", winMin, winMax, minPeak));
   pt->AddText(Form("in-window (raw) all %.3f", allTot > 0 ? allIn / allTot : 0.0));
   pt->AddText(Form("  H %.3f  V %.3f  dH %.3f  dV %.3f",
                    orTot[0] > 0 ? orInWin[0] / orTot[0] : 0.0, orTot[1] > 0 ? orInWin[1] / orTot[1] : 0.0,
