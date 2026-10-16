@@ -16,12 +16,19 @@
 //   - NO ./fttDataWindow/ directory. A local fttDataWindow/fttDataWindow.<run>.txt
 //     overrides the database, so a tree that has one tests the file, not the DB.
 //     The macro checks for it and refuses.
-//   - StRoot reachable, because StFttDbMaker::InitRun reads
-//     StRoot/StFttDbMaker/Row*.txt before it ever gets to the data windows, and
-//     stops there if they are missing. A symlink is enough:
+//   - YOUR OWN BUILD, i.e. .$STAR_HOST_SYS reachable. Without it root4star loads
+//     the official $STAR StFttDbMaker, which is older (2026-06-03) and has no run
+//     stamp at all -- no dataWindowStampRun, no setDataWindowAnchorsValid -- so it
+//     applies whatever entry it finds and prints none of the lines this macro is
+//     looking for. The check then silently tests the wrong code.
 //
 //       mkdir -p /tmp/dbcheck && cd /tmp/dbcheck
-//       ln -s <tree>/StRoot . && ln -s <tree>/.$STAR_HOST_SYS .
+//       ln -s <tree>/.$STAR_HOST_SYS . && ln -s <tree>/StRoot .
+//
+//     StRoot itself is optional here: StFttDbMaker::InitRun reads
+//     StRoot/StFttDbMaker/Row*.txt first, but a missing one is only a warning
+//     ("Strip center file not found") and the data windows load regardless. Link it
+//     anyway to keep the log clean.
 //
 // Measured example of what it is for -- run 23081001 pushed, 23081002 not:
 //
