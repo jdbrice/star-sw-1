@@ -11,6 +11,8 @@ What is here
   fttDataWindowRefit.C   changes the WINDOW of an existing calibration, from the
                          saved histograms, without re-reading any MuDst
   fttDataWindowPlot.C    draws what the fit saw, also from the saved histograms
+  fttDataWindowCheck.C   says what the CONSUMER gets for a run: whether
+                         StFttDbMaker enables that run's anchors or ignores them
   fttDataWindow_db.C     pushes a calibration into the DB, and reads it back
   data/                  the calibrations we have measured (see below), as
                          worked examples -- see the note at the end.
@@ -237,6 +239,17 @@ vmmId only spans 0..383, so that slot is free. StFttDbMaker compares the stamp
 with the run being reconstructed and uses the anchors only on an exact match.
 An unstamped entry -- the pre-existing global one, with uuid[384] == 384 -- is
 treated as window-only and its anchor column is ignored.
+
+Measured, with 23081001 pushed and 23081002 not (fttDataWindowCheck.C):
+
+  run 23081001   entry begins 04:08:18, query at 04:08:28
+                 "per-VMM time anchors ENABLED: entry stamped for run 23081001"
+  run 23081002   the SAME entry is served -- it is the latest at or before
+                 04:40:20 -- and StFttDbMaker says
+                 "stamped for run 23081001 but this is run 23081002: its
+                  anchors are IGNORED ... derives anchors on the fly"
+
+Without the stamp, 23081002 would silently reconstruct with 23081001's anchors.
 
 
 Producing a calibration
