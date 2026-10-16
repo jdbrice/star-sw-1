@@ -1,0 +1,82 @@
+FTT data windows -- where this stands, and what is still ours to do
+===================================================================
+(working notes, not the package README)
+
+The table
+---------
+Calibrations_ftt.fttDataWindowsB. Today it holds two legacy unstamped rows at
+2021-10-01 00:00:00 and 00:00:01, written Nov 2025: uniform [-65,100], anchor 0.
+INSERT is granted, so nothing is blocked on the DB team -- but Dmitry warned of
+a system + perl upgrade that can break master->slave sync, so hold the writes
+until that settles.
+
+Writes go to robinson.star.bnl.gov:3306; reads come from
+star-db01.sdcc.bnl.gov:3316 (user loader).
+
+Entries go at RUN START MINUS 10 SECONDS, one second apart, 11 slots per run
+(start-10 .. start). Every event of a run is at or after its start, so an entry
+in that window serves the whole run, while an entry AFTER the start leaves the
+run's first seconds on the previous run's entry. Ten seconds is safe: over 2149
+runs (2022, days 060-099) the smallest gap between one run ending and the next
+starting was 26 s. fttDataWindow_db.C's "update" option takes the next slot and
+refuses once they are used, pointing at the DB team for a deactivation.
+
+min/max is production's time cut
+--------------------------------
+StFttClusterMaker runs with mTimeCutMode = 0 (kTimeCutModeDB), so whatever is in
+min/max IS the cut applied in BFC. The afterburner is the exception: it sets
+mode 2 with its own fttTimeCutLow=-40, fttTimeCutHigh=100, so afterburner and
+BFC disagree today (-40 vs -65). That should be brought into line, probably by
+having the afterburner default to the DB window. Still open.
+
+Moving the table from [-65,100] to one bunch crossing takes signal-kept from
+1.00 to about 0.83 while making it roughly 8x cleaner. That is a physics choice
+to make deliberately, not a side effect of calibrating the anchors.
+
+The window is now measured, and it only opens
+---------------------------------------------
+fttDataWindow.C fits the in-time crossing per VMM against a same-phase pileup
+background (t + k*4.263, k = +-1..+-6) and grows the window outward from the
+peak until it holds 95% of that crossing. The result is then widened, never
+tightened, to contain [-1,3]. Rationale: per-VMM, per-run, a few hundred events;
+too wide costs a little pileup, too narrow throws away real hits in production,
+silently.
+
+Measured, 200 events each (stored window; the fit alone is in QA cols fitLo/fitHi):
+
+  23081049  2022 field on, st_physics   297 [-1,3]  38 [-3,3]  19 [-2,3]  2 [-1,4]
+  24192016  2023 AuAu                   346 [-1,3]   8 [-2,3]   2 wider low
+  24192017  2023 AuAu                   347 [-1,3]   7 [-2,3]   3 [-3,3]
+
+AuAu works: 384k raw hits in 200 events of 24192017, 357 of 384 VMMs calibrated,
+converged. It is not FTT-poor data -- 59% of its events simply have no FTT
+points at all (sTGC not read out), and the other 41% carry a median of 852.
+
+Regenerating data/
+------------------
+The 56 committed files carry the old uniform [-65,100]. To remake them:
+
+    condor_submit condor/submit_fttcal_regen_window.txt    # from OUTSIDE singularity
+    script/mergeFttCalQA.sh                                 # then check every stop reason
+
+54 of the 56 are queued. Caveats, which is why this has not just been done:
+
+  - the st_fwd stream the 43 field-on 2022 runs were calibrated from is no
+    longer on any /star disk, only in HPSS. They fall back to st_physics, about
+    31x fewer FTT hits per event. 23081049 still converges on 200 events; the
+    small files (23081062 is 5 MB, 23081047 50 MB, 23081002 75 MB) may not.
+  - 23081027 and 23081028 have no MuDst on disk at all.
+  - the 13 zero-field runs still have their original input and will reproduce.
+
+So a regenerated file should replace its committed one only if it converged.
+David's campaign over the Run 22 st_physics MuDsts will produce the real set
+anyway, with this macro.
+
+One copy of the macros
+----------------------
+fttDataWindow.C and fttDataWindow_db.C live in
+StRoot/StFttDbMaker/macro/FttDataWindows. script/ and ftt_sim_hit_maker/timecut/
+hold symlinks to them, so the web page's download link and the condor jobs all
+pick up the same file. runfttcal copies through the symlink, and now also takes
+a <run>.list input (it used to take the run number from an st_*.MuDst.root name
+only).
