@@ -52,31 +52,47 @@ AuAu works: 384k raw hits in 200 events of 24192017, 357 of 384 VMMs calibrated,
 converged. It is not FTT-poor data -- 59% of its events simply have no FTT
 points at all (sTGC not read out), and the other 41% carry a median of 852.
 
-Regenerating data/
-------------------
-The 56 committed files carry the old uniform [-65,100]. To remake them:
+The 56-run campaign (2026-10-16)
+--------------------------------
+condor_submit condor/submit_fttcal_regen_window.txt, 56 jobs, ALL CONVERGED.
+nOK 345-367 for the 2022 field-on runs, 340-342 for zero field 2024, 352 for
+23063028. No run with unusable FTT data. Merged QA in
+fttcal/regen_window/fttDataWindow.QA.txt.
 
-    condor_submit condor/submit_fttcal_regen_window.txt    # from OUTSIDE singularity
-    script/mergeFttCalQA.sh                                 # then check every stop reason
+The window was then refit from the saved histograms to the new [-1,2] floor --
+no MuDst re-read -- and the result copied into data/, replacing the old files
+that carried the uniform [-65,100]. Over all 56 runs: 19376 VMM entries at
+[-1,2], 626 [-2,2], 3 [-1,3], 2 [-1,6], 1 [-4,2], 1 [-1,7]; median [-1,2] on
+every single run. fttDataWindow_db.C dry-runs all 56 cleanly.
 
-All 56 runs are queued, on the same data they were calibrated from: the 13
-zero-field runs keep the exact MuDst named in their header, and the 43 field-on
-2022 runs read 4 st_fwd MuDsts each.
+THE FLOOR IS NOW [-1,2], not [-1,3]. Per tick, summed over every calibrated VMM
+in its own anchor frame:
 
-**Do not use get_file_list.pl to find the Run 22 fwd-stream MuDsts.** The file
-catalog knows only the P24ia st_fwd files, which are HPSS-only, and its P23if
-st_physics entries are stale -- of 160 it lists on NFS for 23081049, exactly one
-is still on disk. The data is in the forward DEV reconstruction, which the
-catalog does not index at all:
+                pp 23081049        AuAu 24192017      zero field 25174011
+  t         signal    bkg        signal    bkg        signal     bkg
+  -1         18165   7887         38068    859        368870    7027
+   0         64610  15556         93254    895        805234    9793
+  +1         15342   6821         26784    496        318857    6037
+  +2          2411   1512          7145    333         33000    4600
+  +3          -660   4795          5477    380          6676    4956
 
-    /star/data2[0-3]/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/...
-    /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2_freeze/...
+Tick +3 is NOT signal on the pp field-on data [-1,3] came from -- 4135 raw
+against 4795 background, negative after subtraction -- and is 0.4% of the
+crossing on zero field. Only AuAu shows +3.3%, and its tail runs past +3
+anyway. It costs 15-18% more background everywhere. And one bunch crossing is
+4.263 ticks: [-1,2] is four and cannot hold two crossings, [-1,3] is five and
+must.
 
-17621 st_fwd MuDsts over these 43 runs, 18 to 588 per run, every run covered.
-List that area from disk.
+If the Run 22 fwd MuDsts are needed again: DO NOT use get_file_list.pl. The
+catalog indexes only the HPSS-only P24ia st_fwd files and stale P23if
+st_physics paths. The data is in the forward DEV reconstruction, which it does
+not index at all:
 
-David's campaign over the Run 22 st_physics MuDsts will produce the real set
-anyway, with this macro.
+    /star/data2[0-3]/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/
+    /star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2_freeze/
+
+17621 st_fwd MuDsts over the 43 day-081 runs. The per-run lists built from it
+are in fttcal/regen_window/lists/.
 
 One copy of the macros
 ----------------------
