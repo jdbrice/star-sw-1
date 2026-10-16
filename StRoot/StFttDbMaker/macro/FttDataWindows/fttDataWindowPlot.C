@@ -27,7 +27,6 @@
 //
 // CINT notes: fixed-size arrays only, unique loop variable names.
 
-const char *kDWMacro = "/star/u/akio/fcstrk11/star-sw-fwd/StRoot/StFttDbMaker/macro/FttDataWindows/fttDataWindow.C";
 const int kPlotHalf = 14;     // ticks either side of the anchor to draw
 
 void onePad(TFile *F, int vmm, int anchor, int storedLo, int storedHi,
@@ -83,7 +82,8 @@ void fttDataWindowPlot(const char *dir, int run,
                        double bxPeriod = 4.263, double winKeep = 0.95,
                        int floorLo = -1, int floorHi = 2)
 {
-  gROOT->LoadMacro(kDWMacro);
+  // the fit comes from fttDataWindow.C beside this file, not from a copy
+  gROOT->LoadMacro(Form("%s/fttDataWindow.C", gSystem->DirName(__FILE__)));
   gStyle->SetOptStat(0);
   gStyle->SetTitleSize(0.05, "t");
 
