@@ -310,7 +310,8 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
     printf("UPDATE run %d: %d slots differ, storing a revision at %s\n", run, cmp, utcStamp(storeAt).Data());
   }
 
-  gSystem->Setenv("DB_ACCESS_MODE", "write");
+  // DB_ACCESS_MODE is set once in fttDataWindow_db(), before anything connects --
+  // see the note there. Setting it here would be too late.
   StDbManager *mgr = StDbManager::Instance();
   StDbConfigNode *node = mgr->initConfig("Calibrations_ftt");
   mgr->setStoreTime(storeAt);
@@ -324,7 +325,6 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
   table->SetTable((char *)&dw, 1);
   table->setFlavor(flavor);
   bool stored = mgr->storeDbTable(table);
-  gSystem->Unsetenv("DB_ACCESS_MODE");
   if (!stored) {
     printf("\n*** WRITE FAILED for run %d at %s -- NOTHING WAS STORED ***\n"
            "    see the MysqlDb/StDbSql errors above\n", run, utcStamp(storeAt).Data());
@@ -348,6 +348,31 @@ void fttDataWindow_db(int run = 0, const char *opt = "", const char *dir = "",
 
   printf("fttDataWindow_db: run=%d opt=\"%s\" dir=%s flavor=%s  (writedb=%d)\n",
          run, opt, sdir.Data(), flavor, (int)option.Contains("writedb"));
+
+  // DB_ACCESS_MODE has to be set BEFORE the first connection, not just before the
+  // store. StDbManager opens one connection and reuses it, and this macro reads the
+  // existing entry before deciding to write -- so if the mode is set only around
+  // storeDbTable, the store goes out on the connection the read already opened, to a
+  // replica, and MySQL answers
+  //
+  //   The MySQL server is running with the --read-only option so it cannot execute
+  //   this statement
+  //
+  // with the macro correctly reporting that nothing was stored. (fstGeometry_db.C
+  // never hit this: it only writes, so its first connection is already a write one.)
+  //
+  // Setting it here means the read-back also goes to the write server named in
+  // $DB_SERVER_LOCAL_CONFIG, which is robinson.star.bnl.gov:3306. That is the master,
+  // so the "is it already there?" check sees our own writes immediately rather than
+  // waiting for replication -- worth more than the trivial extra load of one query
+  // per run. A read-only invocation leaves the mode alone and uses the replicas.
+  if (option.Contains("writedb")) {
+    gSystem->Setenv("DB_ACCESS_MODE", "write");
+    printf("fttDataWindow_db: DB_ACCESS_MODE=write (writes and read-backs both go to\n"
+           "                  the write server in %s)\n",
+           gSystem->Getenv("DB_SERVER_LOCAL_CONFIG") ? gSystem->Getenv("DB_SERVER_LOCAL_CONFIG")
+                                                     : "$DB_SERVER_LOCAL_CONFIG");
+  }
 
   if (run > 0) { doRun(run, sdir.Data(), option, flavor); return; }
 
