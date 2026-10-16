@@ -509,17 +509,28 @@ neither was asking for a good reason.</p>
       4.263-tick crossing &mdash; gaining 7 counts of signal at t=+3 for 16 of background,
       window S/B 1.48 against 2.81 for a healthy VMM on the same FOB. The growth range is
       now <b>half a bunch period</b>, which cannot reach a neighbour by construction.
-  <li><b>The anchor search lost a weak peak that straddled a bin group.</b> It used a
-      rebin by 4, i.e. windows aligned to multiples of 4. VMM 54's real peak is 60+60 counts
-      at dbcid 1070,1071 over a level of 25 &mdash; 7.0&sigma; per tick, 9.9&sigma; together,
+  <li><b>The anchor search lost a weak peak that straddled a bin group.</b> It grouped
+      four bins first, aligned to multiples of 4. VMM 54's real peak is 60+60 counts at
+      dbcid 1070,1071 over a level of 25 &mdash; 7.0&sigma; per tick, 9.9&sigma; together,
       so certainly not a fluctuation, just weak (contrast 2.4 where its FOB mate has 14).
       But 1071 is the last bin of its group, which summed 170, while two neighbouring groups
       holding only the broad tail summed 173 and 171. The anchor came out 1075, five ticks
-      late, and the window fit then chased the peak to [-5,0]. The search is now a
-      <b>sliding</b> 4-tick window, which has no boundary to straddle: it finds 1069..1072 =
-      192 and refines to 1070 &mdash; the raw argmax, and the anchor of all three of its FOB
-      mates.
+      late, and the window fit then chased the peak to [-5,0]. The grouping is now gone
+      entirely: the anchor is the plain argmax over single dbcid values, which for VMM 54 is
+      1070 &mdash; the anchor of all three of its FOB mates.
 </ul>
+<p>Dropping the grouping rather than just unaligning it is also what matches the consumer:
+<tt>HitCalibHelper::add()</tt> keeps a running argmax over single dbcid values. And the
+grouping, which was there to help when statistics are thin, measurably does not. Counting
+the VMMs whose anchor disagrees with the median of their FOB mates &mdash; anchors are a
+property of the board, so the three mates are the check &mdash; plain argmax against a
+sliding 4-tick sum:</p>
+<pre>23081049  pp field on, 4063 hits/VMM    17 / 360  vs  17 / 360
+24192017  AuAu,        ~1000 hits/VMM   29 / 354  vs  29 / 354
+25174011  zero field,  7206 hits/VMM    88 / 344  vs  88 / 344
+25174011  zero field,   522 hits/VMM    92 / 330  vs  93 / 330</pre>
+<p>identical everywhere except the thinnest case, where the plain argmax is slightly
+better.</p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>VMM 54: the same data read against two anchors</TH></TR>
@@ -530,21 +541,20 @@ neither was asking for a good reason.</p>
 <p>Run 23081049, 200 events. Black = raw counts at <tt>t = dbcid - anchor</tt>, red dashed =
 the phase-matched pileup background, grey = the floor, blue = what the fit asked for, green =
 what is stored. Top row: a healthy VMM of that FOB, then VMM 54 against the anchor the
-aligned rebin returned, then <b>the identical histogram</b> against the anchor the sliding
-window returns. Nothing about the data differs between the last two &mdash; only where t=0
+grouped search returned, then <b>the identical histogram</b> against the plain argmax. Nothing about the data differs between the last two &mdash; only where t=0
 is put. Bottom row: three of the busiest VMMs in the run (9.3-9.4k hits each), where the fit
 asks for [-1,1] or [-1,2] and the floor keeps [-1,3].</p>
 
-<p><b>With both fixed, every calibrated VMM of run 23081049 stores [-1,3]</b> &mdash; 361 of
-361, no outliers at all, where before there were four. AuAu 24192017 is 354 [-1,3] and 2
+<p><b>With both fixed, every calibrated VMM of run 23081049 stores [-1,3]</b> &mdash; 360 of
+360, no outliers at all, where before there were four. AuAu 24192017 is 355 [-1,3] and 2
 [-2,3].</p>
 
 <H2>What comes out</H2>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>stored windows</TH><TH>what the fit alone said</TH></TR>
-<TR><TD>23081049, 2022 field on</TD><TD><b>361 [-1,3]</b>, nothing else</TD>
+<TR><TD>23081049, 2022 field on</TD><TD><b>360 [-1,3]</b>, nothing else</TD>
     <TD>mostly [-1,1] and [-1,2]</TD></TR>
-<TR><TD>24192017, 2023 AuAu</TD><TD>354 [-1,3], 2 [-2,3]</TD>
+<TR><TD>24192017, 2023 AuAu</TD><TD>355 [-1,3], 2 [-2,3]</TD>
     <TD>mostly [-1,2] and [-1,1]</TD></TR>
 </TABLE>
 <ul>
