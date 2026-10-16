@@ -107,7 +107,7 @@ void loadLibs();
 // is meaningless and the pT-based guards in FwdTracker.h (addFttHits /
 // addFstHits / addEpdHits, "blown-up state") reject nearly every track. That
 // is why modes 0 and -1 yield few or no FTT residuals.
-void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, int residualTrackType=0, const char* extraFileList="", bool enableAlignment=false, bool applyFstWedgeAlignment=false, bool applyFstGapFix=false, bool applyFstMirror=false, int magField=1, bool applyFttXYMirror=false, int fttTimeCutMode=2, bool fieldFstConstBz=true, double fieldZMax=450., int fttTimeCutLow=-40, int fttTimeCutHigh=100, int fttDiagType=-1, bool fttNoAdd=false, bool fttDiagMix=false, bool useDbGeometry=true){
+void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, int residualTrackType=0, const char* extraFileList="", bool enableAlignment=false, bool applyFstWedgeAlignment=false, bool applyFstGapFix=false, bool applyFstMirror=false, int magField=1, bool applyFttXYMirror=false, int fttTimeCutMode=0, bool fieldFstConstBz=true, double fieldZMax=450., int fttTimeCutLow=-40, int fttTimeCutHigh=100, int fttDiagType=-1, bool fttNoAdd=false, bool fttDiagMix=false, bool useDbGeometry=true){
 	cout << "FileList: " << fileList << endl;
 	cout << "nEvents: " << nEvents << endl;
 	cout << "enableAlignment: " << enableAlignment << endl;
@@ -122,8 +122,12 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 	     << "  fttNoAdd: " << fttNoAdd << (fttNoAdd ? "  (sTGC hits NEVER added to tracks)" : "")
 	     << "  fttDiagMix: " << fttDiagMix << (fttDiagMix ? "  (diagnostic vs PREVIOUS event)" : "") << endl;
 	cout << "fttTimeCutMode: " << fttTimeCutMode
-	     << (fttTimeCutMode==2 ? "  (calibrated time)" : (fttTimeCutMode==1 ? "  (AcceptAll)" : "  (other)"))
-	     << "  window [" << fttTimeCutLow << "," << fttTimeCutHigh << "] dbcid ticks" << endl;
+	     << (fttTimeCutMode==0 ? "  (DB: per-VMM window from Calibrations/ftt/fttDataWindowsB)"
+	        : (fttTimeCutMode==2 ? "  (calibrated time, window from the arguments)"
+	        : (fttTimeCutMode==1 ? "  (AcceptAll)" : "  (other)")));
+	if (fttTimeCutMode != 0)
+	     cout << "  window [" << fttTimeCutLow << "," << fttTimeCutHigh << "] dbcid ticks";
+	cout << endl;
 	runFwdAlignment = enableAlignment;
 
 	// First load some shared libraries we need
@@ -197,17 +201,23 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		chain->AddMaker(fttDbMk);
 		StFttHitCalibMaker * ftthcm = new StFttHitCalibMaker();
 		StFttClusterMaker * fttclu = new StFttClusterMaker();
-		// fttTimeCutMode: 2 = kTimeCutModeCalibratedTime (production default since
-		// 2026-07, window from Run22-Run24 online QA), 1 = kTimeCutModeAcceptAll.
-		// Use 1 for SPARSE data such as the zeroFieldAlignment physics-stream runs.
-		// Mode 2 cuts on the per-VMM calibrated time from StFttHitCalibMaker, and a
-		// VMM only gets a calibrated time after HitCalibHelper::ready(), which needs
-		// >200 DISTINCT dbcid values -- until then every hit is time=-4097 and is
-		// rejected. Measured 2026-09-14: field-on fwd stream 23081049 reaches it in
-		// <100 events (366/368 VMMs ready), but ZF run 23063028 has 31x fewer FTT
-		// hits/event and after 300 events only 4/373 VMMs are ready (H 0/128). The
-		// few that do pass are the NOISIEST, since distinct-dbcid count rewards noise.
-		// Real fix is per-VMM anchors from a dense run instead of per-file warm-up.
+		// fttTimeCutMode: 0 = kTimeCutModeDB, the DEFAULT and what BFC uses. The
+		// window then comes per VMM from Calibrations/ftt/fttDataWindowsB and the
+		// fttTimeCutLow/High arguments are ignored. This macro used to default to
+		// mode 2 with its own [-40,100], so the afterburner and BFC cut differently
+		// on the same data -- they now agree.
+		//   1 = kTimeCutModeAcceptAll, for SPARSE data where the per-file warm-up
+		//       never converges and a calibrated cut would throw most hits away.
+		//   2 = kTimeCutModeCalibratedTime, cutting on StFttHitCalibMaker's
+		//       calibrated time with the window given in the arguments. A VMM only
+		//       gets a calibrated time once HitCalibHelper is ready, so on sparse
+		//       data most hits are time=-4097 and rejected: measured 2026-09-14,
+		//       field-on run 23081049 is ready in <100 events (366/368 VMMs) while
+		//       ZF run 23063028, with 31x fewer FTT hits/event, has only 4/373 ready
+		//       after 300 events -- and those few are the NOISIEST, since the
+		//       readiness test used to reward distinct dbcid values.
+		// Per-run anchors in the DB are what removed that warm-up; see
+		// StFttDbMaker/macro/FttDataWindows.
 		fttclu->SetTimeCut(fttTimeCutMode, fttTimeCutLow, fttTimeCutHigh);
 		StFttClusterPointMaker *fttCP = new StFttClusterPointMaker();
 		fttCP->setApplyXYMirror( applyFttXYMirror ); // TEMP diagnostic, see signature note
