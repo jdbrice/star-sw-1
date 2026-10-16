@@ -134,13 +134,33 @@ Run 23081049 then stores [-1,3] for VMM 54, exactly as akio asked, and for
 every calibrated VMM in the run: 360 of 360, no outliers left at all (was
 356 [-1,3] + 2 + 1 + 1). AuAu 24192017: 355 [-1,3], 2 [-2,3].
 
-STILL OPEN. 15 VMMs (was 16) still have an anchor differing from their FOB
-median: +1 eight times, and +2, +3, +6, +9, +12, -1, -3. They no longer produce
-odd windows, because the floor covers them, but anchors are constant per FOB so
-these are still anchor-finding errors. fobTol = 20 ticks was sized for a
-166-tick window and is far too loose for a 5-tick one; snapping an accepted
-anchor to its FOB median is the obvious next step, and would need akio's call
-since it changes what production gets.
+RESOLVED, THE OTHER WAY. I had suggested snapping an off-FOB anchor to its FOB
+median and tightening fobTol from 20 ticks. Both would be WRONG. Checked every
+one of the 15-17 VMMs whose anchor differs from its FOB median on run 23081049:
+each has its own sharp, well-populated peak at the shifted position.
+
+  FOB  9   36,39 peak at t=0 (165,181)     37 at +2 (282)   38 at +3 (289)
+  FOB 43   174,175 peak at t=0 (141,169)   173 at +1 (322)  172 at +5/+6 (105,185)
+  FOB 94   377,378,379 at t=0              376 at +9 (116)
+  FOB 15   60,62,63 at t=0                 61 at +1 (426 against 110 at 0)
+
+Even the off-by-one cases are decisive peaks, not a coin flip between two bins.
+And per channel (fttDataWindow.C's vmmQA argument) the offsets are WHOLE-CHIP:
+VMM 372 is 12 ticks late in all 9 of its live channels, 376 nine ticks in 7 of
+10, 61 one tick in 52 of 56. Not noisy channels, not a search failure -- a
+per-VMM hardware timing offset.
+
+Snapping would keep only 80% of what is in the window today over those VMMs,
+and 22% for VMM 172, 34% for 376, 36% for 374, 41% for 372.
+
+So fobTol = 20 is right as a sanity check: it exists to catch an anchor wrong by
+hundreds of ticks, not to enforce agreement. A tighter one would reject good
+calibrations. Worth noting too that "the FOB median" is ill-defined when two of
+four differ -- on FOB 9 it follows the shifted VMMs 37,38 and makes 36,39, which
+sit exactly on the board anchor, look wrong.
+
+The one thing worth doing is recording the offset as QA, so a VMM 12 ticks
+(300 ns) off its board mates is visible to whoever cares about the hardware.
 
 ALSO STILL OPEN. The acceptance test cannot reject a VMM with no real peak: a
 VMM is accepted on its in-window FRACTION, and with a 166-tick window a flat
@@ -149,7 +169,8 @@ real -- but the gap stands, and the fitted window's S/B (0.68 for VMM 54 at the
 wrong anchor, 3.21 for VMM 53) is the natural discriminator now that we measure
 the crossing.
 
-Open and NOT working: script/checkFttVmmChannels.C was written to ask whether a
-VMM's weak peak is a few noisy channels or the whole chip. It runs but reads
-only a handful of events, so its per-channel statistics say nothing yet. Needs
-debugging and many more events.
+The per-channel question is now answered inside the package rather than by a
+separate script: fttDataWindow.C takes a vmmQA list of up to 8 VMMs whose dbcid
+it also keeps per channel, and fttDataWindowPlot.C draws it. The earlier
+standalone script/checkFttVmmChannels.C is deleted -- it duplicated the MuDst
+reading and never worked.

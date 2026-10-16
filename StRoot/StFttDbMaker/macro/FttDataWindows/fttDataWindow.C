@@ -247,7 +247,9 @@ void fttDataWindow(const char *input,
                    double bxPeriod   = 4.263,   // ticks per bunch crossing (40 MHz / 9.383 MHz)
                    double winKeep    = 0.95,    // window holds this fraction of the in-time crossing
                    int    winFloorMin = -1,     // the stored window always CONTAINS
-                   int    winFloorMax = 3)      // [winFloorMin, winFloorMax] -- see below
+                   int    winFloorMax = 3,      // [winFloorMin, winFloorMax] -- see below
+                   const char *vmmQA  = "")     // up to 8 VMMs to also histogram per
+                                                // CHANNEL, e.g. "54,172,372"
 {
   loadLibsDW();
   gSystem->mkdir(Form("%s/png", outdir), kTRUE);
@@ -313,6 +315,32 @@ void fttDataWindow(const char *input,
   double orientCount[384][5];
   for (int io = 0; io < kNVMM; io++) for (int jo = 0; jo < kNOrient; jo++) orientCount[io][jo] = 0;
 
+  // Optional: dbcid per CHANNEL for a few named VMMs, so that "is this VMM shifted as
+  // a whole, or only some of its channels?" can be asked without another pass over
+  // the MuDsts. 64 channels x 4096 dbcid for every VMM would be far too much to keep,
+  // which is why it is opt-in.
+  int qaVmm[8], nQa = 0;
+  TH2S *hCh[8];
+  for (int iq = 0; iq < 8; iq++) { qaVmm[iq] = -1; hCh[iq] = 0; }
+  {
+    TString qs(vmmQA);
+    TObjArray *toks = qs.Tokenize(",");
+    for (int it = 0; it < toks->GetEntries() && nQa < 8; it++) {
+      TString one = ((TObjString *)toks->At(it))->GetString();
+      one.ReplaceAll(" ", "");
+      if (one.Length() == 0) continue;
+      int vq = one.Atoi();
+      if (vq < 0 || vq >= kNVMM) continue;
+      qaVmm[nQa] = vq;
+      hCh[nQa] = new TH2S(Form("hChDbcid_%03d", vq),
+                          Form("VMM %d;channel;dbcid", vq), 64, -0.5, 63.5, kNDBCID, 0, kNDBCID);
+      hCh[nQa]->SetDirectory(0);
+      nQa++;
+    }
+    delete toks;
+    if (nQa > 0) printf("fttDataWindow: also histogramming dbcid per channel for %d VMM(s)\n", nQa);
+  }
+
   int anchor[384], status[384];
   double nHitsV[384], sigV[384], bkgV[384], inWinV[384];
 
@@ -347,6 +375,8 @@ void fttDataWindow(const char *input,
       if (d < 0 || d >= kNDBCID) { nBadDbcid++; continue; }
       hV[v]->Fill(d);
       nHitsTot++;
+      for (int jq = 0; jq < nQa; jq++)
+        if (v == qaVmm[jq]) hCh[jq]->Fill((int)hit->channel(), d);
       db->hardwareMap(hit);
       int o = (int)db->orientation(hit);
       if (o < 0 || o > 4) o = 4;
@@ -680,6 +710,7 @@ void fttDataWindow(const char *input,
   // per-VMM dbcid histograms, so anchors/windows can be re-derived without rerunning
   TFile *fRoot = new TFile(Form("%s/root/fttDataWindow.%d.root", outdir, run), "RECREATE");
   for (int sv = 0; sv < kNVMM; sv++) hV[sv]->Write();
+  for (int sq = 0; sq < nQa; sq++) hCh[sq]->Write();
   hAligned->Write(); hTvsV->Write(); hAnchor->Write(); hN->Write(); hFrac->Write();
   fRoot->Close();
 }
