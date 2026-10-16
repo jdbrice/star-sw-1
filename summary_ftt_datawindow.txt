@@ -227,3 +227,18 @@ still applies its windows: it is a global default, not one run's measurement.
 
 Checked end to end with fttDataWindowCheck.C: 23081001, 24192016, 24192017
 ENABLED; 23081003 and (before its own entry existed) 24192017 ignored entirely.
+
+THE UPDATE PATH, TESTED ON 25174011. Three revisions, each one second later:
+
+  07:15:37  [-1,2]  the first push
+  07:15:38  [-1,3]  "writedb update" with the fttcal/dbtest copy
+  07:15:39  [-1,2]  "writedb update" with data/, restoring the right numbers
+
+The run queries at 07:15:47 and resolves to :39, so the live entry is correct.
+Read back at each timestamp to confirm: 348 windows with hi=2, then hi=3, then
+hi=2 again. Nothing is ever overwritten -- (nodeID,elementID,beginTime,flavor,
+deactive) is the primary key -- so a revision supersedes rather than replaces,
+and 3 of the 11 pre-roll slots on that run are now used. The superseded :38 row
+is harmless; only the DB team can remove it, and there is no reason to.
+
+62 active ofl rows in total: 2 legacy + 58 runs + 2 superseded revisions.
