@@ -10,7 +10,7 @@
 // Usage:
 //   root4star -l -b -q 'fttDataWindowRefit.C(23081049)'                  // same settings, round trip
 //   root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.90)'       // keep 90% of the crossing
-//   root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.95,4.263,-2,4)'  // a wider floor
+//   root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.95,4.263,-1,3)'  // the old floor
 //
 //   run        run number
 //   outdir     where to write the new fttDataWindow.<run>.txt. Default "refit".
@@ -18,7 +18,7 @@
 //              fttDataWindow.<run>.txt and root/fttDataWindow.<run>.root.
 //   winKeep    fraction of the in-time crossing the window must hold (0.95)
 //   bxPeriod   ticks per bunch crossing (4.263)
-//   winFloorMin, winFloorMax   the window is always widened to contain these (-1, 3)
+//   winFloorMin, winFloorMax   the window is always widened to contain these (-1, 2)
 //   inTimeHalf half-width of the in-time crossing; 0 means half a bunch period,
 //              which is the widest it can be without overlapping its neighbours
 //
@@ -32,11 +32,14 @@ void fttDataWindowRefit(int run,
                         double winKeep     = 0.95,
                         double bxPeriod    = 4.263,
                         int    winFloorMin = -1,
-                        int    winFloorMax = 3,
+                        int    winFloorMax = 2,
                         const char *indir  = ".",
                         double inTimeHalf  = 0)
 {
-  gROOT->LoadMacro(Form("%s/fttDataWindow.C", gSystem->DirName(__FILE__)));
+  // Loading it again in a loop over runs is harmless but noisy ("file busy"), so
+  // only load it the first time.
+  if (!gROOT->GetGlobalFunction("fitFttWindow", 0, kTRUE))
+    gROOT->LoadMacro(Form("%s/fttDataWindow.C", gSystem->DirName(__FILE__)));
 
   TString fin  = Form("%s/fttDataWindow.%d.txt", indir, run);
   TString froot = Form("%s/root/fttDataWindow.%d.root", indir, run);
@@ -102,7 +105,11 @@ void fttDataWindowRefit(int run,
   gSystem->mkdir(outdir, kTRUE);
   TString fout = Form("%s/fttDataWindow.%d.txt", outdir, run);
   FILE *O = fopen(fout.Data(), "w");
+  // The original header is kept for the record, but its window lines describe the
+  // pass that produced the file, not this one -- say so before reproducing them.
+  fprintf(O, "# ---- header of the original pass, superseded below where it describes the window ----\n");
   fprintf(O, "%s", hdr.Data());
+  fprintf(O, "# ---- end of the original header ----\n");
   fprintf(O, "# REFIT %s: window recomputed from root/fttDataWindow.%d.root, anchors unchanged.\n",
           TDatime().AsSQLString(), run);
   fprintf(O, "#       winKeep %.2f bxPeriod %.3f floor [%d, %d]; %d VMMs refitted, %d widened to the\n"

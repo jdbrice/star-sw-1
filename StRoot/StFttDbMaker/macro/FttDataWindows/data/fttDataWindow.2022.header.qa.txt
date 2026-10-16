@@ -1,1 +1,1 @@
-#    run     date   time nF  events    rawHits  nOK noisy fFob lowS  rej dead   all     H     V    dH    dV stop
+#    run     date   time nF  events    rawHits  nOK noisy fFob lowS  rej dead   wLo   wHi nFit nFlr   all     H     V    dH    dV stop

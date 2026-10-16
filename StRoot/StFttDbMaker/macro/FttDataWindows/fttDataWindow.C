@@ -43,16 +43,37 @@
 // chip/configuration problem, not statistics.
 // SAFETY FLOOR. The fitted window is only ever allowed to GROW. Whatever the fit
 // returns, the stored window is widened to contain [winFloorMin, winFloorMax],
-// default [-1, 3] -- the one-crossing window of the summed-over-all-VMM study
-// (ftt_sim_hit_maker/timecut/index.html section 5). Rationale: the measurement is
-// per VMM and per run, from a few hundred events, so a VMM whose crossing is a
-// tick thin for want of statistics must not end up with a cut TIGHTER than the
-// number we already trust. A window that is one tick too wide costs a little
-// pileup; one that is a tick too narrow throws real hits away, in production,
-// silently. The fit therefore only ever tells us where to open the window FURTHER.
-// Measured (runs 24192016/17): the fit lands on [-1,2] for about half the VMMs, so
-// the floor's upper edge is what is usually stored and the fit mostly decides the
-// tail -- which is the intended asymmetry.
+// default [-1, 2]. Rationale: the measurement is per VMM and per run, from a few
+// hundred events, so a VMM whose crossing is a tick thin for want of statistics
+// must not end up with a cut TIGHTER than the number we trust. A window that is
+// one tick too wide costs a little pileup; one that is a tick too narrow throws
+// real hits away, in production, silently. The fit therefore only ever tells us
+// where to open the window FURTHER.
+//
+// WHY [-1, 2] AND NOT [-1, 3]. One bunch crossing is 4.263 ticks, so [-1,2] is four
+// ticks -- narrower than the period, and unable to hold two crossings. [-1,3] is
+// five, and must hold part of a neighbour for some events. Measured per tick,
+// summed over every calibrated VMM in each VMM's own anchor frame (signal is
+// background-subtracted with the same phase-matched model the fit uses):
+//
+//                 pp 23081049        AuAu 24192017      zero field 25174011
+//   t         signal    bkg        signal    bkg        signal     bkg
+//   -1         18165   7887         38068    859        368870    7027
+//    0         64610  15556         93254    895        805234    9793
+//   +1         15342   6821         26784    496        318857    6037
+//   +2          2411   1512          7145    333         33000    4600
+//   +3          -660   4795          5477    380          6676    4956
+//
+// Tick +3 is not signal on the pp field-on data the [-1,3] number came from: 4135
+// raw counts against 4795 of background, negative after subtraction. On zero field
+// it is 0.4% of the crossing. Only AuAu shows a real +3.3%, and there the tail
+// keeps going past it (+4 2.0%, +5 1.0%, +6 0.9%), so +3 is an arbitrary stopping
+// point rather than an edge. In all three it costs 15-18% more background.
+//
+// The older [-1,3] came from the summed-over-all-VMM distribution of
+// ftt_sim_hit_maker/timecut section 5, which is broadened by the per-VMM anchor
+// offsets measured since -- some VMMs sit up to 12 ticks from their FOB mates. Per
+// VMM the crossing really is the three ticks -1, 0, +1.
 //
 // Stops when goodFrac of ACTIVE VMMs (>= nActive hits) have signal >= minPeak, and
 // at least minEvents were read; or at maxEvents; or at end of input. So dense runs
@@ -247,7 +268,7 @@ void fttDataWindow(const char *input,
                    double bxPeriod   = 4.263,   // ticks per bunch crossing (40 MHz / 9.383 MHz)
                    double winKeep    = 0.95,    // window holds this fraction of the in-time crossing
                    int    winFloorMin = -1,     // the stored window always CONTAINS
-                   int    winFloorMax = 3,      // [winFloorMin, winFloorMax] -- see below
+                   int    winFloorMax = 2,      // [winFloorMin, winFloorMax] -- see below
                    const char *vmmQA  = "")     // up to 8 VMMs to also histogram per
                                                 // CHANNEL, e.g. "54,172,372"
 {

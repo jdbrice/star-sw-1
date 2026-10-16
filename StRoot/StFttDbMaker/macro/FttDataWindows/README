@@ -42,29 +42,33 @@ The calibrations in data/
 -------------------------
   fttDataWindow.23063028.txt            ZERO FIELD 2022, run 23063028,
                                         2022-03-04. zeroFieldAligment_2022.
-                                        364 of 373 active VMMs calibrated;
-                                        in-window fraction 0.906, much the best
-                                        of any run here.
+                                        352 VMMs calibrated; in-window fraction
+                                        0.906, much the best of any run here.
   fttDataWindow.23081*.txt   (43 runs)  2022 FIELD ON, 2022-03-22/23, the fwd
-                                        stream test runs. In-window fraction
-                                        0.57-0.59 -- the field-on runs are
+                                        stream test runs. 345-367 VMMs
+                                        calibrated, in-window fraction
+                                        0.56-0.59 -- the field-on runs are
                                         harder, and this is what the anchors buy
-                                        back.
+                                        back. Read from the forward DEV
+                                        reconstruction, 4 MuDsts per run.
   fttDataWindow.2517[34]*.txt (12 runs) ZERO FIELD 2024, event date 2024-06-22.
                                         zeroFieldAlignment_2024. The same data
                                         the Run 24 sTGC geometry iteration was
-                                        measured from.
-  fttDataWindow.2022.QA.txt             one summary line per run, appended by
-                                        fttDataWindow.C: nOK, noisy, lowStat,
-                                        rejected, dead, in-window fractions per
+                                        measured from. 340-342 VMMs calibrated.
+  fttDataWindow.<year>.QA.txt           one summary line per run: events,
+                                        rawHits, nOK, noisy, lowStat, rejected,
+                                        dead, the stored window wLo/wHi, how
+                                        many VMMs were fitted and how many the
+                                        floor widened, in-window fractions per
                                         orientation, and whether the fit
                                         converged. Read this before trusting a
-                                        run.
-  fttDataWindow.2022.header.qa.txt      the column header for that file.
+                                        run. Every one of the 56 converged, with
+                                        wLo/wHi = -1/2.
+  fttDataWindow.<year>.header.qa.txt    the column header for those files.
 
-  Not copied here: fttDataWindow.23081053.txt.lowstat, which stopped at 14
-  events (status endOfInput) and is not usable, and the png/ and root/ QA
-  output, which is large and reproducible from the MuDsts.
+  Not copied here: the png/ and root/ QA output, which is large. Keep the ROOT
+  files of a campaign though -- every question about the WINDOW can be re-asked
+  from them without reading a MuDst again, see below.
 
 
 File format
@@ -118,22 +122,42 @@ that fall inside the in-time crossing itself. The window then grows outward
 from the peak, always taking the richer side, until it holds 95% of that
 crossing's signal.
 
-The result is then widened, if needed, to contain [-1, 3]: the one-crossing
-window of the summed-over-all-VMM study
-(ftt_sim_hit_maker/timecut/index.html section 5). The fit is allowed to open a
-VMM's window FURTHER, never to make it tighter. The measurement is per VMM and
-per run, from a few hundred events, and the two errors are not symmetric: a
-window one tick too wide costs a little pileup, while a window one tick too
-narrow throws away real hits, in production, silently. So the floor is the
-number we already trust and the fit only ever says "this VMM needs more room".
+The result is then widened, if needed, to contain [-1, 2]. The fit is allowed
+to open a VMM's window FURTHER, never to make it tighter. The measurement is
+per VMM and per run, from a few hundred events, and the two errors are not
+symmetric: a window one tick too wide costs a little pileup, while a window one
+tick too narrow throws away real hits, in production, silently. So the floor is
+the number we trust without the fit, and the fit only ever says "this VMM needs
+more room".
 
-Measured, 200 events each:
+WHY [-1,2]. One bunch crossing is 4.263 ticks, so [-1,2] is four ticks --
+narrower than the period, and unable to hold two crossings. [-1,3], which the
+summed-over-all-VMM study of ftt_sim_hit_maker/timecut section 5 concluded, is
+five. Per tick, summed over every calibrated VMM in its own anchor frame:
 
-  run 23081049 (2022 field on)   356 VMMs [-1,3], 2 [-2,3], 1 [-3,3], 1 [-5,3]
-  run 24192016 (2023 AuAu)       346 VMMs [-1,3], 8 [-2,3], 2 wider on the low side
-  run 24192017 (2023 AuAu)       347 VMMs [-1,3], 7 [-2,3], 3 [-3,3]
+                pp 23081049        AuAu 24192017      zero field 25174011
+  t         signal    bkg        signal    bkg        signal     bkg
+  -1         18165   7887         38068    859        368870    7027
+   0         64610  15556         93254    895        805234    9793
+  +1         15342   6821         26784    496        318857    6037
+  +2          2411   1512          7145    333         33000    4600
+  +3          -660   4795          5477    380          6676    4956
 
-so the floor is what most VMMs get, and the fit decides the tails. Columns
+Tick +3 is not signal on the field-on data [-1,3] came from: 4135 raw counts
+against 4795 of background, negative after subtraction. On zero field it is
+0.4% of the crossing. Only AuAu shows a real +3.3%, and there the tail keeps
+going past it, so +3 is an arbitrary stopping point rather than an edge. In all
+three it costs 15-18% more background. The summed distribution is broader than
+any single VMM's because it mixes in the per-VMM anchor offsets described above.
+
+Measured, over all 56 calibrated runs in data/:
+
+  19376 VMM entries [-1,2], 626 [-2,2], 3 [-1,3], 2 [-1,6], 1 [-4,2], 1 [-1,7]
+
+and a median of [-1,2] on every one of the 56 runs. So the floor is what most
+VMMs get, the ones outside it are mostly a peak one tick early, and the handful
+at [-1,6]/[-1,7] are the whole-chip offsets, where the window has travelled with
+the VMM's own peak. Columns
 fitLo/fitHi keep what the fit returned before the floor, so the measurement
 stays visible in the file that is pushed; 0 0 means the crossing was not
 fitted. A calibrated VMM whose crossing could not be fitted takes the run's
@@ -299,13 +323,18 @@ worked examples: enough to run every mode of fttDataWindow_db.C, to see the
 file format against a real file rather than a description, and to reproduce
 what was pushed.
 
-NOTE ON min/max IN THESE FILES. They were produced before the window was
-measured, so every line carries the uniform [-65, 100]: good anchors, default
-window. Pushing them as they stand gives production the measured anchors and
-leaves its time cut exactly as it is today, which is a reasonable way to
-sequence the two changes -- but do not read their min/max as a measurement.
-Rerunning fttDataWindow.C on the same runs remakes them with the per-VMM window;
-each file's header records the MuDst it came from.
+These are the 2026-10-16 campaign: one condor job per run, all 56 converged,
+every run with a median window of [-1,2]. The window was then refit to the
+[-1,2] floor from the saved histograms rather than by reading the MuDsts again,
+so each file carries the header of its original pass followed by a REFIT line
+saying so -- where the two disagree about the window, the REFIT line is the one
+that describes the file.
+
+Note what pushing them does: min/max IS production's time cut, so these replace
+[-65,100] with one bunch crossing. That takes signal kept from essentially all
+of it to about 83%, at roughly 8x the purity. It is a deliberate physics change,
+not a side effect of calibrating the anchors, and it arrives the moment BFC
+reads the table.
 
 They are NOT the eventual home for the full set. There is one calibration per
 run by construction, since anchors are not slowly varying, so calibrating every

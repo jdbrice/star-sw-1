@@ -81,7 +81,7 @@ void fttDataWindowPlot(const char *dir, int run,
                        int vmmA = -1, int anchorA = 0, int anchorB = 0,
                        int vmmChan = -1, int chanAnchor = 0,
                        double bxPeriod = 4.263, double winKeep = 0.95,
-                       int floorLo = -1, int floorHi = 3)
+                       int floorLo = -1, int floorHi = 2)
 {
   gROOT->LoadMacro(kDWMacro);
   gStyle->SetOptStat(0);
