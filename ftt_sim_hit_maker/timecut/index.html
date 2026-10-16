@@ -10,6 +10,7 @@
 <p><b><a href="#20260914">&darr; 2026-09-14 update: per-run time calibration, field ON vs OFF, time-window choice</a></b></p>
 <p><b><a href="#20260921">&darr; 2026-09-21 update: the [-1,3] window measured on production data (purity, background, track quality)</a></b></p>
 <p><b><a href="#20261016">&darr; 2026-10-16 update: the window measured per VMM, and why it is only allowed to open</a></b></p>
+<p><b><a href="#howto">&darr; HOW TO: calibrate a dataset &mdash; the macros, a condor campaign, what to check</a></b></p>
 
 <H2>Goal / Method</H2>
 <ul>
@@ -481,6 +482,12 @@ the exception &mdash; <tt>fwd_afterburner_db.C</tt> sets mode 2 with its own
   <li>The window then grows outward from the peak, always taking the richer side, until it
       holds <b>95% of that crossing's signal</b>. The parameter is therefore the "signal
       kept" of section 5, not a threshold on an arbitrary shape.
+  <li>It may grow at most <b>half a bunch period</b> from the peak. The in-time crossing on
+      this data is three ticks, t = -1, 0, +1; ticks &plusmn;2 and &plusmn;3 are an empty
+      gap, and the next crossings stand up clearly at t = &plusmn;4. Any wider and the
+      "95%" could be met by admitting a neighbour's shoulder instead of real in-time hits.
+  <li>Everything is measured against the VMM's <b>anchor</b>, the most populated dbcid
+      &mdash; the same definition <tt>StFttHitCalibMaker</tt> uses on the fly.
   <li>The <tt>sugMin</tt>/<tt>sugMax</tt> QA columns are NOT this. They subtract the far
       sideband, which leaves the whole plateau in, which is why they land around
       [-100,+225]: that is the plateau, not the crossing.
@@ -497,82 +504,35 @@ one-crossing window of section 5. The fit may only open a VMM's cut further.</p>
       fit only ever says "this VMM needs more room".
 </ul>
 
-<H2>Two things the first version got wrong</H2>
-<p>The VMMs that <em>did</em> ask for more room turned out to be the interesting ones, and
-neither was asking for a good reason.</p>
-<ul>
-  <li><b>The fit could reach into the neighbouring bunch crossing.</b> The in-time crossing
-      is three ticks, t = -1, 0, +1; ticks &plusmn;2 and &plusmn;3 are an empty gap, and the
-      next crossings stand up clearly at t = &plusmn;4. The growth range was &plusmn;3.0
-      ticks, so on a VMM with a weak peak the "95% of the crossing" test was met by
-      admitting the neighbours' shoulders. VMM 193 came out [-3,3] &mdash; 7 ticks for one
-      4.263-tick crossing &mdash; gaining 7 counts of signal at t=+3 for 16 of background,
-      window S/B 1.48 against 2.81 for a healthy VMM on the same FOB. The growth range is
-      now <b>half a bunch period</b>, which cannot reach a neighbour by construction.
-  <li><b>The anchor search lost a weak peak that straddled a bin group.</b> It grouped
-      four bins first, aligned to multiples of 4. VMM 54's real peak is 60+60 counts at
-      dbcid 1070,1071 over a level of 25 &mdash; 7.0&sigma; per tick, 9.9&sigma; together,
-      so certainly not a fluctuation, just weak (contrast 2.4 where its FOB mate has 14).
-      But 1071 is the last bin of its group, which summed 170, while two neighbouring groups
-      holding only the broad tail summed 173 and 171. The anchor came out 1075, five ticks
-      late, and the window fit then chased the peak to [-5,0]. The grouping is now gone
-      entirely: the anchor is the plain argmax over single dbcid values, which for VMM 54 is
-      1070 &mdash; the anchor of all three of its FOB mates.
-</ul>
-<p>Dropping the grouping rather than just unaligning it is also what matches the consumer:
-<tt>HitCalibHelper::add()</tt> keeps a running argmax over single dbcid values. And the
-grouping, which was there to help when statistics are thin, measurably does not. Counting
-the VMMs whose anchor disagrees with the median of their FOB mates &mdash; anchors are a
-property of the board, so the three mates are the check &mdash; plain argmax against a
-sliding 4-tick sum:</p>
-<pre>23081049  pp field on, 4063 hits/VMM    17 / 360  vs  17 / 360
-24192017  AuAu,        ~1000 hits/VMM   29 / 354  vs  29 / 354
-25174011  zero field,  7206 hits/VMM    88 / 344  vs  88 / 344
-25174011  zero field,   522 hits/VMM    92 / 330  vs  93 / 330</pre>
-<p>identical everywhere except the thinnest case, where the plain argmax is slightly
-better.</p>
-
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
-<TR BGCOLOR="#c0c0f0"><TH>VMM 54: the same data read against two anchors</TH></TR>
-<TR><TD><a href="plots/fttWindow_anchor_23081049.png"><img src="plots/fttWindow_anchor_23081049.png" height="200"></a></TD></TR>
 <TR BGCOLOR="#c0c0f0"><TH>the fit asks for less than the floor, and the floor holds it open</TH></TR>
 <TR><TD><a href="plots/fttWindow_floor_23081049.png"><img src="plots/fttWindow_floor_23081049.png" height="200"></a></TD></TR>
 </TABLE>
-<p>Run 23081049, 200 events. Black = raw counts at <tt>t = dbcid - anchor</tt>, red dashed =
-the phase-matched pileup background, grey = the floor, blue = what the fit asked for, green =
-what is stored. Top row: a healthy VMM of that FOB, then VMM 54 against the anchor the
-grouped search returned, then <b>the identical histogram</b> against the plain argmax. Nothing about the data differs between the last two &mdash; only where t=0
-is put. Bottom row: three of the busiest VMMs in the run (9.3-9.4k hits each), where the fit
-asks for [-1,1] or [-1,2] and the floor keeps [-1,3].</p>
+<p>Run 23081049, 200 events, three of the busiest VMMs in the run (9.3-9.4k hits each).
+Black = raw counts at <tt>t = dbcid - anchor</tt>, red dashed = the phase-matched pileup
+background, grey = the floor, blue = what the fit asked for, green = what is stored. The
+crossing structure is visible either side: the bumps at t = &plusmn;4 are the neighbouring
+bunch crossings.</p>
 
-<p><b>With both fixed, every calibrated VMM of run 23081049 stores [-1,3]</b> &mdash; 360 of
-360, no outliers at all, where before there were four. AuAu 24192017 is 355 [-1,3] and 2
-[-2,3].</p>
-
-<H2>A VMM's anchor need not match its board</H2>
+<H2>Some VMMs are genuinely offset from their board</H2>
 <p>Anchors are set per front-end board, so the 4 VMMs of a FOB normally share one &mdash;
-344 of 360 do on run 23081049. The obvious next step looked like snapping the other 16 to
-their FOB's median. It would have been wrong: <b>every one of them has its own sharp,
-well-populated peak at the shifted position.</b></p>
+344 of 360 do on run 23081049. The rest are not measurement noise: <b>each has its own
+sharp, well-populated peak at a shifted position.</b></p>
 <pre>FOB  9   36,39 peak at t=0 (165,181)     37 at +2 (282)   38 at +3 (289)
 FOB 43   174,175 peak at t=0 (141,169)   173 at +1 (322)  172 at +5/+6 (105,185)
 FOB 94   377,378,379 at t=0              376 at +9 (116)
 FOB 15   60,62,63 at t=0                 61 at +1 (426 against 110 at t=0)</pre>
 <p>Even the off-by-one cases are decisive peaks rather than a coin flip between two bins.
 And per channel the offsets are <b>whole-chip</b>: VMM 372 is 12 ticks late in all 9 of its
-live channels, 376 nine ticks in 7 of 10, 61 one tick in 52 of 56. Not noisy channels, not a
-failure of the anchor search &mdash; a per-VMM hardware timing offset, up to 300 ns.</p>
+live channels, 376 nine ticks in 7 of 10, 61 one tick in 52 of 56. So this is a per-VMM
+hardware timing offset, up to about 300&nbsp;ns &mdash; not a few noisy channels, and not
+something a per-board calibration could describe. It is the reason the anchor has to be
+stored per VMM.</p>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>VMM 372: dbcid vs channel, against its board's anchor</TH></TR>
 <TR><TD><a href="plots/fttWindow_chan_23081049.png"><img src="plots/fttWindow_chan_23081049.png" height="200"></a></TD></TR>
 </TABLE>
-<p>Snapping those to the board would move the window off real hits: over the 17 VMMs it
-keeps 80% of what is in the window today, and as little as 22% for VMM 172. So
-<tt>fobTol</tt> stays a sanity check rather than a correction, and 20 ticks is the right
-order for it &mdash; it is there to catch an anchor wrong by hundreds of ticks. Note also
-that "the FOB median" is ill-defined when two of four differ: on FOB 9 it follows the
-shifted VMMs 37 and 38 and makes 36 and 39, which sit exactly on the board anchor, look
-wrong.</p>
+<p>One horizontal band, at t = +12, across every live channel.</p>
 
 <H2>What comes out</H2>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
@@ -622,6 +582,105 @@ moment BFC reads it. The 56 calibrations in
 <tt>StRoot/StFttDbMaker/macro/FttDataWindows/data</tt> still carry the uniform [-65,100], so
 pushing them as they stand gives production the measured anchors and leaves its cut exactly
 as it is &mdash; which is a clean way to take the two changes one at a time.</p>
+
+<HR>
+<a name="howto"></a>
+<H1>How to calibrate a dataset</H1>
+<p>Everything below lives in
+<tt>StRoot/StFttDbMaker/macro/FttDataWindows/</tt>, which has its own README. One
+calibration belongs to one run &mdash; anchors are reset at every run start, so they are not
+slowly varying and a run cannot borrow its neighbour's.</p>
+
+<H2>The four macros</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>macro</TH><TH>reads</TH><TH>does</TH></TR>
+<TR><TD><tt>fttDataWindow.C</tt></TD><TD>MuDst(s) of one run</TD>
+    <TD>measures the anchors and the window, writes the calibration + QA + histograms</TD></TR>
+<TR><TD><tt>fttDataWindowRefit.C</tt></TD><TD>the saved <tt>.txt</tt> + <tt>.root</tt></TD>
+    <TD>re-fits the WINDOW with different settings, no MuDst needed</TD></TR>
+<TR><TD><tt>fttDataWindowPlot.C</tt></TD><TD>the saved <tt>.txt</tt> + <tt>.root</tt></TD>
+    <TD>draws what the fit saw, no MuDst needed</TD></TR>
+<TR><TD><tt>fttDataWindow_db.C</tt></TD><TD>the saved <tt>.txt</tt></TD>
+    <TD>pushes to <tt>Calibrations/ftt/fttDataWindowsB</tt> and reads it back</TD></TR>
+</TABLE>
+
+<H2>1. One run</H2>
+<pre>root4star -l -b -q 'fttDataWindow.C("st_physics_23081049_raw_1000002.MuDst.root")'
+root4star -l -b -q 'fttDataWindow.C("23081049.list")'    # a text list, one MuDst per line</pre>
+<p>A list is the normal case: the macro reads events until <b>95% of the active VMMs are
+calibrated</b> and then stops, so it takes as many files as that needs and no more. On
+field-on fwd-stream data that is a couple of hundred events; on sparse data it can be a few
+thousand. The macro takes the run number from the events themselves, so a list may be
+called anything &mdash; but name it <tt>&lt;run&gt;.list</tt> anyway, because the condor job
+script below has only the filename to go on.</p>
+<p>Output, in <tt>./fttDataWindow/</tt> by default:</p>
+<ul>
+  <li><tt>fttDataWindow.&lt;run&gt;.txt</tt> &mdash; the calibration. First five columns are
+      the DB order, <tt>uuid mode min max anchor</tt>; the rest are QA and are ignored by
+      everything downstream.
+  <li><tt>fttDataWindow.&lt;year&gt;.QA.txt</tt> &mdash; one summary line per run.
+  <li><tt>png/</tt>, <tt>root/</tt> &mdash; the QA figure and the per-VMM dbcid histograms.
+      <b>Keep the ROOT files.</b> Every question about the window can be re-asked from them
+      without touching a MuDst again.
+</ul>
+
+<H2>2. Many runs</H2>
+<p>One condor job per run, each reading that run's own files. The pieces are
+<tt>script/runfttcal</tt> (the job) and <tt>script/submit_fttcal.pl</tt> (builds the submit
+file); <tt>submit_fttcal.pl</tt> can take a file list, a glob of run directories, or a file
+of run directories, and picks one file per run above a size floor. Two things learned the
+hard way:</p>
+<ul>
+  <li>Each job must write its QA line to <b>its own</b> <tt>qa/&lt;run&gt;.qa</tt>. Many
+      jobs appending to one file over NFS interleave and corrupt it. Merge afterwards with
+      <tt>script/mergeFttCalQA.sh &lt;outdir&gt;</tt>.
+  <li>The input MuDst is read <b>in place</b>, not copied to scratch. A zero-field file is
+      5-6&nbsp;GB and the macro wants a few thousand events from it.
+</ul>
+<p>For Run 22 forward data, note that <tt>get_file_list.pl</tt> is misleading: it lists the
+<tt>st_fwd</tt> MuDsts only under the P24ia production with storage HPSS, and its P23if
+<tt>st_physics</tt> entries are stale &mdash; of 160 it reports on NFS for run 23081049,
+exactly one is still on disk. The forward DEV reconstruction, which it does not index at
+all, holds 17621 <tt>st_fwd</tt> MuDsts over the day-081 runs alone:</p>
+<pre>/star/data2[0-3]/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2/2022/&lt;day&gt;/&lt;run&gt;/
+/star/data23/reco/production_pp500_2022/ReversedFullField/DEV_fwd_test2_freeze/2022/&lt;day&gt;/&lt;run&gt;/</pre>
+<p>So list that area from disk, and use the catalog only for the official productions.</p>
+
+<H2>3. Check before you trust a run</H2>
+<p>Read the merged QA table. The columns that decide it:</p>
+<ul>
+  <li><tt>stop</tt> &mdash; <tt>converged</tt> is what you want. <tt>endOfInput</tt> is fine
+      if <tt>nOK</tt> is high. <tt>maxEvents</tt> with a low <tt>nOK</tt> means it ran out of
+      events before it was done: give that run more files.
+  <li><tt>nOK</tt> of 384, and <tt>rej</tt> / <tt>dead</tt> &mdash; how many VMMs got a
+      usable anchor. A VMM that did not gets <tt>anchor = -1</tt> and the wide [-65,100],
+      and the consumer falls back to its on-the-fly anchor for that VMM alone.
+  <li><tt>wLo wHi</tt> &mdash; the run's median stored window. Expect <tt>-1 3</tt>.
+      Anything else is worth a look before the run is used.
+  <li><tt>all</tt> &mdash; the fraction of raw hits inside the window. Comparable between
+      runs of the same dataset; a run well below its neighbours is suspect.
+</ul>
+<p>A run that fails these should be redone with more files rather than patched.</p>
+
+<H2>4. Try it without touching the database</H2>
+<p>A local file overrides the DB automatically. Put the calibration in
+<tt>./fttDataWindow/fttDataWindow.&lt;run&gt;.txt</tt> relative to where the job runs, and
+<tt>StFttDbMaker</tt> picks it up with a loud warning:</p>
+<pre>StFttDbMaker::loadDataWindows - LOADING DATA WINDOWS FROM LOCAL FILE ... (remove/rename it to use the DB)</pre>
+<p>That is the way to see what a calibration does to the reconstruction before anything is
+written anywhere. Condor jobs run in a scratch directory without that file, so production is
+unaffected.</p>
+<p>The DB side needs INSERT on <tt>Calibrations_ftt</tt> and is best left to one person per
+table &mdash; see the end of the package README about asking the DB team. The important
+thing from a calibration run is the <tt>.txt</tt> and the <tt>.root</tt>; the DB entry can
+always be made from them later.</p>
+
+<H2>5. Where the files should live</H2>
+<p>One calibration per run means a full dataset is thousands of files &mdash; data rather
+than code, too much for the source repository. <tt>data/</tt> in the package holds 56 runs
+as worked examples only, enough to run every mode of <tt>fttDataWindow_db.C</tt> and to see
+the file format against a real file. Where the full set should live is not settled; until it
+is, <tt>fttDataWindow_db.C</tt> takes a <tt>dir=</tt> argument pointing anywhere.</p>
 
 <HR>
 <ADDRESS>
