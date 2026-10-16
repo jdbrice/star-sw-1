@@ -178,17 +178,33 @@ double circInt(TH1 *h, int d1, int d2)
 // the raw argmax inside that 4-bin group.
 int findAnchor(TH1 *h)
 {
-  TH1 *hc = (TH1 *)h->Clone("hAnchorTmp");
-  hc->SetDirectory(0);
-  hc->Rebin(4);
-  int cb = hc->GetMaximumBin();          // 1-based coarse bin
-  delete hc;
-  int d0 = (cb - 1) * 4;
-  int best = d0;
+  // Fullest window of 4 consecutive dbcid, SLIDING and circular, then the fullest
+  // raw bin inside it.
+  //
+  // This used to be Rebin(4), i.e. windows aligned to multiples of 4, and that loses
+  // a weak peak that straddles a group boundary. Measured on VMM 54 of run 23081049:
+  // its real peak is 60+60 counts at dbcid 1070,1071 over a level of 25, which is
+  // 9.9 sigma and certainly not a fluctuation -- but 1071 is the last bin of its
+  // aligned group, so that group summed 170 while two neighbouring groups, holding
+  // only the broad tail, summed 173 and 171. The anchor came out 1075, five ticks
+  // late, and the window fit then chased the peak to [-5,0]. The sliding window has
+  // no boundary to straddle: it finds 1069..1072 = 192 and refines to 1070, which is
+  // both the raw argmax and the anchor of the other three VMMs on the FOB.
+  //
+  // Cost is 4 x 4096 adds per call, which is nothing next to reading the events.
+  int nb = h->GetNbinsX();
+  double bestS = -1;
+  int at = 0;
+  for (int db = 0; db < nb; db++) {
+    double sum4 = 0;
+    for (int dk = 0; dk < 4; dk++) sum4 += h->GetBinContent((db + dk) % nb + 1);
+    if (sum4 > bestS) { bestS = sum4; at = db; }
+  }
+  int best = at;
   double bestC = -1;
-  for (int dk = 0; dk < 4; dk++) {
-    double c = h->GetBinContent(d0 + dk + 1);
-    if (c > bestC) { bestC = c; best = d0 + dk; }
+  for (int dj = 0; dj < 4; dj++) {
+    double c = h->GetBinContent((at + dj) % nb + 1);
+    if (c > bestC) { bestC = c; best = (at + dj) % nb; }
   }
   return best;
 }

@@ -88,46 +88,52 @@ a <run>.list input (it used to take the run number from an st_*.MuDst.root name
 only).
 
 
-VMM 54, and what it exposes (2026-10-16)
-----------------------------------------
-akio asked why VMM 54 of run 23081049 was fitted [-5,0]. It is not a shifted
-peak and not a wrong anchor. It has NO TIME STRUCTURE AT ALL.
+VMM 54: a real but weak peak, lost by the anchor finder (2026-10-16)
+--------------------------------------------------------------------
+akio asked why VMM 54 of run 23081049 was fitted [-5,0], and read the jump from
+~25 to 60 as possibly real. It IS real. Counts per tick in its FOB's frame
+against a local level of 25 (median of the 70 ticks outside |t|<=5):
 
-Counts per tick around the FOB anchor, 200 events:
+   t      -4   -3   -2   -1   +0   +1   +2   +3
+   counts 30   27   23   27   60   60   45   37
+   sigma 1.0  0.4 -0.4  0.4  7.0  7.0  4.0  2.4
 
-  vmm 52   51  6  7 35 60 11 10 102 241  80 37 20 60 26 19  1 38
-  vmm 53   57 18 14 50 55 16 10 147 305  85 23 37 92 45 10 10 67
-  vmm 54   33 26 20 38 30 27 23  27  60  60 45 37 44 47 47 39 38
-  vmm 55   48 11  3 24 58 18  7  70 207  64 19 14 50 28  7 11 25
+7.0 sigma at t=0 and again at t=+1, 9.9 sigma for the two together. Not a
+fluctuation -- just weak: contrast 2.4 against 14 for its FOB mate VMM 53. And
+akio's "1 tick late compared to the others" is right: its mates peak sharply at
+t=0 with a -1 shoulder, while 54 is flat across 0 and +1.
 
-Its three FOB mates have a sharp peak (241/305/207 over a 10-60 background)
-and the neighbouring crossings visible at +-4. VMM 54 is flat, 23 to 60 across
-the whole range, on comparable statistics (6996 hits against 6903/9022/5704).
-Its fitted window has S/B 0.68 -- it admits more background than signal --
-against 3.21 for VMM 53.
+WHAT WENT WRONG WAS THE ANCHOR, not the window fit. findAnchor used Rebin(4),
+i.e. windows aligned to multiples of 4, and VMM 54's peak straddles a group
+boundary: dbcid 1070,1071 are the last two bins of their group, so it summed
+170 while two neighbouring groups holding only the broad tail summed 173 and
+171. The anchor came out 1075, five ticks late, and the fit then chased the
+real peak to [-5,0]. The raw argmax was 1070 all along, the same as its three
+FOB mates.
 
-Consequences:
+Fixed by making the coarse search a SLIDING 4-tick window instead of an aligned
+one -- no boundary to straddle. It finds 1069..1072 = 192 and refines to 1070.
+Run 23081049 then stores [-1,3] for VMM 54, exactly as akio asked, and for
+every other calibrated VMM in the run: 361 of 361, no outliers left at all
+(was 356 [-1,3] + 2 + 1 + 1). One more VMM became calibrated. AuAu 24192017:
+354 [-1,3], 2 [-2,3], essentially unchanged.
 
-  - Its anchor is meaningless rather than wrong. The stored 1075 differs from
-    its FOB's 1070 because findAnchor's 4-bin rebin had to choose between two
-    groups holding 174 and 173 counts. The raw argmax is 1070, same as the FOB.
-  - The existing QA cannot catch this. A VMM is accepted on its in-window
-    FRACTION, and with a 166-tick window [-65,100] a flat distribution scores
-    the same as a peaked one: VMM 54's 0.589 sits right on the run median
-    0.571, so it passes with status 0.
-  - Anchors are constant per FOB, and 344 of the 360 calibrated VMMs do have
-    exactly their FOB median. The 16 that do not are anchor-finding errors:
-    offsets +1 (x8), +2, +3, +5 (vmm 54), +6, +9, +12, -1, -3. fobTol = 20
-    ticks was fine for a 166-tick window and is far too loose for a 5-tick one.
+STILL OPEN. 15 VMMs (was 16) still have an anchor differing from their FOB
+median: +1 eight times, and +2, +3, +6, +9, +12, -1, -3. They no longer produce
+odd windows, because the floor covers them, but anchors are constant per FOB so
+these are still anchor-finding errors. fobTol = 20 ticks was sized for a
+166-tick window and is far too loose for a 5-tick one; snapping an accepted
+anchor to its FOB median is the obvious next step, and would need akio's call
+since it changes what production gets.
 
-TO DECIDE (not changed yet, both affect what production gets):
-  - reject a VMM whose fitted window has S/B below some value, give it anchor
-    -1 and the wide window, and add a status code for it;
-  - snap an accepted anchor to its FOB median, or at least tighten fobTol from
-    20 ticks to 1-2 now that the window is 5 ticks wide.
+ALSO STILL OPEN. The acceptance test cannot reject a VMM with no real peak: a
+VMM is accepted on its in-window FRACTION, and with a 166-tick window a flat
+distribution scores like a peaked one. VMM 54 is not that case -- its peak is
+real -- but the gap stands, and the fitted window's S/B (0.68 for VMM 54 at the
+wrong anchor, 3.21 for VMM 53) is the natural discriminator now that we measure
+the crossing.
 
-Open and NOT working: script/checkFttVmmChannels.C was written to ask whether
-VMM 54 is a few noisy channels or the whole chip. It runs but reads only a
-handful of events -- the per-channel statistics are far too thin to conclude,
-and its anchors disagree with the per-VMM ones. Needs debugging and many more
-events before it says anything.
+Open and NOT working: script/checkFttVmmChannels.C was written to ask whether a
+VMM's weak peak is a few noisy channels or the whole chip. It runs but reads
+only a handful of events, so its per-channel statistics say nothing yet. Needs
+debugging and many more events.
