@@ -625,11 +625,13 @@ script below has only the filename to go on.</p>
 </ul>
 
 <H2>2. Many runs</H2>
-<p>One condor job per run, each reading that run's own files. The pieces are
-<tt>script/runfttcal</tt> (the job) and <tt>script/submit_fttcal.pl</tt> (builds the submit
-file); <tt>submit_fttcal.pl</tt> can take a file list, a glob of run directories, or a file
-of run directories, and picks one file per run above a size floor. Two things learned the
-hard way:</p>
+<p>One condor job per run, each reading that run's own files. The wrapper we use is two
+small scripts, <tt>runfttcal</tt> (the job) and <tt>submit_fttcal.pl</tt> (builds the submit
+file from a file list, a glob of run directories, or a file of run directories, picking one
+file per run above a size floor). They are campaign tooling rather than part of the package,
+so they are not in the STAR repository &mdash; ask and we will send them, or write your own,
+since the job itself is only "run the macro, copy the output back". Two things in it were
+learned the hard way and are worth keeping whichever way you go:</p>
 <ul>
   <li>Each job must write its QA line to <b>its own</b> <tt>qa/&lt;run&gt;.qa</tt>. Many
       jobs appending to one file over NFS interleave and corrupt it. Merge afterwards with
