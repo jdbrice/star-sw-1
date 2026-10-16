@@ -497,38 +497,61 @@ one-crossing window of section 5. The fit may only open a VMM's cut further.</p>
       fit only ever says "this VMM needs more room".
 </ul>
 
+<H2>Two things the first version got wrong</H2>
+<p>The VMMs that <em>did</em> ask for more room turned out to be the interesting ones, and
+neither was asking for a good reason.</p>
+<ul>
+  <li><b>The fit could reach into the neighbouring bunch crossing.</b> The in-time crossing
+      is three ticks, t = -1, 0, +1; ticks &plusmn;2 and &plusmn;3 are an empty gap, and the
+      next crossings stand up clearly at t = &plusmn;4. The growth range was &plusmn;3.0
+      ticks, so on a VMM with a weak peak the "95% of the crossing" test was met by
+      admitting the neighbours' shoulders. VMM 193 came out [-3,3] &mdash; 7 ticks for one
+      4.263-tick crossing &mdash; gaining 7 counts of signal at t=+3 for 16 of background,
+      window S/B 1.48 against 2.81 for a healthy VMM on the same FOB. The growth range is
+      now <b>half a bunch period</b>, which cannot reach a neighbour by construction.
+  <li><b>The anchor search lost a weak peak that straddled a bin group.</b> It used a
+      rebin by 4, i.e. windows aligned to multiples of 4. VMM 54's real peak is 60+60 counts
+      at dbcid 1070,1071 over a level of 25 &mdash; 7.0&sigma; per tick, 9.9&sigma; together,
+      so certainly not a fluctuation, just weak (contrast 2.4 where its FOB mate has 14).
+      But 1071 is the last bin of its group, which summed 170, while two neighbouring groups
+      holding only the broad tail summed 173 and 171. The anchor came out 1075, five ticks
+      late, and the window fit then chased the peak to [-5,0]. The search is now a
+      <b>sliding</b> 4-tick window, which has no boundary to straddle: it finds 1069..1072 =
+      192 and refines to 1070 &mdash; the raw argmax, and the anchor of all three of its FOB
+      mates.
+</ul>
+
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
-<TR BGCOLOR="#c0c0f0"><TH>the fit opens the window wider than the floor</TH>
-    <TH>the fit asks for less, and the floor holds it open</TH></TR>
-<TR>
-<TD><a href="plots/fttWindow_wider_23081049.png"><img src="plots/fttWindow_wider_23081049.png" height="200"></a></TD>
-<TD><a href="plots/fttWindow_floor_23081049.png"><img src="plots/fttWindow_floor_23081049.png" height="200"></a></TD>
-</TR>
+<TR BGCOLOR="#c0c0f0"><TH>VMM 54: the same data read against two anchors</TH></TR>
+<TR><TD><a href="plots/fttWindow_anchor_23081049.png"><img src="plots/fttWindow_anchor_23081049.png" height="200"></a></TD></TR>
+<TR BGCOLOR="#c0c0f0"><TH>the fit asks for less than the floor, and the floor holds it open</TH></TR>
+<TR><TD><a href="plots/fttWindow_floor_23081049.png"><img src="plots/fttWindow_floor_23081049.png" height="200"></a></TD></TR>
 </TABLE>
 <p>Run 23081049, 200 events. Black = raw counts at <tt>t = dbcid - anchor</tt>, red dashed =
 the phase-matched pileup background, grey = the floor, blue = what the fit asked for, green =
-what is stored. VMM 54 is the clearest case for the rule: its timing is smeared over several
-ticks, the fit answers <tt>[-5,0]</tt>, and the stored window is <tt>[-5,3]</tt> &mdash; the
-fit's extra room on the low side, the floor's on the high side. On the right are three of the
-busiest VMMs in the run (9-10k hits each), where the fit would have cut at
-<tt>[-1,1]</tt> or <tt>[-1,2]</tt> and the floor keeps <tt>[-1,3]</tt>.</p>
+what is stored. Top row: a healthy VMM of that FOB, then VMM 54 against the anchor the
+aligned rebin returned, then <b>the identical histogram</b> against the anchor the sliding
+window returns. Nothing about the data differs between the last two &mdash; only where t=0
+is put. Bottom row: three of the busiest VMMs in the run (9.3-9.4k hits each), where the fit
+asks for [-1,1] or [-1,2] and the floor keeps [-1,3].</p>
+
+<p><b>With both fixed, every calibrated VMM of run 23081049 stores [-1,3]</b> &mdash; 361 of
+361, no outliers at all, where before there were four. AuAu 24192017 is 354 [-1,3] and 2
+[-2,3].</p>
 
 <H2>What comes out</H2>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>stored windows</TH><TH>what the fit alone said</TH></TR>
-<TR><TD>23081049, 2022 field on</TD><TD>356 [-1,3], 2 [-2,3], 1 [-3,3], 1 [-5,3]</TD>
+<TR><TD>23081049, 2022 field on</TD><TD><b>361 [-1,3]</b>, nothing else</TD>
     <TD>mostly [-1,1] and [-1,2]</TD></TR>
-<TR><TD>24192016, 2023 AuAu</TD><TD>346 [-1,3], 8 [-2,3], 2 wider on the low side</TD>
-    <TD>147 [-1,2], 136 [-1,1], 58 [-1,3]</TD></TR>
-<TR><TD>24192017, 2023 AuAu</TD><TD>347 [-1,3], 7 [-2,3], 3 [-3,3]</TD>
-    <TD>194 [-1,2], 101 [-1,3], 48 [-1,1]</TD></TR>
+<TR><TD>24192017, 2023 AuAu</TD><TD>354 [-1,3], 2 [-2,3]</TD>
+    <TD>mostly [-1,2] and [-1,1]</TD></TR>
 </TABLE>
 <ul>
-  <li>Stored median <b>[-1,3] on all three runs</b>, two of them AuAu and one pp, so the
-      floor is what most VMMs get and the fit decides the tails.
-  <li>The low edge is where the spread is. The high edge almost never exceeds +3, because
-      the fit's reach is one crossing half-width around the peak and the floor already spans
-      a full crossing.
+  <li>Stored median <b>[-1,3] on every run tried</b>, pp and AuAu, so the floor is what a
+      VMM gets unless its own crossing genuinely sits outside it.
+  <li>Once the fit cannot reach a neighbouring crossing, almost nothing does sit outside it:
+      the window is at most one bunch period wide and the floor already spans one.
   <li>A VMM with <tt>anchor = -1</tt> keeps the wide [-65,100]: it falls back to the
       consumer's on-the-fly anchor, which is not validated to the &plusmn;1 tick a
       one-crossing window needs.

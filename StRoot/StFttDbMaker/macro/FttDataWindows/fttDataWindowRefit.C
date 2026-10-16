@@ -19,6 +19,8 @@
 //   winKeep    fraction of the in-time crossing the window must hold (0.95)
 //   bxPeriod   ticks per bunch crossing (4.263)
 //   winFloorMin, winFloorMax   the window is always widened to contain these (-1, 3)
+//   inTimeHalf half-width of the in-time crossing; 0 means half a bunch period,
+//              which is the widest it can be without overlapping its neighbours
 //
 // The algorithm itself lives in fttDataWindow.C (fitFttWindow) and is loaded from
 // there, so there is one copy of it.
@@ -31,7 +33,8 @@ void fttDataWindowRefit(int run,
                         double bxPeriod    = 4.263,
                         int    winFloorMin = -1,
                         int    winFloorMax = 3,
-                        const char *indir  = ".")
+                        const char *indir  = ".",
+                        double inTimeHalf  = 0)
 {
   gROOT->LoadMacro(Form("%s/fttDataWindow.C", gSystem->DirName(__FILE__)));
 
@@ -72,7 +75,7 @@ void fttDataWindowRefit(int run,
     if (anch[jl] < 0) { nSkip++; continue; }          // no usable anchor: keep the wide default
     TH1 *h = (TH1*) F->Get(Form("hDbcid_%03d", uuid[jl]));
     if (!h) { nSkip++; continue; }
-    if (!fitFttWindow(h, anch[jl], bxPeriod, winKeep)) { nSkip++; continue; }
+    if (!fitFttWindow(h, anch[jl], bxPeriod, winKeep, inTimeHalf)) { nSkip++; continue; }
     fitLo[jl] = gFitLo; fitHi[jl] = gFitHi;
     int lo = gFitLo, hi = gFitHi;
     if (lo > winFloorMin || hi < winFloorMax) nFloor++;

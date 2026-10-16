@@ -101,7 +101,10 @@ int gFitLo = 0, gFitHi = 0;
 double gFitSig[2 * kWinScan + 1], gFitBkg[2 * kWinScan + 1];
 int    gFitPeak = 0;
 
-bool fitFttWindow(TH1 *h, int aQ, double bxPeriod, double winKeep, double inTimeHalf = 0)
+// inTimeHalf <= 0 means "half a bunch crossing", which is the right answer unless
+// you are reproducing old behaviour. Not a default argument: CINT does not honour
+// one when the function is called from another loaded macro.
+bool fitFttWindow(TH1 *h, int aQ, double bxPeriod, double winKeep, double inTimeHalf)
 {
   // inTimeHalf is the half-width of the in-time crossing, in ticks. It is used in two
   // places that must agree: neighbours this close to t are left out of the pileup
@@ -506,7 +509,7 @@ void fttDataWindow(const char *input,
     for (int it3 = 400; it3 >= -300 && tot > 0; it3--) if (cum[it3 + 300] <= 0.99 * tot) { sugMax[pv] = it3 + 1; break; }
 
       // ---- the window actually stored: the in-time bunch crossing -----------------
-      if (fitFttWindow(hV[pv], aQ, bxPeriod, winKeep)) {
+      if (fitFttWindow(hV[pv], aQ, bxPeriod, winKeep, 0)) {
         fitLoV[pv] = gFitLo; fitHiV[pv] = gFitHi;
         int lo = gFitLo, hi = gFitHi;
         // Grow-only: never store a window tighter than the floor.
