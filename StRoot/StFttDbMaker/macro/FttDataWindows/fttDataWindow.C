@@ -83,6 +83,69 @@ const int kWinScan = 40;
 const double kInTimeHalf = 3.0;
 const int kNOrient = 5;   // kFttHorizontal=0, kFttVertical=1, kFttDiagonalH=2, kFttDiagonalV=3, unknown=4
 
+// ---- the window fit, used by fttDataWindow.C and by fttDataWindowRefit.C ------
+// Out-of-time hits arrive in crossings every bxPeriod ticks, so what sits under the
+// in-time peak is pileup at the SAME phase: bg(t) = mean of counts at t + k*bxPeriod,
+// k = +-1..+-6, interpolated between ticks, skipping neighbours that fall inside the
+// in-time crossing itself. A linear slope of the plateau cancels. (sugMin/sugMax in
+// the QA columns subtract the FAR SIDEBAND instead, which leaves the whole plateau
+// in -- which is why they land around [-100,+225]: that is the plateau, not the
+// crossing.) The window then grows outward from the peak, always taking the richer
+// side, until it holds winKeep of the crossing's signal -- so the parameter is the
+// "signal kept" of the timecut study rather than a threshold on an arbitrary shape.
+// One crossing keeps ~83% of the signal at ~8x the purity of [-65,100];
+// see ftt_sim_hit_maker/timecut/index.html section 5.
+//
+// h is a VMM's raw dbcid histogram and aQ its anchor BIN. Returns true and sets
+// gFitLo/gFitHi (globals rather than reference arguments: CINT resolves signatures
+// at load time and is happier passing nothing by reference across macros).
+// gFitSig/gFitBkg hold the per-tick signal and background of the last call, for
+// plotting; index t runs -kWinScan..+kWinScan at offset kWinScan.
+int gFitLo = 0, gFitHi = 0;
+double gFitSig[2 * kWinScan + 1], gFitBkg[2 * kWinScan + 1];
+int    gFitPeak = 0;
+
+bool fitFttWindow(TH1 *h, int aQ, double bxPeriod, double winKeep)
+{
+  double cntW[2 * kWinScan + 1];
+  for (int tw = -kWinScan; tw <= kWinScan; tw++)
+    cntW[tw + kWinScan] = h->GetBinContent(((aQ + tw) % kNDBCID + kNDBCID) % kNDBCID + 1);
+  for (int tw2 = -kWinScan; tw2 <= kWinScan; tw2++) {
+    double bsum = 0; int nb = 0;
+    for (int kk = -6; kk <= 6; kk++) {
+      if (kk == 0) continue;
+      double x = tw2 + kk * bxPeriod;
+      if (fabs(x) <= kInTimeHalf) continue;
+      int x0 = (int)floor(x);
+      double fx = x - x0;
+      int i0 = ((aQ + x0)     % kNDBCID + kNDBCID) % kNDBCID;
+      int i1 = ((aQ + x0 + 1) % kNDBCID + kNDBCID) % kNDBCID;
+      bsum += (1 - fx) * h->GetBinContent(i0 + 1) + fx * h->GetBinContent(i1 + 1);
+      nb++;
+    }
+    gFitBkg[tw2 + kWinScan] = (nb > 0 ? bsum / nb : 0);
+    gFitSig[tw2 + kWinScan] = cntW[tw2 + kWinScan] - gFitBkg[tw2 + kWinScan];
+  }
+  int tPk = 0; double sPk = -1e30;
+  for (int tw3 = -3; tw3 <= 5; tw3++) if (gFitSig[tw3 + kWinScan] > sPk) { sPk = gFitSig[tw3 + kWinScan]; tPk = tw3; }
+  gFitPeak = tPk;
+  int xlo = tPk - (int)kInTimeHalf, xhi = tPk + (int)kInTimeHalf;
+  double totX = 0;
+  for (int tw4 = xlo; tw4 <= xhi; tw4++)
+    if (gFitSig[tw4 + kWinScan] > 0) totX += gFitSig[tw4 + kWinScan];
+  if (sPk <= 0 || totX <= 0) return false;
+  int lo = tPk, hi = tPk;
+  double got = sPk;
+  while (got < winKeep * totX && (lo - 1 >= xlo || hi + 1 <= xhi)) {
+    double sl = (lo - 1 >= xlo) ? gFitSig[lo - 1 + kWinScan] : -1e30;
+    double sh = (hi + 1 <= xhi) ? gFitSig[hi + 1 + kWinScan] : -1e30;
+    if (sl >= sh) { lo--; if (sl > 0) got += sl; }
+    else          { hi++; if (sh > 0) got += sh; }
+  }
+  gFitLo = lo; gFitHi = hi;
+  return true;
+}
+
 int wrapT(int t)
 {
   while (t >= 2048) t -= 4096;
@@ -418,59 +481,14 @@ void fttDataWindow(const char *input,
     for (int it3 = 400; it3 >= -300 && tot > 0; it3--) if (cum[it3 + 300] <= 0.99 * tot) { sugMax[pv] = it3 + 1; break; }
 
       // ---- the window actually stored: the in-time bunch crossing -----------------
-      // Out-of-time hits arrive in crossings every bxPeriod ticks, so what sits under
-      // the in-time peak is pileup at the SAME phase: bg(t) = mean of counts at
-      // t + k*bxPeriod, k = +-1..+-6, interpolated between ticks, skipping neighbours
-      // that fall inside the in-time crossing itself. A linear slope of the plateau
-      // cancels. sugMin/sugMax above subtract the FAR SIDEBAND instead, which leaves
-      // the whole plateau in -- which is why they land around [-100,+225]: that is the
-      // plateau, not the crossing. One crossing keeps ~83% of the signal at ~8x the
-      // purity of [-65,100]; see ftt_sim_hit_maker/timecut/index.html section 5.
-      {
-        double cntW[2 * kWinScan + 1], sgnW[2 * kWinScan + 1];
-        for (int tw = -kWinScan; tw <= kWinScan; tw++)
-          cntW[tw + kWinScan] = hV[pv]->GetBinContent(((aQ + tw) % kNDBCID + kNDBCID) % kNDBCID + 1);
-        for (int tw = -kWinScan; tw <= kWinScan; tw++) {
-          double bsum = 0; int nb = 0;
-          for (int kk = -6; kk <= 6; kk++) {
-            if (kk == 0) continue;
-            double x = tw + kk * bxPeriod;
-            if (fabs(x) <= kInTimeHalf) continue;
-            int x0 = (int)floor(x);
-            double fx = x - x0;
-            int i0 = ((aQ + x0)     % kNDBCID + kNDBCID) % kNDBCID;
-            int i1 = ((aQ + x0 + 1) % kNDBCID + kNDBCID) % kNDBCID;
-            bsum += (1 - fx) * hV[pv]->GetBinContent(i0 + 1) + fx * hV[pv]->GetBinContent(i1 + 1);
-            nb++;
-          }
-          sgnW[tw + kWinScan] = cntW[tw + kWinScan] - (nb > 0 ? bsum / nb : 0);
-        }
-        // Grow outward from the peak, always taking the richer side, until the window
-        // holds winKeep of the crossing's signal. This is the "signal kept" of the
-        // timecut study, so the parameter means the thing we actually care about
-        // rather than a threshold on an arbitrary shape.
-        int tPk = 0; double sPk = -1e30;
-        for (int tw = -3; tw <= 5; tw++) if (sgnW[tw + kWinScan] > sPk) { sPk = sgnW[tw + kWinScan]; tPk = tw; }
-        int xlo = tPk - (int)kInTimeHalf, xhi = tPk + (int)kInTimeHalf;
-        double totX = 0;
-        for (int tw = xlo; tw <= xhi; tw++)
-          if (sgnW[tw + kWinScan] > 0) totX += sgnW[tw + kWinScan];
-        if (sPk > 0 && totX > 0) {
-          int lo = tPk, hi = tPk;
-          double got = sPk;
-          while (got < winKeep * totX && (lo - 1 >= xlo || hi + 1 <= xhi)) {
-            double sl = (lo - 1 >= xlo) ? sgnW[lo - 1 + kWinScan] : -1e30;
-            double sh = (hi + 1 <= xhi) ? sgnW[hi + 1 + kWinScan] : -1e30;
-            if (sl >= sh) { lo--; if (sl > 0) got += sl; }
-            else          { hi++; if (sh > 0) got += sh; }
-          }
-          fitLoV[pv] = lo; fitHiV[pv] = hi;
-          // Grow-only: never store a window tighter than the floor.
-          if (lo > winFloorMin || hi < winFloorMax) nWinFloor++;
-          if (lo > winFloorMin) lo = winFloorMin;
-          if (hi < winFloorMax) hi = winFloorMax;
-          winMinV[pv] = lo; winMaxV[pv] = hi; nWinOwn++;
-        }
+      if (fitFttWindow(hV[pv], aQ, bxPeriod, winKeep)) {
+        fitLoV[pv] = gFitLo; fitHiV[pv] = gFitHi;
+        int lo = gFitLo, hi = gFitHi;
+        // Grow-only: never store a window tighter than the floor.
+        if (lo > winFloorMin || hi < winFloorMax) nWinFloor++;
+        if (lo > winFloorMin) lo = winFloorMin;
+        if (hi < winFloorMax) hi = winFloorMax;
+        winMinV[pv] = lo; winMaxV[pv] = hi; nWinOwn++;
       }
 
     for (int dd = 0; dd < kNDBCID; dd++) {

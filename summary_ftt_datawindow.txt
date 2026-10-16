@@ -44,7 +44,7 @@ silently.
 
 Measured, 200 events each (stored window; the fit alone is in QA cols fitLo/fitHi):
 
-  23081049  2022 field on, st_physics   297 [-1,3]  38 [-3,3]  19 [-2,3]  2 [-1,4]
+  23081049  2022 field on, st_fwd       356 [-1,3]   2 [-2,3]   1 [-3,3]  1 [-5,3]
   24192016  2023 AuAu                   346 [-1,3]   8 [-2,3]   2 wider low
   24192017  2023 AuAu                   347 [-1,3]   7 [-2,3]   3 [-3,3]
 

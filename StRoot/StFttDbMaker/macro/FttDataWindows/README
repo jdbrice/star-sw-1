@@ -8,6 +8,8 @@ from.
 What is here
 ------------
   fttDataWindow.C        produces a calibration from MuDst, one run at a time
+  fttDataWindowRefit.C   changes the WINDOW of an existing calibration, from the
+                         saved histograms, without re-reading any MuDst
   fttDataWindow_db.C     pushes a calibration into the DB, and reads it back
   data/                  the calibrations we have measured (see below), as
                          worked examples -- see the note at the end.
@@ -105,7 +107,7 @@ number we already trust and the fit only ever says "this VMM needs more room".
 
 Measured, 200 events each:
 
-  run 23081049 (2022 field on)   297 VMMs [-1,3], 38 [-3,3], 19 [-2,3], 2 [-1,4]
+  run 23081049 (2022 field on)   356 VMMs [-1,3], 2 [-2,3], 1 [-3,3], 1 [-5,3]
   run 24192016 (2023 AuAu)       346 VMMs [-1,3], 8 [-2,3], 2 wider on the low side
   run 24192017 (2023 AuAu)       347 VMMs [-1,3], 7 [-2,3], 3 [-3,3]
 
@@ -121,6 +123,30 @@ Note that [-65, 100] keeps essentially all the signal, and one crossing keeps
 about 83% of it at roughly 8x the purity. Moving the table from one to the
 other therefore changes production's time cut. It is a deliberate choice, not
 a side effect of calibrating the anchors.
+
+
+Trying a different window, without re-reading the MuDsts
+--------------------------------------------------------
+fttDataWindow.C saves every VMM's raw dbcid histogram in
+root/fttDataWindow.<run>.root, and the window is measured from exactly those
+histograms. So a different window criterion is a re-analysis of the saved ROOT
+file, not another pass over the data:
+
+    root4star -l -b -q 'fttDataWindowRefit.C(23081049)'                        # round trip
+    root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.90)'             # keep 90%
+    root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.95,4.263,-2,4)'  # wider floor
+
+It reads fttDataWindow.<run>.txt and root/fttDataWindow.<run>.root from indir
+(default .), and writes a new fttDataWindow.<run>.txt into outdir. Anchors are
+NOT recomputed -- they are read back from the existing calibration -- so only
+columns 3 and 4 can change and everything else is passed through unchanged. A
+round trip at the same settings reproduces the file the MuDst pass wrote, all
+384 lines.
+
+The fit itself lives in fttDataWindow.C (fitFttWindow) and the refit macro
+loads it from there, so there is one copy of the algorithm. What the ROOT file
+cannot give back is a different ANCHOR definition or more events; those need
+the MuDsts again.
 
 
 The run stamp, and why it matters
