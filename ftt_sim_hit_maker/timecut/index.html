@@ -9,6 +9,7 @@
 <p><a href="../index.html">&larr; back to StFttSimHitMaker main page</a></p>
 <p><b><a href="#20260914">&darr; 2026-09-14 update: per-run time calibration, field ON vs OFF, time-window choice</a></b></p>
 <p><b><a href="#20260921">&darr; 2026-09-21 update: the [-1,3] window measured on production data (purity, background, track quality)</a></b></p>
+<p><b><a href="#20261016">&darr; 2026-10-16 update: the window measured per VMM, and why it is only allowed to open</a></b></p>
 
 <H2>Goal / Method</H2>
 <ul>
@@ -453,6 +454,116 @@ do not say what the FST wedge flip or the FTT X/Y flip is worth on its own. A de
 zero-field A/B of the three switches at fixed [-1,3] window is the next measurement &mdash; zero
 field is the better place for it, since its excess (1.8) and purity (23%) are far above the
 field-on values, and straight tracks make a geometry error show up directly.</p>
+
+<HR>
+<a name="20261016"></a>
+<H1>The window measured per VMM (2026-10-16)</H1>
+
+<p>Until now the <tt>min</tt>/<tt>max</tt> columns of
+<tt>Calibrations/ftt/fttDataWindowsB</tt> were not a measurement. They were a macro
+argument written straight through: <b>[-65,100] on all 21504 VMM lines</b> of the 56
+calibrated runs. Only the anchors were measured.</p>
+
+<p>That matters more than it looks, because <b>those columns are the time cut production
+applies</b>: <tt>StFttClusterMaker</tt> runs with <tt>mTimeCutMode = 0</tt>
+(<tt>kTimeCutModeDB</tt>) and reads the window per VMM from the table. (The afterburner is
+the exception &mdash; <tt>fwd_afterburner_db.C</tt> sets mode 2 with its own
+<tt>[-40,100]</tt>, so afterburner and BFC disagree today. Still to be reconciled.)</p>
+
+<H2>How the window is measured</H2>
+<ul>
+  <li>Out-of-time hits arrive one bunch crossing apart, every <b>4.263 ticks</b>
+      (40&nbsp;MHz / 9.383&nbsp;MHz), so what sits under the in-time peak is pileup at the
+      <b>same phase</b>. Background: <tt>bg(t)</tt> = mean of the counts at
+      <tt>t + k&middot;4.263</tt>, k = &plusmn;1..&plusmn;6, interpolated between ticks,
+      skipping neighbours that fall inside the in-time crossing itself. A linear slope of
+      the plateau cancels.
+  <li>The window then grows outward from the peak, always taking the richer side, until it
+      holds <b>95% of that crossing's signal</b>. The parameter is therefore the "signal
+      kept" of section 5, not a threshold on an arbitrary shape.
+  <li>The <tt>sugMin</tt>/<tt>sugMax</tt> QA columns are NOT this. They subtract the far
+      sideband, which leaves the whole plateau in, which is why they land around
+      [-100,+225]: that is the plateau, not the crossing.
+</ul>
+
+<H2>and why it is only allowed to OPEN</H2>
+<p>The fitted window is then <b>widened, never tightened, to contain [-1,3]</b> &mdash; the
+one-crossing window of section 5. The fit may only open a VMM's cut further.</p>
+<ul>
+  <li>The fit is per VMM, per run, from a few hundred events. The two errors it can make do
+      not cost the same: a window one tick too wide costs a little pileup, a window one tick
+      too narrow <b>throws away real hits, in production, silently</b>.
+  <li>So the floor is the number already trusted from the summed-over-all-VMM study, and the
+      fit only ever says "this VMM needs more room".
+</ul>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>the fit opens the window wider than the floor</TH>
+    <TH>the fit asks for less, and the floor holds it open</TH></TR>
+<TR>
+<TD><a href="plots/fttWindow_wider_23081049.png"><img src="plots/fttWindow_wider_23081049.png" height="200"></a></TD>
+<TD><a href="plots/fttWindow_floor_23081049.png"><img src="plots/fttWindow_floor_23081049.png" height="200"></a></TD>
+</TR>
+</TABLE>
+<p>Run 23081049, 200 events. Black = raw counts at <tt>t = dbcid - anchor</tt>, red dashed =
+the phase-matched pileup background, grey = the floor, blue = what the fit asked for, green =
+what is stored. VMM 54 is the clearest case for the rule: its timing is smeared over several
+ticks, the fit answers <tt>[-5,0]</tt>, and the stored window is <tt>[-5,3]</tt> &mdash; the
+fit's extra room on the low side, the floor's on the high side. On the right are three of the
+busiest VMMs in the run (9-10k hits each), where the fit would have cut at
+<tt>[-1,1]</tt> or <tt>[-1,2]</tt> and the floor keeps <tt>[-1,3]</tt>.</p>
+
+<H2>What comes out</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>stored windows</TH><TH>what the fit alone said</TH></TR>
+<TR><TD>23081049, 2022 field on</TD><TD>356 [-1,3], 2 [-2,3], 1 [-3,3], 1 [-5,3]</TD>
+    <TD>mostly [-1,1] and [-1,2]</TD></TR>
+<TR><TD>24192016, 2023 AuAu</TD><TD>346 [-1,3], 8 [-2,3], 2 wider on the low side</TD>
+    <TD>147 [-1,2], 136 [-1,1], 58 [-1,3]</TD></TR>
+<TR><TD>24192017, 2023 AuAu</TD><TD>347 [-1,3], 7 [-2,3], 3 [-3,3]</TD>
+    <TD>194 [-1,2], 101 [-1,3], 48 [-1,1]</TD></TR>
+</TABLE>
+<ul>
+  <li>Stored median <b>[-1,3] on all three runs</b>, two of them AuAu and one pp, so the
+      floor is what most VMMs get and the fit decides the tails.
+  <li>The low edge is where the spread is. The high edge almost never exceeds +3, because
+      the fit's reach is one crossing half-width around the peak and the floor already spans
+      a full crossing.
+  <li>A VMM with <tt>anchor = -1</tt> keeps the wide [-65,100]: it falls back to the
+      consumer's on-the-fly anchor, which is not validated to the &plusmn;1 tick a
+      one-crossing window needs.
+  <li>The fit's own answer is kept in new QA columns <tt>fitLo</tt>/<tt>fitHi</tt>, so the
+      measurement stays visible in the file that is pushed.
+</ul>
+
+<H2>Nothing changed in the histograms &mdash; only the analysis</H2>
+<p>The raw per-VMM <tt>dbcid</tt> histograms are what they always were, and
+<tt>fttDataWindow.C</tt> already saves all 384 of them in
+<tt>root/fttDataWindow.&lt;run&gt;.root</tt>. The window is measured from exactly those
+histograms, so <b>changing the window criterion is a re-analysis of the saved ROOT file, not
+a new pass over the MuDsts</b>:</p>
+<pre>root4star -l -b -q 'fttDataWindowRefit.C(23081049)'                          # same settings: round trip
+root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.90)'               # keep 90% of the crossing
+root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.95,4.263,-2,4)'    # a wider floor</pre>
+<ul>
+  <li>Anchors are <b>not</b> recomputed &mdash; they are read back from the existing
+      calibration, so only columns 3 and 4 can change. Everything else is passed through.
+  <li>Verified: re-running the fit from the ROOT file reproduces the MuDst pass exactly, all
+      384 lines, columns 1-5 identical.
+  <li>The fit lives in one place (<tt>fitFttWindow</tt> in <tt>fttDataWindow.C</tt>) and the
+      refit macro loads it from there, so the two cannot drift apart.
+</ul>
+<p>So anyone holding the ROOT files can try a different window without the MuDsts. What the
+ROOT file cannot give back is a different ANCHOR definition or more events &mdash; those need
+the MuDsts again.</p>
+
+<H2>The decision this still leaves open</H2>
+<p>[-65,100] keeps essentially all the signal; one crossing keeps about 83% of it at roughly
+8&times; the purity. Pushing a measured window therefore changes production's time cut the
+moment BFC reads it. The 56 calibrations in
+<tt>StRoot/StFttDbMaker/macro/FttDataWindows/data</tt> still carry the uniform [-65,100], so
+pushing them as they stand gives production the measured anchors and leaves its cut exactly
+as it is &mdash; which is a clean way to take the two changes one at a time.</p>
 
 <HR>
 <ADDRESS>
