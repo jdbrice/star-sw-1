@@ -190,3 +190,40 @@ separate script: fttDataWindow.C takes a vmmQA list of up to 8 VMMs whose dbcid
 it also keeps per channel, and fttDataWindowPlot.C draws it. The earlier
 standalone script/checkFttVmmChannels.C is deleted -- it duplicated the MuDst
 reading and never worked.
+
+PUSHED 2026-10-16 -- 58 runs are in the database
+------------------------------------------------
+Calibrations_ftt.fttDataWindowsB now holds 60 active ofl rows: the 2 legacy
+unstamped ones from Nov 2025, plus our 58, each at its run start minus 10 s.
+Verified run by run with fttDataWindow_db.C(0): 58 processed, 58 stamped MATCH,
+58 DB-identical to the file, 0 differing, 0 errors.
+
+  44 runs  2022 field-on + zero field    2022-03-04 .. 2022-03-23
+   2 runs  Au+Au 2023                    2023-07-11
+  12 runs  zero field 2024               2024-06-22
+
+Two things the push itself taught us, both now fixed in the code:
+
+  - DB_ACCESS_MODE must be set BEFORE the first connection. StDbManager opens
+    one connection and reuses it, and this macro reads before it writes, so
+    setting the mode around storeDbTable sent the write out on the read
+    connection: "The MySQL server is running with the --read-only option".
+    Nothing was stored, and the macro said so correctly.
+  - The post-store read-back came from St_db_Maker's cache and showed the state
+    from BEFORE the write. A store is now confirmed by a direct query on the
+    server it was written to.
+
+AND THE WINDOWS ARE NOW GATED ON THE RUN STAMP, not just the anchors
+(StFttDbMaker::loadDataWindows). Resolution is "latest entry at or before", so
+without this every LATER run inherited a calibrated run's windows -- run
+24192017 was being served run 23081064's, sixteen months older. A four-tick
+window only means anything against the anchor it was measured with, and an
+uncalibrated run uses on-the-fly anchors. An entry stamped for another run is
+now ignored entirely and StFttDb::getTimeCut falls back to its built-in default,
+[-65,100], which is deliberately the same as the legacy global entry. So an
+uncalibrated run behaves exactly as it did before any of this was pushed, and
+the fallback disappears by itself as runs get calibrated. An UNSTAMPED entry
+still applies its windows: it is a global default, not one run's measurement.
+
+Checked end to end with fttDataWindowCheck.C: 23081001, 24192016, 24192017
+ENABLED; 23081003 and (before its own entry existed) 24192017 ignored entirely.
