@@ -549,6 +549,31 @@ asks for [-1,1] or [-1,2] and the floor keeps [-1,3].</p>
 360, no outliers at all, where before there were four. AuAu 24192017 is 355 [-1,3] and 2
 [-2,3].</p>
 
+<H2>A VMM's anchor need not match its board</H2>
+<p>Anchors are set per front-end board, so the 4 VMMs of a FOB normally share one &mdash;
+344 of 360 do on run 23081049. The obvious next step looked like snapping the other 16 to
+their FOB's median. It would have been wrong: <b>every one of them has its own sharp,
+well-populated peak at the shifted position.</b></p>
+<pre>FOB  9   36,39 peak at t=0 (165,181)     37 at +2 (282)   38 at +3 (289)
+FOB 43   174,175 peak at t=0 (141,169)   173 at +1 (322)  172 at +5/+6 (105,185)
+FOB 94   377,378,379 at t=0              376 at +9 (116)
+FOB 15   60,62,63 at t=0                 61 at +1 (426 against 110 at t=0)</pre>
+<p>Even the off-by-one cases are decisive peaks rather than a coin flip between two bins.
+And per channel the offsets are <b>whole-chip</b>: VMM 372 is 12 ticks late in all 9 of its
+live channels, 376 nine ticks in 7 of 10, 61 one tick in 52 of 56. Not noisy channels, not a
+failure of the anchor search &mdash; a per-VMM hardware timing offset, up to 300 ns.</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>VMM 372: dbcid vs channel, against its board's anchor</TH></TR>
+<TR><TD><a href="plots/fttWindow_chan_23081049.png"><img src="plots/fttWindow_chan_23081049.png" height="200"></a></TD></TR>
+</TABLE>
+<p>Snapping those to the board would move the window off real hits: over the 17 VMMs it
+keeps 80% of what is in the window today, and as little as 22% for VMM 172. So
+<tt>fobTol</tt> stays a sanity check rather than a correction, and 20 ticks is the right
+order for it &mdash; it is there to catch an anchor wrong by hundreds of ticks. Note also
+that "the FOB median" is ill-defined when two of four differ: on FOB 9 it follows the
+shifted VMMs 37 and 38 and makes 36 and 39, which sit exactly on the board anchor, look
+wrong.</p>
+
 <H2>What comes out</H2>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>stored windows</TH><TH>what the fit alone said</TH></TR>
