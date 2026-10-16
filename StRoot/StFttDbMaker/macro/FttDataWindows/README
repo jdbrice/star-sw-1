@@ -7,7 +7,8 @@ from.
 
 What is here
 ------------
-  fttDataWindow.C        produces a calibration from MuDst, one run at a time
+  fttDataWindow.C        produces a calibration from MuDst, one run at a time,
+                         or REDOES one from the histograms it saved earlier
   fttDataWindowRefit.C   changes the WINDOW of an existing calibration, from the
                          saved histograms, without re-reading any MuDst
   fttDataWindowPlot.C    draws what the fit saw, also from the saved histograms
@@ -178,8 +179,34 @@ other therefore changes production's time cut. It is a deliberate choice, not
 a side effect of calibrating the anchors.
 
 
-Trying a different window, without re-reading the MuDsts
---------------------------------------------------------
+Redoing the WHOLE calibration without the MuDsts
+-------------------------------------------------
+Everything the analysis needs per VMM is the raw dbcid histogram, and
+fttDataWindow.C saves all 384 of them. So give it one of its own ROOT files
+instead of a MuDst and it redoes the lot -- anchors, the acceptance tests, the
+window -- and writes a complete calibration text file:
+
+    root4star -l -b -q 'fttDataWindow.C("root/fttDataWindow.23081049.root")'
+
+That is the way to recalibrate after the algorithm changes, and the way to
+produce a calibration if you have the ROOT files but not the MuDsts.
+
+Two things are not in the histogram file and are read from the .txt beside it
+(../fttDataWindow.<run>.txt, where this macro puts it): the run metadata for
+the header, and each VMM's strip orientation for the QA columns. Without the
+.txt the run number still comes from the filename and the calibration is
+unaffected -- only the orientation split in the QA line is lost.
+
+Verified: redoing run 23081049 from its ROOT file reproduces the calibration
+the MuDst pass produced, all 385 lines, all five DB columns, and the same QA
+line apart from the three fields a histogram cannot carry -- number of files,
+events read, and the stop reason, which becomes "redoFromHistograms". The same
+holds for a ROOT file written in September by an older version of this macro:
+the histogram definition has never changed, so old files still work.
+
+
+Trying a different window only, without redoing the anchors
+------------------------------------------------------------
 fttDataWindow.C saves every VMM's raw dbcid histogram in
 root/fttDataWindow.<run>.root, and the window is measured from exactly those
 histograms. So a different window criterion is a re-analysis of the saved ROOT

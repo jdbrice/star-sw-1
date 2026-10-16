@@ -295,37 +295,67 @@ void fttDataWindow(const char *input,
   }
   if (nFiles == 0) { printf("fttDataWindow: no input files in %s\n", input); return; }
 
-  StChain *chain = new StChain("StChain");
-  StMuDstMaker *muDstMaker = new StMuDstMaker(0, 0, "", files[0].Data(), "MuDst.root", 1);
-  TChain &muChain = *muDstMaker->chain();
-  for (int iF = 1; iF < nFiles; iF++) muChain.Add(files[iF].Data());
-  // Only the event header and FTT raw hits are needed -- a large speed-up on
-  // physics-stream files.
-  muDstMaker->SetStatus("*", 0);
-  muDstMaker->SetStatus("MuEvent", 1);
-  muDstMaker->SetStatus("FttRawHit", 1);
-
-  St_db_Maker *dbMk = new St_db_Maker("db", "MySQL:StarDb", "$STAR/StarDb", "StarDb");
-  StMuDst2StEventMaker *mu2ev = new StMuDst2StEventMaker();
-  StFttDbMaker *fttDbMk = new StFttDbMaker();
-
-  if (chain->Init()) { printf("fttDataWindow: chain Init failed\n"); return; }
-  if (muChain.GetEntries() <= 0) {
-    printf("fttDataWindow: ERROR no events readable from %s (missing file or unavailable disk?)\n", input);
-    return;
+  // ---- redo mode: the input is one of OUR OWN root/fttDataWindow.<run>.root -----
+  // Everything the analysis needs per VMM is the raw dbcid histogram, so a saved
+  // file can be re-analysed with no MuDst: anchors, acceptance and window are all
+  // recomputed. That is how a calibration is redone after the algorithm changes,
+  // and how someone without the MuDsts can still produce a calibration text file.
+  //
+  // Two things are not in the histogram file and are read from the .txt beside it
+  // (../fttDataWindow.<run>.txt, as fttDataWindow.C writes them): the run metadata
+  // for the header, and each VMM's strip orientation for the QA columns. Without
+  // that .txt the run number still comes from the filename and the analysis is
+  // unaffected; only the orientation split in the QA line is lost.
+  bool redoMode = false;
+  TFile *fIn = 0;
+  if (in.EndsWith(".root")) {
+    fIn = TFile::Open(in.Data());
+    if (fIn && !fIn->IsZombie() && fIn->Get("hDbcid_000")) redoMode = true;
+    else if (fIn) { fIn->Close(); fIn = 0; }
+    // back to memory, or the accumulators below would be created inside fIn and
+    // collide by name with what is already in it
+    gROOT->cd();
   }
 
-  muChain.GetEntry(0);
-  int run = muDstMaker->muDst()->event()->runNumber();
-  // UTC date/time of the first event, for the DB query. TTimeStamp rather than
-  // gmtime(): CINT does not reliably know struct tm without extra includes.
-  TTimeStamp firstTs((time_t)muDstMaker->muDst()->event()->eventInfo()->time(), 0);
-  int date  = (int)firstTs.GetDate(kTRUE);
-  int itime = (int)firstTs.GetTime(kTRUE);
-  dbMk->SetDateTime(date, itime);
-  chain->InitRun(run);
-  printf("fttDataWindow: run %d, first event %d %06d, %d file(s), %lld entries\n",
-         run, date, itime, nFiles, (Long64_t)muChain.GetEntries());
+  StChain *chain = 0;
+  int run = 0, date = 0, itime = 0;
+  Long64_t nEntries = 0;
+  StMuDstMaker *muDstMaker = 0;
+
+  if (!redoMode) {
+    chain = new StChain("StChain");
+    muDstMaker = new StMuDstMaker(0, 0, "", files[0].Data(), "MuDst.root", 1);
+    TChain &muChain = *muDstMaker->chain();
+    for (int iF = 1; iF < nFiles; iF++) muChain.Add(files[iF].Data());
+    // Only the event header and FTT raw hits are needed -- a large speed-up on
+    // physics-stream files.
+    muDstMaker->SetStatus("*", 0);
+    muDstMaker->SetStatus("MuEvent", 1);
+    muDstMaker->SetStatus("FttRawHit", 1);
+
+    St_db_Maker *dbMk = new St_db_Maker("db", "MySQL:StarDb", "$STAR/StarDb", "StarDb");
+    new StMuDst2StEventMaker();
+    new StFttDbMaker();
+
+    if (chain->Init()) { printf("fttDataWindow: chain Init failed\n"); return; }
+    if (muChain.GetEntries() <= 0) {
+      printf("fttDataWindow: ERROR no events readable from %s (missing file or unavailable disk?)\n", input);
+      return;
+    }
+
+    muChain.GetEntry(0);
+    run = muDstMaker->muDst()->event()->runNumber();
+    // UTC date/time of the first event, for the DB query. TTimeStamp rather than
+    // gmtime(): CINT does not reliably know struct tm without extra includes.
+    TTimeStamp firstTs((time_t)muDstMaker->muDst()->event()->eventInfo()->time(), 0);
+    date  = (int)firstTs.GetDate(kTRUE);
+    itime = (int)firstTs.GetTime(kTRUE);
+    dbMk->SetDateTime(date, itime);
+    chain->InitRun(run);
+    nEntries = (Long64_t) muChain.GetEntries();
+    printf("fttDataWindow: run %d, first event %d %06d, %d file(s), %lld entries\n",
+           run, date, itime, nFiles, nEntries);
+  }
 
   // ---- accumulators -------------------------------------------------------------
   TH1I *hV[384];
@@ -365,13 +395,70 @@ void fttDataWindow(const char *input,
   int anchor[384], status[384];
   double nHitsV[384], sigV[384], bkgV[384], inWinV[384];
 
-  Long64_t nEntries = muChain.GetEntries();
+  // nEntries was set from the chain above; redo mode leaves it 0 and never loops
   if (maxEvents > 0 && maxEvents < nEntries) nEntries = maxEvents;
   double nHitsTot = 0, nBadVmm = 0, nBadDbcid = 0, nOtherRun = 0;
   int nRead = 0;
   TString stopReason = "endOfInput";
+  double nHitsTotRedo = 0;
 
-  for (Long64_t iev = 0; iev < muChain.GetEntries(); iev++) {
+  // ---- redo mode: fill the accumulators from the saved file instead of events ----
+  if (redoMode) {
+    for (int ir = 0; ir < kNVMM; ir++) {
+      TH1 *hIn = (TH1 *) fIn->Get(Form("hDbcid_%03d", ir));
+      if (!hIn) continue;
+      for (int ib = 1; ib <= kNDBCID; ib++) hV[ir]->SetBinContent(ib, hIn->GetBinContent(ib));
+      hV[ir]->SetEntries(hIn->GetEntries());
+      nHitsTotRedo += hIn->GetEntries();
+    }
+    // Run metadata and the per-VMM orientation come from the .txt beside the file,
+    // ../fttDataWindow.<run>.txt. Both are QA only -- the calibration itself is
+    // recomputed from the histograms either way.
+    TString dirIn  = gSystem->DirName(in.Data());      // .../root
+    TString baseIn = gSystem->BaseName(in.Data());     // fttDataWindow.<run>.root
+    baseIn.ReplaceAll(".root", ".txt");
+    TString txt = Form("%s/../%s", dirIn.Data(), baseIn.Data());   // the usual layout
+    FILE *T = fopen(txt.Data(), "r");
+    if (!T) {                                          // or sitting beside the file
+      txt = Form("%s/%s", dirIn.Data(), baseIn.Data());
+      T = fopen(txt.Data(), "r");
+    }
+    if (T) {
+      char ln[512];
+      while (fgets(ln, sizeof(ln), T)) {
+        if (ln[0] == '#') {
+          int r2 = 0, d2 = 0, t2 = 0;
+          if (sscanf(ln, "# run %d firstEventDate %d firstEventTime %d", &r2, &d2, &t2) == 3) {
+            run = r2; date = d2; itime = t2;
+          }
+          continue;
+        }
+        // cols 1, 7 and 11 are uuid, nHits and orient. The rest are skipped with %*,
+        // which costs no argument: CINT's sscanf takes at most 12.
+        int u2 = -1, or2 = -1; double nn2 = 0;
+        if (sscanf(ln, "%d %*d %*d %*d %*d %*d %lf %*f %*f %*f %d", &u2, &nn2, &or2) == 3)
+          if (u2 >= 0 && u2 < kNVMM && or2 >= 0 && or2 < kNOrient) orientCount[u2][or2] = nn2;
+      }
+      fclose(T);
+      printf("fttDataWindow: redo -- metadata and orientation from %s\n", txt.Data());
+    } else {
+      printf("fttDataWindow: redo -- no .txt beside the histogram file; the QA\n"
+             "               orientation split and the run metadata will be blank\n");
+    }
+    if (run == 0) {   // last resort: the run number is in the filename
+      TString base = gSystem->BaseName(in.Data());
+      base.ReplaceAll("fttDataWindow.", ""); base.ReplaceAll(".root", "");
+      if (base.IsDigit()) run = base.Atoi();
+    }
+    nRead = 0;
+    nHitsTot = nHitsTotRedo;
+    stopReason = "redoFromHistograms";
+    printf("fttDataWindow: REDO run %d from %s -- %0.f hits in 384 VMM histograms,\n"
+           "               anchors and windows recomputed, no MuDst read\n",
+           run, in.Data(), nHitsTotRedo);
+  }
+
+  for (Long64_t iev = 0; !redoMode && iev < nEntries; iev++) {
     if (maxEvents > 0 && iev >= maxEvents) { stopReason = "maxEvents"; break; }
     chain->Clear();
     int rc = chain->Make();
