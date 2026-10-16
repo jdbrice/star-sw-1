@@ -182,3 +182,39 @@ real-data timestamp that the survey comes back -> merge the PR.
       bfc option NoCintDb = MySQL only, both file sources dropped.
       Check the geometry cache afterwards too: rebuild any fGeom.*.root whose
       sdt no longer resolves to the entry you intend.
+
+DEACTIVATION DONE AND VERIFIED (2026-10-16)
+-------------------------------------------
+Dmitry: "Done, requested entries are deactivated. I also verified that values
+propagated to at least one replica so replication works as expected."
+
+All 11 old 2021-10-25 entries now carry deactive=1792163577:
+  fstOnTpc 4 (00:00:11..14), hssOnFst 1, fstWedgeOnHss 1,
+  fstSensorOnWedge 5 (00:00:00..04)
+Our 8 slots per table are untouched and active.
+
+THE MERGE-ORDER TRAP IS CLEARED. Checked with StFstDbMaker/macro/
+fstGeometryCheck.C, which opens St_db_Maker with MySQL as its ONLY source --
+the BFC NoCintDb case, i.e. the world after the release stops shipping
+Geometry/fst. Every run year resolves to the right slot, and the survey is
+there rather than identity:
+
+  query time          resolves to            hssOnFst row0 t
+  20211010 000000     2021-10-10 00:00:00    identity           (ideal / MC)
+  20220322 221026     2021-10-15 00:00:01    -0.0775, +0.016    SURVEY
+  20230711 193927     2023-04-15 00:00:00    -0.0775, +0.016    SURVEY
+  20240622 071547     2023-12-15 00:00:00    -0.0775, +0.016    SURVEY
+  20250601 120000     2024-12-15 00:00:00    -0.0775, +0.016    SURVEY
+
+fstOnTpc carries +0.14876, -0.31702 at every one of those; fstWedgeOnHss and
+fstSensorOnWedge are identity by construction, since the survey lives in
+fstOnTpc and hssOnFst.
+
+So the branch that removes StarDb/Geometry/fst can be merged. Note the RELEASE
+still ships $STAR/StarDb/Geometry/fst at 20211110.000001, later than every DB
+entry, so until a release is cut without them the files still win at a Run 22
+timestamp -- which is harmless, they are the same survey, but it means the DB
+path is only exercised with NoCintDb until then.
+
+Remaining after the merge: rebuild any fGeom.*.root cache, which is built from
+the DB at the event timestamp.
