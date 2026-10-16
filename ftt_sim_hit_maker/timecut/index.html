@@ -7,6 +7,8 @@
 
 <H1>FTT per-VMM uuid vs. time diagnostic</H1>
 <p><a href="../index.html">&larr; back to StFttSimHitMaker main page</a></p>
+<p><b><a href="#20260914">&darr; 2026-09-14 update: per-run time calibration, field ON vs OFF, time-window choice</a></b></p>
+<p><b><a href="#20260921">&darr; 2026-09-21 update: the [-1,3] window measured on production data (purity, background, track quality)</a></b></p>
 
 <H2>Goal / Method</H2>
 <ul>
@@ -146,6 +148,311 @@ value it corrupts.</b></p>
       structureless dbcid distributions -- plausibly related to the "ffff! FFFF!" corrupted-word
       warnings seen in every run's stderr this session. Not investigated further yet.
 </ul>
+
+<HR>
+<a name="20260914"></a>
+<H1>Per-run time calibration (2026-09-14)</H1>
+
+<H2>1. Symptom: zero-field data has no horizontal clusters</H2>
+<p>Zero-field run 23063028, 150 events, only the FTT time cut changed:</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>StFttClusterMaker time cut</TH><TH>V clusters</TH><TH>H clusters</TH><TH>H/V</TH><TH>FTT points</TH></TR>
+<TR><TD>mode 2, calibrated time [-40,100]</TD><TD>165</TD><TD><b>0</b></TD><TD>0.000</TD><TD>752</TD></TR>
+<TR><TD>mode 1, AcceptAll</TD><TD>5856</TD><TD>5838</TD><TD>0.997</TD><TD>20416</TD></TR>
+</TABLE>
+<p>Field-on data does not show this (H and V identical to 1%).</p>
+
+<H2>2. Cause: <tt>HitCalibHelper::ready()</tt> counted distinct values, not hits</H2>
+<p>A hit gets <tt>time = -4097</tt> (always cut) until its VMM is "ready":</p>
+<pre>-  return ( ... dbcidHist[uuid].size() &gt; MIN_BCID_SAMPLES );   // number of DISTINCT dbcid values
++  return ( ... nSamples[uuid]         &gt; MIN_BCID_SAMPLES );   // number of hits</pre>
+<ul>
+  <li>A well-timed VMM puts its hits on a few dbcid values, so it can stay "not ready" forever;
+      a noisy one gets ready fast. On sparse data the cut keeps noise and drops clean channels.
+  <li>Harmless while production used AcceptAll; decisive once the calibrated cut was enabled.
+</ul>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH></TH><TH>FTT hits / event</TH><TH>hits / VMM</TH><TH>distinct dbcid / VMM</TH><TH>VMMs ready (H / V / dH / dV)</TH></TR>
+<TR><TD>field ON 23081049, 100 evt</TD><TD>10,620</TD><TD>~2,600</TD><TD>~300</TD><TD>127/128, 120/120, 63/64, 56/60</TD></TR>
+<TR><TD>field OFF 23063028, 300 evt</TD><TD>339</TD><TD>~212</TD><TD>~21</TD><TD><b>0/128</b>, 1/120, 1/64, 2/61</TD></TR>
+</TABLE>
+<p>Fixed (samples counted; anchor argmax kept, now updated incrementally). Effect on field-on
+run 23081049, 300 events, window [-40,100]:</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH></TH><TH>uncalibrated H hits</TH><TH>in window H / V / dH / dV</TH></TR>
+<TR><TD>before</TD><TD>106,947</TD><TD>45.1 / 45.3 / 45.9 / 45.5 %</TD></TR>
+<TR><TD>after</TD><TD>25,571</TD><TD>49.1 / 48.8 / 48.7 / 48.2 %</TD></TR>
+</TABLE>
+
+<H2>3. Per-run anchors instead of per-file warm-up</H2>
+<p>VMM anchors are reset at random at every run start, so they must be measured per run.
+Measuring them once from enough events removes the per-file warm-up entirely.</p>
+<ul>
+  <li><a href="fttDataWindow.C"><tt>StRoot/StFttDbMaker/macro/FttDataWindows/fttDataWindow.C</tt></a> -- MuDst (or list) for one run &rarr;
+      <tt>fttDataWindow/fttDataWindow.&lt;run&gt;.txt</tt>, <tt>png/</tt>, <tt>root/</tt>, plus one line in
+      <tt>fttDataWindow.&lt;year&gt;.QA.txt</tt>.
+  <li>Raw dbcid per VMM; anchor = most populated dbcid; runs until 95% of active VMMs are calibrated.
+  <li>Accepted if the in-window fraction is &ge; 0.7 &times; run median; otherwise kept if within
+      20 ticks of its FOB's median anchor; otherwise <tt>anchor = -1</tt> (no calibration).
+  <li>The window is measured per VMM as well: the in-time crossing, against a background
+      taken at the same phase (<tt>t + k&middot;4.263</tt>, k = &plusmn;1..6), grown outward from
+      the peak until it holds 95% of that crossing. It is then widened if needed to contain
+      <b>[-1,3]</b>, the one-crossing window of section 5: the fit may only open a VMM's cut
+      <em>further</em>, never tighter, so a thin measurement cannot throw real hits away.
+      Measured median on AuAu runs 24192016/17: [-1,3], with ~3% of VMMs opening to -2 or -3.
+      VMMs with <tt>anchor = -1</tt> keep the wide [-65,100].
+  <li><a href="fttDataWindow_db.C"><tt>StRoot/StFttDbMaker/macro/FttDataWindows/fttDataWindow_db.C</tt></a> -- reads one run or all files, gets
+      <tt>startRunTime</tt> from RunLog, stores and reads back. Refuses to store poor calibrations
+      unless forced.
+</ul>
+<p><b>All zero-field runs are now calibrated</b> (2026-09-21, one condor job per run,
+<tt>script/submit_fttcal.pl</tt> + <tt>script/runfttcal</tt>, one MuDst per run read in place):</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>dataset</TH><TH>calibrated</TH><TH>no FTT data</TH><TH>QA table</TH><TH>plots</TH><TH>files</TH></TR>
+<TR><TD>zero field 2022</TD><TD>49 runs</TD><TD>3 runs</TD>
+    <TD><a href="fttcal/zf2022/fttDataWindow.2022.qa.txt">fttDataWindow.2022.qa.txt</a></TD>
+    <TD><a href="fttcal/zf2022/png/">png/</a> (all runs in one page)</TD>
+    <TD><a href="fttcal/zf2022/">zf2022/</a></TD></TR>
+<TR><TD>zero field 2024</TD><TD>12 runs</TD><TD>1 run</TD>
+    <TD><a href="fttcal/zf2024/fttDataWindow.2024.qa.txt">fttDataWindow.2024.qa.txt</a></TD>
+    <TD><a href="fttcal/zf2024/png/">png/</a></TD>
+    <TD><a href="fttcal/zf2024/">zf2024/</a></TD></TR>
+</TABLE>
+<p>Each dataset directory holds <tt>fttDataWindow.&lt;run&gt;.txt</tt> (the calibration),
+<tt>qa/</tt> (one QA line per run, plus <tt>0_header.qa</tt> so <tt>cat *.qa</tt> prints a header
+first), <tt>png/</tt> QA plots, and <tt>empty/</tt> for runs
+with no usable FTT data &mdash; those are kept OUT of the calibration directory on purpose: such a
+file is syntactically valid but full of anchor -1, and a consumer that loaded it would reject every
+hit of that run. The per-VMM dbcid histograms (<tt>root/</tt>, 25&nbsp;MB) and the condor logs are not
+copied here; they stay in <tt>fttcal/</tt> in the working area.</p>
+
+<H3>Reading the QA table</H3>
+<p>Columns: run, date, time, nFiles, events read, raw FTT hits, then VMM counts
+(<tt>nOK</tt>, <tt>noisy</tt> = noisy-FOB but usable, <tt>fFob</tt> = anchor taken from the FOB median,
+<tt>lowS</tt> = too few hits, <tt>rej</tt> = failed the quality cut, <tt>dead</tt>), then the fraction of
+hits inside the window (all, H, V, diagonal H, diagonal V) and the stop reason.</p>
+<p><b><tt>stop = endOfInput</tt> does NOT mean "needs more events".</b> It means the file ended before
+95% of active VMMs were calibrated, and it covers two different situations:</p>
+<ul>
+  <li><b>No FTT at all</b> (3 runs, all early 2022): 6-12k events read, ZERO raw hits, all 384 VMMs
+      dead. More events cannot help; these are the <tt>empty/</tt> runs.</li>
+  <li><b>Rejected VMMs, not statistics</b> (19 runs in 2022, all 13 in 2024): millions of raw hits,
+      <tt>lowS</tt> = 0 or 1, so every VMM had plenty of data. 2024 misses the threshold by about two
+      VMMs &mdash; 340 OK + 8 noisy = 348 good of 369 active = 94.3%, against the 95% required. The
+      early-2022 ones miss by more (24-59 rejected). The calibration written is still good for the
+      VMMs that passed; only the "converged" label is missing. Either relax <tt>goodFrac</tt> to
+      ~0.92, or find out why those VMMs are rejected &mdash; 2024 rejects the same 20 in every run,
+      which looks like a fixed set of bad channels rather than a statistical effect.</li>
+</ul>
+<p><b>2024 needs a look before use:</b> its in-window fraction is 0.42 against 0.89 for 2022, worst
+on the diagonal-H strips (0.32). With per-VMM anchors applied, that says the [-65,100] window sits
+much less well on the 2024 signal than on 2022.</p>
+<pre># cols 1-5 -> DB: uuid mode min max anchor ; cols 6+ QA only
+  0 0  -65  100   528  0      2575    1516.0    0.000  0.589 0  -81  227
+  1 0  -65  100   527  0      4908    2906.0    0.000  0.592 0 -124  221</pre>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>events needed</TH><TH>VMM ok</TH><TH>noisy, anchor FOB-consistent</TH><TH>rejected</TH><TH>no hits</TH><TH>in window [-65,100] H / V / dH / dV</TH></TR>
+<TR><TD>field ON 23081049</TD><TD>200</TD><TD>362</TD><TD>0</TD><TD>10</TD><TD>12</TD><TD>0.571 / 0.567 / 0.568 / 0.561</TD></TR>
+<TR><TD>field OFF 23063028</TD><TD>1000</TD><TD>352</TD><TD>12</TD><TD>5</TD><TD>11</TD><TD>0.950 / 0.910 / 0.936 / 0.831</TD></TR>
+</TABLE>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>QA field ON 23081049</TH><TH>QA field OFF 23063028</TH></TR>
+<TR>
+<TD><a href="plots/fttDataWindow_23081049.png"><img src="plots/fttDataWindow_23081049.png" height=200></a></TD>
+<TD><a href="plots/fttDataWindow_23063028.png"><img src="plots/fttDataWindow_23063028.png" height=200></a></TD>
+</TR>
+</TABLE>
+<ul>
+  <li>Anchors are constant per FOB (4 VMMs). FOBs in one quadrant differ by ~30 ticks, occasionally ~1500.
+  <li>Anchors of the two runs are completely different (e.g. first FOB 528 vs 3613).
+  <li>VMMs 200 and 369 are ~500 ticks away from their FOB in <b>both</b> runs; no spike. Likely a chip problem.
+  <li>Dead VMMs come in whole-FOB groups of 4 (e.g. 100-103, 108-111, 116-119).
+</ul>
+
+<H2>4. DB content and the run stamp</H2>
+<ul>
+  <li>Table <tt>Calibrations/ftt/fttDataWindowsB</tt>. Existing entry: begin 2021-10-01 00:00:01,
+      all VMMs <tt>mode 0</tt>, window [-65,100], <tt>anchor 0</tt> (anchor never read by the code).
+  <li><tt>uuid</tt> = <tt>StFttDb::vmmId()</tt>, 0-based 0-383 (idl comment fixed on dev, PR #20).
+  <li><tt>mode 0</tt> = cut on calibrated time (<tt>kHitCalibratedTime = 0</tt>).
+      <b>The idl still says "0 = timebin, 1 = bcid" -- the opposite.</b>
+  <li>DB entries have a begin time only. A run with no entry of its own gets the previous run's
+      entry -- whose anchors are wrong for it. So <tt>_db</tt> writes the run number into the
+      spare slot 384 (<tt>uuid -1</tt>, <tt>min = run/10000</tt>, <tt>max = run%10000</tt>), and
+      <tt>StFttDbMaker</tt> uses the anchors only if it matches the run. Windows are used either way.
+  <li>DB query time is the file's first event (e.g. 2022-03-04 20:11:58; run start 19:57:59).
+</ul>
+<p>Zero-field run 23063028, 100 events, window [-40,100]:</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>entry</TH><TH>anchors</TH><TH>in window H / V / dH / dV</TH></TR>
+<TR><TD>stamped for this run</TD><TD>used</TD><TD><b>94.6 / 90.9 / 93.3 / 82.0 %</b></TD></TR>
+<TR><TD>stamped for another run</TD><TD>refused</TD><TD>1.0 / 5.7 / 2.0 / 14.6 %</TD></TR>
+<TR><TD>current DB (unstamped)</TD><TD>ignored</TD><TD>1.0 / 5.7 / 2.0 / 14.6 %</TD></TR>
+</TABLE>
+<p>A local <tt>fttDataWindow/fttDataWindow.&lt;run&gt;.txt</tt> overrides the DB (like
+<tt>vmm_map.dat</tt>). Nothing has been written to the DB yet.</p>
+
+<H2>5. Corrected time: field ON vs OFF, and does the cut make sense?</H2>
+<p>Corrected time = dbcid - per-run anchor, all calibrated VMMs
+(<a href="plotFttCorrectedTime.C"><tt>script/plotFttCorrectedTime.C</tt></a>).</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>field ON 23081049 (2.09M hits)</TH><TH>field OFF 23063028 (0.32M hits)</TH><TH>unit area, log</TH></TR>
+<TR>
+<TD><a href="plots/correctedProjY_fieldOn_23081049.png"><img src="plots/correctedProjY_fieldOn_23081049.png" height=200></a></TD>
+<TD><a href="plots/correctedProjY_fieldOff_23063028.png"><img src="plots/correctedProjY_fieldOff_23063028.png" height=200></a></TD>
+<TD><a href="plots/correctedProjY_onVsOff.png"><img src="plots/correctedProjY_onVsOff.png" height=200></a></TD>
+</TR>
+</TABLE>
+<H3>Out-of-time hits come in bunch crossings</H3>
+<ul>
+  <li>The field-on plateau is periodic with <b>4.263 ticks</b> (periodogram FWHM 4.23-4.30).
+      RHIC bunch spacing is 106.6 ns (9.383 MHz), and 40 MHz / 9.383 MHz = <b>4.263</b>.
+  <li>So one tick = 25 ns, and each bump in the plateau is one out-of-time bunch crossing.
+      (Inferred from the period; to be confirmed with the electronics.)
+  <li>The in-time crossing is narrow: at zero field 72% of <i>all</i> hits are in t = [-1,1].
+</ul>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>1-tick zoom: data and pileup background</TH><TH>periodogram (red: 40 / 9.383)</TH></TR>
+<TR>
+<TD><a href="plots/correctedTime_zoom.png"><img src="plots/correctedTime_zoom.png" height=200></a></TD>
+<TD><a href="plots/correctedTime_periodogram.png"><img src="plots/correctedTime_periodogram.png" height=200></a></TD>
+</TR>
+</TABLE>
+
+<H3>Background model and window choice</H3>
+<p>Pileup at time t is taken from the same phase in the neighbouring crossings:
+bg(t) = mean of counts at t + k&times;4.263, k = &plusmn;1..&plusmn;6, interpolated between ticks,
+excluding neighbours inside the in-time crossing (|t + k&times;4.263| &le; 3). A linear slope of the
+plateau cancels. Signal = hits - bg. <b>signal fraction</b> = signal / hits in window;
+<b>signal kept</b> = signal relative to the DB window [-65,100].
+(<a href="checkFttTimeComb.C"><tt>script/checkFttTimeComb.C</tt></a>)</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH rowspan=2>window</TH><TH colspan=3>field OFF 23063028</TH><TH colspan=3>field ON 23081049</TH></TR>
+<TR BGCOLOR="#c0c0f0"><TH>inside</TH><TH>signal fraction</TH><TH>signal kept</TH><TH>inside</TH><TH>signal fraction</TH><TH>signal kept</TH></TR>
+<TR><TD>[-1, 1]</TD><TD>0.725</TD><TD>0.991</TD><TD>0.957</TD><TD>0.059</TD><TD>0.757</TD><TD>0.816</TD></TR>
+<TR><TD>[-1, 2]</TD><TD>0.745</TD><TD>0.990</TD><TD>0.982</TD><TD>0.061</TD><TD>0.753</TD><TD>0.836</TD></TR>
+<TR BGCOLOR="#fff0c0"><TD>[-1, 3]</TD><TD>0.752</TD><TD>0.989</TD><TD>0.991</TD><TD>0.063</TD><TD><b>0.723</b></TD><TD>0.828</TD></TR>
+<TR><TD>[-3, 3]</TD><TD>0.757</TD><TD>0.986</TD><TD>0.995</TD><TD>0.065</TD><TD>0.689</TD><TD>0.814</TD></TR>
+<TR><TD>[-10, 20]</TD><TD>0.821</TD><TD>0.940</TD><TD>1.028</TD><TD>0.156</TD><TD>0.310</TD><TD>0.884</TD></TR>
+<TR><TD>[-30, 60]</TD><TD>0.864</TD><TD>0.867</TD><TD>0.998</TD><TD>0.363</TD><TD>0.144</TD><TD>0.957</TD></TR>
+<TR><TD>[-40, 100] (afterburner)</TD><TD>0.900</TD><TD>0.829</TD><TD>0.994</TD><TD>0.504</TD><TD>0.100</TD><TD>0.921</TD></TR>
+<TR><TD>[-65, 100] (DB)</TD><TD>0.913</TD><TD>0.822</TD><TD>1</TD><TD>0.577</TD><TD><b>0.095</b></TD><TD>1</TD></TR>
+<TR><TD>[-100, 150]</TD><TD>0.946</TD><TD>0.787</TD><TD>0.992</TD><TD>0.771</TD><TD>0.066</TD><TD>0.928</TD></TR>
+</TABLE>
+<ul>
+  <li><b>Field OFF: the estimated signal is constant (~240k, &plusmn;2%) for every window from [-3,3] outward</b>
+      -- the in-time signal is within &plusmn;3 ticks (&plusmn;75 ns). [-1,3] keeps 99% of it.
+  <li><b>Field ON, DB window [-65,100]: only ~9.5% of the hits kept are in-time.</b> A flat-plateau
+      estimate gives ~27% because the crossings are densest near t = 0.
+  <li><b>[-1,3] (one crossing): signal fraction 0.72, about 8&times; cleaner.</b> [-30,60] is only 0.14.
+  <li>Field ON "signal kept" for tight windows is ~0.83. At ~1.1M background hits in the wide
+      window a 1% subtraction error is ~11k hits (~10% of signal), so this is either real
+      broadening with field or estimate noise. The field-OFF value (0.99) is the cleaner number.
+  <li>A one-crossing window needs each VMM's anchor right to &plusmn;1 tick; a 1-tick anchor error
+      costs a large part of that VMM's signal. Check per VMM before using it.
+  <li>Direct check with field on: time of FTT hits matched to tracks vs unmatched hits.
+</ul>
+
+<H2>6. Other changes</H2>
+<ul>
+  <li><tt>StFttDb::getTimeCut()</tt>: a VMM with no data-window entry returned an
+      <b>uninitialized</b> mode and window. <tt>StFttClusterMaker</tt> defaults to
+      <tt>kTimeCutModeDB</tt>, so this reaches every chain that does not call
+      <tt>SetTimeCut()</tt> (BFC, simulation). Now defaults to mode 0, [-65,100] (the current
+      DB entry), warns once per run, and clears windows before each load so a failed DB fetch
+      cannot keep the previous run's entry.
+  <li><tt>StFttHitCalibMaker</tt> reports how many hits were timed from the DB anchor, on the
+      fly, or not at all.
+  <li><tt>fwd_afterburner_db.C</tt> calls <tt>chain-&gt;Finish()</tt> again, so that report and
+      all outputs are finalized while the chain is intact.
+</ul>
+
+
+<HR>
+<a name="20260921"></a>
+<H1>The tight window measured on production data (2026-09-21)</H1>
+
+<p>The [-1,3] window proposed above was tested against the loose [-65,100] window on real
+production output: four afterburner campaigns, 10 files each, zero field (run 23063028) and
+reversed full field (run 23081015), all with per-run per-VMM anchors
+(<tt>fttDataWindow/fttDataWindow.&lt;run&gt;.txt</tt>, shipped to the jobs), calibrated-time cut mode,
+and the FST gap fix, FST mirror and FTT X/Y mirror all ON. Only the window differs within each
+field setting.</p>
+
+<p>The metric is how well tracks fitted <i>without</i> sTGC hits find those hits, measured with the
+FST-blind diagnostic (the track knows no FTT hit when the search is made). Note the diagnostic is
+filled once per track TYPE (Global, BLC, Primary, FwdVtx, BLCVtx), so excess and purity mix them;
+only the usage fraction is Global-only:
+<b>excess</b> = peak over local sideband at the projection point,
+<b>purity</b> = background-subtracted peak entries / all matched entries,
+<b>usage</b> = fraction of Global tracks with a hit used on an FTT plane.
+One line per campaign from <tt>script/fttMatchSummary.C</tt>.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>campaign</TH><TH>window</TH><TH>excess V</TH><TH>excess H</TH><TH>purity</TH>
+    <TH>FTT usage top</TH><TH>FTT usage bottom</TH><TH>tracks/event</TH><TH>&lt;&chi;&sup2;&gt;</TH></TR>
+<TR><TD>zero field</TD><TD>[-65,100]</TD><TD>1.811</TD><TD>1.481</TD><TD>23.3%</TD><TD>17.7%</TD><TD>4.8%</TD><TD>17.56</TD><TD>11.46</TD></TR>
+<TR><TD>zero field</TD><TD>[-1,3]</TD><TD>1.838</TD><TD>1.507</TD><TD>23.1%</TD><TD>16.9%</TD><TD>4.6%</TD><TD>17.56</TD><TD>11.26</TD></TR>
+<TR><TD>field on</TD><TD>[-65,100]</TD><TD>1.043</TD><TD>1.036</TD><TD>10.5%</TD><TD>8.7%</TD><TD>7.8%</TD><TD>60.96</TD><TD>17.59</TD></TR>
+<TR BGCOLOR="#ccffcc"><TD>field on</TD><TD><b>[-1,3]</b></TD><TD><b>1.361</b></TD><TD><b>1.308</b></TD><TD><b>16.2%</b></TD><TD>8.1%</TD><TD>7.6%</TD><TD>61.02</TD><TD><b>15.05</b></TD></TR>
+</TABLE>
+
+<H2>What it says</H2>
+<ul>
+  <li><b>Field on: the tight window is a clear win and costs no tracks.</b> Purity 10.5 &rarr; 16.2%,
+      excess 1.04 &rarr; 1.36, background under the peak <b>6.6&times; lower</b>
+      (157.9k &rarr; 23.9k per bin, disk 0 V). Track yield is unchanged (61.0 per event both ways)
+      and the fit is better: &lt;&chi;&sup2;&gt; 17.6 &rarr; 15.1. 93% of the matches survive.
+  <li><b>Zero field is insensitive to the window</b>, as expected with no pileup: purity 23.3 vs
+      23.1%, excess 1.81 vs 1.84. That makes zero field the clean measurement of what the cut
+      costs in real signal: the background-subtracted peak falls 7%, so
+      <b>[-1,3] keeps ~93% of genuine in-time hits</b> &mdash; the field-off number from the
+      2026-09-14 table (0.99) was optimistic, this is the measured one.
+  <li><b>The number of real matched hits goes UP with the tighter window</b>, 304k &rarr; 429k
+      (+41%), while matched track-disk pairs fall only 8% (2.89M &rarr; 2.65M). Cutting hits away
+      cannot create real hits, so the first guess was that the window cleans up clusters. It does
+      not &mdash; see the peak width below. What actually happens is that the loose-window
+      background subtraction was eating the signal.
+  <li><b>Zero field is still ~1.5&times; better than field on after the cut</b> (23% vs 16% purity),
+      so roughly half the remaining field-on deficit is not out-of-time pileup: it is in-time
+      pileup plus tracking quality in the field.
+  <li>V strips keep beating H strips (zero field 1.84 vs 1.51; field on 1.36 vs 1.31). Unexplained.
+</ul>
+
+
+<H2>Why the "extra" real hits appear: the true match is broad</H2>
+<p>Fitting the background-subtracted peak (Gaussian, |d|&lt;1&nbsp;cm) shows the genuine
+FST&rarr;sTGC match is not a sharp spike:</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>sample</TH><TH>disk0 V</TH><TH>disk0 H</TH><TH>disk1 V</TH><TH>disk1 H</TH></TR>
+<TR><TD>field on, loose</TD><TD>&sigma; 0.12</TD><TD>&sigma; 0.05</TD><TD>&sigma; 0.09</TD><TD>&sigma; 0.05</TD></TR>
+<TR><TD>field on, tight</TD><TD>&sigma; 0.45</TD><TD>&sigma; 0.32</TD><TD>&sigma; 0.42</TD><TD>&sigma; 0.32</TD></TR>
+<TR><TD>zero field, loose</TD><TD>&sigma; 0.65</TD><TD>&sigma; 0.38</TD><TD>&sigma; 0.48</TD><TD>&sigma; 0.50</TD></TR>
+<TR><TD>zero field, tight</TD><TD>&sigma; 0.63</TD><TD>&sigma; 0.33</TD><TD>&sigma; 0.48</TD><TD>&sigma; 0.50</TD></TR>
+</TABLE>
+<p>Zero field gives the same width with either window, &sigma; = 3-6&nbsp;mm, and field-on with the
+tight window agrees with it. Field-on with the loose window is the odd one out: an artificially
+narrow 0.5-1.2&nbsp;mm core. The reason is the sideband: with 6.6&times; more pileup the local
+background window (1-3&nbsp;cm) contains a large part of the broad signal itself, so subtracting it
+removes real signal and leaves only the narrow core. The tight window lowers the pileup until the
+broad component stands clear.</p>
+<p>So the +41% is <b>recovered signal, not new hits and not better clusters</b>. The excess ratio
+(1.04 &rarr; 1.36), the 6.6&times; background drop and &lt;&chi;&sup2;&gt; 17.6 &rarr; 15.1 are the
+definition-independent statements; the purity numbers move partly because the loose-window
+measurement under-counts its own signal.</p>
+<p><b>The real width is worth its own look.</b> A 3-6&nbsp;mm match width is much larger than the
+sTGC strip pitch, so it is dominated by FTT position/alignment plus the FST-only projection. In
+zero field the fitted peak centres are also offset from zero, per disk and per orientation:
+disk0 H +4.4&nbsp;mm, disk1 H +1.7&nbsp;mm, disk3 H -2.3&nbsp;mm, disk0 V -1.5&nbsp;mm, disks 1-2 V
+consistent with 0. Those are sTGC alignment offsets, measured with straight tracks and no field.</p>
+
+<H2>Caveat: the geometry switches were not varied</H2>
+<p>All four campaigns ran with the FST 1&deg; gap fix, the FST wedge mirror and the FTT X/Y mirror
+ON together, so these numbers do not separate the window from the geometry corrections, and they
+do not say what the FST wedge flip or the FTT X/Y flip is worth on its own. A dedicated
+zero-field A/B of the three switches at fixed [-1,3] window is the next measurement &mdash; zero
+field is the better place for it, since its excess (1.8) and purity (23%) are far above the
+field-on values, and straight tracks make a geometry error show up directly.</p>
 
 <HR>
 <ADDRESS>
