@@ -111,12 +111,28 @@ boundary: dbcid 1070,1071 are the last two bins of their group, so it summed
 real peak to [-5,0]. The raw argmax was 1070 all along, the same as its three
 FOB mates.
 
-Fixed by making the coarse search a SLIDING 4-tick window instead of an aligned
-one -- no boundary to straddle. It finds 1069..1072 = 192 and refines to 1070.
+Fixed by dropping the grouping altogether: findAnchor is now the plain argmax
+over single dbcid values. That is also what the CONSUMER does --
+HitCalibHelper::add() keeps a running argmax, "the most populated dbcid" -- so
+the macro now really has the definition it always claimed.
+
+Grouping was meant to help when statistics are thin. Measured, it does not.
+Counting the VMMs whose anchor disagrees with the median of their FOB mates,
+plain argmax vs a sliding 4-tick sum:
+
+  23081049  pp field on, 4063 hits/VMM    17 / 360  vs  17 / 360
+  24192017  AuAu,        ~1000 hits/VMM   29 / 354  vs  29 / 354
+  25174011  zero field,  7206 hits/VMM    88 / 344  vs  88 / 344
+  25174011  zero field,   522 hits/VMM    92 / 330  vs  93 / 330
+
+Identical everywhere but the thinnest case, where the plain argmax is slightly
+better. The one VMM the two versions disagree on, 130 of run 23081049, is on a
+board whose other three VMMs are all rejected on 234-378 hits; the plain argmax
+rejects it too, which is the right call.
+
 Run 23081049 then stores [-1,3] for VMM 54, exactly as akio asked, and for
-every other calibrated VMM in the run: 361 of 361, no outliers left at all
-(was 356 [-1,3] + 2 + 1 + 1). One more VMM became calibrated. AuAu 24192017:
-354 [-1,3], 2 [-2,3], essentially unchanged.
+every calibrated VMM in the run: 360 of 360, no outliers left at all (was
+356 [-1,3] + 2 + 1 + 1). AuAu 24192017: 355 [-1,3], 2 [-2,3].
 
 STILL OPEN. 15 VMMs (was 16) still have an anchor differing from their FOB
 median: +1 eight times, and +2, +3, +6, +9, +12, -1, -3. They no longer produce

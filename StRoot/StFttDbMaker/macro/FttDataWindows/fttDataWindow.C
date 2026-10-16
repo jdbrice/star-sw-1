@@ -181,33 +181,34 @@ double circInt(TH1 *h, int d1, int d2)
 // the raw argmax inside that 4-bin group.
 int findAnchor(TH1 *h)
 {
-  // Fullest window of 4 consecutive dbcid, SLIDING and circular, then the fullest
-  // raw bin inside it.
+  // The most populated dbcid, full stop -- no grouping of any kind.
   //
-  // This used to be Rebin(4), i.e. windows aligned to multiples of 4, and that loses
-  // a weak peak that straddles a group boundary. Measured on VMM 54 of run 23081049:
-  // its real peak is 60+60 counts at dbcid 1070,1071 over a level of 25, which is
-  // 9.9 sigma and certainly not a fluctuation -- but 1071 is the last bin of its
-  // aligned group, so that group summed 170 while two neighbouring groups, holding
-  // only the broad tail, summed 173 and 171. The anchor came out 1075, five ticks
-  // late, and the window fit then chased the peak to [-5,0]. The sliding window has
-  // no boundary to straddle: it finds 1069..1072 = 192 and refines to 1070, which is
-  // both the raw argmax and the anchor of the other three VMMs on the FOB.
+  // This is what the consumer does: HitCalibHelper::add() keeps a running argmax
+  // over single dbcid values ("Anchor = the most populated dbcid"). The macro has
+  // always claimed the same definition, but it used to group 4 bins first, and that
+  // grouping was the bug behind VMM 54 of run 23081049: its real peak, 60+60 counts
+  // at dbcid 1070,1071 over a level of 25 (9.9 sigma, not a fluctuation), straddles
+  // a group boundary, so its group summed 170 while two neighbours holding only the
+  // broad tail summed 173 and 171. The anchor came out 1075, five ticks late. The
+  // raw argmax was 1070 throughout -- the same as all three of its FOB mates.
   //
-  // Cost is 4 x 4096 adds per call, which is nothing next to reading the events.
+  // Grouping was meant to help when statistics are thin. Measured, it does not:
+  // counting the VMMs whose anchor disagrees with the median of their FOB mates,
+  // the plain argmax against a sliding 4-tick sum gives
+  //
+  //   23081049  pp field on, 4063 hits/VMM    17 / 360  vs  17 / 360
+  //   24192017  AuAu,        ~1000 hits/VMM   29 / 354  vs  29 / 354
+  //   25174011  zero field,  7206 hits/VMM    88 / 344  vs  88 / 344
+  //   25174011  zero field,   522 hits/VMM    92 / 330  vs  93 / 330
+  //
+  // identical everywhere except the thinnest case, where the plain argmax is
+  // slightly better. So there is nothing to buy and a boundary artefact to avoid.
   int nb = h->GetNbinsX();
-  double bestS = -1;
-  int at = 0;
-  for (int db = 0; db < nb; db++) {
-    double sum4 = 0;
-    for (int dk = 0; dk < 4; dk++) sum4 += h->GetBinContent((db + dk) % nb + 1);
-    if (sum4 > bestS) { bestS = sum4; at = db; }
-  }
-  int best = at;
+  int best = 0;
   double bestC = -1;
-  for (int dj = 0; dj < 4; dj++) {
-    double c = h->GetBinContent((at + dj) % nb + 1);
-    if (c > bestC) { bestC = c; best = (at + dj) % nb; }
+  for (int db = 0; db < nb; db++) {
+    double c = h->GetBinContent(db + 1);
+    if (c > bestC) { bestC = c; best = db; }
   }
   return best;
 }
