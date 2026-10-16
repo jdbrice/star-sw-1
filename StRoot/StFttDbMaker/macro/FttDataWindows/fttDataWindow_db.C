@@ -29,6 +29,10 @@
 // to the load balancer; this is only used to look, so one node is fine.
 const char *kReadHost = "star-db01.sdcc.bnl.gov";
 const int   kReadPort = 3316;
+// The write server of $DB_SERVER_LOCAL_CONFIG. Only used to confirm a row we have
+// just written: a replica may not have it yet.
+const char *kWriteHost = "robinson.star.bnl.gov";
+const int   kWritePort = 3306;
 
 // A run's first entry goes kPreRoll seconds BEFORE the run start, not at it.
 // Resolution is "latest beginTime at or before the requested time" and every
@@ -109,13 +113,17 @@ int unixOfStamp(const char *ts)
 // beginTime of the entry that applies at this run -- the latest at or before the
 // run start. Empty if there is none. WHICH run it belongs to is not decided here:
 // dbCompare reads the run stamp, which is the reliable answer.
-TString dbLatestBegin(int starttime, const char *flavor)
+// Latest active beginTime at or before starttime. onMaster picks the write server,
+// which is the only place a row written seconds ago is certain to be visible.
+TString dbLatestBegin(int starttime, const char *flavor, int onMaster = 0)
 {
   TString ts = utcStamp(starttime);
-  TString cmd = Form("mysql -h %s --port=%d -u loader -N -s -e "
+  TString cmd = Form("mysql -h %s --port=%d %s -N -s -e "
                      "\"SELECT MAX(beginTime) FROM Calibrations_ftt.fttDataWindowsB "
                      "WHERE beginTime<='%s' AND flavor='%s' AND deactive=0\" 2>/dev/null",
-                     kReadHost, kReadPort, ts.Data(), flavor);
+                     onMaster ? kWriteHost : kReadHost,
+                     onMaster ? kWritePort : kReadPort,
+                     onMaster ? "" : "-u loader", ts.Data(), flavor);
   TString out = gSystem->GetFromPipe(cmd.Data());
   out = out.Strip(TString::kBoth);
   if (out == "NULL") out = "";
@@ -331,7 +339,20 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
     return -2;                           // fatal: stop, do not try the other runs
   }
   printf("STORE run %d at %s flavor %s: OK\n", run, utcStamp(storeAt).Data(), flavor);
-  dbCompare(run, readDate, readTime, flavor, 1);
+
+  // NOT dbCompare() here. St_db_Maker caches the dataset it read before the store, so
+  // asking it again in this process returns the state from BEFORE the write and looks
+  // like the write did nothing. Confirm the row directly instead, on the server it was
+  // written to, and leave the slot-by-slot comparison to a fresh read-only run.
+  TString now = dbLatestBegin(storeAt, flavor, 1);
+  TString want = utcStamp(storeAt);
+  if (now == want)
+    printf("VERIFY run %d: the entry at %s is in %s. Re-run without \"writedb\" for the\n"
+           "       slot-by-slot comparison -- this process cannot, its read is cached.\n",
+           run, want.Data(), kWriteHost);
+  else
+    printf("VERIFY run %d: expected an entry at %s but %s reports %s -- CHECK THIS\n",
+           run, want.Data(), kWriteHost, now == "" ? "none" : now.Data());
   return 0;
 }
 
