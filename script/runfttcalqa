@@ -1,0 +1,113 @@
+#!/bin/csh
+# Per-RUN condor job: one forward QA ROOT file -> per-VMM FTT time anchors.
+# Usage: runfttcalqa QAFILE OUTDIR [KEEPHIST]
+#
+# The input is one of the forward QA files, StFwdRun22Qa_<run>_raw_<n>.root, which
+# keeps H2S_FttRawHit_dbcidVch_<vmm> (channel x dbcid, 64 x 4096) for all 384 VMMs.
+# fttDataWindow.C reads those directly -- the field is the same StFttRawHit::dbcid()
+# and the id the same StFttDb::vmmId(), with no time cut applied -- so there is no
+# MuDst to read and no conversion step. See the macro's redo-mode comment.
+#
+# KEEPHIST (default 0): 1 also copies back root/ and png/. Off by default because
+# the input QA file IS the histogram source and lives on disk already; keeping a
+# copy per run costs a few GB over a full dataset for no new information.
+#
+# Outputs copied back to OUTDIR:
+#   fttDataWindow.<run>.txt    the calibration itself
+#   qa/<run>.qa                this run's QA line as its OWN file -- the macro
+#                              appends to a shared fttDataWindow.<year>.QA.txt and
+#                              many jobs appending to one NFS/GPFS file corrupt it.
+#                              Merge afterwards with script/mergeFttCalQA.sh.
+set nonomatch
+
+set infile = $1
+set outdir = $2
+set keephist = $3
+if ( "$keephist" == "" ) set keephist = 0
+
+set dir = $cwd
+set base = $infile:t
+# run number: StFwdRun22Qa_<run>_raw_<n>.root -- the first 8-digit field.
+# NOT a leading [^0-9]* sed pattern: "StFwdRun22Qa_" has digits of its own, so that
+# leaves the "22" in front of the run number. Eight explicit [0-9] rather than
+# {8} because csh brace-expands the latter.
+set run = `echo $base | awk '{ if (match($0,/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]/)) print substr($0,RSTART,8) }'`
+
+echo "runfttcalqa: run=$run infile=$infile outdir=$outdir keephist=$keephist"
+
+if ( ! -e $infile ) then
+    echo "FATAL: input $infile not found"
+    exit 1
+endif
+if ( "$run" == "" || "$run" == "$base" ) then
+    echo "FATAL: no 8-digit run number in $base"
+    exit 1
+endif
+
+cd $SCRATCH
+set macro = $dir/script/fttDataWindow.C
+if ( ! -e $macro ) then
+    echo "FATAL: $macro not found"
+    exit 1
+endif
+/bin/cp $macro .
+ln -s $dir/.$STAR_HOST_SYS
+ln -s $dir/StRoot
+
+root4star -l -b -q fttDataWindow.C'("'$infile'",50000,200,0.95,-65,100)'
+set status_root = $status
+echo "runfttcalqa: root4star exit status = $status_root"
+
+if ( ! -e fttDataWindow/fttDataWindow.$run.txt ) then
+    echo "FATAL: no fttDataWindow.$run.txt produced"
+    ls -la fttDataWindow
+    exit 2
+endif
+
+# A run with no FTT readout at all still produces a syntactically valid file full
+# of anchor -1. That must NOT land where a consumer could load it, or it would
+# reject every hit of the run. File it under empty/ for the record instead.
+set qaline = ""
+foreach f (fttDataWindow/fttDataWindow.*.QA.txt)
+    if ( -e $f ) set qaline = "`grep '^'$run' ' $f`"
+end
+set rawhits = `echo "$qaline" | awk '{print $6+0}'`
+set nok     = `echo "$qaline" | awk '{print $7+0}'`
+if ( "$rawhits" == "" ) set rawhits = 0
+if ( "$nok" == "" ) set nok = 0
+echo "runfttcalqa: run $run rawHits=$rawhits nOK=$nok"
+
+mkdir -p $outdir $outdir/qa
+if ( $rawhits == 0 || $nok == 0 ) then
+    echo "runfttcalqa: NO USABLE FTT DATA for run $run -- filing under empty/, not as a calibration"
+    mkdir -p $outdir/empty
+    /bin/cp fttDataWindow/fttDataWindow.$run.txt $outdir/empty/
+else
+    /bin/cp fttDataWindow/fttDataWindow.$run.txt $outdir/
+endif
+
+if ( $keephist == 1 ) then
+    mkdir -p $outdir/png $outdir/root
+    foreach f (fttDataWindow/png/*.png)
+        if ( -e $f ) /bin/cp $f $outdir/png/
+    end
+    foreach f (fttDataWindow/root/*.root)
+        if ( -e $f ) /bin/cp $f $outdir/root/
+    end
+endif
+
+# one QA fragment per run, never a shared append
+foreach f (fttDataWindow/fttDataWindow.*.QA.txt)
+    if ( -e $f ) grep "^ *$run " $f > $outdir/qa/$run.qa
+end
+# header fragment, same column widths, named so "cat *.qa" prints it first.
+# Written to a unique temp name and renamed, so concurrent jobs cannot interleave.
+foreach f (fttDataWindow/fttDataWindow.*.header.qa.txt)
+    if ( -e $f ) then
+        /bin/cp $f $outdir/qa/.0_header.$$.tmp
+        /bin/mv -f $outdir/qa/.0_header.$$.tmp $outdir/qa/0_header.qa
+        /bin/cp $f $outdir/
+    endif
+end
+
+echo "runfttcalqa: done run $run"

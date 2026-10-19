@@ -306,11 +306,24 @@ void fttDataWindow(const char *input,
   // for the header, and each VMM's strip orientation for the QA columns. Without
   // that .txt the run number still comes from the filename and the analysis is
   // unaffected; only the orientation split in the QA line is lost.
-  bool redoMode = false;
+  // The histograms can also come from the forward QA job
+  // (StFwdRun22Qa_<run>_raw_*.root), which keeps dbcid vs CHANNEL per VMM as
+  // H2S_FttRawHit_dbcidVch_<vmm>, 64 x 4096. Summed over channel that IS the
+  // hDbcid_<vmm> this macro saves: the same StFttRawHit::dbcid(), the same
+  // StFttDb::vmmId() 0..383, and no time cut applied upstream. Verified on run
+  // 23081049 -- anchors derived from the QA file match the MuDst calibration for
+  // all 360 calibrated VMMs exactly, on 6.4x the statistics (13.4M hits vs 2.0M).
+  // 376 of 384 VMMs come out with identical DB columns; the 8 that differ are all
+  // statistics (3 VMMs rise above the sig>=200 cut, 1 window closes from +3 to +2,
+  // and one FOB is rejected as noisy on the larger sample).
+  bool redoMode = false, qaMode = false;
   TFile *fIn = 0;
   if (in.EndsWith(".root")) {
     fIn = TFile::Open(in.Data());
     if (fIn && !fIn->IsZombie() && fIn->Get("hDbcid_000")) redoMode = true;
+    else if (fIn && !fIn->IsZombie() && fIn->Get("H2S_FttRawHit_dbcidVch_0")) {
+      redoMode = true; qaMode = true;
+    }
     else if (fIn) { fIn->Close(); fIn = 0; }
     // back to memory, or the accumulators below would be created inside fIn and
     // collide by name with what is already in it
@@ -405,6 +418,25 @@ void fttDataWindow(const char *input,
   // ---- redo mode: fill the accumulators from the saved file instead of events ----
   if (redoMode) {
     for (int ir = 0; ir < kNVMM; ir++) {
+      if (qaMode) {
+        TH2 *h2In = (TH2 *) fIn->Get(Form("H2S_FttRawHit_dbcidVch_%d", ir));
+        if (!h2In) continue;
+        if (h2In->GetNbinsY() != kNDBCID) {
+          printf("fttDataWindow: QA VMM %d has %d dbcid bins, expected %d -- skipped\n",
+                 ir, h2In->GetNbinsY(), kNDBCID);
+          continue;
+        }
+        double sumV = 0;
+        for (int iy = 1; iy <= kNDBCID; iy++) {
+          double cy = 0;
+          for (int ix = 1; ix <= h2In->GetNbinsX(); ix++) cy += h2In->GetBinContent(ix, iy);
+          if (cy > 0) hV[ir]->SetBinContent(iy, (int) (cy + 0.5));
+          sumV += cy;
+        }
+        hV[ir]->SetEntries(sumV);
+        nHitsTotRedo += sumV;
+        continue;
+      }
       TH1 *hIn = (TH1 *) fIn->Get(Form("hDbcid_%03d", ir));
       if (!hIn) continue;
       for (int ib = 1; ib <= kNDBCID; ib++) hV[ir]->SetBinContent(ib, hIn->GetBinContent(ib));
@@ -414,9 +446,28 @@ void fttDataWindow(const char *input,
     // Run metadata and the per-VMM orientation come from the .txt beside the file,
     // ../fttDataWindow.<run>.txt. Both are QA only -- the calibration itself is
     // recomputed from the histograms either way.
+    // The run number: from the .txt header when there is one, otherwise from the
+    // file name -- fttDataWindow.<run>.root, or the QA job's
+    // StFwdRun22Qa_<run>_raw_<n>.root, where it is an embedded 8-digit field.
+    int runFromName = 0;
+    TString bn = gSystem->BaseName(in.Data());
+    TString b1 = bn; b1.ReplaceAll("fttDataWindow.", ""); b1.ReplaceAll(".root", "");
+    if (b1.IsDigit()) runFromName = b1.Atoi();
+    int nbn = bn.Length();
+    for (int ic = 0; ic + 8 <= nbn && runFromName == 0; ic++) {
+      if (ic > 0      && bn[ic-1] >= '0' && bn[ic-1] <= '9') continue;  // mid-number
+      if (ic + 8 < nbn && bn[ic+8] >= '0' && bn[ic+8] <= '9') continue;  // longer than 8
+      TString cand = bn(ic, 8);
+      if (cand.IsDigit() && cand.Atoi() > 10000000) runFromName = cand.Atoi();
+    }
+
     TString dirIn  = gSystem->DirName(in.Data());      // .../root
     TString baseIn = gSystem->BaseName(in.Data());     // fttDataWindow.<run>.root
     baseIn.ReplaceAll(".root", ".txt");
+    // A QA file's own name is not fttDataWindow.<run>.txt, so look for the
+    // calibration text file by run number instead -- orientation and metadata are
+    // picked up if a previous calibration of this run is sitting there.
+    if (qaMode && runFromName > 0) baseIn = Form("fttDataWindow.%d.txt", runFromName);
     TString txt = Form("%s/../%s", dirIn.Data(), baseIn.Data());   // the usual layout
     FILE *T = fopen(txt.Data(), "r");
     if (!T) {                                          // or sitting beside the file
@@ -445,17 +496,15 @@ void fttDataWindow(const char *input,
       printf("fttDataWindow: redo -- no .txt beside the histogram file; the QA\n"
              "               orientation split and the run metadata will be blank\n");
     }
-    if (run == 0) {   // last resort: the run number is in the filename
-      TString base = gSystem->BaseName(in.Data());
-      base.ReplaceAll("fttDataWindow.", ""); base.ReplaceAll(".root", "");
-      if (base.IsDigit()) run = base.Atoi();
-    }
+    if (run == 0) run = runFromName;   // no .txt header: take it from the filename
     nRead = 0;
     nHitsTot = nHitsTotRedo;
     stopReason = "redoFromHistograms";
-    printf("fttDataWindow: REDO run %d from %s -- %0.f hits in 384 VMM histograms,\n"
+    printf("fttDataWindow: REDO run %d from %s%s -- %0.f hits in 384 VMM histograms,\n"
            "               anchors and windows recomputed, no MuDst read\n",
-           run, in.Data(), nHitsTotRedo);
+           run, in.Data(),
+           qaMode ? " (forward QA file, dbcid summed over channel)" : "",
+           nHitsTotRedo);
   }
 
   for (Long64_t iev = 0; !redoMode && iev < nEntries; iev++) {

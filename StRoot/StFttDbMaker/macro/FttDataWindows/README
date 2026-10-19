@@ -205,6 +205,63 @@ holds for a ROOT file written in September by an older version of this macro:
 the histogram definition has never changed, so old files still work.
 
 
+Calibrating a whole dataset from the forward QA files
+-----------------------------------------------------
+The forward QA job already histograms what this calibration needs. Its files,
+StFwdRun22Qa_<run>_raw_<n>.root, keep
+
+    H2S_FttRawHit_dbcidVch_<vmm>     channel x dbcid, 64 x 4096, all 384 VMMs
+
+and summed over channel that IS the hDbcid_<vmm> this macro saves: the same
+StFttRawHit::dbcid(), the same StFttDb::vmmId() 0..383, and no time cut applied
+upstream. fttDataWindow.C detects them and reads them directly -- no conversion
+step, no MuDst:
+
+    root4star -l -b -q 'fttDataWindow.C("..../StFwdRun22Qa_23081049_raw_3000046.root")'
+
+VERIFIED on run 23081049, against the calibration this macro produced from the
+MuDsts: the anchors agree for all 360 calibrated VMMs EXACTLY, not one off by a
+tick, on 6.4x the statistics (13.4M hits against 2.0M). 376 of 384 VMMs come out
+with identical DB columns. The 8 that differ are all statistics:
+
+  VMM 54            same anchor; the window closes from [-1,3] to [-1,2],
+                    because 44134 hits say +3 is not signal where 6996 did
+  VMM 128,130,131   we had rejected them for sig < 200 (177/186/124); their sig
+                    here is 779-1551, so they become calibrated -- 3 VMMs gained
+  VMM 140-143       one whole FOB, calibrated by us at anchor 1864, REJECTED
+                    here: 15x the hits of its neighbours with sigFrac 0.067 and
+                    a flat background, i.e. noisy
+
+That last row is unsettled and matters for production. Our pass read 200-600
+events of each run; the QA file covers far more. Note that a DAQ file is NOT
+time-ordered within a run -- events are interleaved across event builders -- so
+"the QA file saw later events" is not a safe explanation, and which calibration
+is right for a noisy FOB has to be decided by looking at it, not assumed. The
+per-channel axis of these histograms is the tool for that: the macro keeps
+per-channel detail only for 8 opt-in VMMs, the QA files have it for all 384.
+
+Also checked on runs 23081001, 23081025 and 23081064: every one gains calibrated
+VMMs (+4, +2, +2 against our stored QA), rejections fall, and `dead` is exactly
+12 in all three in BOTH datasets -- the same twelve VMMs have no hits in two
+independently produced sets.
+
+To calibrate a full dataset:
+
+    sh script/makeFttQaSubmit.sh            # one job per run; prints the count
+    condor_submit condor/submit_fttcal_qa_run22.txt     # from OUTSIDE singularity
+    sh script/mergeFttCalQA.sh /gpfs01/star/pwg_tasks/FwdCalib/akio/FttDataWindows22/data
+
+makeFttQaSubmit.sh takes QADIR, OUTDIR, SUBMITFILE and KEEPHIST, and defaults to
+the Run 22 set with output on GPFS -- 3150 runs, so the output does NOT belong on
+a home directory. The submit file it writes is 2 MB of generated text and is not
+committed; regenerate it rather than editing it. script/runfttcalqa is the job.
+
+KEEPHIST defaults to 0, which does NOT copy root/ and png/ back. The QA file is
+itself the histogram source and is already on disk, so a per-run copy costs
+several GB over a full dataset for no new information. Pass 1 if you want the
+plots.
+
+
 Trying a different window only, without redoing the anchors
 ------------------------------------------------------------
 fttDataWindow.C saves every VMM's raw dbcid histogram in
