@@ -365,6 +365,20 @@ to store even when the calibration looks poor. dir defaults to the data/
 directory beside this macro, so it works from any working directory; pass dir
 explicitly to push a calibration you produced elsewhere.
 
+Every pass ends with a tally, which is the only readable output once a dataset is
+thousands of runs. It says how many went in as NEW entries, how many as REVISIONS
+one second later, how many were not inserted and why -- already identical, needs
+"update", blocked by the quality gate, revision slots exhausted -- and how many
+were skipped for a missing file or a missing RunLog start time. A dry run reports
+the same buckets as "would". For the buckets that need a human it also lists the
+first dozen run numbers, so the next step is opening one log rather than grepping
+all of them, and it warns if the buckets do not add up to the runs processed,
+which is what a code path with no bucket would look like.
+
+Note that "force" does NOT re-store an identical entry. It overrides the quality
+gate only. Re-storing the same numbers would spend one of the eleven revision
+slots for no change, so identical entries are always counted as not inserted.
+
 IT DOES NOT INSERT BLINDLY. The run stamp in slot 384 says whether what the DB
 serves for a run is that run's own entry, so before storing, the macro reads it
 back and compares:

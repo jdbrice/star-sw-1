@@ -244,15 +244,159 @@ int dbCompare(int run, int date, int time, const char *flavor, int verbose)
   return nDiff;
 }
 
+// ---- outcome tally ----------------------------------------------------------
+// One bucket per way doRun() can end. A pass over a full dataset is thousands of
+// runs, so the per-run lines above are unreadable in bulk and the question that
+// actually matters -- how many went in, how many did not, and why -- has to be
+// answered at the end. catAdd() also keeps the first few run numbers per bucket:
+// for the buckets that need action a count alone does not say which runs to look
+// at.
+const int kCatStoredNew  =  0;
+const int kCatStoredUpd  =  1;
+const int kCatSkipSame   =  2;
+const int kCatSkipDiff   =  3;
+const int kCatSkipGate   =  4;
+const int kCatFailSlots  =  5;
+const int kCatFailNoPrev =  6;
+const int kCatFailWrite  =  7;
+const int kCatWarnVerify =  8;
+const int kCatErrFile    =  9;
+const int kCatErrRunTime = 10;
+const int kCatDryStore   = 11;
+const int kCatDryUpdate  = 12;
+const int kCatDrySame    = 13;
+const int kCatDryGate    = 14;
+const int kNCat          = 15;
+const int kCatListMax    = 12;
+
+int gCatN[kNCat];
+int gCatRun[kNCat][kCatListMax];
+
+void catReset()
+{
+  for (int ic = 0; ic < kNCat; ic++) {
+    gCatN[ic] = 0;
+    for (int jr = 0; jr < kCatListMax; jr++) gCatRun[ic][jr] = 0;
+  }
+}
+
+void catAdd(int cat, int run)
+{
+  if (cat < 0 || cat >= kNCat) return;
+  if (gCatN[cat] < kCatListMax) gCatRun[cat][gCatN[cat]] = run;
+  gCatN[cat]++;
+}
+
+// A switch rather than a global array of string literals: CINT is unreliable with
+// the latter at file scope.
+const char *catName(int cat)
+{
+  if (cat == kCatStoredNew)  return "INSERTED, new entry for the run (at run start - preroll)";
+  if (cat == kCatStoredUpd)  return "INSERTED as a revision, one second after the existing entry";
+  if (cat == kCatSkipSame)   return "not inserted: already in the DB and IDENTICAL";
+  if (cat == kCatSkipDiff)   return "not inserted: in the DB and DIFFERS -- needs \"update\"";
+  if (cat == kCatSkipGate)   return "not inserted: failed the quality gate -- needs \"force\"";
+  if (cat == kCatFailSlots)  return "not inserted: all revision slots up to the run start are used";
+  if (cat == kCatFailNoPrev) return "not inserted: differs, but the existing entry could not be found";
+  if (cat == kCatFailWrite)  return "WRITE FAILED -- the pass stopped here, nothing stored";
+  if (cat == kCatWarnVerify) return "stored, but the read-back did NOT confirm it -- CHECK";
+  if (cat == kCatErrFile)    return "skipped: calibration file missing or unreadable";
+  if (cat == kCatErrRunTime) return "skipped: no startRunTime from RunLog";
+  if (cat == kCatDryStore)   return "would INSERT (nothing in the DB for this run yet)";
+  if (cat == kCatDryUpdate)  return "would need \"update\": in the DB and DIFFERS";
+  if (cat == kCatDrySame)    return "would do nothing: already in the DB and identical";
+  if (cat == kCatDryGate)    return "would NOT be stored: fails the quality gate";
+  return "?";
+}
+
+// true for the buckets a human has to do something about
+bool catNeedsAction(int cat)
+{
+  return (cat == kCatSkipDiff || cat == kCatSkipGate || cat == kCatFailSlots ||
+          cat == kCatFailNoPrev || cat == kCatFailWrite || cat == kCatWarnVerify ||
+          cat == kCatErrFile || cat == kCatErrRunTime);
+}
+
+void catSummary(int nRuns, TString option, const char *dir)
+{
+  bool wr = option.Contains("writedb");
+  printf("\n==================== fttDataWindow_db summary ====================\n");
+  printf("runs processed : %d   from %s\n", nRuns, dir);
+  printf("mode          : %s%s%s\n",
+         wr ? "writedb -- the DB was modified" : "dry run -- NOTHING was written",
+         option.Contains("update") ? " +update" : "",
+         option.Contains("force")  ? " +force"  : "");
+
+  if (wr) {
+    int ins = gCatN[kCatStoredNew] + gCatN[kCatStoredUpd];
+    int not_ = nRuns - ins;
+    printf("headline      : %d inserted (%d new, %d revisions), %d not inserted\n",
+           ins, gCatN[kCatStoredNew], gCatN[kCatStoredUpd], not_ < 0 ? 0 : not_);
+  } else {
+    printf("headline      : %d would be inserted, %d already identical, "
+           "%d would need \"update\", %d blocked by the quality gate\n",
+           gCatN[kCatDryStore], gCatN[kCatDrySame], gCatN[kCatDryUpdate], gCatN[kCatDryGate]);
+  }
+
+  printf("-----------------------------------------------------------------\n");
+  int order[15] = { kCatStoredNew, kCatStoredUpd, kCatSkipSame, kCatSkipDiff,
+                    kCatSkipGate,  kCatFailSlots, kCatFailNoPrev, kCatFailWrite,
+                    kCatWarnVerify, kCatDryStore, kCatDryUpdate, kCatDrySame,
+                    kCatDryGate,   kCatErrFile,  kCatErrRunTime };
+  int tot = 0;
+  for (int io = 0; io < kNCat; io++) {
+    int cat = order[io];
+    // Zero buckets are noise, except the ones that answer the question being
+    // asked: in a push, "0 inserted" has to be visible rather than absent.
+    bool keyNow = wr ? (cat == kCatStoredNew || cat == kCatStoredUpd || cat == kCatSkipSame)
+                     : (cat == kCatDryStore  || cat == kCatDrySame);
+    if (gCatN[cat] == 0 && !keyNow) continue;
+    printf("  %6d  %s\n", gCatN[cat], catName(cat));
+    tot += gCatN[cat];
+  }
+
+  // Every run must land in exactly one bucket. If it does not, a path was added
+  // without a catAdd() and the numbers below cannot be trusted.
+  int totAll = 0;
+  for (int ia = 0; ia < kNCat; ia++)
+    if (ia != kCatWarnVerify) totAll += gCatN[ia];   // overlay, see doRun()
+  if (totAll != nRuns)
+    printf("  WARNING: buckets total %d but %d runs were processed -- a code path\n"
+           "           is missing its catAdd(), so these counts are incomplete\n",
+           totAll, nRuns);
+
+  // the run numbers worth opening a log for
+  bool anyAction = false;
+  for (int ib = 0; ib < kNCat; ib++) if (catNeedsAction(ib) && gCatN[ib] > 0) anyAction = true;
+  if (anyAction) {
+    printf("-----------------------------------------------------------------\n");
+    printf("runs needing attention:\n");
+    for (int ic2 = 0; ic2 < kNCat; ic2++) {
+      int cat2 = order[ic2];
+      if (!catNeedsAction(cat2) || gCatN[cat2] == 0) continue;
+      printf("  %s\n   ", catName(cat2));
+      int nShow = gCatN[cat2] < kCatListMax ? gCatN[cat2] : kCatListMax;
+      for (int jr2 = 0; jr2 < nShow; jr2++) printf(" %d", gCatRun[cat2][jr2]);
+      if (gCatN[cat2] > nShow) printf(" ... and %d more", gCatN[cat2] - nShow);
+      printf("\n");
+    }
+  }
+  printf("=================================================================\n");
+}
+
 int doRun(int run, const char *dir, TString option, const char *flavor)
 {
   TString fname = Form("%s/fttDataWindow.%d.txt", dir, run);
   int n = readCalibFile(fname.Data(), run);
-  if (n < 0) return -1;
+  if (n < 0) { catAdd(kCatErrFile, run); return -1; }
   int nCal = gNCal, nActive = gNActive, fileRun = gFileRun;
 
   int starttime = runStartTime(run);
-  if (starttime <= 0) { printf("ERROR: run %d: no startRunTime from RunLog -- skipped\n", run); return -1; }
+  if (starttime <= 0) {
+    printf("ERROR: run %d: no startRunTime from RunLog -- skipped\n", run);
+    catAdd(kCatErrRunTime, run);
+    return -1;
+  }
   int readDate = gSystem->GetFromPipe(Form("date -u -d @%d +%%Y%%m%%d", starttime)).Atoi();
   int readTime = gSystem->GetFromPipe(Form("date -u -d @%d +%%H%%M%%S", starttime)).Atoi();
 
@@ -268,20 +412,29 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
 
   if (!option.Contains("writedb")) {           // look only -- say what a push would do
     int cmpL = dbCompare(run, readDate, readTime, flavor, 1);
-    if (!ok && !option.Contains("force"))
+    if (!ok && !option.Contains("force")) {
       printf("  would NOT store run %d: fails the quality gate\n", run);
-    else if (cmpL == 0)
+      catAdd(kCatDryGate, run);
+    }
+    else if (cmpL == 0) {
       printf("  nothing to do for run %d: already in the DB and identical\n", run);
-    else if (cmpL > 0)
+      catAdd(kCatDrySame, run);
+    }
+    else if (cmpL > 0) {
       printf("  run %d is in the DB but DIFFERS (%d slots): a push needs \"update\"\n", run, cmpL);
-    else
+      catAdd(kCatDryUpdate, run);
+    }
+    else {
+      catAdd(kCatDryStore, run);
       printf("  would store run %d at %s (run start %s minus %d s)\n", run,
              utcStamp(starttime - kPreRoll).Data(), utcStamp(starttime).Data(), kPreRoll);
+    }
     return 0;
   }
 
   if (!ok && !option.Contains("force")) {
     printf("NOT WRITING run %d (add \"force\" to override)\n", run);
+    catAdd(kCatSkipGate, run);
     return -1;
   }
 
@@ -291,12 +444,20 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
   int storeAt = starttime - kPreRoll;        // first entry for a run
 
   if (cmp == 0) {
+    // "force" deliberately does NOT reach here: it overrides the quality gate, not
+    // an identical entry. Re-storing identical numbers would burn one of the
+    // kPreRoll+1 revision slots for no change.
     printf("SKIP run %d: already in the DB and identical\n", run);
+    catAdd(kCatSkipSame, run);
     return 0;
   }
   if (cmp > 0) {                             // this run's entry, but different numbers
     TString prev = dbLatestBegin(starttime, flavor);
-    if (prev == "") { printf("NOT WRITING run %d: cannot find the existing entry\n", run); return -1; }
+    if (prev == "") {
+      printf("NOT WRITING run %d: cannot find the existing entry\n", run);
+      catAdd(kCatFailNoPrev, run);
+      return -1;
+    }
     if (!option.Contains("update")) {
       printf("SKIP run %d: it is in the DB already and the content DIFFERS in %d of %d slots.\n"
              "  The existing entry begins %s. Nothing is overwritten -- "
@@ -305,6 +466,7 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
              "  which then wins for the whole run. See README.\n",
              run, cmp, kStampSlot + 1, prev.Data());
       dbCompare(run, readDate, readTime, flavor, 1);
+      catAdd(kCatSkipDiff, run);
       return -1;
     }
     storeAt = unixOfStamp(prev.Data()) + 1;
@@ -313,6 +475,7 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
              "  Going later than the run start would leave the first seconds of the run on\n"
              "  the old entry, so ask the database team to deactivate one instead.\n",
              run, kPreRoll + 1, utcStamp(starttime - kPreRoll).Data());
+      catAdd(kCatFailSlots, run);
       return -1;
     }
     printf("UPDATE run %d: %d slots differ, storing a revision at %s\n", run, cmp, utcStamp(storeAt).Data());
@@ -336,9 +499,11 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
   if (!stored) {
     printf("\n*** WRITE FAILED for run %d at %s -- NOTHING WAS STORED ***\n"
            "    see the MysqlDb/StDbSql errors above\n", run, utcStamp(storeAt).Data());
+    catAdd(kCatFailWrite, run);
     return -2;                           // fatal: stop, do not try the other runs
   }
   printf("STORE run %d at %s flavor %s: OK\n", run, utcStamp(storeAt).Data(), flavor);
+  catAdd(cmp > 0 ? kCatStoredUpd : kCatStoredNew, run);
 
   // NOT dbCompare() here. St_db_Maker caches the dataset it read before the store, so
   // asking it again in this process returns the state from BEFORE the write and looks
@@ -353,6 +518,10 @@ int doRun(int run, const char *dir, TString option, const char *flavor)
   else
     printf("VERIFY run %d: expected an entry at %s but %s reports %s -- CHECK THIS\n",
            run, want.Data(), kWriteHost, now == "" ? "none" : now.Data());
+  // An OVERLAY on the stored bucket above, not an alternative to it: the row did
+  // go in, it is the confirmation that did not come back. catSummary() therefore
+  // leaves this bucket out of the one-bucket-per-run consistency check.
+  if (now != want) catAdd(kCatWarnVerify, run);
   return 0;
 }
 
@@ -367,6 +536,7 @@ void fttDataWindow_db(int run = 0, const char *opt = "", const char *dir = "",
   TString sdir(dir);
   if ( sdir == "" ) sdir = Form("%s/data", gSystem->DirName(__FILE__));
 
+  catReset();
   printf("fttDataWindow_db: run=%d opt=\"%s\" dir=%s flavor=%s  (writedb=%d)\n",
          run, opt, sdir.Data(), flavor, (int)option.Contains("writedb"));
 
@@ -395,7 +565,11 @@ void fttDataWindow_db(int run = 0, const char *opt = "", const char *dir = "",
                                                      : "$DB_SERVER_LOCAL_CONFIG");
   }
 
-  if (run > 0) { doRun(run, sdir.Data(), option, flavor); return; }
+  if (run > 0) {
+    doRun(run, sdir.Data(), option, flavor);
+    catSummary(1, option, sdir.Data());
+    return;
+  }
 
   TString list = gSystem->GetFromPipe(Form("ls %s/fttDataWindow.*.txt 2>/dev/null | sort", sdir.Data()));
   TObjArray *tok = list.Tokenize("\n");
@@ -408,9 +582,11 @@ void fttDataWindow_db(int run = 0, const char *opt = "", const char *dir = "",
     if (!base.IsDigit()) continue;
     if (doRun(base.Atoi(), sdir.Data(), option, flavor) == -2) {
       printf("*** STOPPING -- %d run(s) processed before the failure ***\n", nDone);
+      catSummary(nDone + 1, option, sdir.Data());   // +1: the run that failed
       return;
     }
     nDone++;
   }
   printf("fttDataWindow_db: processed %d run(s) from %s\n", nDone, sdir.Data());
+  catSummary(nDone, option, sdir.Data());
 }
