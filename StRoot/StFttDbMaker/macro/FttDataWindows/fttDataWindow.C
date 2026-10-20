@@ -1,4 +1,25 @@
-// fttDataWindow.C -- per-VMM FTT (sTGC) time calibration from MuDst, for one run.
+// fttDataWindow.C -- per-VMM FTT (sTGC) time calibration for one run.
+//
+// THREE KINDS OF INPUT, and only the first needs a chain or the database:
+//   a MuDst, or a .list of them     full chain: StMuDstMaker + StMuDst2StEventMaker
+//                                   + St_db_Maker + StFttDbMaker, DB timestamp taken
+//                                   from the first event
+//   a forward QA ROOT file          StFwdRun22Qa_<run>_raw_<n>.root: the per-VMM
+//                                   H2S_FttRawHit_dbcidVch_<vmm> histograms, read
+//                                   directly. NO chain, NO database, NO timestamp.
+//   one of our own root/*.root      redo the analysis on saved histograms. Same.
+// The whole Run 22 calibration, 3016 runs, was produced through the second path, so
+// everything below `if (!redoMode)` is skipped; nothing in it runs.
+//
+// WHAT THE DATABASE IS FOR -- not the VMM numbering. StFttDb::vmmId() is pure
+// arithmetic on the raw hit's own electronics fields (sector, rdo, feb, vmm); it
+// reads no table and knows nothing about geometry or time. The chain is there for
+// exactly one call, StFttDb::hardwareMap()/orientation(), which fills the per-
+// ORIENTATION in-window fractions of the QA columns (all / H / V / dH / dV). Those
+// are QA only: the calibration itself -- anchor, window, accept or reject -- is per
+// VMM and never looks at orientation, row, strip or any geometry. St_db_Maker needs
+// a timestamp only because it must be positioned in time to load that hardware map,
+// which is the one and only reason the event time is read.
 //
 // Output (in <outdir>, default ./fttDataWindow/):
 //   fttDataWindow.<run>.txt        calibration, one line per VMM, first 5 columns in
@@ -100,7 +121,7 @@ const int kNDBCID = 4096;
 const int kWinScan = 40;
 const int kNOrient = 5;   // kFttHorizontal=0, kFttVertical=1, kFttDiagonalH=2, kFttDiagonalV=3, unknown=4
 
-// ---- the window fit, used by fttDataWindow.C and by fttDataWindowRefit.C ------
+// ---- the window fit, used here and loaded by fttDataWindowPlot.C -------------
 // Out-of-time hits arrive in crossings every bxPeriod ticks, so what sits under the
 // in-time peak is pileup at the SAME phase: bg(t) = mean of counts at t + k*bxPeriod,
 // k = +-1..+-6, interpolated between ticks, skipping neighbours that fall inside the
@@ -527,6 +548,12 @@ void fttDataWindow(const char *input,
     for (int ih = 0; ih < nh; ih++) {
       StFttRawHit *hit = fc->rawHits()[ih];
       int v = (int)db->vmmId(hit);
+      // Not a check on whether the geometry DB loaded -- vmmId() never reads it.
+      // It guards malformed electronics fields: vmmId() returns size_t from
+      // u_char iPlane = sector()-1, so sector 0 wraps to 255 and the id comes back
+      // ~24000. StFttDb guards the same way at both of its own call sites,
+      // getTimeCut() (with a LOG_WARN) and getAnchor(). Here v indexes a fixed
+      // array, so without the guard a malformed hit is a segfault, not a skip.
       if (v < 0 || v >= kNVMM) { nBadVmm++; continue; }
       int d = hit->dbcid();
       if (d < 0 || d >= kNDBCID) { nBadDbcid++; continue; }

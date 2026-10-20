@@ -6,7 +6,7 @@
 <BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
 
 <H1>FTT per-VMM uuid vs. time diagnostic</H1>
-<p><a href="../index.html">&larr; back to StFttSimHitMaker main page</a></p>
+<p><a href="../index.html">&larr; back to StFttSlowSimMaker main page</a></p>
 <p><b><a href="#20260914">&darr; 2026-09-14 update: per-run time calibration, field ON vs OFF, time-window choice</a></b></p>
 <p><b><a href="#20260921">&darr; 2026-09-21 update: the [-1,3] window measured on production data (purity, background, track quality)</a></b></p>
 <p><b><a href="#20261016">&darr; 2026-10-16 update: the window measured per VMM, and why it is only allowed to open</a></b></p>
@@ -601,12 +601,17 @@ stored per VMM.</p>
 <tt>root/fttDataWindow.&lt;run&gt;.root</tt>. The window is measured from exactly those
 histograms, so <b>changing the window criterion is a re-analysis of the saved ROOT file, not
 a new pass over the MuDsts</b>:</p>
-<pre>root4star -l -b -q 'fttDataWindowRefit.C(23081049)'                          # same settings: round trip
-root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.90)'               # keep 90% of the crossing
-root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.95,4.263,-2,4)'    # a wider floor</pre>
+<pre>root4star -l -b -q 'fttDataWindow.C("fttDataWindow/root/fttDataWindow.23081049.root")'
+root4star -l -b -q 'fttDataWindow.C("&lt;saved .root or forward QA file&gt;",50000,200,0.95,
+                     -65,100,"w999",200,200,50,0.7,20,4.263,0.999,-1,2)'   # winKeep 0.999</pre>
+<p>(This was <tt>fttDataWindowRefit.C</tt> until 2026-10-20. <tt>fttDataWindow.C</tt> in redo mode
+does the same job and also reads the forward QA files, which exist for every run, so the separate
+macro was dropped.)</p>
 <ul>
-  <li>Anchors are <b>not</b> recomputed &mdash; they are read back from the existing
-      calibration, so only columns 3 and 4 can change. Everything else is passed through.
+  <li>The anchor does not move: it comes from the same histogram by the same argmax. On run
+      22354025, <tt>winKeep</tt> 0.999 against the default 0.95 changed the window on 6 VMMs and
+      left all 384 anchors identical. At 0.90 <b>nothing</b> changes &mdash; on a busy run the fit
+      asks for less than the [-1,2] floor, which holds the window open anyway.
   <li>Verified: re-running the fit from the ROOT file reproduces the MuDst pass exactly, all
       384 lines, columns 1-5 identical.
   <li>The fit lives in one place (<tt>fitFttWindow</tt> in <tt>fttDataWindow.C</tt>) and the
@@ -632,13 +637,14 @@ as it is &mdash; which is a clean way to take the two changes one at a time.</p>
 calibration belongs to one run &mdash; anchors are reset at every run start, so they are not
 slowly varying and a run cannot borrow its neighbour's.</p>
 
-<H2>The four macros</H2>
+<H2>The macros</H2>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>macro</TH><TH>reads</TH><TH>does</TH></TR>
-<TR><TD><tt>fttDataWindow.C</tt></TD><TD>MuDst(s) of one run</TD>
-    <TD>measures the anchors and the window, writes the calibration + QA + histograms</TD></TR>
-<TR><TD><tt>fttDataWindowRefit.C</tt></TD><TD>the saved <tt>.txt</tt> + <tt>.root</tt></TD>
-    <TD>re-fits the WINDOW with different settings, no MuDst needed</TD></TR>
+<TR><TD><tt>fttDataWindow.C</tt></TD>
+    <TD>MuDst(s) of one run, a forward QA file, or its own saved <tt>.root</tt></TD>
+    <TD>measures the anchors and the window, writes the calibration + QA + histograms.
+        From a histogram file it re-runs the same analysis with no chain and no database
+        &mdash; that is how a window criterion is changed.</TD></TR>
 <TR><TD><tt>fttDataWindowPlot.C</tt></TD><TD>the saved <tt>.txt</tt> + <tt>.root</tt></TD>
     <TD>draws what the fit saw, no MuDst needed</TD></TR>
 <TR><TD><tt>fttDataWindow_db.C</tt></TD><TD>the saved <tt>.txt</tt></TD>

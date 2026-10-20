@@ -7,24 +7,38 @@ from.
 
 What is here
 ------------
-  fttDataWindow.C        produces a calibration from MuDst, one run at a time,
-                         or REDOES one from the histograms it saved earlier
-  fttDataWindowRefit.C   changes the WINDOW of an existing calibration, from the
-                         saved histograms, without re-reading any MuDst
-  fttDataWindowPlot.C    draws what the fit saw, also from the saved histograms
+  fttDataWindow.C        produces a calibration, one run at a time, from a MuDst,
+                         from a forward QA ROOT file, or by REDOING one from
+                         histograms it saved earlier
+  fttDataWindowPlot.C    draws what the window fit saw, from the saved histograms
   fttDataWindowCheck.C   says what the CONSUMER gets for a run: whether
                          StFttDbMaker enables that run's anchors or ignores them
   fttDataWindow_db.C     pushes a calibration into the DB, and reads it back
   data/                  the calibrations we have measured (see below), as
                          worked examples -- see the note at the end.
-  writeFttDataWindows.C  Daniel's original: writes ONE global entry with a
-                         uniform window and no anchors
-  readFttDataWindows.C   Daniel's original: prints whatever the DB holds
 
-Use fttDataWindow_db.C for real calibrations. writeFttDataWindows.C does not
-read a measurement at all -- it hardcodes min=-65, max=100, anchor=0 for every
-VMM and stores a single entry. That is the right thing for establishing a
-default window and it is what the DB holds today, but it is not calibration.
+Four macros, and only fttDataWindow_db.C ever writes to the database.
+
+Three macros were removed once fttDataWindow.C learned to re-run its own
+analysis from saved histograms:
+
+  fttDataWindowRefit.C   re-derived the window from the saved histograms with the
+                         anchors frozen. fttDataWindow.C in redo mode does the
+                         same and more -- it reads the forward QA files too, which
+                         exist for every run, while root/*.root exists only where
+                         the producing job was run with keephist=1. Checked on run
+                         22354025: redo at winKeep 0.999 instead of 0.95 moves the
+                         window on 6 VMMs and leaves all 384 anchors bit-identical,
+                         which is exactly what Refit promised.
+  writeFttDataWindows.C  wrote ONE global entry with a uniform window and no
+  readFttDataWindows.C   anchors, and printed back whatever the DB held (both
+                         Daniel's, Nov 2025). The global entry they made is still
+                         in the table, beginning 2021-10-01, and is still the
+                         fallback for any run with no calibration of its own -- but
+                         it is already there and does not need rewriting, and
+                         fttDataWindow_db.C both stores and reads back, per run and
+                         stamped. Recover them from git if that global entry ever
+                         has to be replaced.
 
 
 Why per-run anchors exist
@@ -264,21 +278,21 @@ plots.
 
 Trying a different window only, without redoing the anchors
 ------------------------------------------------------------
-fttDataWindow.C saves every VMM's raw dbcid histogram in
-root/fttDataWindow.<run>.root, and the window is measured from exactly those
-histograms. So a different window criterion is a re-analysis of the saved ROOT
-file, not another pass over the data:
+The window is measured from the per-VMM dbcid histograms and nothing else, so a
+different window criterion is a re-analysis of a saved file rather than another
+pass over the data. Point fttDataWindow.C at the histograms instead of a MuDst
+and give it the criterion you want:
 
-    root4star -l -b -q 'fttDataWindowRefit.C(23081049)'                        # round trip
-    root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.90)'             # keep 90%
-    root4star -l -b -q 'fttDataWindowRefit.C(23081049,"out",0.95,4.263,-2,4)'  # wider floor
+    root4star -l -b -q 'fttDataWindow.C("fttDataWindow/root/fttDataWindow.23081049.root")'
+    root4star -l -b -q 'fttDataWindow.C("<forward QA file>",50000,200,0.95,-65,100,
+                                        "w999",200,200,50,0.7,20,4.263,0.999,-1,2)'
 
-It reads fttDataWindow.<run>.txt and root/fttDataWindow.<run>.root from indir
-(default .), and writes a new fttDataWindow.<run>.txt into outdir. Anchors are
-NOT recomputed -- they are read back from the existing calibration -- so only
-columns 3 and 4 can change and everything else is passed through unchanged. A
-round trip at the same settings reproduces the file the MuDst pass wrote, all
-384 lines.
+winKeep is the 14th argument, the two floor ticks the 15th and 16th. The anchor
+comes from the same histogram by the same argmax, so it does not move: on run
+22354025, winKeep 0.999 against the default 0.95 changed the window on 6 VMMs
+and left all 384 anchors identical. Mind the safety floor while reading such a
+comparison -- at winKeep 0.90 NOTHING changes, because on a busy run the fit
+asks for less than [-1,2] and the floor holds the window open anyway.
 
 The fit itself lives in fttDataWindow.C (fitFttWindow) and the refit macro
 loads it from there, so there is one copy of the algorithm. What the ROOT file
