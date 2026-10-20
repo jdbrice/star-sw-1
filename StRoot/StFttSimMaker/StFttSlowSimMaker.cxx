@@ -2,7 +2,7 @@
 #include <map>
 #include <utility>
 
-#include "StFttSimHitMaker.h"
+#include "StFttSlowSimMaker.h"
 
 #include "StEvent.h"
 #include "StEnumerations.h"
@@ -16,10 +16,26 @@
 
 #include "TRandom.h"
 
-ClassImp( StFttSimHitMaker )
+// One particle crossing one gas layer: GEANT can report it as several steps
+// (~6% of crossings, up to 17), which are one physical ionisation trail
+// through one foil. They are one charge deposit, so the energy is summed and
+// the position is their dE-weighted centroid -- the charge-weighted centre is
+// what the strips actually see. Measured against taking the first step
+// instead, the centroid moves the hit by less than 0.4mm (an eighth of a
+// strip pitch) for 97% of crossings, but by more than a pitch for the ~1%
+// that travel along the gas or throw a delta ray.
+struct FttGeantCrossing {
+    double deSum;      // GeV, summed over the steps of this crossing
+    double gxWeighted; // sum of de*x over the steps, cm*GeV
+    double gyWeighted; // sum of de*y
+    int    trackId;
+    int    volumeId;
+};
+
+ClassImp( StFttSlowSimMaker )
 
 //_____________________________________________________________
-StFttSimHitMaker::StFttSimHitMaker( const char* name )
+StFttSlowSimMaker::StFttSlowSimMaker( const char* name )
 : StMaker( name ),
   mEvent( 0 ),
   mFttCollection( 0 ),
@@ -27,27 +43,27 @@ StFttSimHitMaker::StFttSimHitMaker( const char* name )
 { }
 
 //_____________________________________________________________
-StFttSimHitMaker::~StFttSimHitMaker()
+StFttSlowSimMaker::~StFttSlowSimMaker()
 { }
 
 //_____________________________________________________________
-Int_t StFttSimHitMaker::Init()
+Int_t StFttSlowSimMaker::Init()
 {
     return kStOk;
 }
 
 //_____________________________________________________________
-Int_t StFttSimHitMaker::Make()
+Int_t StFttSlowSimMaker::Make()
 {
     mEvent = (StEvent*)GetInputDS("StEvent");
     if ( !mEvent ) {
         mEvent = new StEvent();
         AddData( mEvent );
-        LOG_INFO << "StFttSimHitMaker::Make() - Creating StEvent" << endm;
+        LOG_INFO << "StFttSlowSimMaker::Make() - Creating StEvent" << endm;
     }
 
     if ( mEvent->fttCollection() == nullptr ) {
-        LOG_INFO << "StFttSimHitMaker::Make() - Creating FttCollection" << endm;
+        LOG_INFO << "StFttSlowSimMaker::Make() - Creating FttCollection" << endm;
         mEvent->setFttCollection( new StFttCollection() );
     }
     mFttCollection = mEvent->fttCollection();
@@ -55,20 +71,36 @@ Int_t StFttSimHitMaker::Make()
 
     mFttDb = static_cast<StFttDb*>( GetDataSet( "fttDb" ) );
     if ( !mFttDb ) {
-        LOG_ERROR << "StFttSimHitMaker::Make() - fttDb dataset not found (is StFttDbMaker in the chain, before this maker?), cannot continue" << endm;
+        LOG_ERROR << "StFttSlowSimMaker::Make() - fttDb dataset not found (is StFttDbMaker in the chain, before this maker?), cannot continue" << endm;
         return kStErr;
     }
 
     St_g2t_fts_hit *geantFtt = (St_g2t_fts_hit*)GetDataSet( "geant/g2t_stg_hit" );
     if ( !geantFtt ) {
-        LOG_WARN << "StFttSimHitMaker::Make() - geant/g2t_stg_hit is empty" << endm;
+        LOG_WARN << "StFttSlowSimMaker::Make() - geant/g2t_stg_hit is empty" << endm;
         return kStOk;
     }
 
-    // one truth hit -> one synthetic 3-strip cluster (per orientation, see
-    // header comment); dedupe multiple GEANT steps on the same track+volume,
-    // same convention as StFttClusterPointMaker::MakeGeantPoints()
-    std::map<std::pair<int,int>,int> track_vol_count;
+    // First pass: collapse the GEANT step list into one entry per crossing
+    // (one track through one gas layer), summing the energy loss. Everything
+    // below works from these, one crossing -> one synthetic cluster per
+    // orientation. Front and back are different physical foils with
+    // different volume_ids, so each still gets its own cluster
+    // (StFttDb::reverseHardwareMap() disambiguates the two orientations at a
+    // given row/strip -- see status_ftt_sim_maker.txt item 3).
+    std::map< std::pair<int,int>, FttGeantCrossing > crossings;
+    for ( int ig = 0; ig < geantFtt->GetNRows(); ig++ ) {
+        g2t_fts_hit_st *step = (g2t_fts_hit_st*)geantFtt->At( ig );
+        if ( !step ) continue;
+        // operator[] value-initialises a new entry, so the three sums start
+        // at zero and the first visit needs no special case.
+        FttGeantCrossing &c = crossings[ std::make_pair( step->track_p, step->volume_id ) ];
+        c.trackId     = step->track_p;
+        c.volumeId    = step->volume_id;
+        c.deSum      += step->de;
+        c.gxWeighted += step->de * step->x[0];
+        c.gyWeighted += step->de * step->x[1];
+    }
 
     // Accumulate ADC per physical channel across ALL truth hits this event
     // before creating any StFttRawHit -- two nearby tracks (or one track's
@@ -78,56 +110,76 @@ Int_t StFttSimHitMaker::Make()
     // status_ftt_sim_maker.txt item 9.
     std::map<long long, ChannelAccum> accum;
 
-    int nTruthHits = 0;
+    int nTruthHits = 0, nBadVolumeId = 0, nNoStrip = 0;
 
-    for ( int i = 0; i < geantFtt->GetNRows(); i++ ) {
-        g2t_fts_hit_st *git = (g2t_fts_hit_st*)geantFtt->At(i);
-        if ( !git ) continue;
+    std::map< std::pair<int,int>, FttGeantCrossing >::const_iterator ic;
+    for ( ic = crossings.begin(); ic != crossings.end(); ++ic ) {
+        const FttGeantCrossing &crossing = ic->second;
 
-        int track_id  = git->track_p;
-        int volume_id = git->volume_id;
+        int track_id  = crossing.trackId;
+        int volume_id = crossing.volumeId;
 
-        // Dedupe by (track, volume): front/back are genuinely different
-        // physical foils (StFttDb::reverseHardwareMap() now disambiguates
-        // both orientations at a given row/strip -- see status_ftt_sim_maker.txt
-        // item 3), so each gets its own synthetic cluster again.
-        if ( ++track_vol_count[ std::make_pair(track_id, volume_id) ] > 1 ) continue;
-
-        int plane_id = (volume_id - 1) / 100;
+        // volume_id = 100*station + 10*pentagon + layer, where layer is 1
+        // (front foil) or 2 (back foil): each station in
+        // StarVMC/Geometry/StgmGeo/StgmGeo1.xml places four STFM pentagons in
+        // turn inside STGM, and each pentagon holds two STMG gas layers.
+        // Both station and pentagon are 0-based, from g2t_stg_volume_id():
+        //     station = (numbv(1)-1)/4 ; plane = MOD(numbv(1)-1,4)
+        // Careful with the names: what g2t calls "plane" is the PENTAGON, and
+        // its "station" is the hundreds digit. This is the station, so call it
+        // that -- StFttDb's "plane" is the same thing, the pentagon is not.
+        // No -1 before the divide: 10*pentagon + layer <= 32 can never carry
+        // into the hundreds, so it would change nothing for a real volume_id,
+        // while hiding a bad one -- 400 (station 4) would decode as 3 and slip
+        // past the range check below instead of being reported.
+        int station_id = volume_id / 100;
+        int agmlQuad   = (volume_id / 10) % 10;
         // front (even volume_id) = vertical/X strips, back (odd) = horizontal/Y strips --
         // same convention as StFttClusterPointMaker::MakeGeantPoints() / StFttFastSimMaker
         UChar_t intendedOrientation = (volume_id % 2 == 0) ? kFttVertical : kFttHorizontal;
 
-        if ( plane_id < 0 || plane_id >= (int)StFttDb::nPlane ) continue;
-
-        // GEANT truth global position, cm
-        double gx = git->x[0];
-        double gy = git->x[1];
-
-        // Brute force the quadrant: try all 4, invert
-        // StFttClusterPointMaker::MakeGlobalPoints()'s forward transform
-        // ( global = ((local*s)+d)/10 ) with the SAME live StFttDb call for each,
-        // and keep whichever gives a local (x,y) inside the physical strip range
-        // (0..~560mm). This makes the whole chain a self-consistent round trip
-        // through the real local<->global formula (whatever it currently is --
-        // bug or not, see status_ftt_sim_maker.txt), not an independently
-        // re-derived geometry. sx/sy are always +-1, so dividing == multiplying.
-        const double kLocalMax = 560.0; // mm, a bit above the largest strip-group edge (548.7mm)
-        int quadrant_id = -1;
-        double local_x = 0, local_y = 0;
-        for ( int q = 0; q < (int)StFttDb::nQuadPerPlane; q++ ) {
-            float dx, sx, dy, sy, dz, sz;
-            mFttDb->getGloablOffset_ClusterPoint( (UChar_t)plane_id, (UChar_t)q, dx, sx, dy, sy, dz, sz );
-            double lx = (gx * 10.0 - dx) * sx;
-            double ly = (gy * 10.0 - dy) * sy;
-            if ( lx >= 0 && lx <= kLocalMax && ly >= 0 && ly <= kLocalMax ) {
-                quadrant_id = q;
-                local_x = lx;
-                local_y = ly;
-                break;
+        if ( volume_id < 1 ||
+             station_id < 0 || station_id >= (int)StFttDb::nPlane ||
+             agmlQuad   < 0 || agmlQuad   >= (int)StFttDb::nQuadPerPlane ) {
+            // Not a position we can place: the sTGC geometry cannot produce
+            // such a volume_id, so this means the geometry and this decoding
+            // have gone out of step -- say so rather than dropping it quietly.
+            if ( nBadVolumeId < 10 ) {
+                LOG_WARN << "StFttSlowSimMaker::Make() - g2t_stg_hit volume_id " << volume_id
+                         << " decodes to station " << station_id << ", pentagon " << agmlQuad
+                         << ", outside the sTGC geometry; is StgmGeo's volume numbering still "
+                         << "100*station + 10*pentagon + layer?" << endm;
             }
+            nBadVolumeId++;
+            continue;
         }
-        if ( quadrant_id < 0 ) continue; // didn't land cleanly in any quadrant's valid local range
+
+        // AGML places the four pentagons of a station in rotation order
+        // (A, D, C, B) while StFttDb numbers quadrants A, B, C, D, so the
+        // GEANT pentagon copy number and the StFttDb quadrant index differ by
+        // this permutation. Measured on a particle-gun sample: of the truth
+        // hits whose local position lands on strips, 100% agree with this
+        // table and none contradict it (see status_ftt_sim_maker.txt).
+        static const int kAgmlToDbQuadrant[4] = { 0, 3, 2, 1 };
+        int quadrant_id = kAgmlToDbQuadrant[ agmlQuad ];
+
+        // GEANT truth global position, cm: the dE-weighted centroid of this
+        // crossing's steps. deSum > 0 for every crossing we built, but guard
+        // anyway -- a zero-energy step list would divide by zero.
+        if ( crossing.deSum <= 0 ) continue;
+        double gx = crossing.gxWeighted / crossing.deSum;
+        double gy = crossing.gyWeighted / crossing.deSum;
+
+        // Invert StFttClusterPointMaker::MakeGlobalPoints()'s forward
+        // transform ( global = ((local*s)+d)/10 ) with the SAME live StFttDb
+        // call, so the whole chain is a self-consistent round trip through the
+        // real local<->global formula (whatever it currently is -- bug or not,
+        // see status_ftt_sim_maker.txt) rather than an independently
+        // re-derived geometry. sx/sy are always +-1, so dividing == multiplying.
+        float dx, sx, dy, sy, dz, sz;
+        mFttDb->getGloablOffset_ClusterPoint( (UChar_t)station_id, (UChar_t)quadrant_id, dx, sx, dy, sy, dz, sz );
+        double local_x = (gx * 10.0 - dx) * sx;
+        double local_y = (gy * 10.0 - dy) * sy;
 
         // Diagonal strips are a SECOND strip layer etched on the SAME foil as
         // the primary (Vertical or Horizontal) one -- see StEnumerations.h's
@@ -137,11 +189,12 @@ Int_t StFttSimHitMaker::Make()
         UChar_t diagonalOrientation = ( kFttVertical == intendedOrientation ) ? kFttDiagonalV : kFttDiagonalH;
         const UChar_t attempts[2] = { intendedOrientation, diagonalOrientation };
 
-        // Drawn ONCE per truth hit: intendedOrientation and diagonalOrientation
-        // are the same physical foil's two strip layers (Vertical+DiagonalV =
-        // front foil, Horizontal+DiagonalH = back foil), reading the same
-        // charge deposit -- see header comment on setMeanTotalAdc().
-        double totalAdc = -mMeanTotalAdc * std::log( gRandom->Rndm() );
+        // Charge for this crossing, from the energy GEANT actually deposited.
+        // Drawn ONCE: intendedOrientation and diagonalOrientation are the same
+        // physical foil's two strip layers (Vertical+DiagonalV = front foil,
+        // Horizontal+DiagonalH = back foil) reading the same charge deposit --
+        // see the header comment on setAdcPerKeV().
+        double totalAdc = mAdcPerKeV * ( crossing.deSum * 1e6 /* GeV -> keV */ ) * gainFluctuation();
         const double kPitch = StFttDb::stripPitch;
 
         bool anyBuilt = false;
@@ -152,8 +205,8 @@ Int_t StFttSimHitMaker::Make()
             if ( !computeRowStrip( orientation, local_x, local_y, row, centerStrip, subStripOffset ) ) continue;
 
             if ( mDebug ) {
-                printf( "StFttSimHitMaker DEBUG: track=%d plane=%d quad=%d orient=%d g=(%.3f,%.3f) local=(%.2f,%.2f) row=%d strip=%d off=%.2f\n",
-                        track_id, plane_id, quadrant_id, (int)orientation, gx, gy, local_x, local_y, row, centerStrip, subStripOffset );
+                printf( "StFttSlowSimMaker DEBUG: track=%d plane=%d quad=%d orient=%d g=(%.3f,%.3f) local=(%.2f,%.2f) row=%d strip=%d off=%.2f\n",
+                        track_id, station_id, quadrant_id, (int)orientation, gx, gy, local_x, local_y, row, centerStrip, subStripOffset );
             }
 
             anyBuilt = true;
@@ -173,11 +226,12 @@ Int_t StFttSimHitMaker::Make()
                 double frac = 0.5 * ( std::erf( hi / ( mChargeShareSigma * std::sqrt(2.0) ) )
                                      - std::erf( lo / ( mChargeShareSigma * std::sqrt(2.0) ) ) );
                 float adc = (float)( totalAdc * frac );
-                accumulateStrip( accum, plane_id, quadrant_id, row, strip, adc, (UShort_t) track_id, orientation, ( 0 == d ) );
+                accumulateStrip( accum, station_id, quadrant_id, row, strip, adc, (UShort_t) track_id, orientation, ( 0 == d ) );
             }
         }
         if ( anyBuilt ) nTruthHits++;
-    } // loop on geant hits
+        else             nNoStrip++;
+    } // loop on crossings
 
     // Now that every truth hit's contribution to every channel has been
     // summed (a channel near two nearby tracks' edges can clear threshold
@@ -202,11 +256,48 @@ Int_t StFttSimHitMaker::Make()
         if ( mFttCollection->rawHits().size() > before ) nStripsAdded++;
     }
 
-    LOG_INFO << "StFttSimHitMaker made " << nStripsAdded << " raw hits ("
+    LOG_INFO << "StFttSlowSimMaker made " << nStripsAdded << " raw hits ("
               << accum.size() << " unique channels) from "
               << nTruthHits << " truth hits this event" << endm;
 
+    // Not an error, and rare: GEANT records a hit anywhere in the STMG gas
+    // volume, including the narrow band inside the first strip-group edge
+    // (YX_StripGroupEdge[0] = 11.49mm) where the foil carries no strips yet.
+    // Measured on an electron gun: 73 of 11404 crossings, 0.64%, about two
+    // thirds of them in that band. (A hit is kept if EITHER the X/Y or the
+    // diagonal orientation finds a strip, and the diagonal rotation covers
+    // most of what the X/Y rows miss, which is why this is so small.)
+    // Reported so the number is visible instead of hidden in a silent skip.
+    if ( nNoStrip > 0 ) {
+        LOG_INFO << "StFttSlowSimMaker - " << nNoStrip
+                  << " truth hits fell outside the strip-covered area of their foil "
+                  << "(no strips there), no raw hit made for them" << endm;
+    }
+    if ( nBadVolumeId > 0 ) {
+        LOG_WARN << "StFttSlowSimMaker - " << nBadVolumeId
+                  << " truth hits had a volume_id this maker could not decode" << endm;
+    }
+
     return kStOk;
+}
+
+//_____________________________________________________________
+// Gas amplification spread: a Polya/Gamma factor with mean 1 and relative
+// width mGainSpread, drawn as the mean of 1/mGainSpread^2 unit exponentials
+// (so the achievable widths are 1/sqrt(integer); 0.3 gives 0.302). Small for
+// this detector by design: ~0.78keV in the 3mm gap at W~25-30eV is ~26-31
+// primary electrons, each avalanching independently, so the spread averages
+// down to sqrt(f/N) ~ 13-20%. Real data prefers ~30% -- the same ballpark,
+// a little more, as TGC saturated-mode gain plus VMM shaping would give.
+// mGainSpread = 0 switches it off entirely (pure scaling of de).
+double StFttSlowSimMaker::gainFluctuation()
+{
+    if ( mGainSpread <= 0 ) return 1.0;
+    int nStage = (int) ( 1.0 / ( mGainSpread * mGainSpread ) );
+    if ( nStage < 1 ) nStage = 1;
+    double g = 0;
+    for ( int is = 0; is < nStage; is++ ) g += gRandom->Exp( 1.0 );
+    return g / (double)nStage;
 }
 
 //_____________________________________________________________
@@ -226,7 +317,7 @@ Int_t StFttSimHitMaker::Make()
 // Returns false if the position falls outside this orientation's coverage
 // (row 0-2 case) -- strip-range validity for either case is enforced later
 // by reverseHardwareMap() itself.
-bool StFttSimHitMaker::computeRowStrip( UChar_t orientation, double local_x, double local_y, int &row, int &centerStrip, double &subStripOffset )
+bool StFttSlowSimMaker::computeRowStrip( UChar_t orientation, double local_x, double local_y, int &row, int &centerStrip, double &subStripOffset )
 {
     if ( kFttVertical == orientation || kFttHorizontal == orientation ) {
         double measuredAxis = ( kFttVertical == orientation ) ? local_x : local_y;
@@ -274,7 +365,7 @@ bool StFttSimHitMaker::computeRowStrip( UChar_t orientation, double local_x, dou
 // orientation doesn't need to be part of the key. Plain bit-packed (not
 // hashed) so it's trivially injective: plane needs 2 bits, quad 2, row 3,
 // strip 8 -- generous shifts below, no overlap.
-long long StFttSimHitMaker::packChannelKey( int plane, int quad, int row, int strip )
+long long StFttSlowSimMaker::packChannelKey( int plane, int quad, int row, int strip )
 {
     return ( (long long)plane << 24 )
          | ( (long long)quad  << 20 )
@@ -283,7 +374,7 @@ long long StFttSimHitMaker::packChannelKey( int plane, int quad, int row, int st
 }
 
 //_____________________________________________________________
-void StFttSimHitMaker::accumulateStrip( std::map<long long, ChannelAccum> &accum, int plane, int quad, int row, int strip, float adc, UShort_t idTruth, UChar_t orientation, bool isCenter )
+void StFttSlowSimMaker::accumulateStrip( std::map<long long, ChannelAccum> &accum, int plane, int quad, int row, int strip, float adc, UShort_t idTruth, UChar_t orientation, bool isCenter )
 {
     long long key = packChannelKey( plane, quad, row, strip );
     ChannelAccum &c = accum[key]; // default-constructs on first touch of this channel
@@ -297,7 +388,7 @@ void StFttSimHitMaker::accumulateStrip( std::map<long long, ChannelAccum> &accum
 }
 
 //_____________________________________________________________
-void StFttSimHitMaker::addStrip( int plane, int quad, int row, int strip, float adc, UShort_t idTruth, UChar_t expectOrientation )
+void StFttSlowSimMaker::addStrip( int plane, int quad, int row, int strip, float adc, UShort_t idTruth, UChar_t expectOrientation )
 {
     int rob = -1, feb = -1, vmm = -1, ch = -1;
     // Pre-set orientation to the wanted value: reverseHardwareMap() now
@@ -307,7 +398,7 @@ void StFttSimHitMaker::addStrip( int plane, int quad, int row, int strip, float 
     bool ok = mFttDb->reverseHardwareMap( rob, feb, vmm, ch, plane, quad, row, strip, orientation );
     if ( !ok ) {
         if ( mDebug ) {
-            LOG_INFO << "StFttSimHitMaker::addStrip - no hardware address for plane=" << plane
+            LOG_INFO << "StFttSlowSimMaker::addStrip - no hardware address for plane=" << plane
                       << " quad=" << quad << " row=" << row << " strip=" << strip
                       << " orientation=" << (int)expectOrientation << ", dropping" << endm;
         }
