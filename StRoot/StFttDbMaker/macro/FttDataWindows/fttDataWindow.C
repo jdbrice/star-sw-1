@@ -109,6 +109,26 @@
 // anchor = -1 marks a VMM with no usable calibration (status 1,2,3); consumers must
 // fall back to the on-the-fly anchor for it.
 //
+// THE TWO RANGE CHECKS IN THE EVENT LOOP are assertions on the data, not error
+// handling, and neither can fire on anything the DAQ unpacker produced:
+//   - vmmId: RTS/src/DAQ_STGC/stgc_data_c.cxx flags feb_id > 5 and vmm_id < 4 as
+//     "hard error; corrupt data" and ZEROES the whole stgc_vmm_t rather than
+//     passing it on, and StFttRawHitMaker masks the VMM with & 3. So feb and vmm
+//     are in range by construction. v < 0 is unreachable for a second reason:
+//     the largest value vmmId() can return is 31875, far below INT_MAX, so the
+//     size_t -> int cast cannot wrap. Only v >= kNVMM is kept.
+//   - dbcid: it is NOT the BCID. StFttRawHit::dbcid() returns mBCIDDelta, which
+//     StFttRawHitMaker takes from stgc_vmm_t::bcid_delta, which the unpacker
+//     computes as bcid - (trigger marker % 4096), wrapped by +4096 when negative.
+//     Same 12 bits as the BCID, but a delta, and from the DAQ always in [0,4095].
+//     What IS reachable is StFttRawHit's unset default, mBCIDDelta = -32000, on a
+//     hit built by something other than the DAQ. StFttSlowSimMaker passes an
+//     explicit 0 today, so simulated FTT hits carry no time at all.
+// Checked on data: 51.6 M raw hits of run 23081004 have every field inside its
+// range, each spanning its full range. So if either assertion ever fires, the
+// fault is upstream -- which is why each now prints the offending fields once
+// instead of only incrementing a counter.
+//
 // CINT notes: fixed-size arrays and histograms only, unique loop variable names.
 
 // ---- constants inlined from StFttDb.h (class statics are not reliably visible) --
@@ -139,6 +159,9 @@ const int kNOrient = 5;   // kFttHorizontal=0, kFttVertical=1, kFttDiagonalH=2, 
 // at load time and is happier passing nothing by reference across macros).
 // gFitSig/gFitBkg hold the per-tick signal and background of the last call, for
 // plotting; index t runs -kWinScan..+kWinScan at offset kWinScan.
+// report-once flags for the two sanity assertions in the event loop
+int gWarnVmm = 0, gWarnDbcid = 0;
+
 int gFitLo = 0, gFitHi = 0;
 double gFitSig[2 * kWinScan + 1], gFitBkg[2 * kWinScan + 1];
 int    gFitPeak = 0;
@@ -547,16 +570,34 @@ void fttDataWindow(const char *input,
     int nh = fc->rawHits().size();
     for (int ih = 0; ih < nh; ih++) {
       StFttRawHit *hit = fc->rawHits()[ih];
+      // SANITY ASSERTIONS, not error handling -- see the header. Neither can fire
+      // on data from the DAQ unpacker, so if one does, something upstream is
+      // wrong and the run should not be calibrated quietly. Each reports once,
+      // with the fields that caused it, because a count alone is not actionable.
       int v = (int)db->vmmId(hit);
-      // Not a check on whether the geometry DB loaded -- vmmId() never reads it.
-      // It guards malformed electronics fields: vmmId() returns size_t from
-      // u_char iPlane = sector()-1, so sector 0 wraps to 255 and the id comes back
-      // ~24000. StFttDb guards the same way at both of its own call sites,
-      // getTimeCut() (with a LOG_WARN) and getAnchor(). Here v indexes a fixed
-      // array, so without the guard a malformed hit is a segfault, not a skip.
-      if (v < 0 || v >= kNVMM) { nBadVmm++; continue; }
+      if (v >= kNVMM) {                       // v < 0 is unreachable: the largest
+        nBadVmm++;                            // vmmId() can return is 31875
+        if (gWarnVmm++ == 0)
+          printf("fttDataWindow: ERROR vmmId %d >= %d from sector %d rdo %d "
+                 "feb %d vmm %d -- the electronics fields are out of range, "
+                 "which the DAQ unpacker should have zeroed. Hits skipped.\n",
+                 v, kNVMM, (int)hit->sector(), (int)hit->rdo(),
+                 (int)hit->feb(), (int)hit->vmm());
+        continue;
+      }
       int d = hit->dbcid();
-      if (d < 0 || d >= kNDBCID) { nBadDbcid++; continue; }
+      if (d < 0 || d >= kNDBCID) {
+        nBadDbcid++;
+        if (gWarnDbcid++ == 0)
+          printf("fttDataWindow: ERROR dbcid %d outside [0,%d) on vmmId %d. "
+                 "%s Hits skipped.\n", d, kNDBCID, v,
+                 d == -32000 ? "That is StFttRawHit's unset default, so these "
+                               "hits were built without a time -- simulation, "
+                               "or a producer that never filled bcid_delta."
+                             : "From the DAQ it is bcid - trigger marker wrapped "
+                               "into [0,4095], so it cannot land here.");
+        continue;
+      }
       hV[v]->Fill(d);
       nHitsTot++;
       for (int jq = 0; jq < nQa; jq++)
