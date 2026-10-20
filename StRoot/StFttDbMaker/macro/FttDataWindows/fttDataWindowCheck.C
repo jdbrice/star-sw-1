@@ -52,8 +52,8 @@ void loadLibsChk()
 }
 
 // The run start comes from fttDataWindow_db.C's runStartTime(), loaded rather than
-// copied: the RunLog port is year-dependent (3400 + year - 1) and that rule belongs
-// in one place.
+// copied: the RunLog port depends on the run PERIOD, which does not line up with the
+// run-number prefix in December, and that rule belongs in one place.
 
 void fttDataWindowCheck(int run, const char *flavor = "ofl")
 {

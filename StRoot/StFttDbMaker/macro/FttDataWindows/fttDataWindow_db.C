@@ -87,15 +87,48 @@ void loadDbLibs()
   dbLoaded = 1;
 }
 
-// run start from RunLog (same host/port rule as fcsTimedepGainCorr_db.C)
-int runStartTime(int run)
+// One RunLog query, against one slave port.
+int runStartTimeOnPort(int run, int port)
 {
-  int year = run / 1000000 - 1;
-  int port = 3400 + year - 1;
   TString cmd = Form("mysql -h db04.star.bnl.gov --port=%d -N -s -e \"SELECT startRunTime FROM RunLog.runDescriptor WHERE runNumber=%d LIMIT 1\"",
                      port, run);
-  TString st = gSystem->GetFromPipe(cmd.Data());
-  return st.Atoi();
+  return gSystem->GetFromPipe(cmd.Data()).Atoi();
+}
+
+// run start from RunLog.
+//
+// The slave port is per RHIC RUN PERIOD, not per calendar year, and a run period
+// spans two calendar years: Run 22 is December 2021 through 2022 and all of it
+// answers on port 3421. The run number is YYDDDNNN with YY one AHEAD of the
+// calendar year, so the prefix rolls over in the middle of a period -- 22349014
+// (2021-12-15) and 23081049 (2022-03-22) are the same period on the same port.
+//
+// fcsTimedepGainCorr_db.C, which this was adapted from, derives the port from the
+// calendar year (3400 + run/1000000 - 2). That is right for January-November runs
+// and off by one for the December ones, which silently returned no start time: 248
+// of the 3016 runs of the Run 22 calibration, every one of them 22349xxx-22365xxx.
+//
+// So: period = YY for a December run, YY-1 otherwise, and port = 3399 + period.
+// The December cut is deliberately loose (day >= 300) because the exact day the
+// run number rolls over is a scheduling detail, and a wrong guess still finds the
+// start time -- if the computed port has no row for the run, the adjacent period's
+// port is tried before giving up.
+int runStartTime(int run)
+{
+  int yy  = run / 1000000;
+  int day = (run / 1000) % 1000;
+  int period = (day >= 300) ? yy : yy - 1;
+
+  int t = runStartTimeOnPort(run, 3399 + period);
+  if (t > 0) return t;
+
+  // Rolled over on a different day than assumed: try the neighbour period.
+  int other = (day >= 300) ? period - 1 : period + 1;
+  t = runStartTimeOnPort(run, 3399 + other);
+  if (t > 0)
+    printf("runStartTime: run %d answered on the run-%d port, not run-%d\n",
+           run, other, period);
+  return t;
 }
 
 // UTC "YYYY-MM-DD HH:MM:SS" for a unix time -- the form beginTime is stored in.
