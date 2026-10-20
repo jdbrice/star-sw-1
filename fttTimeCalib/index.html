@@ -7,8 +7,9 @@
 
 <H1>FTT per-VMM time calibration -- whole Run 22</H1>
 
-<p>Per-VMM dbcid anchors and time windows for <b>every run of Run 22</b>, ready to go into
-<tt>Calibrations/ftt/fttDataWindowsB</tt>. Nothing has been written to the database yet.</p>
+<p>Per-VMM dbcid anchors and time windows for <b>every run of Run 22</b>, in
+<tt>Calibrations/ftt/fttDataWindowsB</tt>. 3016 runs are stored; the 7 of section 2 are left out on
+purpose and get the time window without anchors.</p>
 
 <p><b>Method, plots and all the detail are on the earlier page:
 <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/ftt_sim_hit_maker/timecut/index.html">FTT
@@ -33,7 +34,7 @@ cut applied. The two zero-field sets below came from MuDsts and are unchanged.</
     <TD><b>3016 runs</b></TD><TD>134 runs</TD><TD>7 runs</TD>
     <TD><a href="fttDataWindow.Run22.qa.txt">fttDataWindow.Run22.qa.txt</a><br>(3145 rows)</TD>
     <TD><a href="fttDataWindow.Run22.calib.tar.gz">fttDataWindow.Run22.calib.tar.gz</a><br>(24 MB, 3016 files + <tt>empty/</tt>)</TD>
-    <TD><a href="png/">png/</a> &mdash; 9 runs only<br>(all 3016 would be 270 MB)</TD></TR>
+    <TD><a href="png/">png/</a> &mdash; 9 runs in one page<br>(all 3016 would be 270 MB)</TD></TR>
 <TR><TD>zero field 2022</TD><TD>49 runs</TD><TD>3 runs</TD><TD>&mdash;</TD>
     <TD><a href="https://www.star.bnl.gov/protected/spin/akio/fcs/ftt_sim_hit_maker/timecut/fttcal/zf2022/fttDataWindow.2022.qa.txt">fttDataWindow.2022.qa.txt</a></TD>
     <TD><a href="https://www.star.bnl.gov/protected/spin/akio/fcs/ftt_sim_hit_maker/timecut/fttcal/zf2022/">zf2022/</a></TD>
@@ -62,26 +63,23 @@ carry the result are <tt>rawHits</tt>, <tt>nOK</tt> and the window <tt>wLo</tt>/
 <b>360</b>, 5th percentile 48. Median raw FTT hits per run <b>18.9 M</b>. Run median window
 <b>[-1, 2]</b>, matching the one-crossing window of section 5 of the earlier page.</p>
 
-<H2>2. What a push would do (dry run, nothing written)</H2>
-<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
-<TR BGCOLOR="#c0c0f0"><TH>bucket</TH><TH>runs</TH><TH>what it means</TH></TR>
-<TR><TD>would INSERT</TD><TD><b>2966</b></TD><TD>nothing in the DB for this run yet</TD></TR>
-<TR><TD>would need "update"</TD><TD>43</TD>
-    <TD>in the DB and differs &mdash; all of them run 23081xxx, the 58-run batch pushed
-        2026-10-16; 3 to 46 of 385 slots moved. A plain <tt>writedb</tt> will <b>not</b> touch
-        these.</TD></TR>
-<TR><TD>already identical</TD><TD>0</TD><TD>&mdash;</TD></TR>
-<TR><TD>fails the quality gate</TD><TD>7</TD><TD>section 3 &mdash; not to be stored</TD></TR>
-<TR><TD>skipped</TD><TD>0</TD><TD>every run resolved its start time from RunLog</TD></TR>
-</TABLE>
-<p>So the push is two commands, not one:</p>
-<pre>root4star -l -b -q 'fttDataWindow_db.C(0,"writedb",       "&lt;dir&gt;")'   # the 2966
-root4star -l -b -q 'fttDataWindow_db.C(0,"writedb update","&lt;dir&gt;")'   # the 43</pre>
-<p><tt>beginTime</tt> is the run's own start time from RunLog minus 10 s. Each entry carries the run
-number in spare slot 384, so <tt>StFttDbMaker</tt> applies the anchors only to the run they were
-measured on and falls back to window-only for any other run.</p>
+<H2>2. Per-run QA plots</H2>
+<p>One plot per run, from <tt>fttDataWindow.C</tt>. In a healthy run the per-VMM anchors sit
+in flat plateaus of 4 &mdash; one FOB &mdash; and the window panel is a narrow band; where a
+run fails, the same panels are scatter, which is the rejection in picture form. All 9 plots in
+one page: <a href="png/">png/</a>. They were regenerated from the same QA input files and are
+bit-identical to the condor pass.</p>
 
-<H2>3. Bad runs: the 7 that fail the quality gate</H2>
+<H3>Good runs</H3>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>raw FTT hits</TH><TH>VMM ok</TH><TH>rejected</TH><TH>dead</TH><TH></TH><TH>QA plot</TH></TR>
+<TR><TD>22354025</TD><TD>78.0 M</TD><TD><b>378</b></TD><TD>6</TD><TD>0</TD><TD>about the best in the dataset</TD>
+    <TD><a href="png/fttDataWindow.22354025.png"><img src="png/fttDataWindow.22354025.png" height=200></a></TD></TR>
+<TR><TD>22353012</TD><TD>71.5 M</TD><TD>356</TD><TD>4</TD><TD>24</TD><TD>typical: one FOB group dead, the rest clean</TD>
+    <TD><a href="png/fttDataWindow.22353012.png"><img src="png/fttDataWindow.22353012.png" height=200></a></TD></TR>
+</TABLE>
+
+<H3>Bad runs: the 7 left out of the push</H3>
 <p><b>Six of the seven are starved of statistics, not mis-timed.</b> The median run has 18.9 M raw
 FTT hits and the 5th percentile 6.5 M; these have 8 k to 400 k, i.e. a few hundred hits per VMM.
 With that little data a VMM's in-window fraction scatters below the 0.7 &times; run-median cut and
@@ -92,10 +90,10 @@ failed. Short runs, not broken ones.</p>
 384 VMMs converge with 90 low-statistics and 246 rejected. That one is a genuine timing or
 threshold problem in the run. <b>23101028</b> is a third case &mdash; 215 dead VMMs and 8 k hits,
 the detector was largely off.</p>
-<p><b>Recommendation: store none of the seven</b>, rather than <tt>"force"</tt> them. With no entry
-of its own a run gets window-only from the stamp check, which is the honest answer when the anchors
-were never measured. Forcing them would put 4 to 48 measured anchors and ~340 anchor
-<tt>-1</tt> into the DB and label the run calibrated.</p>
+<p><b>None of the seven was stored</b>, rather than <tt>"force"</tt>d in. With no entry of its own
+a run gets window-only from the stamp check, which is the honest answer when the anchors were never
+measured; forcing them would have put 4 to 48 measured anchors and ~340 anchor <tt>-1</tt> into the
+table and labelled the run calibrated.</p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>raw FTT hits</TH><TH>VMM ok</TH><TH>lowStat</TH><TH>rejected</TH><TH>dead</TH><TH>why</TH><TH>QA plot</TH></TR>
@@ -122,19 +120,7 @@ were never measured. Forcing them would put 4 to 48 measured anchors and ~340 an
     <TD><a href="png/fttDataWindow.23101028.png"><img src="png/fttDataWindow.23101028.png" height=200></a></TD></TR>
 </TABLE>
 
-<H3>Good runs, same plot, for comparison</H3>
-<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
-<TR BGCOLOR="#c0c0f0"><TH>run</TH><TH>raw FTT hits</TH><TH>VMM ok</TH><TH>rejected</TH><TH>dead</TH><TH></TH><TH>QA plot</TH></TR>
-<TR><TD>22354025</TD><TD>78.0 M</TD><TD><b>378</b></TD><TD>6</TD><TD>0</TD><TD>about the best in the dataset</TD>
-    <TD><a href="png/fttDataWindow.22354025.png"><img src="png/fttDataWindow.22354025.png" height=200></a></TD></TR>
-<TR><TD>22353012</TD><TD>71.5 M</TD><TD>356</TD><TD>4</TD><TD>24</TD><TD>typical: one FOB group dead, the rest clean</TD>
-    <TD><a href="png/fttDataWindow.22353012.png"><img src="png/fttDataWindow.22353012.png" height=200></a></TD></TR>
-</TABLE>
-<p>In a good run the anchors sit in flat per-FOB plateaus of 4 VMMs; in the starved runs the same
-panel is scatter, which is the rejection in picture form. The 9 plots here were regenerated from
-the same input files and are bit-identical to the condor pass.</p>
-
-<H2>4. Still open</H2>
+<H2>3. Still open</H2>
 <ul>
   <li><b>VMMs 140-143</b> (one FOB): calibrated at anchor 1864 by the 200-600 event MuDst pass, but
       <b>rejected as noisy</b> from the QA files (15&times; the hits of neighbours, sigFrac 0.067,
