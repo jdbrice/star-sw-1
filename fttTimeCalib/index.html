@@ -46,10 +46,20 @@ cut applied. The two zero-field sets below came from MuDsts and are unchanged.</
 </TABLE>
 
 <p>Working area for Run 22, not copied here (20 GB, mostly condor logs):
-<tt>/gpfs01/star/pwg_tasks/FwdCalib/akio/FttDataWindows22/data</tt>.
-Macros: <a href="fttDataWindow.C"><tt>fttDataWindow.C</tt></a> (produce),
-<a href="fttDataWindow_db.C"><tt>fttDataWindow_db.C</tt></a> (push),
-<a href="README.txt"><tt>README</tt></a>.</p>
+<tt>/gpfs01/star/pwg_tasks/FwdCalib/akio/FttDataWindows22/data</tt>.</p>
+
+<!-- The macro links point at PR #29 while it is open. After it is merged, swap the
+     three hrefs below for the main branch:
+     https://git.racf.bnl.gov/gitea/STAR/star-sw/src/branch/main/StRoot/StFttDbMaker/macro/FttDataWindows/fttDataWindow.C
+     https://git.racf.bnl.gov/gitea/STAR/star-sw/src/branch/main/StRoot/StFttDbMaker/macro/FttDataWindows/fttDataWindow_db.C
+     https://git.racf.bnl.gov/gitea/STAR/star-sw/src/branch/main/StRoot/StFttDbMaker/macro/FttDataWindows/README      -->
+<p>The macros live in <tt>StRoot/StFttDbMaker/macro/FttDataWindows/</tt>, in
+<a href="https://git.racf.bnl.gov/gitea/STAR/star-sw/pulls/29/files">STAR PR #29</a>
+(SDCC login needed): <tt>fttDataWindow.C</tt> produces a calibration,
+<tt>fttDataWindow_db.C</tt> pushes it and reads it back,
+<tt>fttDataWindowCheck.C</tt> says what the consumer gets for a run,
+<tt>fttDataWindowPlot.C</tt> draws what the window fit saw, and the
+<tt>README</tt> there is the full description.</p>
 
 <p><b>Reading the Run 22 QA text.</b> Columns are the same as the zero-field tables
 (<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/ftt_sim_hit_maker/timecut/index.html#20260914">see
