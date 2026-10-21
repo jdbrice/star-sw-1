@@ -9,6 +9,8 @@
 <p><a href="index.html">&larr; back to StFttSlowSimMaker main page</a></p>
 <p><b>&rarr; <a href="#efficiency">Threshold efficiency: is the hardware threshold cutting real FTT hits?</a></b>
 (2026-10-17, a hypothesis for the low FTT hit pickup, with the numbers behind it)</p>
+<p><b>&rarr; <a href="#xugate">The geometric crossing gate, at 682k events</a></b>
+(2026-10-21, StFttDb::stripsCross, and the charge ratio settled at 1.0)</p>
 <p><b>&rarr; <a href="#xucorr">X&ndash;U / Y&ndash;V charge correlation: found, with a per-VMM time cut</a></b>
 (2026-10-21, why the 2nd pass below saw nothing, and what it looks like once the window is right)</p>
 
@@ -397,6 +399,74 @@ toward one. High luminosity never had this problem: 23081049 is in the Run&nbsp;
 <b>pairing discriminant</b>: tight around 1.0 for true pairs, flat for accidentals, which is
 exactly the handle sTGC space-point making needs to decide which X cluster belongs with which
 U cluster.</p>
+
+
+<HR>
+<A NAME="xugate"></A>
+<H1>The geometric crossing gate, at 682k events (2026-10-21)</H1>
+
+<p>An X strip and a U strip either meet inside both of their lengths or they cannot have
+come from the same particle. That is a gate on any pairing, it needs no charge information,
+and it is now a reusable function &mdash; <tt>StFttDb::stripSegment()</tt> and
+<tt>StFttDb::stripsCross()</tt> &mdash; because it is the same question sTGC space-point
+making has to answer. 88 condor jobs, two MuDst files from each of the 45 day-081 runs so
+many different per-run DB anchors are exercised, per-VMM anchor and window from
+<tt>Calibrations/ftt/fttDataWindowsB</tt>, crossing tolerance 10 mm.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>sample</TH><TH>X&ndash;U pairs</TH><TH>correlation</TH>
+    <TH>U/X mean &plusmn; rms</TH><TH>in [0.5,2.0]</TH></TR>
+<TR><TD>all pairs</TD><TD>298 M</TD><TD>+0.072</TD><TD>0.956 &plusmn; 0.691</TD><TD>59.1%</TD></TR>
+<TR BGCOLOR="#e0ffe0"><TD>crossing-gated</TD><TD>67 M</TD><TD><b>+0.252</b></TD><TD>0.970 &plusmn; 0.635</TD><TD>67.2%</TD></TR>
+<TR BGCOLOR="#ffe0e0"><TD>clean 1+1 (truth proxy)</TD><TD>391 k</TD><TD><b>+0.600</b></TD><TD>0.955 &plusmn; 0.468</TD><TD>84.0%</TD></TR>
+</TABLE>
+<p>Y&ndash;V behaves the same: +0.086 / +0.281 / +0.722 on 340 M / 77 M / 465 k pairs,
+ratio 0.958 &plusmn; 0.461 on clean pairs.</p>
+
+<H2>What the gate costs and what it buys</H2>
+<p><b>It keeps 81.5% (X&ndash;U) and 82.9% (Y&ndash;V) of the clean 1+1 pairs while cutting
+the background to 22.6%</b> &mdash; a factor 4.4, measured on 391k and 465k clean pairs
+rather than the few hundred a single file gives. Adding a charge-ratio cut on top:</p>
+<pre>  ratio cut     signal efficiency   background kept   rejection
+  none                81.5%              22.6%           4.4x
+  [0.5, 2.0]          68.5%              15.2%           6.6x
+  [0.6, 1.6]          61.2%              12.3%           8.1x</pre>
+<p>[0.5,2.0] is the better operating point: the tighter cut buys 1.2&times; more rejection
+for 7 points of efficiency. And note where the power comes from &mdash; <b>the geometry does
+most of the work</b>. The ratio is a soft discriminant on its own (rms 0.47 even on clean
+pairs) and adds about 1.5&times; on top of the gate's 4.4&times;.</p>
+
+<H2>And the ratio is 1.0, settled</H2>
+<p>0.955 &plusmn; 0.468 (U/X) and 0.958 &plusmn; 0.461 (V/Y) on nearly a million clean pairs.
+The 0.59/0.60 of the 1st pass was an event-sum artefact: the diagonal orientations carry
+fewer clusters, which drags a summed ratio down even when the per-cluster charge is equal.
+<b>So <tt>StFttSlowSimMaker</tt> injecting one charge into both strip layers of a foil is
+right, and no simulation change is called for.</b></p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>X vs U: all pairs, crossing-gated, clean 1+1</TH><TH>the ratio, area-normalised</TH></TR>
+<TR>
+<TD><a href="plots_cs/xu_final_2d.png"><img src="plots_cs/xu_final_2d.png" height=230></a></TD>
+<TD><a href="plots_cs/xu_final_ratio.png"><img src="plots_cs/xu_final_ratio.png" height=230></a></TD>
+</TR>
+</TABLE>
+
+<H2>Two notes from the running</H2>
+<ul>
+  <li><b>Getting the frame right mattered more than the gate.</b> The first version kept
+      only 31% of the clean pairs, because <tt>scMapXY</tt> (Row1.txt, "Strip_Center") is the
+      PRECISION coordinate &mdash; its values step by the 3.2 mm pitch &mdash; while the
+      along-strip extent is the row band. The two agree exactly: a row-0 strip starts at
+      <tt>YX_StripGroupEdge[0]</tt> = 11.49 and runs 160.8 mm to 172.29, which is where row 1
+      begins. Without the clean-pair sample as a control this would have shipped as a gate
+      that looked like a fine background cut while discarding two thirds of the signal.
+  <li><b>One job of 89 produced nothing, and correctly.</b> Run 23081053 has no entry in
+      <tt>fttDataWindowsB</tt>, so the database returned the neighbouring run's; the run
+      stamp caught it and refused it outright rather than applying anchors from another run.
+      That guard is the one described in section 4 of the
+      <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/ftt_sim_hit_maker/timecut/index.html#20260914">timecut page</a>,
+      doing its job on real data.
+</ul>
 
 <HR>
 <ADDRESS>
