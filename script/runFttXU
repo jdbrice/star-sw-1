@@ -32,7 +32,9 @@ ln -s $dir/StRoot
 ln -s $dir/StarDb
 cp $dir/script/runFttChargeSharing.C .
 
-root4star -b -q "runFttChargeSharing.C(\"$infile\",100000,-65,100,\"$tag.root\",1,$crosstol)"
+# csh does NOT handle \" inside double quotes -- splice with single quotes
+# instead, the same idiom script/runfttcalqa already uses and which works.
+root4star -b -q runFttChargeSharing.C'("'$infile'",100000,-65,100,"'$tag'.root",1,'$crosstol')'
 set rc = $status
 echo "runFttXU: root4star exit $rc"
 
