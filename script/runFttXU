@@ -1,0 +1,45 @@
+#!/bin/csh
+# Per-FILE condor job: FTT X-U / Y-V charge correlation with the geometric
+# crossing gate, from one production MuDst.
+#
+#   runFttXU MUDST OUTDIR [CROSSTOL]
+#
+# Takes the per-VMM time anchor AND window from Calibrations/ftt/fttDataWindowsB,
+# so the run must be in that table -- every day-081 run is. Runs in its own
+# scratch directory on purpose: StFttDbMaker prefers a local
+# fttDataWindow/fttDataWindow.<run>.txt over the database, and picking one up by
+# accident would silently test the file instead.
+set nonomatch
+
+set infile = $1
+set outdir = $2
+set crosstol = $3
+if ( "$crosstol" == "" ) set crosstol = 10
+
+set dir  = $cwd
+set base = $infile:t
+set tag  = $base:r:r      # st_fwd_23081049_raw_1500057
+
+if ( ! -e $infile ) then
+    echo "FATAL: input $infile not found"
+    exit 1
+endif
+echo "runFttXU: in=$infile out=$outdir tol=$crosstol"
+
+cd $SCRATCH
+ln -s $dir/.$STAR_HOST_SYS
+ln -s $dir/StRoot
+ln -s $dir/StarDb
+cp $dir/script/runFttChargeSharing.C .
+
+root4star -b -q "runFttChargeSharing.C(\"$infile\",100000,-65,100,\"$tag.root\",1,$crosstol)"
+set rc = $status
+echo "runFttXU: root4star exit $rc"
+
+if ( ! -e $tag.root ) then
+    echo "FATAL: no $tag.root produced"
+    exit 2
+endif
+mkdir -p $outdir
+/bin/cp $tag.root $outdir/
+echo "runFttXU: done $tag"

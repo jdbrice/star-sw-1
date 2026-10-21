@@ -816,6 +816,99 @@ bool StFttDb::hardwareMap( StFttRawHit * hit ) const{
     }
     return false;
 }
+//_____________________________________________________________________________
+// Endpoints of one strip, in quadrant-local mm. See the header for the frame.
+bool StFttDb::stripSegment( int row, int strip, UChar_t orientation,
+                            double &x1, double &y1, double &x2, double &y2 ) const
+{
+    if ( strip < 0 || row < 0 || row >= (int)nRowsPerQuad ) return false;
+
+    if ( kFttVertical == orientation || kFttHorizontal == orientation ) {
+        if ( row > 2 ) return false;                    // XY strips live on rows 0-2
+        if ( !scMapXY.count( strip ) ) return false;
+        const std::map<int,Float_t> *sl =
+            ( 0 == row ) ? &slMapRow1 : ( 1 == row ) ? &slMapRow2 : &slMapRow3;
+        if ( !sl->count( strip ) ) return false;
+        // scMapXY (Row1.txt, "Strip_Center") is the PRECISION coordinate -- the
+        // strips are 3.2 mm apart in it, and it is what the cluster's x() uses.
+        // The along-strip extent is the row band: a row-0 strip runs from
+        // YX_StripGroupEdge[0] = 11.49 for 160.8 mm, which lands exactly on
+        // YX_StripGroupEdge[1] = 172.29, the start of row 1.
+        const double p = scMapXY.at( strip );
+        const double L = sl->at( strip );
+        if ( L <= 0 ) return false;
+        const double b = YX_StripGroupEdge[row];
+        if ( kFttVertical == orientation ) {            // runs along y, measures x
+            x1 = x2 = p;  y1 = b;  y2 = b + L;
+        } else {                                        // runs along x, measures y
+            y1 = y2 = p;  x1 = b;  x2 = b + L;
+        }
+        return true;
+    }
+
+    if ( kFttDiagonalV == orientation || kFttDiagonalH == orientation ) {
+        if ( row < 3 ) return false;                    // diagonals live on rows 3-4
+        const std::map<int,Float_t> *sl = ( 3 == row ) ? &slMapRow4 : &slMapRow5;
+        if ( !sl->count( strip ) ) return false;
+        if ( !scMapDiag.count( strip ) ) return false;
+        const double L = sl->at( strip );
+        if ( L <= 0 ) return false;
+        const double p = scMapDiag.at( strip );         // precision coordinate, x'
+
+        // Which way y' runs is set by row AND orientation, opposite for the two
+        // diagonals -- the same convention MakeLocalPoints() uses.
+        double sgn;
+        if ( kFttDiagonalV == orientation ) sgn = ( 4 == row ) ? +1.0 : -1.0;
+        else                                sgn = ( 3 == row ) ? +1.0 : -1.0;
+
+        // The strip starts at the diagonal edge, y' = 0, and runs outward by L,
+        // so its centre sits at sgn*L/2 -- MakeLocalPoints() places the point there.
+        const double yp1 = 0.0, yp2 = sgn * L;
+        const double a = D_StripGroupEdge[0];
+        const double r2 = std::sqrt( 2.0 );
+        // invert x' = (x+y-2a)/sqrt2, y' = (y-x)/sqrt2
+        x1 = a + ( p - yp1 ) / r2;  y1 = a + ( p + yp1 ) / r2;
+        x2 = a + ( p - yp2 ) / r2;  y2 = a + ( p + yp2 ) / r2;
+        return true;
+    }
+
+    return false;
+}
+
+//_____________________________________________________________________________
+// Do two strips cross inside both of their lengths?
+bool StFttDb::stripsCross( int rowA, int stripA, UChar_t orientA,
+                           int rowB, int stripB, UChar_t orientB,
+                           double &crossX, double &crossY, double tolerance ) const
+{
+    double ax1, ay1, ax2, ay2, bx1, by1, bx2, by2;
+    if ( !stripSegment( rowA, stripA, orientA, ax1, ay1, ax2, ay2 ) ) return false;
+    if ( !stripSegment( rowB, stripB, orientB, bx1, by1, bx2, by2 ) ) return false;
+
+    // extend each segment by the tolerance at both ends, along its own direction
+    if ( tolerance > 0 ) {
+        double dx = ax2 - ax1, dy = ay2 - ay1, n = std::sqrt( dx*dx + dy*dy );
+        if ( n > 0 ) { dx /= n; dy /= n; ax1 -= dx*tolerance; ay1 -= dy*tolerance;
+                                         ax2 += dx*tolerance; ay2 += dy*tolerance; }
+        dx = bx2 - bx1; dy = by2 - by1; n = std::sqrt( dx*dx + dy*dy );
+        if ( n > 0 ) { dx /= n; dy /= n; bx1 -= dx*tolerance; by1 -= dy*tolerance;
+                                         bx2 += dx*tolerance; by2 += dy*tolerance; }
+    }
+
+    const double rx = ax2 - ax1, ry = ay2 - ay1;
+    const double sx = bx2 - bx1, sy = by2 - by1;
+    const double denom = rx * sy - ry * sx;
+    if ( std::fabs( denom ) < 1e-9 ) return false;      // parallel: never crosses
+
+    const double t = ( ( bx1 - ax1 ) * sy - ( by1 - ay1 ) * sx ) / denom;
+    const double u = ( ( bx1 - ax1 ) * ry - ( by1 - ay1 ) * rx ) / denom;
+    if ( t < 0.0 || t > 1.0 || u < 0.0 || u > 1.0 ) return false;
+
+    crossX = ax1 + t * rx;
+    crossY = ay1 + t * ry;
+    return true;
+}
+
 //used to reversve the map, from the hardware to electronic map
 // plane, quad, row and strip can be calculated from the simulation maker
 // the key issue if to figure out which feb, row, and strip is for the selected channel

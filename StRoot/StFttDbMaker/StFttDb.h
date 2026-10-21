@@ -178,6 +178,32 @@ public:
 
     void getGloablOffset( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
     void getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
+    // ---- strip geometry: where a strip physically is, in quadrant-local mm ----
+    // The four orientations are two strip layers on each of two foils, running at
+    // 45 degrees to each other, so an X strip and a U strip either cross inside the
+    // sensitive area or they cannot have come from the same particle. That makes a
+    // geometric gate possible on any pairing of clusters, which is what
+    // StFttClusterPointMaker has to decide and what a charge-correlation study has
+    // to control for.
+    //
+    // stripSegment() returns the strip's two endpoints. The precision coordinate is
+    // (strip-0.5)*stripPitch, matching StFttSlowSimMaker::computeRowStrip(); the
+    // along-strip extent comes from the Row*_StripLength tables already loaded here.
+    // Rows 0-2 are Vertical/Horizontal, rows 3-4 Diagonal, in the rotated frame
+    //     x' = (x + y - 2a)/sqrt2,  y' = (y - x)/sqrt2,  a = D_StripGroupEdge[0]
+    // with the sign of y' set by row AND orientation -- kFttDiagonalV runs positive
+    // on row 4, kFttDiagonalH on row 3 (see StFttClusterPointMaker::MakeLocalPoints).
+    bool stripSegment( int row, int strip, UChar_t orientation,
+                       double &x1, double &y1, double &x2, double &y2 ) const;
+
+    // True if the two strips cross within both of their lengths. tolerance (mm)
+    // widens each segment at both ends, for the strip width and for the fact that
+    // a cluster's position is not exactly its max-ADC strip centre.
+    // crossX/crossY get the crossing point when there is one.
+    bool stripsCross( int rowA, int stripA, UChar_t orientA,
+                      int rowB, int stripB, UChar_t orientB,
+                      double &crossX, double &crossY, double tolerance = 0.0 ) const;
+
     bool reverseHardwareMap(int &rob, int &feb, int &vmm, int &ch, int plane, int quad, int row, int strip, UChar_t &orientation) const;
     bool reverseHardwareMap( int &feb, int &vmm, int &ch, int row, int strip ) const;
 

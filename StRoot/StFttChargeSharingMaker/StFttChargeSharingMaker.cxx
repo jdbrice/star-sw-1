@@ -29,6 +29,11 @@ StFttChargeSharingMaker::StFttChargeSharingMaker( const char* name )
   mNTotalHits( 0 ),
   mNInTimeHits( 0 ),
   mNClustersFound( 0 ), mNPQOSamples(0), mUseDb(false), mFttDb(nullptr), mNFromDbAnchor(0), mNFallback(0),
+  mH2ClusterXvsU_cross(nullptr), mH2ClusterYvsV_cross(nullptr),
+  mHRatioUX_cross(nullptr), mHRatioVY_cross(nullptr),
+  mNPairsXU(0), mNPairsXUCross(0), mNPairsYV(0), mNPairsYVCross(0),
+  mNExclXU(0), mNExclXUCross(0), mNExclYV(0), mNExclYVCross(0),
+  mCrossTolerance(1.6),
   mHNStrips( nullptr ),
   mHSumAdc( nullptr ),
   mHSumAdcN1( nullptr ),
@@ -83,6 +88,10 @@ Int_t StFttChargeSharingMaker::Init()
     mH2ClusterXvsU_excl = new TH2F( "h2ClusterXvsU_excl", "cluster sumAdc, exactly 1 X + 1 U this plane/quad/event;X cluster sumAdc;U cluster sumAdc", 150, 0, 3000, 150, 0, 3000 );
     mH2ClusterYvsV_excl = new TH2F( "h2ClusterYvsV_excl", "cluster sumAdc, exactly 1 Y + 1 V this plane/quad/event;Y cluster sumAdc;V cluster sumAdc", 150, 0, 3000, 150, 0, 3000 );
     mHRatioUX_excl = new TH1F( "hRatioUX_excl", "cluster sumAdc ratio U/X, exactly 1 X + 1 U;U/X;pairs", 150, 0, 3 );
+    mH2ClusterXvsU_cross = new TH2F( "h2ClusterXvsU_cross", "cluster sumAdc, X-U pairs whose strips CROSS;X cluster sumAdc;U cluster sumAdc", 150, 0, 3000, 150, 0, 3000 );
+    mH2ClusterYvsV_cross = new TH2F( "h2ClusterYvsV_cross", "cluster sumAdc, Y-V pairs whose strips CROSS;Y cluster sumAdc;V cluster sumAdc", 150, 0, 3000, 150, 0, 3000 );
+    mHRatioUX_cross = new TH1F( "hRatioUX_cross", "cluster sumAdc ratio U/X, crossing pairs;U/X;pairs", 150, 0, 3 );
+    mHRatioVY_cross = new TH1F( "hRatioVY_cross", "cluster sumAdc ratio V/Y, crossing pairs;V/Y;pairs", 150, 0, 3 );
     mHRatioVY_excl = new TH1F( "hRatioVY_excl", "cluster sumAdc ratio V/Y, exactly 1 Y + 1 V;V/Y;pairs", 150, 0, 3 );
 
     return kStOk;
@@ -139,7 +148,7 @@ long long StFttChargeSharingMaker::packGroupKey( int plane, int quad, int row, i
 // a stub returning 0.0 in the real maker too, so any positive ADC passes),
 // on a plain per-(plane,quad,row,orientation) strip vector instead of
 // StFttRawHit objects (that link isn't available from MuDst -- see header).
-void StFttChargeSharingMaker::clusterAndFill( std::vector<StripHit>& hits, std::vector<float>* outSums )
+void StFttChargeSharingMaker::clusterAndFill( std::vector<StripHit>& hits, int row, std::vector<ClusterInfo>* out )
 {
     std::sort( hits.begin(), hits.end(), []( const StripHit& a, const StripHit& b ) { return a.strip < b.strip; } );
 
@@ -182,7 +191,7 @@ void StFttChargeSharingMaker::clusterAndFill( std::vector<StripHit>& hits, std::
             if ( multIdx >= 2 && mPProfileByMult[multIdx] ) mPProfileByMult[multIdx]->Fill( offset, frac );
         }
         mNClustersFound++;
-        if ( outSums ) outSums->push_back( sumAdc );
+        if ( out ) { ClusterInfo ci; ci.sum = sumAdc; ci.row = row; ci.peakStrip = peakStrip; out->push_back( ci ); }
 
         hits.erase( hits.begin() + left, hits.begin() + right + 1 );
     }
@@ -282,14 +291,15 @@ Int_t StFttChargeSharingMaker::Make()
     // orientation), for the same-foil combinatoric check below -- packGroupKey()
     // is (plane<<16)|(quad<<12)|(row<<4)|orientation, so orientation/quad/plane
     // unpack straight back out of the group key.
-    std::map<long long, std::vector<float> > clusterSumsByPQO;
+    std::map<long long, std::vector<ClusterInfo> > clusterSumsByPQO;
     for ( std::map<long long, std::vector<StripHit> >::iterator it = groups.begin(); it != groups.end(); ++it ) {
         long long key = it->first;
         int orientation = (int)( key & 0xF );
         int quad        = (int)( ( key >> 12 ) & 0xF );
         int plane       = (int)( key >> 16 );
         long long pqoKey = ( (long long)plane * 4 + quad ) * 4 + orientation;
-        clusterAndFill( it->second, &clusterSumsByPQO[pqoKey] );
+        int row = (int)( ( key >> 4 ) & 0xFF );
+        clusterAndFill( it->second, row, &clusterSumsByPQO[pqoKey] );
     }
 
     for ( int p = 0; p < 4; p++ ) {
@@ -306,10 +316,10 @@ Int_t StFttChargeSharingMaker::Make()
             if ( x > 0 || u > 0 ) mH2XvsU->Fill( x, u );
             if ( y > 0 || v > 0 ) mH2YvsV->Fill( y, v );
 
-            std::vector<float>& xList = clusterSumsByPQO[ base + kFttVertical ];
-            std::vector<float>& uList = clusterSumsByPQO[ base + kFttDiagonalV ];
-            std::vector<float>& yList = clusterSumsByPQO[ base + kFttHorizontal ];
-            std::vector<float>& vList = clusterSumsByPQO[ base + kFttDiagonalH ];
+            std::vector<ClusterInfo>& xList = clusterSumsByPQO[ base + kFttVertical ];
+            std::vector<ClusterInfo>& uList = clusterSumsByPQO[ base + kFttDiagonalV ];
+            std::vector<ClusterInfo>& yList = clusterSumsByPQO[ base + kFttHorizontal ];
+            std::vector<ClusterInfo>& vList = clusterSumsByPQO[ base + kFttDiagonalH ];
             mNClusOrient[0] += (double)yList.size();   // Horizontal
             mNClusOrient[1] += (double)xList.size();   // Vertical
             mNClusOrient[2] += (double)vList.size();   // DiagonalH
@@ -317,23 +327,50 @@ Int_t StFttChargeSharingMaker::Make()
             mNPQOSamples++;
             for ( size_t ix = 0; ix < xList.size(); ix++ ) {
                 for ( size_t iu = 0; iu < uList.size(); iu++ ) {
-                    mH2ClusterXvsU->Fill( xList[ix], uList[iu] );
-                    if ( xList[ix] > 0 ) mHRatioUX->Fill( uList[iu] / xList[ix] );
+                    mH2ClusterXvsU->Fill( xList[ix].sum, uList[iu].sum );
+                    if ( xList[ix].sum > 0 ) mHRatioUX->Fill( uList[iu].sum / xList[ix].sum );
+                    mNPairsXU++;
+                    double cx, cy;
+                    if ( mFttDb && mFttDb->stripsCross( xList[ix].row, xList[ix].peakStrip, kFttVertical,
+                                                        uList[iu].row, uList[iu].peakStrip, kFttDiagonalV,
+                                                        cx, cy, mCrossTolerance ) ) {
+                        mNPairsXUCross++;
+                        mH2ClusterXvsU_cross->Fill( xList[ix].sum, uList[iu].sum );
+                        if ( xList[ix].sum > 0 ) mHRatioUX_cross->Fill( uList[iu].sum / xList[ix].sum );
+                    }
                 }
             }
             for ( size_t iy = 0; iy < yList.size(); iy++ ) {
                 for ( size_t iv = 0; iv < vList.size(); iv++ ) {
-                    mH2ClusterYvsV->Fill( yList[iy], vList[iv] );
-                    if ( yList[iy] > 0 ) mHRatioVY->Fill( vList[iv] / yList[iy] );
+                    mH2ClusterYvsV->Fill( yList[iy].sum, vList[iv].sum );
+                    if ( yList[iy].sum > 0 ) mHRatioVY->Fill( vList[iv].sum / yList[iy].sum );
+                    mNPairsYV++;
+                    double cx, cy;
+                    if ( mFttDb && mFttDb->stripsCross( yList[iy].row, yList[iy].peakStrip, kFttHorizontal,
+                                                        vList[iv].row, vList[iv].peakStrip, kFttDiagonalH,
+                                                        cx, cy, mCrossTolerance ) ) {
+                        mNPairsYVCross++;
+                        mH2ClusterYvsV_cross->Fill( yList[iy].sum, vList[iv].sum );
+                        if ( yList[iy].sum > 0 ) mHRatioVY_cross->Fill( vList[iv].sum / yList[iy].sum );
+                    }
                 }
             }
+            double ecx, ecy;
             if ( xList.size() == 1 && uList.size() == 1 ) {
-                mH2ClusterXvsU_excl->Fill( xList[0], uList[0] );
-                if ( xList[0] > 0 ) mHRatioUX_excl->Fill( uList[0] / xList[0] );
+                mH2ClusterXvsU_excl->Fill( xList[0].sum, uList[0].sum );
+                if ( xList[0].sum > 0 ) mHRatioUX_excl->Fill( uList[0].sum / xList[0].sum );
+                mNExclXU++;
+                if ( mFttDb && mFttDb->stripsCross( xList[0].row, xList[0].peakStrip, kFttVertical,
+                                                    uList[0].row, uList[0].peakStrip, kFttDiagonalV,
+                                                    ecx, ecy, mCrossTolerance ) ) mNExclXUCross++;
             }
             if ( yList.size() == 1 && vList.size() == 1 ) {
-                mH2ClusterYvsV_excl->Fill( yList[0], vList[0] );
-                if ( yList[0] > 0 ) mHRatioVY_excl->Fill( vList[0] / yList[0] );
+                mH2ClusterYvsV_excl->Fill( yList[0].sum, vList[0].sum );
+                if ( yList[0].sum > 0 ) mHRatioVY_excl->Fill( vList[0].sum / yList[0].sum );
+                mNExclYV++;
+                if ( mFttDb && mFttDb->stripsCross( yList[0].row, yList[0].peakStrip, kFttHorizontal,
+                                                    vList[0].row, vList[0].peakStrip, kFttDiagonalH,
+                                                    ecx, ecy, mCrossTolerance ) ) mNExclYVCross++;
             }
         }
     }
@@ -358,6 +395,18 @@ Int_t StFttChargeSharingMaker::Finish()
         printf( "      H %.2f   V %.2f   dH %.2f   dV %.2f   (%d samples)\n",
                 mNClusOrient[0]/mNPQOSamples, mNClusOrient[1]/mNPQOSamples,
                 mNClusOrient[2]/mNPQOSamples, mNClusOrient[3]/mNPQOSamples, mNPQOSamples );
+        if ( mNExclXU > 0 || mNExclYV > 0 )
+            printf( "  gate EFFICIENCY on the clean 1+1 pairs (must be high, or the gate is wrong): "
+                    "X-U %.0f of %.0f (%.1f%%), Y-V %.0f of %.0f (%.1f%%)\n",
+                    mNExclXUCross, mNExclXU, mNExclXU > 0 ? 100.0*mNExclXUCross/mNExclXU : 0.0,
+                    mNExclYVCross, mNExclYV, mNExclYV > 0 ? 100.0*mNExclYVCross/mNExclYV : 0.0 );
+        if ( mNPairsXU > 0 || mNPairsYV > 0 )
+            printf( "  geometric crossing gate (tolerance %.1f mm): X-U %.0f of %.0f pairs cross (%.1f%%), "
+                    "Y-V %.0f of %.0f (%.1f%%)\n",
+                    mCrossTolerance, mNPairsXUCross, mNPairsXU,
+                    mNPairsXU > 0 ? 100.0*mNPairsXUCross/mNPairsXU : 0.0,
+                    mNPairsYVCross, mNPairsYV,
+                    mNPairsYV > 0 ? 100.0*mNPairsYVCross/mNPairsYV : 0.0 );
         printf( "      combinations per (plane,quad,event): X-U %.1f   Y-V %.1f\n",
                 (mNClusOrient[1]/mNPQOSamples)*(mNClusOrient[3]/mNPQOSamples),
                 (mNClusOrient[0]/mNPQOSamples)*(mNClusOrient[2]/mNPQOSamples) );
@@ -381,6 +430,10 @@ Int_t StFttChargeSharingMaker::Finish()
         mH2ClusterXvsU_excl->Write();
         mH2ClusterYvsV_excl->Write();
         mHRatioUX_excl->Write();
+        mH2ClusterXvsU_cross->Write();
+        mH2ClusterYvsV_cross->Write();
+        mHRatioUX_cross->Write();
+        mHRatioVY_cross->Write();
         mHRatioVY_excl->Write();
         mPProfileAll->Write();
         for ( int m = 2; m <= 5; m++ ) if ( mPProfileByMult[m] ) mPProfileByMult[m]->Write();

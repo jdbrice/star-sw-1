@@ -66,6 +66,9 @@ private:
 #ifndef __CINT__
     struct StripHit { int strip; float adc; };
 
+    // one cluster, enough of it to place the strip geometrically
+    struct ClusterInfo { float sum; int row; int peakStrip; };
+
     // per-VMM online time calibration, HitCalibHelper's algorithm (anchor =
     // mode of the dbcid distribution), just over the whole file instead of
     // an early bootstrap -- see header comment above.
@@ -80,7 +83,7 @@ private:
     // SearchClusterEdges(), operating on a plain per-(plane,quad,row,orientation)
     // strip vector instead of StFttRawHit objects. outSums, if given, gets each
     // found cluster's sumAdc appended (for the same-foil combinatoric check).
-    void clusterAndFill( std::vector<StripHit>& hits, std::vector<float>* outSums = 0 );
+    void clusterAndFill( std::vector<StripHit>& hits, int row, std::vector<ClusterInfo>* out = 0 );
     static long long packGroupKey( int plane, int quad, int row, int orientation );
 #endif
 
@@ -145,6 +148,24 @@ private:
     TH2F* mH2ClusterYvsV_excl;
     TH1F* mHRatioUX_excl;
     TH1F* mHRatioVY_excl;
+
+    // Pairs that actually CROSS: an X strip and a U strip either meet inside both
+    // of their lengths or they cannot be one particle. The gate is geometry only,
+    // so what survives is the honest combinatorial background to cut a ratio on --
+    // unlike the exclusive 1+1 sample, which is clean but rare.
+    TH2F* mH2ClusterXvsU_cross;
+    TH2F* mH2ClusterYvsV_cross;
+    TH1F* mHRatioUX_cross;
+    TH1F* mHRatioVY_cross;
+    double mNPairsXU, mNPairsXUCross, mNPairsYV, mNPairsYVCross;
+    // of the exclusive 1+1 pairs -- the closest thing to truth we have --
+    // how many does the geometric gate KEEP? If it throws these away the
+    // gate is wrong, however nicely it cuts the background.
+    double mNExclXU, mNExclXUCross, mNExclYV, mNExclYVCross;
+    double mCrossTolerance;
+public:
+    void setCrossTolerance( double mm ) { mCrossTolerance = mm; }
+private:
 
     ClassDef( StFttChargeSharingMaker, 0 )
 };

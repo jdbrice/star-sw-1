@@ -9,7 +9,7 @@
 // directory that has no such file or you will silently test the file instead.
 void runFttChargeSharing(const char* file = "st_fwd_23081015_raw_1000066.MuDst.root", int nevents = 2463,
                          int tlo = -65, int thi = 100, const char* outfile = "fttChargeSharing.root",
-                         int useDb = 0) {
+                         int useDb = 0, double crossTol = 1.6) {
     gSystem->Load("libStarClassLibrary.so");
     gSystem->Load("libStarRoot.so");
     gROOT->LoadMacro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
@@ -46,6 +46,7 @@ void runFttChargeSharing(const char* file = "st_fwd_23081015_raw_1000066.MuDst.r
 
     StFttChargeSharingMaker *csMk = new StFttChargeSharingMaker();
     if (useDb) csMk->setUseDb(true);
+    csMk->setCrossTolerance(crossTol);
     csMk->setOutputFile(outfile);
     csMk->setWarmupEvents(20);
     csMk->setTimeCutWindow(tlo, thi);
