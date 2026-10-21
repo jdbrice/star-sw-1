@@ -12,6 +12,8 @@
 #include "StMuDSTMaker/COMMON/StMuFttCollection.h"
 #include "StMuDSTMaker/COMMON/StMuFttRawHit.h"
 #include "StEvent/StEnumerations.h"
+#include "StEvent/StFttRawHit.h"
+#include "StFttDbMaker/StFttDb.h"
 
 ClassImp( StFttChargeSharingMaker )
 
@@ -26,7 +28,7 @@ StFttChargeSharingMaker::StFttChargeSharingMaker( const char* name )
   mEventCount( 0 ),
   mNTotalHits( 0 ),
   mNInTimeHits( 0 ),
-  mNClustersFound( 0 ),
+  mNClustersFound( 0 ), mNPQOSamples(0), mUseDb(false), mFttDb(nullptr), mNFromDbAnchor(0), mNFallback(0),
   mHNStrips( nullptr ),
   mHSumAdc( nullptr ),
   mHSumAdcN1( nullptr ),
@@ -45,6 +47,7 @@ StFttChargeSharingMaker::StFttChargeSharingMaker( const char* name )
   mHRatioUX_excl( nullptr ),
   mHRatioVY_excl( nullptr )
 {
+    for ( int io = 0; io < 4; io++ ) mNClusOrient[io] = 0;
     for ( int i = 0; i < 6; i++ ) mPProfileByMult[i] = nullptr;
 }
 
@@ -213,6 +216,15 @@ Int_t StFttChargeSharingMaker::Make()
         fillCalib( uuid, (short)mh->dbcid() );
     }
 
+    if ( mUseDb && !mFttDb ) {
+        mFttDb = static_cast<StFttDb*>( GetDataSet( "fttDb" ) );
+        if ( !mFttDb )
+            printf( "StFttChargeSharingMaker: setUseDb(true) but no \"fttDb\" in the chain -- "
+                    "add St_db_Maker and StFttDbMaker ahead of this maker. Self-calibrating.\n" );
+        else
+            printf( "StFttChargeSharingMaker: per-VMM anchor and window from Calibrations/ftt/fttDataWindowsB\n" );
+    }
+
     if ( mEventCount <= mWarmupEvents ) return kStOk; // let anchors build up, don't analyze yet
 
     // pass 2: select in-time hits (time = dbcid - anchor(VMM) within window),
@@ -228,10 +240,33 @@ Int_t StFttChargeSharingMaker::Make()
     for ( int j = 0; j < nRaw; j++ ) {
         StMuFttRawHit* mh = ftt->getRawHit( j );
         int uuid = uuidOf[j];
-        if ( !readyFor( uuid ) ) continue;
 
-        int t = (int)mh->dbcid() - (int)anchorFor( uuid );
-        if ( t < mTimeCutLo || t > mTimeCutHi ) continue;
+        // Prefer the per-VMM anchor and per-VMM window from the calibration;
+        // fall back to the self-calibrated anchor and the flat window for any
+        // VMM the calibration could not anchor (anchor -1).
+        int anchor = -1, lo = mTimeCutLo, hi = mTimeCutHi;
+        if ( mFttDb ) {
+            // StFttDb keys on the raw hit's own electronics fields, so a scratch
+            // StFttRawHit carrying them is all it needs; nothing else is read.
+            StFttRawHit probe;
+            probe.setRaw( mh->sector(), mh->rdo(), mh->feb(), mh->vmm(),
+                          mh->channel(), mh->adc(), mh->bcid(), mh->tb(), mh->dbcid() );
+            Short_t dbAnchor = -1;
+            if ( mFttDb->getAnchor( &probe, dbAnchor ) && dbAnchor >= 0 ) {
+                int mode = 0, dbLo = mTimeCutLo, dbHi = mTimeCutHi;
+                mFttDb->getTimeCut( &probe, mode, dbLo, dbHi );
+                anchor = dbAnchor; lo = dbLo; hi = dbHi;
+                mNFromDbAnchor++;
+            }
+        }
+        if ( anchor < 0 ) {
+            if ( !readyFor( uuid ) ) continue;
+            anchor = (int)anchorFor( uuid );
+            mNFallback++;
+        }
+
+        int t = (int)mh->dbcid() - anchor;
+        if ( t < lo || t > hi ) continue;
         mNInTimeHits++;
         mHRawAdcInTime->Fill( mh->adc() );
 
@@ -275,6 +310,11 @@ Int_t StFttChargeSharingMaker::Make()
             std::vector<float>& uList = clusterSumsByPQO[ base + kFttDiagonalV ];
             std::vector<float>& yList = clusterSumsByPQO[ base + kFttHorizontal ];
             std::vector<float>& vList = clusterSumsByPQO[ base + kFttDiagonalH ];
+            mNClusOrient[0] += (double)yList.size();   // Horizontal
+            mNClusOrient[1] += (double)xList.size();   // Vertical
+            mNClusOrient[2] += (double)vList.size();   // DiagonalH
+            mNClusOrient[3] += (double)uList.size();   // DiagonalV
+            mNPQOSamples++;
             for ( size_t ix = 0; ix < xList.size(); ix++ ) {
                 for ( size_t iu = 0; iu < uList.size(); iu++ ) {
                     mH2ClusterXvsU->Fill( xList[ix], uList[iu] );
@@ -308,6 +348,20 @@ Int_t StFttChargeSharingMaker::Finish()
     printf( "  total raw hits seen: %d, in-time (kept for clustering): %d (%.1f%%)\n",
             mNTotalHits, mNInTimeHits, mNTotalHits > 0 ? 100.0 * mNInTimeHits / mNTotalHits : 0.0 );
     printf( "  clusters found: %d\n", mNClustersFound );
+    if ( mNPQOSamples > 0 ) {
+        if ( mFttDb )
+            printf( "  time cut: per-VMM anchor+window from the DB (%d hits on a DB anchor, %d fell back)\n",
+                    mNFromDbAnchor, mNFallback );
+        else
+            printf( "  time cut used: [%d, %d], self-calibrated anchors\n", mTimeCutLo, mTimeCutHi );
+        printf( "  clusters per (plane,quad,event), by orientation -- the pairing figure of merit:\n" );
+        printf( "      H %.2f   V %.2f   dH %.2f   dV %.2f   (%d samples)\n",
+                mNClusOrient[0]/mNPQOSamples, mNClusOrient[1]/mNPQOSamples,
+                mNClusOrient[2]/mNPQOSamples, mNClusOrient[3]/mNPQOSamples, mNPQOSamples );
+        printf( "      combinations per (plane,quad,event): X-U %.1f   Y-V %.1f\n",
+                (mNClusOrient[1]/mNPQOSamples)*(mNClusOrient[3]/mNPQOSamples),
+                (mNClusOrient[0]/mNPQOSamples)*(mNClusOrient[2]/mNPQOSamples) );
+    }
     printf( "  distinct VMMs with a computed anchor: %d\n", (int)mAnchor.size() );
 
     if ( mFout ) {

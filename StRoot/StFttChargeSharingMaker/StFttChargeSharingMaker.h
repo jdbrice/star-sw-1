@@ -4,7 +4,7 @@
  *
  * Description: reads real (MuDst) FTT raw hits and measures the actual
  * per-strip charge-sharing profile within a cluster, to replace
- * StFttSimHitMaker's flat 1:8:1 3-strip model with something realistic.
+ * StFttSlowSimMaker's flat 1:8:1 3-strip model with something realistic.
  *
  * Time cut: StFttDb::getTimeCut() (checked directly against this run's DB)
  * returns mode=kHitCalibratedTime and a constant window [-65,100] for every
@@ -29,6 +29,7 @@
 
 #ifndef __CINT__
 #include <map>
+#include <string>
 #include <vector>
 #endif
 
@@ -36,6 +37,7 @@ class StMuDst;
 class TFile;
 class TH1F;
 class TH2F;
+class StFttDb;
 class TProfile;
 
 class StFttChargeSharingMaker : public StMaker {
@@ -51,6 +53,14 @@ public:
     void setWarmupEvents( int n ) { mWarmupEvents = n; }
     void setTimeCutWindow( int lo, int hi ) { mTimeCutLo = lo; mTimeCutHi = hi; }
     void setMinSamplesForReady( int n ) { mMinSamplesForReady = n; }
+
+    // Take the per-VMM anchor AND per-VMM window from the DATABASE --
+    // Calibrations/ftt/fttDataWindowsB, via StFttDb -- instead of
+    // self-calibrating over the file and using one flat window for every VMM.
+    // Needs St_db_Maker and StFttDbMaker ahead of this maker in the chain.
+    // A VMM the calibration could not anchor (anchor -1) falls back to the
+    // self-calibrated anchor and the setTimeCutWindow() window.
+    void setUseDb( bool b = true ) { mUseDb = b; }
 
 private:
 #ifndef __CINT__
@@ -82,10 +92,22 @@ private:
     int mTimeCutHi;
     int mMinSamplesForReady;  // matches HitCalibHelper::MIN_BCID_SAMPLES
 
+    // per-VMM anchor and window straight from the database
+    bool        mUseDb;
+    StFttDb*    mFttDb;
+    int         mNFromDbAnchor;
+    int         mNFallback;
+
     int mEventCount;
     int mNTotalHits;
     int mNInTimeHits;
     int mNClustersFound;
+
+    // Clusters per orientation per (plane,quad) per event -- the figure of
+    // merit for whether the time cut has made cluster pairing tractable. The
+    // 2026-10 study drowned at ~36 per orientation; true pairs need ~1-2.
+    double mNClusOrient[4];   // summed over (plane,quad,event), indexed by orientation
+    int    mNPQOSamples;      // number of (plane,quad,event) samples contributing
 
     TH1F*     mHNStrips;
     TH1F*     mHSumAdc;

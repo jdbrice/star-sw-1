@@ -1,13 +1,25 @@
 <HTML>
 <HEAD>
    <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
-   <TITLE>StFttSimHitMaker -- FTT GEANT-to-hit simulation maker (built + validated)</TITLE>
+   <TITLE>StFttSlowSimMaker -- FTT GEANT-to-hit simulation maker (built + validated)</TITLE>
 </HEAD>
 <BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
 
-<H1>StFttSimHitMaker: a real-geometry FTT simulation maker</H1>
+<H1>StFttSlowSimMaker: a real-geometry FTT simulation maker</H1>
+<p><b>&rarr; <a href="charge_sharing.html">Real FTT charge-sharing measurement</a></b>
+&mdash; the measured 3-strip profile behind this maker's charge sharing, the
+<a href="charge_sharing.html#efficiency">hardware threshold efficiency</a>, and the
+<a href="charge_sharing.html#xucorr">X&ndash;U / Y&ndash;V charge correlation</a>
+(found 2026-10-21, once the per-VMM time cut is applied).</p>
+<p><i>Renamed 2026-10-17 (PR #26 review): was <tt>StFttSimHitMaker</tt>, now
+<tt>StRoot/StFttSimMaker/StFttSlowSimMaker</tt>, joining the existing
+<tt>StFttFastSimMaker</tt> in that package &mdash; the same layout FST uses
+(<tt>StFstFastSimMaker</tt> + <tt>StFstSlowSimMaker</tt>). BFC option
+<tt>fttSlowSim</tt>. It does not replace the fast sim: that one writes
+<tt>StFttPoint</tt> directly with a 100&micro;m blur and never touches clustering
+or <tt>StFttDb</tt>; this one writes <tt>StFttRawHit</tt> and runs the real chain.</i></p>
 <p>A new maker that lets a GEANT MC event drive the FTT reconstruction code path<br>
-  <tt>G2THIT</tt>  &rarr; <tt>StFttSimHitMaker</tt> &rarr; <tt>StFttClusterMaker</tt> &rarr; <tt>StFttClusterPointMaker</tt> which uses <tt>StFttDb</tt><br>
+  <tt>G2THIT</tt>  &rarr; <tt>StFttSlowSimMaker</tt> &rarr; <tt>StFttClusterMaker</tt> &rarr; <tt>StFttClusterPointMaker</tt> which uses <tt>StFttDb</tt><br>
   instead of the fast-sim shortcuts that bypass them entirely.
 
 <HR>
@@ -27,7 +39,7 @@ actually reaches <tt>StFttDb</tt></b> : </p>
       never reads GEANT truth at all; it only unpacks real raw DAQ data or an
       already-existing <tt>MuDst</tt>.
 </ul>
-<tt>StFttSimHitMaker</tt> closes this gap. This is also essential for
+<tt>StFttSlowSimMaker</tt> closes this gap. This is also essential for
 <ul>  
   <li>Noise studies
   <li>Studies for high occupancy
@@ -35,13 +47,20 @@ actually reaches <tt>StFttDb</tt></b> : </p>
 </ul>
 
 <HR>
-<H2>New StFttSimHitMaker</H2>
+<H2>New StFttSlowSimMaker</H2>
 <ul>
   <li>Reads <tt>St_g2t_fts_hit</tt> and truth hits
-  <li>brute-forces which quadrant a hit belongs to by inverting <tt>StFttDb::getGloablOffset_ClusterPoint()</tt>'s 
-    forward transform for all 4 quadrants and keeping whichever gives a physically valid local (x,y) 
+  <li>Takes the quadrant straight from <tt>volume_id</tt>, then inverts
+    <tt>StFttDb::getGloablOffset_ClusterPoint()</tt>'s forward transform for that one quadrant
     <ul>
-      <li>volume_id's own quadrant digit does <i>not</i> match <tt>StFttDb</tt>'s A/B/C/D convention (True? Is there better way?) 
+      <li><b>There was a better way (2026-10-17).</b> <tt>volume_id = 100&middot;station + 10&middot;pentagon + layer</tt>
+          (layer 1 = front foil, 2 = back), because each station in <tt>StgmGeo1.xml</tt> places its four
+          <tt>STFM</tt> pentagons in turn. So it <i>does</i> carry the quadrant.
+      <li>The digit is not <tt>StFttDb</tt>'s index though: AGML places the pentagons in rotation order
+          A,D,C,B while <tt>StFttDb</tt> numbers them A,B,C,D, so they differ by the fixed permutation
+          <tt>{0,3,2,1}</tt>. Measured on a particle gun: every truth hit landing on strips agrees, none disagree.
+      <li>The old brute-force search over all 4 quadrants was wrong for ~4% of hits (its 560mm local
+          box overlaps between quadrants, and it kept the first match) and silently dropped another ~15%.
     </ul>
   <li>Covers X, Y and both diagonal (U/V) orientations
   <li>Injects ADC to strips using <tt>StFttDb::reverseHardwareMap()</tt>
@@ -53,6 +72,7 @@ actually reaches <tt>StFttDb</tt></b> : </p>
       <li>New model based on that analysis:
         <ul>	  
 	  <li>Total charge/cluster : draw from exponential with mean=431.5 (measured cluster sumAdc mean=RMS)
+              &mdash; <b>superseded, see <a href="#decharge">ADC from GEANT energy loss</a> below</b>
           <li>Center strip is always kept, floored to threshold (~70 ADC) if the draw came in low,
               keeping single-hit efficiency at 100% for now
           <li>Width : Gaussian(&sigma;=2.4mm) charge response, fit to the real nStrips=3 cluster mean 25:48:25 ratio
@@ -260,10 +280,124 @@ quadrant is populated -- both expected. Click any thumbnail for the full-size im
 </table>
 
 <HR>
+<A NAME="decharge"></A>
+<H2>ADC from GEANT energy loss (2026-10-17)</H2>
+
+<p>The charge model above draws the cluster total from an exponential and never looks at
+how much energy the particle actually deposited. Raised in review of
+<a href="https://git.racf.bnl.gov/gitea/STAR/star-sw/pulls/26">PR #26</a>:
+<i>"Why is the total adc independent of the energy deposited in the strip?"</i>
+<tt>g2t_fts_hit</tt> carries <tt>de</tt> and <tt>ds</tt>, so the question is whether a
+<tt>de</tt>-driven model does better. It does.</p>
+
+<H3>What to compare against</H3>
+<ul>
+  <li>The measured all-cluster mean of 431.5 is not the right target: 19% of real clusters are
+      single-strip, mean 112, and are noise and unrelated pileup (busy p+p, wide time window).
+      The spike at exactly 1023 in that population is single saturated strips.
+  <li>A single-particle MC should be compared to the <b>nStrips&ge;2</b> clusters:
+      <b>mean 508.3, rms/mean 0.930</b>.
+</ul>
+
+<H3>The model</H3>
+<ul>
+  <li>Sum <tt>de</tt> over <i>all</i> GEANT steps of one crossing (one track, one foil) &mdash;
+      GEANT reports ~7% of crossings as several steps, up to 9. Mean 0.776 keV, Landau, rms/mean 3.19.
+  <li><tt>totalAdc = gain &times; &Sigma;de &times; G</tt>, with <tt>G</tt> a gas-amplification
+      fluctuation of relative width <tt>r</tt> (<tt>r=0</tt> means pure scaling, nothing added).
+  <li>Then the maker's existing response, unchanged: sub-strip position, Gaussian(&sigma;=2.4mm)
+      split over centre &plusmn;1 strip, 70-ADC zero suppression, 1023/strip saturation.
+  <li>Each curve is scaled so its <i>mean</i> equals the real mean, so the plots compare
+      <b>shape</b>, not normalisation.
+</ul>
+
+<H3>Result: does <tt>de</tt> beat the exponential?</H3>
+<p>Standalone model study (no chain), each scale tuned so that model's own mean
+equals the real nStrips&ge;2 mean, so only shape is being compared:</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>model</TH><TH>scale</TH><TH>rms/mean</TH><TH>shape mismatch</TH></TR>
+<TR><TD>real data, nStrips&ge;2</TD><TD>&mdash;</TD><TD><b>0.93</b></TD><TD>&mdash;</TD></TR>
+<TR><TD><tt>de</tt> &times; scale, nothing added</TD><TD>732 ADC/keV</TD><TD>0.82</TD><TD>3.2</TD></TR>
+<TR BGCOLOR="#e0ffe0"><TD><tt>de</tt> &times; scale, +30% gas spread</TD><TD>675 ADC/keV</TD><TD>0.84</TD><TD><b>1.7</b></TD></TR>
+<TR><TD>code today: Exp(mean), <tt>de</tt> ignored</TD><TD>343</TD><TD>0.66</TD><TD>3.6</TD></TR>
+</TABLE>
+<p>(shape mismatch = 10<sup>4</sup> &times; mean per-bin squared difference over 0-3000 ADC, smaller is better)</p>
+
+<ul>
+  <li><b>GEANT <tt>de</tt> alone, with zero added fluctuation, already beats the current
+      exponential</b> (3.2 vs 3.6) and tracks the tail out to 2500 ADC where the exponential
+      falls away badly.
+  <li>Adding gas amplification spread helps, but only a little: <tt>r</tt>&asymp;0.3 is best (1.7),
+      and <tt>r</tt>&ge;0.6 &mdash; approaching the single-electron exponential limit, which is
+      effectively what the code assumes now &mdash; makes it worse again.
+  <li><b>So for this detector the Landau dominates and the avalanche is a correction</b>, not the
+      other way round. 0.776 keV in a 3mm gap of the pentane/CO<sub>2</sub> mix at W&asymp;25-30eV is
+      ~26-31 primary electrons, each avalanching independently, so the gain spread averages down to
+      &radic;(f/N) &asymp; 13-20%. The data preferring ~30% is the same ballpark, a little more,
+      which is what TGC saturated-mode gain plus VMM shaping would give.
+  <li><b>The model cannot reach rms/mean 0.93 and should not be tuned until it does.</b> It
+      saturates near 0.82-0.84 because the 1023/strip cap truncates the Landau tail. The rest of
+      the width in data is pileup, noise and a wider spread of incidence angles than a
+      p<sub>T</sub>=1.5 electron gun gives. None of those are in this MC yet (see TODO).
+  <li>The model's shoulder near 600-800 ADC is its own hard 70-ADC strip threshold: it disappears
+      if the threshold is lowered to 20. Real data has noise smearing it out; the MC has none.
+</ul>
+
+<H3>What the maker now does</H3>
+<p><tt>StFttSlowSimMaker</tt> now draws the charge this way:
+<tt>totalAdc = mAdcPerKeV &times; &Sigma;de &times; gainFluctuation()</tt>, with
+<tt>mAdcPerKeV = 600</tt> and <tt>mGainSpread = 0.3</tt>, both settable. Below is its
+<i>actual output</i> through the real chain
+(<tt>StFttDbMaker &rarr; StFttSlowSimMaker &rarr; StFttClusterMaker</tt>), not a model of it,
+against the same real data.</p>
+<ul>
+  <li><b>Anchored on the cluster PEAK-strip ADC, not on sumAdc.</b> The peak strip is the center
+      strip, which this &plusmn;1-strip model represents faithfully. One parameter puts both
+      moments on the real values: <b>mean 227 vs 226, rms 199 vs 196</b>.
+  <li><b>sumAdc comes out ~15% high</b> (583 vs 508) and <b>the 4-7 strip clusters are missing</b>
+      (4% vs 20% of real clusters). Both are the same thing: the model puts charge only on the
+      center strip &plusmn;1, so it cannot make the wide clusters a shallow-incidence track leaves
+      in real data. That is a known limit of the &plusmn;1 design, not a tuning error, and it is why
+      sumAdc is the wrong quantity to anchor on.
+  <li>Single-strip clusters: 30% in MC vs 19% in real data &mdash; but the real single-strip
+      population is largely noise and pileup, which this MC does not have at all, so the two
+      numbers are not measuring the same thing.
+  <li>Geometry is unaffected by any of this: 93.1% of truth hits still match a cluster within 5mm,
+      residual mean 0.014mm.
+</ul>
+
+<table border=1>
+  <tr><td>peak-strip ADC &mdash; <b>the anchor</b></td>
+      <td>cluster sumAdc, nStrips&ge;2</td>
+      <td>strip multiplicity</td></tr>
+  <tr><td align=center><a href="plots_de/chainPeakAdc.png"><img src="plots_de/chainPeakAdc.png" height="200"></a></td>
+      <td align=center><a href="plots_de/chainSumAdc.png"><img src="plots_de/chainSumAdc.png" height="200"></a></td>
+      <td align=center><a href="plots_de/chainNStrips.png"><img src="plots_de/chainNStrips.png" height="200"></a></td></tr>
+</table>
+<p>Made by <tt>script/plotFttSimChainAdc.C</tt>. Bins widened for display only
+(MC has 14k clusters against the data's 5.6M); all numbers quoted are unrebinned.</p>
+
+<table border=1>
+  <tr><td>GEANT input: energy loss per crossing</td>
+      <td>Real data: why nStrips&ge;2 is the target</td></tr>
+  <tr><td align=center><a href="plots_de/geantDe.png"><img src="plots_de/geantDe.png" height="200"></a></td>
+      <td align=center><a href="plots_de/realSumAdcDecomp.png"><img src="plots_de/realSumAdcDecomp.png" height="200"></a></td></tr>
+  <tr><td>Real vs <tt>de</tt>&times;scale (log)</td>
+      <td>Same, linear</td></tr>
+  <tr><td align=center><a href="plots_de/sumAdcCompare.png"><img src="plots_de/sumAdcCompare.png" height="200"></a></td>
+      <td align=center><a href="plots_de/sumAdcCompareLin.png"><img src="plots_de/sumAdcCompareLin.png" height="200"></a></td></tr>
+</table>
+<p>Made by <tt>script/plotFttDeAdc.C</tt>, from a 1000-event e<sup>-</sup> gun
+(11404 crossings) and the real-data histograms behind the
+<a href="charge_sharing.html">charge-sharing page</a>.</p>
+
+<HR>
 <H2>TODO</H2>
 <ul>
   <li>Investigate the systematic FTT residual shift seen in the 200-event full-chain run.
   <li>Noise, signal fractuation and pedestal? Using kTimeCutModeAcceptAll? (nothing for now)
+      &mdash; the <a href="#decharge">de study</a> shows where this would show up: the model peak is
+      too narrow and its 70-ADC threshold edge is too sharp
   <li>Realistic Efficiency? (100% for now)
 </ul>
 

@@ -6,11 +6,15 @@
 <BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
 
 <H1>Real FTT charge-sharing measurement</H1>
-<p><a href="index.html">&larr; back to StFttSimHitMaker main page</a></p>
+<p><a href="index.html">&larr; back to StFttSlowSimMaker main page</a></p>
+<p><b>&rarr; <a href="#efficiency">Threshold efficiency: is the hardware threshold cutting real FTT hits?</a></b>
+(2026-10-17, a hypothesis for the low FTT hit pickup, with the numbers behind it)</p>
+<p><b>&rarr; <a href="#xucorr">X&ndash;U / Y&ndash;V charge correlation: found, with a per-VMM time cut</a></b>
+(2026-10-21, why the 2nd pass below saw nothing, and what it looks like once the window is right)</p>
 
 <H2>Goal</H2>
 <ul>
-  <li>Replace <tt>StFttSimHitMaker</tt>'s flat 1:8:1 3-strip model with a real, measured profile.
+  <li>Replace <tt>StFttSlowSimMaker</tt>'s flat 1:8:1 3-strip model with a real, measured profile.
   <li>Source: production p+p 500GeV MuDst, run 23081015, 2463 events.
 </ul>
 
@@ -81,7 +85,7 @@ carries far less of the charge than the current model assumes.</p>
       detector sim needs. Model scope limited to center strip &plusmn;1 (below).
 </ul>
 
-<H2>Model implemented in StFttSimHitMaker</H2>
+<H2>Model implemented in StFttSlowSimMaker</H2>
 <ul>
   <li>Gaussian(&sigma;) charge response, split over center strip &plusmn;1 only (far tail
       dropped &mdash; small, 2.8% of clusters, likely pileup/noise contaminated here).
@@ -184,6 +188,7 @@ whether that shows up as a real correlation.</p>
 </TR>
 </TABLE>
 
+<A NAME="pass2"></A>
 <H3>2nd pass: cluster-by-cluster, all combinations</H3>
 <ul>
   <li>Every (X-cluster,U-cluster) combination within the same plane/quad/event (same for
@@ -222,6 +227,160 @@ whether that shows up as a real correlation.</p>
 &mdash; the real fix is upstream (implement <tt>GetThresholdFor()</tt> to cut noise/pileup
 clusters before combinatorics gets tried at all), not a downstream ratio cut fighting an
 already-overwhelming background.</p>
+
+<HR>
+<A NAME="efficiency"></A>
+<H2>Threshold efficiency: is the hardware threshold cutting real hits? (2026-10-17)</H2>
+
+<p><b>This section is a hypothesis with numbers attached, not a measurement of the detector.</b>
+It is written down so it can be tested and, if wrong, discarded.</p>
+
+<H3>Where it comes from</H3>
+<p>The simulator's charge model is now driven by the GEANT energy deposit
+(<a href="index.html#decharge">details</a>): <tt>totalAdc = mAdcPerKeV &times; &Sigma;de &times;
+gainFluctuation()</tt>. Once that model reproduces the measured ADC spectrum <i>above</i>
+threshold, it can be extrapolated <i>below</i> threshold to ask how many real particle
+crossings never produce a recordable strip at all.</p>
+
+<H3>First, how well is the gain actually pinned?</H3>
+<p>This matters, because the whole estimate rides on it. <tt>mAdcPerKeV</tt> was tuned so the
+MC cluster peak-strip ADC matches the real one &mdash; but the real distribution only exists
+above threshold, so that tuning is partly circular. Re-fitting using <i>only</i> peak ADC in
+150-1000 (far above the 70-ADC threshold, and free of the simulator's centre-strip floor):</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>gain [ADC/keV]</TH><TH>350</TH><TH>450</TH><TH>500</TH><TH>550</TH><TH>600</TH><TH>700</TH><TH>900</TH></TR>
+<TR><TD>shape mismatch</TD><TD>4.00</TD><TD>2.58</TD><TD><b>2.55</b></TD><TD>2.66</TD><TD>2.57</TD><TD>3.26</TD><TD>5.67</TD></TR>
+</TABLE>
+<p>The minimum is broad and flat from 450 to 600, so <b>the gain is known only to about
+&plusmn;20%</b>. That is the dominant uncertainty on everything below, and it cannot be
+reduced without data below threshold &mdash; which by definition does not exist.</p>
+
+<H3>Efficiency, with the simulator's artificial floor removed</H3>
+<p>The simulator currently floors the centre strip up to threshold, which forces 100%
+efficiency by construction. That was a deliberate placeholder. Removing it, at the real
+70-ADC hardware threshold:</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>gain</TH><TH>&ge;1 strip over threshold</TH><TH>&ge;2 strips</TH></TR>
+<TR><TD>450</TD><TD>71.3%</TD><TD>50.1%</TD></TR>
+<TR BGCOLOR="#e0ffe0"><TD>500</TD><TD><b>76.4%</b></TD><TD>56.0%</TD></TR>
+<TR><TD>600</TD><TD>83.8%</TD><TD>65.9%</TD></TR>
+</TABLE>
+<p>And how sharply it depends on the threshold, at gain 500:</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>threshold [ADC]</TH><TH>0</TH><TH>20</TH><TH>40</TH><TH>70</TH><TH>100</TH><TH>150</TH><TH>200</TH></TR>
+<TR><TD>efficiency (&ge;1 strip)</TD><TD>100%</TD><TD>98.7%</TD><TD>93.1%</TD><TD><b>76.4%</b></TD><TD>57.6%</TD><TD>35.6%</TD><TD>22.7%</TD></TR>
+</TABLE>
+
+<H3>The hypothesis</H3>
+<ul>
+  <li><b>The 70-ADC hardware threshold costs 16-29% of real crossings</b>, most likely around
+      20-24%. Those particles cross the gas, deposit energy, and never produce a recordable
+      strip. This would be a real detector inefficiency present in the data, not a software
+      bug and not recoverable offline.
+  <li>The threshold sits on the steep part of the curve &mdash; between 40 and 100 ADC the
+      efficiency falls from 93% to 58% &mdash; so it should vary chamber to chamber and run to
+      run with the gas gain.
+  <li>If true, a per-plane efficiency of ~76-84% is a long way from the ~100% implicitly
+      assumed when calling the FTT hit pickup from VTX+FST tracks "low", and would account for
+      a large part of it.
+</ul>
+
+<H3>How to test it, and why the obvious test is the weaker one</H3>
+<p>The obvious test &mdash; take tracks with hits on 3 of the 4 FTT planes and ask how often
+the 4th has a hit &mdash; is model-independent, but it has two problems. It selects on FTT
+itself, so it is biased towards efficient regions; and the 3-hit requirement is
+combinatorially punishing exactly when efficiency is low, which is the case it is meant to
+diagnose. At 80% per plane it is fine (82% of tracks have 3 or more), but at 20% only 0.8% of
+tracks would qualify and random combinations would dominate the sample.</p>
+<p><b>Projecting VTX+FST tracks onto the FTT is the better tool</b>, because the track
+selection never touches the FTT and so cannot be biased by it. Its weakness is the opposite
+one: the pickup number mixes detector efficiency with projection accuracy and alignment.</p>
+<p>The way to separate those two: <b>measure pickup efficiency as a function of the search
+window size</b>. If it plateaus, the plateau is the detector efficiency and the approach to it
+measures the projection resolution. If it keeps climbing with the window, projection accuracy
+dominates and the detector efficiency cannot yet be read off. The number predicted here,
+~76-84%, is what the plateau should sit at if this hypothesis is right.</p>
+
+
+<HR>
+<A NAME="xucorr"></A>
+<H1>X&ndash;U / Y&ndash;V charge correlation: found (2026-10-21)</H1>
+
+<p>The <a href="#pass2">2nd pass above</a> concluded that no cluster-by-cluster correlation
+survives the combinatorial background. That conclusion was right about the data it had and
+wrong about the cause: it was not the detector, and not the threshold. <b>It was the time
+window.</b> Repeating it with a per-VMM time cut &mdash; which did not exist then and does
+now, from <tt>Calibrations/ftt/fttDataWindowsB</tt> &mdash; the correlation appears.</p>
+
+<H2>Same file, same anchors, only the window changed</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>sample</TH><TH>window</TH><TH>in&#8209;time</TH>
+    <TH>clusters per (plane,quad,event)<br>H / V / dH / dV</TH><TH>X&ndash;U combinations</TH>
+    <TH>clean 1+1 pairs</TH><TH>their correlation</TH><TH>U/X on clean pairs</TH></TR>
+<TR><TD>high lumi 23081049</TD><TD>[-65,100]</TD><TD>55.2%</TD>
+    <TD>42.7 / 41.9 / 28.0 / 25.8</TD><TD>1082.5</TD><TD><b>0</b></TD><TD>&mdash;</TD><TD>&mdash;</TD></TR>
+<TR BGCOLOR="#e0ffe0"><TD>high lumi 23081049</TD><TD>[-1,2]</TD><TD>6.3%</TD>
+    <TD>5.5 / 5.3 / 3.5 / 3.2</TD><TD>17.1</TD><TD>607</TD><TD><b>+0.693</b></TD><TD>0.986 &plusmn; 0.498</TD></TR>
+<TR BGCOLOR="#e0ffe0"><TD>high lumi 23081049</TD><TD>per&#8209;VMM, from the DB</TD><TD>7.0%</TD>
+    <TD>6.1 / 5.8 / 3.9 / 3.5</TD><TD>19.8</TD><TD>537</TD><TD><b>+0.671</b></TD><TD>0.980 &plusmn; 0.478</TD></TR>
+<TR><TD>zero field 23072005</TD><TD>[-65,100]</TD><TD>51.7%</TD>
+    <TD>1.3 / 1.1 / 1.2 / 1.0</TD><TD>1.2</TD><TD>562</TD><TD>+0.701</TD><TD>1.155 &plusmn; 0.721</TD></TR>
+<TR><TD>zero field 23072005</TD><TD>[-1,2]</TD><TD>41.0%</TD>
+    <TD>1.1 / 1.0 / 0.8 / 0.9</TD><TD>1.0</TD><TD>564</TD><TD>+0.611</TD><TD>1.166 &plusmn; 0.710</TD></TR>
+</TABLE>
+
+<H2>What it says</H2>
+<ul>
+  <li><b>The old null result reproduces exactly</b> in the first row: 1082 combinations per
+      (plane,quad,event), all&#8209;combination correlation +0.016, and <b>zero</b> clean 1+1
+      pairs in 1034 events &mdash; the same "no quiet corner exists" the 2nd pass reported.
+  <li><b>One change fixes it.</b> Same file, same self&#8209;calibrated anchors, window
+      [-65,100] &rarr; [-1,2]: combinations fall 1082 &rarr; 17 and <b>607 clean pairs appear
+      with correlation +0.693</b> (Y&ndash;V: 713 pairs, +0.701). Nothing else was touched
+      &mdash; not the threshold, not the clustering.
+  <li><b>The per&#8209;VMM window from the database gives the same answer</b> as a flat
+      [-1,2], which is the expected result: the measured run&#8209;median window IS [-1,2].
+  <li><b>Zero field was already clean</b> &mdash; about one cluster per orientation even with
+      the wide window, so the cut buys little there. ZF gives clean pairs for free; high
+      luminosity gives them only with the cut. Two independent routes to the same physics.
+  <li><b>The ratio is ~1.0, not 0.6.</b> On clean pairs: 0.98&ndash;0.99 (high lumi),
+      1.16 (zero field). The 0.59/0.60 from the 1st pass was an <b>event&#8209;sum
+      artifact</b>: the diagonal orientations carry fewer clusters (dH 28.0, dV 25.8 against
+      H 42.7, V 41.9), which drags a summed ratio down even when the per&#8209;cluster charge
+      is equal. So <tt>StFttSlowSimMaker</tt> injecting the same charge into both layers of a
+      foil looks right, and no sim change is called for on this evidence.
+  <li>The high&#8209;lumi clean pairs are also the <i>tighter</i> distribution &mdash; rms
+      0.48 against zero field's 0.71 &mdash; so that is the better sample for characterising
+      the ratio, not the worse.
+</ul>
+
+<H2>Plots</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>all combinations (top) vs clean 1+1 pairs (bottom), four configurations</TH>
+    <TH>ratio on clean pairs</TH></TR>
+<TR>
+<TD><a href="plots_cs/xu_grid.png"><img src="plots_cs/xu_grid.png" height=260></a></TD>
+<TD><a href="plots_cs/xu_ratio.png"><img src="plots_cs/xu_ratio.png" height=260></a></TD>
+</TR>
+</TABLE>
+
+<H2>Two things this leaves open</H2>
+<ul>
+  <li><b>The zero-field runs are not in the database.</b> Run 23072005 returned <b>0 hits on a
+      DB anchor</b> &mdash; all 102553 fell back to the self-calibrated anchor, because the
+      49-run zero-field calibration exists only as files and was never pushed. The ZF rows
+      above are therefore self-calibrated, not DB-driven. Pushing those 49 runs would close
+      it. High luminosity is unaffected: 23081049 is in the Run&nbsp;22 set, and 10.4M of
+      10.9M hits took a DB anchor.
+  <li><b>Zero field in-time is only 51.7%</b> where the per-run calibration reaches ~95% on a
+      zero-field run. That gap is consistent with the self-calibrated anchor underperforming
+      on this run, and is the first thing the DB push above would test.
+</ul>
+
+<p>If the ratio holds up it is not a number for tuning the simulation &mdash; it is a
+<b>pairing discriminant</b>: tight around 1.0 for true pairs, flat for accidentals, which is
+exactly the handle sTGC space-point making needs to decide which X cluster belongs with which
+U cluster.</p>
 
 <HR>
 <ADDRESS>
