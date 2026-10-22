@@ -1010,6 +1010,7 @@ void StFttDb::resetGeometryToHardcoded() {
         mZLoc[3][ip]   = idealPlaneZLocations_QuadD[ip];
     }
     mGeoFromDb = false;
+    buildQuadMatrices();
 }
 
 // Row i of a Survey table, or 0 if it is missing or too short. Rows are taken in
@@ -1087,6 +1088,7 @@ int StFttDb::loadGeometryFromDb( St_Survey *stgcOnTpc, St_Survey *stationOnStgc,
             mZLoc  [iq][ip] =        tz;          // z locations are already cm
         }
     }
+    buildQuadMatrices();
     mGeoFromDb = true;
 
     const char *qn[4] = { "A", "B", "C", "D" };
@@ -1101,6 +1103,70 @@ int StFttDb::loadGeometryFromDb( St_Survey *stgcOnTpc, St_Survey *stationOnStgc,
                  << " | z(cm) "  << mZLoc[jq][0]   << " " << mZLoc[jq][1]   << " "
                                  << mZLoc[jq][2]   << " " << mZLoc[jq][3] << endm;
     return kStOK;
+}
+
+//_____________________________________________________________________________
+// Build the quadrant-local -> global transform for every (quadrant, station).
+//
+// AGML places pentagon `pent` of a station with a rotation about z, then the
+// <Misalign> tags of that placement, then the station placement and its own
+// misalignment. quad->pent is {0,3,2,1}, the A,B,C,D vs A,D,C,B ordering
+// measured in script/fttQuadConvention.C.
+//
+// The translation part is mXShift/mYShift/mZLoc, which the loaders have already
+// built as "AGML placeholder + survey levels". Composing them as a product with
+// the rotation (rather than adding, then reflecting) is what fixes quadrants B
+// and D. When a survey row acquires a real rotation, or a level such as
+// TpcPosition is added, it multiplies in here and nothing else changes.
+void StFttDb::buildQuadMatrices()
+{
+    // AGML's four pentagon rotations, in pent order, from StgmGeo1.xml
+    static const double kPentRot[4][9] = {
+        {  1, 0, 0,   0, 1, 0,   0, 0, 1 },   // pent 0 : identity
+        {  0,-1, 0,   1, 0, 0,   0, 0, 1 },   // pent 1 : +90 about z
+        { -1, 0, 0,   0,-1, 0,   0, 0, 1 },   // pent 2 : 180
+        {  0, 1, 0,  -1, 0, 0,   0, 0, 1 }    // pent 3 : -90
+    };
+    static const int quad2pent[4] = { 0, 3, 2, 1 };
+
+    for ( size_t iq = 0; iq < nQuadPerPlane; iq++ ) {
+        for ( size_t ip = 0; ip < nPlane; ip++ ) {
+            TGeoHMatrix m;
+            m.Clear();
+            m.SetRotation( const_cast<double*>( kPentRot[ quad2pent[iq] ] ) );
+            // mXShift/mYShift are mm, mZLoc is already cm; TGeo wants cm
+            double tr[3] = { mXShift[iq][ip] / 10.0, mYShift[iq][ip] / 10.0, mZLoc[iq][ip] };
+            m.SetTranslation( tr );
+            mQuadToGlobal[iq][ip] = m;
+        }
+    }
+}
+
+//_____________________________________________________________________________
+const TGeoHMatrix& StFttDb::quadToGlobal( int quad, int plane ) const
+{
+    static TGeoHMatrix unit;
+    if ( quad < 0 || quad >= (int)nQuadPerPlane || plane < 0 || plane >= (int)nPlane ) {
+        unit.Clear();
+        return unit;
+    }
+    return mQuadToGlobal[quad][plane];
+}
+
+//_____________________________________________________________________________
+bool StFttDb::localToGlobal( UChar_t plane, UChar_t quad, const double l[3], double g[3] ) const
+{
+    if ( quad >= nQuadPerPlane || plane >= nPlane ) return false;
+    mQuadToGlobal[quad][plane].LocalToMaster( l, g );
+    return true;
+}
+
+//_____________________________________________________________________________
+bool StFttDb::globalToLocal( UChar_t plane, UChar_t quad, const double g[3], double l[3] ) const
+{
+    if ( quad >= nQuadPerPlane || plane >= nPlane ) return false;
+    mQuadToGlobal[quad][plane].MasterToLocal( g, l );
+    return true;
 }
 
 void StFttDb::getGloablOffset( UChar_t plane, UChar_t quad, 

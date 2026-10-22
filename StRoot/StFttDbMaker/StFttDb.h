@@ -14,6 +14,7 @@
 #endif
 #include "StEvent/StEnumerations.h"
 #include <stdint.h>
+#include "TGeoMatrix.h"
 #include <map>
 #include <vector>
 
@@ -178,6 +179,26 @@ public:
 
     void getGloablOffset( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
     void getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
+
+    // ---- quadrant local <-> global, as a real transform ------------------------
+    // getGloablOffset_ClusterPoint() returns (d,s) pairs with s = +-1, i.e. a
+    // translation and axis REFLECTIONS. AGML rotates the four pentagons instead:
+    // with quad->pent {0,3,2,1}, quadrant A gets the identity and C gets 180
+    // degrees -- those two happen to agree with the reflections -- while B gets
+    // -90 and D gets +90, which a single-axis reflection cannot reproduce. That
+    // is why StFttDb and the built geometry agree exactly in quadrants A and C
+    // and differ by ~140-200 mm in B and D.
+    //
+    // These matrices carry the rotation properly and compose the survey levels as
+    // matrix PRODUCTS rather than by adding translations, so a survey row with a
+    // real rotation, or a new level such as TpcPosition, is one more factor
+    // instead of a re-derivation. Units are cm, as TGeo uses.
+    const TGeoHMatrix& quadToGlobal( int quad, int plane ) const;
+    bool localToGlobal( UChar_t plane, UChar_t quad, const double l[3], double g[3] ) const;
+    bool globalToLocal( UChar_t plane, UChar_t quad, const double g[3], double l[3] ) const;
+    // Rebuild the matrices from the current offsets. Called by the loaders; public
+    // so a test can force it after poking the shifts.
+    void buildQuadMatrices();
     // ---- strip geometry: where a strip physically is, in quadrant-local mm ----
     // The four orientations are two strip layers on each of two foils, running at
     // 45 degrees to each other, so an X strip and a U strip either cross inside the
@@ -244,7 +265,8 @@ public:
   bool   mGeoFromDb     = false;         //! set once a DB load has actually been applied
   double mXShift[nQuadPerPlane][nPlane]; //! mm, effective per quadrant/plane
   double mYShift[nQuadPerPlane][nPlane]; //! mm
-  double mZLoc  [nQuadPerPlane][nPlane]; //! cm
+  double mZLoc  [nQuadPerPlane][nPlane];
+    TGeoHMatrix mQuadToGlobal[nQuadPerPlane][nPlane];   //! quadrant local -> global //! cm
 
   int   mDbAccess=1;                     //! enable(1) or disabe(0) DB access
   int   mRun=0;                          //! run#
