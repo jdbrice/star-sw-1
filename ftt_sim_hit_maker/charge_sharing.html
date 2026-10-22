@@ -423,6 +423,55 @@ many different per-run DB anchors are exercised, per-VMM anchor and window from
 <p>Y&ndash;V behaves the same: +0.086 / +0.281 / +0.722 on 340 M / 77 M / 465 k pairs,
 ratio 0.958 &plusmn; 0.461 on clean pairs.</p>
 
+<H2>The function: <tt>StFttDb::stripsCross()</tt></H2>
+<p>The gate is a public method on <tt>StFttDb</tt>, not something private to this study,
+because deciding whether two strips can be one hit is exactly what sTGC space-point making
+has to do. Two calls:</p>
+<pre>bool stripSegment( int row, int strip, UChar_t orientation,
+                   double &amp;x1, double &amp;y1, double &amp;x2, double &amp;y2 ) const;
+
+bool stripsCross ( int rowA, int stripA, UChar_t orientA,
+                   int rowB, int stripB, UChar_t orientB,
+                   double &amp;crossX, double &amp;crossY, double tolerance = 0.0 ) const;</pre>
+<ul>
+  <li><b><tt>stripSegment</tt></b> gives a strip's two endpoints in quadrant-local mm.
+      It needs no DB connection beyond what <tt>StFttDb</tt> already loads: the strip
+      position comes from <tt>scMapXY</tt> / <tt>scMapDiag</tt> (Row1.txt, Row4.txt) and
+      the length from <tt>slMapRow1..5</tt> (Row*_StripLength.txt).
+  <li><b><tt>stripsCross</tt></b> returns true when the two segments meet inside BOTH of
+      their lengths, and hands back the crossing point. Parallel strips return false.
+      <tt>tolerance</tt> (mm) extends each segment at both ends, absorbing the strip width
+      and the fact that a cluster's position is not exactly its peak strip's centre.
+</ul>
+
+<H3>The frame, which is the part that is easy to get wrong</H3>
+<p>Two coordinates are involved and they come from different tables. Getting them the wrong
+way round is not a small error &mdash; it was a gate that kept only 31% of true pairs.</p>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>quantity</TH><TH>where it comes from</TH><TH>what it is</TH></TR>
+<TR><TD>precision coordinate</TD><TD><tt>scMapXY[strip]</tt>, Row1.txt "Strip_Center"</TD>
+    <TD>across the strips. Values step by the 3.2 mm pitch (15.95, 19.15, 22.35, ...) and
+        this is what a cluster's <tt>x()</tt> measures.</TD></TR>
+<TR><TD>along-strip extent</TD><TD><tt>YX_StripGroupEdge[row]</tt> + <tt>slMapRow*[strip]</tt></TD>
+    <TD>the row band. A strip starts at its band edge and runs its own length.</TD></TR>
+</TABLE>
+<p>The two are consistent, which is the check that the model is right: a row-0 strip starts
+at <tt>YX_StripGroupEdge[0]</tt> = 11.49 mm and is 160.8 mm long, ending at 172.29 mm, which
+is exactly <tt>YX_StripGroupEdge[1]</tt>, where row 1 begins. Row 1 is 188.5 mm against a
+band of 187.8 mm, so the strips slightly overhang their band.</p>
+<p>For the diagonals (rows 3 and 4) the same two quantities live in <tt>scMapDiag</tt> and
+<tt>slMapRow4</tt>/<tt>slMapRow5</tt>, in the rotated frame</p>
+<pre>x' = (x + y - 2a)/sqrt(2)      y' = (y - x)/sqrt(2)      a = D_StripGroupEdge[0] = 11.49 mm</pre>
+<p>with the sign of y' set by row AND orientation, and the two diagonals opposite:
+<tt>kFttDiagonalV</tt> runs positive on row 4, <tt>kFttDiagonalH</tt> on row 3. A diagonal
+strip starts at the diagonal edge (y' = 0) and runs outward by its length, which is why
+diagonal strips are short near the corner &mdash; 6.6 mm for strip 0, growing outward. That
+sign convention follows <tt>StFttClusterPointMaker::MakeLocalPoints()</tt>; getting it
+backwards still finds a valid (row,strip), just the wrong one.</p>
+<p>Intersection itself is the ordinary 2D segment test: solve for the two line parameters
+and require both in [0,1]. Degenerate (parallel) pairs return false rather than a large
+number.</p>
+
 <H2>What the gate costs and what it buys</H2>
 <p><b>It keeps 81.5% (X&ndash;U) and 82.9% (Y&ndash;V) of the clean 1+1 pairs while cutting
 the background to 22.6%</b> &mdash; a factor 4.4, measured on 391k and 465k clean pairs
