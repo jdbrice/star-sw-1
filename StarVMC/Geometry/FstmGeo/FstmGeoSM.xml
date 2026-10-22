@@ -724,7 +724,13 @@ The factors are the weights fraction for stainless and NOVEC
                         </If-->
 
                         halfid = 0
-                        <If expr="iwedgem.ge.5">
+                        <!-- halfid splits the 12 wedges of a disk into two halves, which index
+                         the two rows of Geometry/fst/hssOnFst. ge.5 put 5 wedges in
+                         one half and 7 in the other, so a third of the sensors took
+                         the wrong half's survey row. Confirmed against the built
+                         geometry: the misaligned sensors split 45/63 instead of
+                         54/54. ge.6 gives 6 and 6. [Flemming, 2026-10-22] -->
+                    <If expr="iwedgem.ge.6">
                             halfid = 1
                         </If>
                                            
