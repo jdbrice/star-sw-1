@@ -1,0 +1,51 @@
+Geometry/ftt survey + alignment slots for the sTGC
+==================================================
+
+Three tables per slot: stgcOnTpc (1 row), stationOnStgc (4), pentOnStation (16).
+Row order is what AGML's <Misalign row="N"/> indexes; pentOnStation row =
+4*station + pent, pent order A,D,C,B (script/fttQuadConvention.C).
+
+StFttDb composes them as
+
+    AGML placeholder + stgcOnTpc + stationOnStgc[station] + pentOnStation[row]
+
+with the placeholder = (phx[pent], 5.9, zstation) cm, phx = {0,0,-6.5,+6.5},
+zstation = {312.342, 329.953, 347.637, 365.422}.  Translations are cm; StFttDb's
+X/Y shifts are mm, so t0/t1 are scaled by 10 and t2 adds straight to z.
+
+Slots, Run 22 (Gene's rule: one date per run year, just before the run; the
+day-15..20 window is the safe one, and -10 ideal is outside it on purpose):
+
+  -10  20211010.000000  ideal: all identity. The symmetric placeholder AGML
+                        started from, before the detector was built.
+  -11  20211011.000000  SURVEY: the numbers that were hardcoded in StFttDb as
+                        X_shift_Quad*/Y_shift_Quad*/idealPlaneZLocations_Quad*.
+                        Survey of the built detector, no alignment folded in.
+  -15  20211015.000001  baseline: that survey PLUS the first FST->sTGC alignment
+                        (the row comments carry the geo/align split).
+  -16  --               the alignment program's lane, iterations in the seconds
+                        field. Day -16 00:00:00 stays empty on purpose so an sdt
+                        naming only that date falls back to the -15 baseline.
+  -20  --               kept free for "ask with this one".
+
+The -11 slot is a whole day wide (nothing is written at -12..-14), so a job can
+name it as sdt20211012.000000 without hitting a sub-minute gap.
+
+Why -11 exists at all: the hardcoded numbers are survey, not design, and until
+now they lived only in the code -- and only there, since every -15 and later
+entry has the survey ADDED to an alignment and cannot be separated from it by a
+timestamp. Ideal (all zeros) is up to 48.49 mm and 2.91 mm in z away from them,
+~15 strips at the 3.2 mm pitch, so "no DB" and "ideal" are not the same
+geometry and the difference is not negligible.
+
+Verify before pushing, end to end through StFttDb, nothing inlined:
+
+    root4star -l -b -q 'script/fttSurveySlotCheck.C(20211012)'   # PASS, 48/48 exact
+    root4star -l -b -q 'script/fttSurveySlotCheck.C(20220322)'   # real data, unchanged
+
+BLOCKED on the DB side (re-checked 2026-10-22): Geometry_ftt holds only
+fttFobToHV / fttFobToStation / fttHardwareMap, and Geometry_stgc does not exist,
+so none of these three tables can be stored yet. Dmitry has to create
+stgcOnTpc, stationOnStgc and pentOnStation in Geometry_ftt first. The push macro
+is still to be written; StRoot/StFstDbMaker/macro/fstGeometry_db.C is the
+template, tag -> (file stamp, beginTime, description) one row per slot.
