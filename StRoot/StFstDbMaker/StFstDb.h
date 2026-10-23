@@ -47,6 +47,20 @@ public:
    const TGeoHMatrix *getGeoHMatrixSensorOnWedge(Int_t wedge, Int_t sensor) const {return &mGeoHMatrixSensorOnWedge[wedge - 1][sensor]; }
    static const TGeoHMatrix *getHMatrixSensorOnGlobal(int wedge, int sensor);
 
+   // ---- survey-table index convention ------------------------------------
+   // fstSensorOnWedge rows are addressed by the Id COLUMN, not by their
+   // position in the table: the reader below takes Id and derives (wedge,
+   // sensor) from it, so row order is irrelevant and a row carrying the wrong
+   // Id lands on the wrong sensor however it is ordered. (The FTT is the other
+   // way round -- its rows are positional, see StFttDb::surveyRow.)
+   //
+   // Anyone WRITING a table needs sensorSurveyId(); the reverse is what the
+   // reader uses, and what a check macro needs to say which sensor a row is.
+   // wedge is 1..kFstNumWedges and sensor 0..kFstNumSensorsPerWedge-1, the
+   // human-friendly numbering the rest of this class uses.
+   static int  sensorSurveyId(int wedge, int sensor);
+   static bool decodeSensorSurveyId(int id, int &wedge, int &sensor);
+
    const fstPedNoise_st *getPedNoise() const 		{return mFstPedNoise;}
    const fstGain_st *getGain() const     		{return mFstGain;    }
    const fstMapping_st *getMapping() const  		{return mFstMapping; }

@@ -166,6 +166,26 @@ public:
     // t2 adds straight to the z locations, which are already cm.
     //
     // Rows are taken in table order, which is what AGML's <Misalign row="N"/> indexes.
+    // ---- survey-table index conventions ---------------------------------
+    // AGML orders the four pentagons of a station A,D,C,B by rotation about z,
+    // StFttDb numbers its quadrants A,B,C,D. Measured from the built geometry,
+    // see script/fttQuadConvention.C. One copy of that permutation lives in
+    // StFttDb.cxx and these are the only ways to reach it.
+    //
+    // FTT survey rows are POSITIONAL -- row = 4*station + pent, which is what
+    // AGML's <Misalign row="N"/> indexes, and what loadGeometryFromDb() reads.
+    // (The FST is the other way round: its rows are addressed by the Id column,
+    // see StFstDb::sensorSurveyId. A writer that confuses the two produces a
+    // shuffled table that still loads.)
+    //
+    // WRITING a table needs surveyRow(): a correction for (station, quad) goes
+    // in that row. The reverse pair is for reading a table back and saying
+    // which quadrant a row belongs to.
+    static int  quadToPent( int quad );     // StFttDb A,B,C,D -> AGML pent index
+    static int  pentToQuad( int pent );     // and back
+    static int  surveyRow( int station, int quad );            // -> 0..15, or -1
+    static bool surveyRowToStationQuad( int row, int &station, int &quad );
+
     void setUseDbGeometry( bool v ) { mUseDbGeometry = v; }
     bool useDbGeometry() const      { return mUseDbGeometry; }
     bool geometryFromDb() const     { return mGeoFromDb; }   // a DB load actually happened

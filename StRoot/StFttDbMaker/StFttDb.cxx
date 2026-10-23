@@ -998,6 +998,38 @@ UChar_t StFttDb::orientation( StFttRawHit * hit ){
 // ---------------------------------------------------------------------------
 // Geometry offsets. See the block comment in StFttDb.h for the convention.
 // ---------------------------------------------------------------------------
+
+// THE copy of the quadrant <-> pentagon permutation. Everything that needs it
+// goes through the four functions below rather than writing the array again.
+static const int kQuadToPent[4] = { 0, 3, 2, 1 };
+
+int StFttDb::quadToPent( int quad ) {
+    if ( quad < 0 || quad > 3 ) return -1;
+    return kQuadToPent[quad];
+}
+
+// {0,3,2,1} happens to be its own inverse, so the same array would serve both
+// directions today. That is a property of this particular permutation and not
+// of the convention, so invert it properly -- otherwise a future change to the
+// quadrant order would silently keep "working" in one direction only.
+int StFttDb::pentToQuad( int pent ) {
+    if ( pent < 0 || pent > 3 ) return -1;
+    for ( int q = 0; q < 4; q++ ) if ( kQuadToPent[q] == pent ) return q;
+    return -1;
+}
+
+int StFttDb::surveyRow( int station, int quad ) {
+    int p = quadToPent( quad );
+    if ( p < 0 || station < 0 || station >= (int)nPlane ) return -1;
+    return 4 * station + p;
+}
+
+bool StFttDb::surveyRowToStationQuad( int row, int &station, int &quad ) {
+    if ( row < 0 || row >= 4 * (int)nPlane ) return false;
+    station = row / 4;
+    quad    = pentToQuad( row % 4 );
+    return quad >= 0;
+}
 void StFttDb::resetGeometryToHardcoded() {
     for ( size_t ip = 0; ip < nPlane; ip++ ) {
         mXShift[0][ip] = X_shift_QuadA[ip];  mYShift[0][ip] = Y_shift_QuadA[ip];
@@ -1072,13 +1104,12 @@ int StFttDb::loadGeometryFromDb( St_Survey *stgcOnTpc, St_Survey *stationOnStgc,
     // quantity AGML itself computes -- the geometry and the hit positions then come
     // from one source instead of two that have to be kept in step by hand.
     Survey_st *glob = fttSurveyRow( stgcOnTpc, 0, "stgcOnTpc" );
-    const int quad2pent[4] = { 0, 3, 2, 1 };   // StFttDb A,B,C,D -> AGML pent order A,D,C,B
 
     for ( size_t ip = 0; ip < nPlane; ip++ ) {
         Survey_st *st = fttSurveyRow( stationOnStgc, (int)ip, "stationOnStgc" );
         for ( size_t iq = 0; iq < nQuadPerPlane; iq++ ) {
-            const int ipent = quad2pent[iq];
-            Survey_st *pe = fttSurveyRow( pentOnStation, 4 * (int)ip + ipent, "pentOnStation" );
+            const int ipent = quadToPent( (int)iq );
+            Survey_st *pe = fttSurveyRow( pentOnStation, surveyRow( (int)ip, (int)iq ), "pentOnStation" );
             double tx = kAgmlPentX[ipent], ty = kAgmlPentY, tz = kAgmlStationZ[ip];   // cm
             if ( glob ) { tx += glob->t0; ty += glob->t1; tz += glob->t2; }
             if ( st   ) { tx += st->t0;   ty += st->t1;   tz += st->t2;   }
@@ -1127,13 +1158,12 @@ void StFttDb::buildQuadMatrices()
         { -1, 0, 0,   0,-1, 0,   0, 0, 1 },   // pent 2 : 180
         {  0, 1, 0,  -1, 0, 0,   0, 0, 1 }    // pent 3 : -90
     };
-    static const int quad2pent[4] = { 0, 3, 2, 1 };
 
     for ( size_t iq = 0; iq < nQuadPerPlane; iq++ ) {
         for ( size_t ip = 0; ip < nPlane; ip++ ) {
             TGeoHMatrix m;
             m.Clear();
-            m.SetRotation( const_cast<double*>( kPentRot[ quad2pent[iq] ] ) );
+            m.SetRotation( const_cast<double*>( kPentRot[ quadToPent( (int)iq ) ] ) );
             // mXShift/mYShift are mm, mZLoc is already cm; TGeo wants cm
             double tr[3] = { mXShift[iq][ip] / 10.0, mYShift[iq][ip] / 10.0, mZLoc[iq][ip] };
             m.SetTranslation( tr );

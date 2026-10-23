@@ -75,9 +75,8 @@ Int_t StFstDb::setGeoHMatrices(Survey_st **tables)
       if (comb) continue;
 
       comb = new TGeoHMatrix(Form("R%04i", id));
-      int wedge = (id - 1000) / kFstNumSensorsPerWedge + 1; // 1 <= wedge <= 36
-      int sensor = (id - 1000) % kFstNumSensorsPerWedge; // 0 <= sensor <= 2
-	  cout<<"id"<<id<<" "<<"wedge"<<wedge<<"sensor"<<sensor<<endl;
+      int wedge = 0, sensor = 0;
+      if (!decodeSensorSurveyId(id, wedge, sensor)) continue;  // 1<=wedge<=36, 0<=sensor<=2
 
       if (wedge <= 0 || wedge > kFstNumWedges) {
          LOG_WARN << "Wedge ID is out of range (1 - 36)!" << endm;
@@ -125,8 +124,35 @@ const TGeoHMatrix *StFstDb::getHMatrixSensorOnGlobal(int wedge, int sensor)
    if (wedge < 1 || wedge > kFstNumWedges || sensor < 0 || sensor >= kFstNumSensorsPerWedge)
       return 0;
 
-   int id = 1000 + (wedge - 1) * kFstNumSensorsPerWedge + sensor;
+   int id = sensorSurveyId(wedge, sensor);
    return mgRotList ? (const TGeoHMatrix *) mgRotList->FindObject(Form("R%04i", id)) : 0;
+}
+
+
+/**
+ * The fstSensorOnWedge Id convention, in one place and both directions.
+ * Id = 1000 + (wedge-1)*kFstNumSensorsPerWedge + sensor, so the 108 sensors
+ * occupy 1000..1107. Verified to round trip over all of them.
+ */
+int StFstDb::sensorSurveyId(int wedge, int sensor)
+{
+   if (wedge < 1 || wedge > kFstNumWedges) return -1;
+   if (sensor < 0 || sensor >= kFstNumSensorsPerWedge) return -1;
+   return 1000 + (wedge - 1) * kFstNumSensorsPerWedge + sensor;
+}
+
+
+bool StFstDb::decodeSensorSurveyId(int id, int &wedge, int &sensor)
+{
+   wedge  = (id - 1000) / kFstNumSensorsPerWedge + 1;
+   sensor = (id - 1000) % kFstNumSensorsPerWedge;
+   if (id < 1000 || wedge < 1 || wedge > kFstNumWedges ||
+       sensor < 0 || sensor >= kFstNumSensorsPerWedge) {
+      LOG_WARN << "StFstDb: fstSensorOnWedge Id " << id << " is out of range, "
+               << "expected 1000.." << 1000 + kFstNumSensors - 1 << endm;
+      return false;
+   }
+   return true;
 }
 
 
