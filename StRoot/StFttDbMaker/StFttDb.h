@@ -262,6 +262,32 @@ public:
     //     x' = (x + y - 2a)/sqrt2,  y' = (y - x)/sqrt2,  a = D_StripGroupEdge[0]
     // with the sign of y' set by row AND orientation -- kFttDiagonalV runs positive
     // on row 4, kFttDiagonalH on row 3 (see StFttClusterPointMaker::MakeLocalPoints).
+    // The precision coordinate of one strip, in quadrant-local mm: the single
+    // place that answers "where is strip N". Everything else should ask here
+    // rather than recompute, which is the whole point -- the formula
+    // (strip-0.5)*stripPitch that StFttClusterMaker.cxx:363 and
+    // StFttSlowSimMaker::computeRowStrip() both use is this value minus a
+    // CONSTANT 17.5500 mm for XY strips and 26.7400 mm for diagonals
+    // (script/fttStripCenterCheck.C measures both over every strip, spread
+    // ~1e-13, so the maps carry no per-strip information beyond the offset).
+    //
+    // Which is right is settled empirically, not geometrically: assuming the
+    // FST->sTGC fit absorbed 17.55*(sx,sy), the residual against
+    // pentOnStation.20211015 is mean -0.07 mm, rms 1.97, over all 16
+    // quadrant/stations. The offset is real and our "alignment" is largely it.
+    // There is NO first-principles derivation of 17.55 in the repository; it
+    // would need the chamber drawing.
+    //
+    // Note the two offsets DIFFER, so a single added constant cannot fix both
+    // XY and diagonal strips -- which is why this is a lookup and not a number.
+    bool stripCenter( int row, int strip, UChar_t orientation, double &center ) const;
+
+    // The inverse: which strip does a quadrant-local precision coordinate fall
+    // on? Uses the same maps, so it round trips with stripCenter() by
+    // construction rather than by two formulas agreeing.
+    bool stripFromLocal( int row, UChar_t orientation, double precisionCoord,
+                         int &strip, double &offsetInStrip ) const;
+
     bool stripSegment( int row, int strip, UChar_t orientation,
                        double &x1, double &y1, double &x2, double &y2 ) const;
 

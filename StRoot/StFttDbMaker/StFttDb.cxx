@@ -818,6 +818,52 @@ bool StFttDb::hardwareMap( StFttRawHit * hit ) const{
 }
 //_____________________________________________________________________________
 // Endpoints of one strip, in quadrant-local mm. See the header for the frame.
+// See the block comment in StFttDb.h. One owner for "where is strip N".
+bool StFttDb::stripCenter( int row, int strip, UChar_t orientation, double &center ) const
+{
+    if ( strip < 0 || row < 0 || row >= (int)nRowsPerQuad ) return false;
+    if ( kFttVertical == orientation || kFttHorizontal == orientation ) {
+        if ( row > 2 ) return false;                      // XY strips are rows 0-2
+        if ( !scMapXY.count( strip ) ) return false;
+        center = scMapXY.at( strip );
+        return true;
+    }
+    if ( kFttDiagonalV == orientation || kFttDiagonalH == orientation ) {
+        if ( row < 3 ) return false;                      // diagonals are rows 3-4
+        if ( !scMapDiag.count( strip ) ) return false;
+        center = scMapDiag.at( strip );
+        return true;
+    }
+    return false;
+}
+
+
+bool StFttDb::stripFromLocal( int row, UChar_t orientation, double precisionCoord,
+                              int &strip, double &offsetInStrip ) const
+{
+    const std::map<int,Float_t> *m = 0;
+    if ( kFttVertical == orientation || kFttHorizontal == orientation ) {
+        if ( row < 0 || row > 2 ) return false;
+        m = &scMapXY;
+    } else if ( kFttDiagonalV == orientation || kFttDiagonalH == orientation ) {
+        if ( row < 3 || row >= (int)nRowsPerQuad ) return false;
+        m = &scMapDiag;
+    } else return false;
+    if ( m->empty() ) return false;
+
+    // The maps are exactly linear, so invert analytically off the first entry
+    // rather than searching: centre(s) = centre(first) + (s - first)*pitch.
+    std::map<int,Float_t>::const_iterator it0 = m->begin();
+    const int    s0 = it0->first;
+    const double c0 = it0->second;
+    const double fs = ( precisionCoord - c0 ) / stripPitch + s0;
+    strip = (int) lround( fs );
+    if ( !m->count( strip ) ) return false;               // off the end of the chamber
+    offsetInStrip = precisionCoord - m->at( strip );
+    return true;
+}
+
+
 bool StFttDb::stripSegment( int row, int strip, UChar_t orientation,
                             double &x1, double &y1, double &x2, double &y2 ) const
 {
