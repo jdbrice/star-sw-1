@@ -190,11 +190,15 @@ Int_t StFttSlowSimMaker::Make()
         const UChar_t attempts[2] = { intendedOrientation, diagonalOrientation };
 
         // Charge for this crossing, from the energy GEANT actually deposited.
-        // Drawn ONCE: intendedOrientation and diagonalOrientation are the same
-        // physical foil's two strip layers (Vertical+DiagonalV = front foil,
-        // Horizontal+DiagonalH = back foil) reading the same charge deposit --
-        // see the header comment on setAdcPerKeV().
-        double totalAdc = mAdcPerKeV * ( crossing.deSum * 1e6 /* GeV -> keV */ ) * gainFluctuation();
+        // intendedOrientation and diagonalOrientation are the same physical
+        // foil's two strip layers (Vertical+DiagonalV = front foil,
+        // Horizontal+DiagonalH = back foil) reading the same charge deposit, so
+        // the common part is drawn ONCE here; the part measured to be
+        // independent between the two layers is drawn inside the loop below.
+        // The Landau dE/dx spread, which dominates in a 3 mm gap, is already
+        // common through crossing.deSum. See setGainSpreadIndependent().
+        double commonAdc = mAdcPerKeV * ( crossing.deSum * 1e6 /* GeV -> keV */ )
+                           * gainFluctuation( gainSpreadCommon() );
         const double kPitch = StFttDb::stripPitch;
 
         bool anyBuilt = false;
@@ -203,6 +207,12 @@ Int_t StFttSlowSimMaker::Make()
             int row = -1, centerStrip = -1;
             double subStripOffset = 0; // true hit position within the center strip, relative to its own center, mm
             if ( !computeRowStrip( orientation, local_x, local_y, row, centerStrip, subStripOffset ) ) continue;
+
+            // Per-layer gain draw: this is what decorrelates X from U. Drawn
+            // after the row/strip check so that a view which produces no hit
+            // does not consume a random number -- the surviving view then gets
+            // the same charge it would have had on its own.
+            double totalAdc = commonAdc * gainFluctuation( mGainSpreadIndependent );
 
             if ( mDebug ) {
                 printf( "StFttSlowSimMaker DEBUG: track=%d plane=%d quad=%d orient=%d g=(%.3f,%.3f) local=(%.2f,%.2f) row=%d strip=%d off=%.2f\n",
@@ -290,10 +300,10 @@ Int_t StFttSlowSimMaker::Make()
 // down to sqrt(f/N) ~ 13-20%. Real data prefers ~30% -- the same ballpark,
 // a little more, as TGC saturated-mode gain plus VMM shaping would give.
 // mGainSpread = 0 switches it off entirely (pure scaling of de).
-double StFttSlowSimMaker::gainFluctuation()
+double StFttSlowSimMaker::gainFluctuation( double relWidth )
 {
-    if ( mGainSpread <= 0 ) return 1.0;
-    int nStage = (int) ( 1.0 / ( mGainSpread * mGainSpread ) );
+    if ( relWidth <= 0 ) return 1.0;
+    int nStage = (int) ( 1.0 / ( relWidth * relWidth ) );
     if ( nStage < 1 ) nStage = 1;
     double g = 0;
     for ( int is = 0; is < nStage; is++ ) g += gRandom->Exp( 1.0 );

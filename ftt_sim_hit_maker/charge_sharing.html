@@ -12,6 +12,7 @@
 <p><b>&rarr; <a href="#xugate">The geometric crossing gate, at 682k events</a></b>
 (2026-10-21, StFttDb::stripsCross, and the charge ratio settled at 1.0)</p>
 <p><b>&rarr; <a href="#xucorr">X&ndash;U / Y&ndash;V charge correlation: found, with a per-VMM time cut</a></b>
+<p><b>&rarr; <a href="#xusplit">What the ratio width means for the simulation: 0.26 common, 0.15 per view</a></b>
 (2026-10-21, why the 2nd pass below saw nothing, and what it looks like once the window is right)</p>
 
 <H2>Goal</H2>
@@ -351,8 +352,10 @@ now, from <tt>Calibrations/ftt/fttDataWindowsB</tt> &mdash; the correlation appe
       1.16 (zero field). The 0.59/0.60 from the 1st pass was an <b>event&#8209;sum
       artifact</b>: the diagonal orientations carry fewer clusters (dH 28.0, dV 25.8 against
       H 42.7, V 41.9), which drags a summed ratio down even when the per&#8209;cluster charge
-      is equal. So <tt>StFttSlowSimMaker</tt> injecting the same charge into both layers of a
-      foil looks right, and no sim change is called for on this evidence.
+      is equal. So <tt>StFttSlowSimMaker</tt> injecting the same MEAN charge into both layers
+      of a foil is right. Its injecting the same charge <i>draw</i> into both is not, as the
+      width of this ratio shows &mdash; see
+      <a href="#xusplit">what the ratio width means for the simulation</a>.
   <li>The high&#8209;lumi clean pairs are also the <i>tighter</i> distribution &mdash; rms
       0.48 against zero field's 0.71 &mdash; so that is the better sample for characterising
       the ratio, not the worse.
@@ -515,6 +518,82 @@ right, and no simulation change is called for.</b></p>
       That guard is the one described in section 4 of the
       <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/ftt_sim_hit_maker/timecut/index.html#20260914">timecut page</a>,
       doing its job on real data.
+</ul>
+
+<HR>
+<A NAME="xusplit"></A>
+<H1>What the ratio width means for the simulation (2026-10-23)</H1>
+
+<p>The mean of the ratio is 1.0 and that settled the <i>gain</i> question. The
+<b>width</b> is a separate measurement, and it is the one the simulation needs: it says how
+much of a foil's charge fluctuation is shared between its two strip layers and how much is
+not. Both layers read the same avalanche, so the naive answer is "all of it is shared" and
+the ratio should be a delta function. It is not.</p>
+
+<H2>Fit the core, not the rms</H2>
+<p>The rms of the whole ratio distribution is 0.47, but about 45% of the clean&#8209;pair
+sample sits outside the peak &mdash; the shelf below 0.5 and the tail above 1.5 are
+background and split clusters, not gain. Fitting a lognormal core on a locally linear
+background over [0.30, 2.00]:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>sample</TH><TH>clean pairs</TH><TH>full rms</TH>
+    <TH>core median</TH><TH>core width &sigma;<sub>ln</sub></TH><TH>core fraction</TH></TR>
+<TR><TD>U/X</TD><TD>391 k</TD><TD>0.468</TD><TD>0.905</TD><TD><b>0.207 &plusmn; 0.001</b></TD><TD>56%</TD></TR>
+<TR><TD>V/Y</TD><TD>465 k</TD><TD>0.461</TD><TD>0.906</TD><TD><b>0.213 &plusmn; 0.001</b></TD><TD>53%</TD></TR>
+</TABLE>
+
+<p>A plain Gaussian core fit gives 0.207 and 0.231 on the same data, so the number does not
+depend on the model. Varying the fit window ([0.25,2.5] through [0.50,1.60]) and the
+background order moves it between 0.17 and 0.23, which is the real uncertainty:
+<b>&sigma;<sub>ln</sub> = 0.21 &plusmn; 0.02</b>. The two foils agree, which they should.</p>
+
+<H2>From the ratio to the split</H2>
+<p>A ratio <b>cancels the common part exactly</b>, so this measurement constrains only the
+independent part and says nothing at all about the shared one. With the two views assumed
+equally noisy &mdash; the ratio alone cannot say which is which &mdash;</p>
+<pre>  sigma_independent = 0.21 / sqrt(2) = 0.15 per view</pre>
+<p>The shared part is then fixed by a different measurement: the single&#8209;view cluster ADC
+spectrum, which <tt>mAdcPerKeV</tt> and <tt>mGainSpread</tt> = 0.30 were already tuned
+against. Keeping that total intact,</p>
+<pre>  (1 + 0.30^2) = (1 + c^2)(1 + 0.15^2)   ->   sigma_common = 0.26</pre>
+<p>(the two draws multiply, so the widths do not simply add in quadrature; solving it this
+way keeps the single&#8209;view total at exactly 0.30 instead of about 1% over). So the answer
+is <b>0.26 common and 0.15 per view</b> &mdash; neither "all common" as the maker had it, nor
+the "0 common, 0.33 each" the raw rms would have suggested.</p>
+
+<H2>What the maker does now</H2>
+<p><tt>gainFluctuation()</tt> takes a width, the common draw stays outside the orientation
+loop and a second draw moved inside it. Drawn after the row/strip check, so a view that
+produces no hit does not consume a random number. <tt>setGainSpread()</tt> keeps its old
+meaning &mdash; the single&#8209;view total &mdash; so existing macros are unaffected;
+<tt>setGainSpreadIndependent()</tt> is the new knob and the common part is derived.</p>
+
+<p>Verified by replicating the maker's own Erlang draw, 3M crossings:</p>
+<pre>  single view  : relative width 0.3013          (target 0.300)
+  ratio        : lognormal core 0.2143          (measured 0.207 - 0.213)
+  inverted     : 0.2143 / sqrt(2) = 0.1515      (input 0.150)</pre>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>the core fit, both foils</TH><TH>data against the simulated split</TH></TR>
+<TR>
+<TD><a href="plots_cs/xu_core_fit.png"><img src="plots_cs/xu_core_fit.png" height="200"></a></TD>
+<TD><a href="plots_cs/xu_split_sim.png"><img src="plots_cs/xu_split_sim.png" height="200"></a></TD>
+</TR>
+</TABLE>
+
+<H2>Two things this does not fix</H2>
+<ul>
+  <li><b>The core sits at 0.905, not 1.0</b> &mdash; and at 0.906 in the other foil, so it is
+      reproducible, not noise. The diagonal layer collects about 9% less cluster charge than
+      the primary one. That is a per&#8209;view <i>gain</i>, not a fluctuation, and the maker
+      still gives both layers the same mean. It is left alone deliberately: the inter-view
+      ratio and the <tt>mAdcPerKeV</tt> anchor (tuned on the peak-strip ADC of whichever
+      clusters the real data gave) have to be re-tuned together, not one at a time.
+  <li><b>The equal split between the two views is an assumption.</b> The ratio gives
+      &sigma;<sub>x</sub><sup>2</sup> + &sigma;<sub>u</sub><sup>2</sup> and nothing more;
+      separating them needs a third measurement, such as either view against truth in
+      simulation or against a track-based charge estimate in data.
 </ul>
 
 <HR>
