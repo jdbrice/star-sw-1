@@ -825,16 +825,29 @@ bool StFttDb::stripSegment( int row, int strip, UChar_t orientation,
 
     if ( kFttVertical == orientation || kFttHorizontal == orientation ) {
         if ( row > 2 ) return false;                    // XY strips live on rows 0-2
-        if ( !scMapXY.count( strip ) ) return false;
+        if ( !scMapXY.count( strip ) ) return false;   // presence check only, see below
         const std::map<int,Float_t> *sl =
             ( 0 == row ) ? &slMapRow1 : ( 1 == row ) ? &slMapRow2 : &slMapRow3;
         if ( !sl->count( strip ) ) return false;
-        // scMapXY (Row1.txt, "Strip_Center") is the PRECISION coordinate -- the
-        // strips are 3.2 mm apart in it, and it is what the cluster's x() uses.
+        // The precision coordinate is (strip-0.5)*stripPitch, NOT scMapXY.
+        //
+        // scMapXY (Row1.txt, "Strip_Center") is in a DIFFERENT FRAME: measured
+        // over all 167 strips it is exactly (strip-0.5)*pitch + 17.5500 mm, to
+        // 1e-13, so it carries no per-strip survey information -- only an origin
+        // shift of 5.4844 pitches. scMapDiag (Row4.txt) is the same formula
+        // shifted by 26.7400 mm. script/fttStripCenterCheck.C measures both.
+        //
+        // The analytic form is the frame the tracking works in:
+        // StFttClusterMaker.cxx:363 builds the cluster centroid as
+        // (strip*3.2 - 1.6) and that becomes point->setX(), and the 2026-10-08
+        // residual test put that coordinate within +-0.08 cm of the track
+        // projection. A 17.55 mm frame error would be 1.755 cm, twenty times
+        // the observed residual, so it is not there.
+        //
         // The along-strip extent is the row band: a row-0 strip runs from
         // YX_StripGroupEdge[0] = 11.49 for 160.8 mm, which lands exactly on
         // YX_StripGroupEdge[1] = 172.29, the start of row 1.
-        const double p = scMapXY.at( strip );
+        const double p = ( strip - 0.5 ) * stripPitch;
         const double L = sl->at( strip );
         if ( L <= 0 ) return false;
         const double b = YX_StripGroupEdge[row];
@@ -850,10 +863,12 @@ bool StFttDb::stripSegment( int row, int strip, UChar_t orientation,
         if ( row < 3 ) return false;                    // diagonals live on rows 3-4
         const std::map<int,Float_t> *sl = ( 3 == row ) ? &slMapRow4 : &slMapRow5;
         if ( !sl->count( strip ) ) return false;
-        if ( !scMapDiag.count( strip ) ) return false;
+        if ( !scMapDiag.count( strip ) ) return false;  // presence check only
         const double L = sl->at( strip );
         if ( L <= 0 ) return false;
-        const double p = scMapDiag.at( strip );         // precision coordinate, x'
+        // analytic, for the same reason as the XY case above: scMapDiag is the
+        // same formula offset by 26.7400 mm, and the tracking frame is this one.
+        const double p = ( strip - 0.5 ) * stripPitch;  // precision coordinate, x'
 
         // Which way y' runs is set by row AND orientation, opposite for the two
         // diagonals -- the same convention MakeLocalPoints() uses.
