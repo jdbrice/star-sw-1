@@ -259,9 +259,14 @@ int StFwdClosureMaker::Init() {
     // exactly this; this maker builds its own fitter and so needs its own copy.
     // Fit-failure bookkeeping is unaffected -- only the stderr spam goes away.
     // (static ofstream: it must outlive the rdbuf link.)
-    genfit::Exception::quiet(true);
-    static std::ofstream sClosureGenfitErrNull("/dev/null");
-    genfit::errorOut.rdbuf(sClosureGenfitErrNull.rdbuf());
+    // Guarded per Gene's review on PR #38: silenced in normal running, left
+    // alone when the maker is in debug mode, so the diagnostic is still there
+    // for whoever is actually debugging the propagation.
+    if ( !Debug() ) {
+        genfit::Exception::quiet(true);
+        static std::ofstream sClosureGenfitErrNull("/dev/null");
+        genfit::errorOut.rdbuf(sClosureGenfitErrNull.rdbuf());
+    }
 
     // ( (genfit::DAF*) mFitter.get())->setConvergenceDeltaWeight( 1e-3 );
 
@@ -728,14 +733,28 @@ int StFwdClosureMaker::Make() {
         // set above rather than dividing by zero. Near-collinear points give a
         // huge radius and a correspondingly huge pT, which is the same physical
         // statement, so clamp it to the same default.
+        if ( curve == 0 && Debug() ) {
+            // The collinear/duplicate-points case. computeCurvature() is a free
+            // function and cannot reach Debug(), so the report lives here, where
+            // it is one line per affected track instead of one per call.
+            LOG_DEBUG << "Collinear or duplicate space points, curvature undefined: "
+                      << "keeping the straight-line seed" << endm;
+        }
         if ( curve != 0 ) {
             double pt = fabs((K*BStrength)/curve); // pT from average measured curv
             if ( !std::isfinite(pt) || pt > 9999.0 ) pt = 9999.0;
             qCurve = curve > 0 ? 1 : -1;
             ptCurve = pt;
         }
-        LOG_INFO << "Curve: " << curve << ", Pt(curve): " << ptCurve << endm;
-        LOG_INFO << "CurveQ: " << qCurve << ", McQ: " << mcQ << "correct? == " << (int)(qCurve == mcQ) <<endm;
+        // Per-track, so LOG_DEBUG rather than LOG_INFO (Gene, PR #38), and
+        // guarded on Debug() rather than relying on the log level to drop them.
+        // Whether a suppressed LOG_DEBUG still accumulates in the message
+        // manager is disputed and unresolved; the guard is correct either way,
+        // because nothing is constructed unless debugging is actually on.
+        if ( Debug() ) {
+            LOG_DEBUG << "Curve: " << curve << ", Pt(curve): " << ptCurve << endm;
+            LOG_DEBUG << "CurveQ: " << qCurve << ", McQ: " << mcQ << "correct? == " << (int)(qCurve == mcQ) <<endm;
+        }
     }
 
 
