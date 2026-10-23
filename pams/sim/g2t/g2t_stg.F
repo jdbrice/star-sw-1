@@ -1,8 +1,10 @@
+
       FUNCTION  G2T_STG (g2t_track_h,   g2t_track , 
      >                   g2t_fts_hit_h, g2t_fts_hit ) 
       IMPLICIT  NONE
 #include "g2t_fts.inc"
 #include "genhit.h"
++cde,gcvolu.
       INTEGER   G2T_STG,G2R_GET_HIT,Iprin/0/,Idigi,i,isys
       logical,parameter :: Local = .false.
 
@@ -23,6 +25,8 @@
 
            IF (Iprin.ge.0 ) THEN
 
+! G2R_GET_HIT calls AgHITGET, which calls out to AgFPath, restoring the GCVOLU
+! data structure to current numbv path.
               Do While (G2R_GET_HIT('stg') .eq. 0)
 
                  i=i+1
@@ -47,6 +51,12 @@
                  g2t_fts_hit(i).next_tr_hit_p = g2t_track(trac).hit_fts_p
                  g2t_track(trac).hit_fts_p    = i
                  g2t_track(trac).n_stg_hit    = g2t_track(trac).n_stg_hit + 1
+
+!
+! 
+                 NLEVEL = NLEVEL - 1
+                 call gmtod( g2t_fts_hit(i).x, g2t_fts_hit(i).xlocal )
+                 NLEVEL = NLEVEL + 1
 
               enddo * G2R_GET_HIT
 

@@ -47,6 +47,9 @@
          g2t_fst_hit(i).ds            = Step
          g2t_fst_hit(i).track_p       = trac
          g2t_fst_hit(i).volume_id     = volume
+         g2t_fst_hit(i).xlocal(1)     = x(1)
+         g2t_fst_hit(i).xlocal(2)     = x(2)
+         g2t_fst_hit(i).xlocal(3)     = x(3)
 *
 *                  add to track linked list 
 *

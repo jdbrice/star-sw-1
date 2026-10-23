@@ -17,5 +17,6 @@ struct g2t_fst_hit {        /* G2t_fst_hit */
        float     p[3];         /* track momentum */
        float     tof;          /* Time of flight */
        float     x[3];         /* Hit position */
+       float     xlocal[3];         /* Hit position */
    };
 
