@@ -84,7 +84,8 @@ public:
     //
     // The two layers read the same avalanche, so the naive expectation is that
     // all of it is common and the measured X/U ratio should be a delta. It is
-    // not: in 391k/465k clean 1+1 pairs from 682k Run 23 ZF events, the ratio's
+    // not: in 391k/465k clean 1+1 pairs from 682k events of Run 22 pp500 st_fwd
+    // production (ReversedFullField, day 081), the ratio's
     // lognormal CORE has a relative width of 0.207 (U/X) and 0.213 (V/Y),
     // i.e. 0.21 +- 0.02 including fit-window and background-model systematics.
     // A Gaussian core fit gives 0.207 as well, so the number does not depend on
