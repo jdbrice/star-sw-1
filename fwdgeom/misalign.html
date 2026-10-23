@@ -1,0 +1,92 @@
+<HTML>
+<HEAD><TITLE>Is the simulated geometry actually misaligned?</TITLE></HEAD>
+<BODY BGCOLOR="#ffffff">
+
+<H1>Is the simulated geometry actually misaligned? (2026-10-23)</H1>
+
+<p>Any plan that takes strip numbers, acceptance or residuals from a simulated geometry is
+worthless if that geometry is nominal while the reconstruction applies a survey. This is the
+check: build the same tag twice, once with the misalignment switched on and once without,
+and difference the position of every sTGC pentagon and every FST sensor.</p>
+
+<p><b>Result: the sTGC moves by exactly the table it was given, to 5 x 10<sup>-14</sup> cm,
+on all 16 pentagons.</b></p>
+
+<H2>What was run</H2>
+<pre>  root4star -l -b -q 'build_geom.C("dev2026","ideal.root",false,"sdt20211016")'
+  root4star -l -b -q 'build_geom.C("dev2026","misal.root",true ,"sdt20211016")'
+  root4star -l -b -q 'dumpGeomNodes.C("ideal.root","ideal.txt")'   # once per file:
+  root4star -l -b -q 'dumpGeomNodes.C("misal.root","misal.txt")'   # gGeoManager is a singleton
+  python3 cmpGeomNodes.py ideal.txt misal.txt</pre>
+
+<p><tt>dev2026</tt> is <tt>y2023</tt> with the FST built from <tt>FSTMv1m</tt>, the config
+that carries <tt>&lt;Misalign&gt;</tt> tags; the sTGC module has them in every config. The
+third argument adds the BFC <tt>misalign</tt> option, which is the only thing that makes
+<tt>StBFChain</tt> call <tt>AgPosition::SetReal()</tt> &mdash; without it
+<tt>AgMLDbFunctor</tt> returns the unit matrix however many tags the XML carries. The fourth
+picks <b>which</b> tables: the misalignment is read at that timestamp.</p>
+
+<H2>sTGC: 16 of 16 exact</H2>
+<p>At <tt>sdt20211016</tt> the sTGC tables resolve to <tt>Geometry/stgc/*.20211011</tt>, the
+survey slot &mdash; the numbers that used to live hardcoded in <tt>StFttDb</tt>. Measured
+shift against the table row AGML was told to apply, in cm:</p>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>node</TH><TH>measured dx, dy, dz</TH><TH>row</TH><TH>table t0, t1, t2</TH></TR>
+<TR><TD>STFM_1</TD><TD><tt>&nbsp;0.8090,&nbsp;&nbsp;3.6340,&nbsp;&nbsp;0.0000</tt></TD><TD>1</TD><TD><tt>&nbsp;0.8090,&nbsp;3.6340,&nbsp;0.0000</tt></TD></TR>
+<TR><TD>STFM_2</TD><TD><tt>-0.3690,&nbsp;&nbsp;3.6700,&nbsp;-0.2440</tt></TD><TD>2</TD><TD><tt>-0.3690,&nbsp;3.6700,-0.2440</tt></TD></TR>
+<TR><TD>STFM_3</TD><TD><tt>-4.2510,&nbsp;&nbsp;2.4600,&nbsp;-0.0250</tt></TD><TD>3</TD><TD><tt>-4.2510,&nbsp;2.4600,-0.0250</tt></TD></TR>
+<TR><TD>STFM_4</TD><TD><tt>&nbsp;4.7740,&nbsp;&nbsp;2.5240,&nbsp;-0.1770</tt></TD><TD>4</TD><TD><tt>&nbsp;4.7740,&nbsp;2.5240,-0.1770</tt></TD></TR>
+<TR><TD COLSPAN="4" ALIGN="center">... all 16 agree ...</TD></TR>
+<TR><TD>STFM_16</TD><TD><tt>&nbsp;4.8490,&nbsp;&nbsp;2.4810,&nbsp;-0.0130</tt></TD><TD>16</TD><TD><tt>&nbsp;4.8490,&nbsp;2.4810,-0.0130</tt></TD></TR>
+</TABLE>
+
+<p>Worst <tt>|measured - table|</tt> over all 16: <b>4.7 x 10<sup>-14</sup> cm</b>, which is
+double precision. The loop is closed end to end for the first time: the hardcoded StFttDb
+survey, written into a DB table, read by AGML's <tt>&lt;Misalign&gt;</tt> tags, arriving in
+the built geometry.</p>
+
+<p>It also confirms the row convention independently. Rows are positional,
+<tt>row = 4*station + pent</tt> with pent in the A,D,C,B rotation order. Had that map been
+wrong the quadrants would have been permuted while every individual <i>value</i> still
+matched &mdash; only the per-row comparison catches it.</p>
+
+<H2>FST: 54 / 54, and that is the interesting part</H2>
+<p>The 108 sensors move in two rigid groups, which is what
+<tt>fstOnTpc + hssOnFst[half]</tt> should produce:</p>
+<pre>  (0.0713, -0.3010, 0.0) cm    54 sensors = 6 wedges x 9
+  (0.2263, -0.3330, 0.0) cm    54 sensors = 6 wedges x 9</pre>
+
+<p>The shift values match an earlier measurement. <b>The split does not: it was 45/63</b>,
+five wedges against seven. That asymmetry is what exposed the <tt>iwedgem.ge.5</tt> bug in
+the half-id test, which should be <tt>.ge.6</tt> for a 12-wedge half to divide evenly.
+Seeing 6/6 here means <b>the fix is verified in the built geometry</b>, not merely in the
+generator output.</p>
+
+<H2>What this does not prove</H2>
+<ul>
+  <li><b>Translations only.</b> FST sensors are TUBS segments placed on the beam axis, so
+      their node origin is (0, 0, z) and a pure rotation in a survey row would not show up
+      in this probe. Every row used here is a pure translation, so the test is valid as run,
+      but it is not a general misalignment test.
+  <li><b>The two detectors came from different places.</b> No local FST table resolves at
+      <tt>sdt20211016</tt> (the earliest is 20211110), so that half exercises the Run&nbsp;22
+      survey as pushed to MySQL. The sTGC half is served from a local file.
+  <li><b>Nothing here says a simulation will use it.</b> This is the geometry; the BFC
+      <tt>misalign</tt> option still has to be passed by whatever chain actually runs.
+</ul>
+
+<H2>If you rebuild geometry yourself, verify by content</H2>
+<p>A clean <tt>cons</tt> is not evidence that your XML reached the library. With no local
+copy, cons satisfies its targets from the <tt>$STAR</tt> repository and never runs the
+parser: exit 0, clean link, and someone else's geometry in the <tt>.so</tt>, with no error
+and no warning. Check the build, not the exit code:</p>
+<pre>  grep -c agmlParser build.log                 # 0 means the parser never ran
+  nm -C $lib/libStarGeometry.so | grep dev2026 # the tag you changed should be there</pre>
+
+<HR>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>

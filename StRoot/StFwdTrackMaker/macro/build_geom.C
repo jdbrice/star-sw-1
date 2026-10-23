@@ -2,7 +2,14 @@
 // that is a valid shebang to run script as executable
 
 
-void build_geom( TString geomtag = "y2023", TString output="fGeom.root" ) {
+// misalign = true adds the BFC "misalign" option, which is the ONLY thing that
+// makes StBFChain call AgPosition::SetReal() (StBFChain.cxx:1011) and so the only
+// way the <Misalign> tags in the XML reach the built geometry. Without it
+// AgMLDbFunctor's default operator() returns the unit matrix and the geometry is
+// nominal however many Misalign tags the module carries.
+// sdt picks WHICH tables: the misalignment is read at that timestamp.
+void build_geom( TString geomtag = "y2023", TString output="fGeom.root",
+                 bool misalign = false, TString sdt = "sdt20211016" ) {
 
     gSystem->Load( "libStarRoot.so" );
     
@@ -14,7 +21,10 @@ void build_geom( TString geomtag = "y2023", TString output="fGeom.root" ) {
     // for anyone running outside the standard environment.
     // gROOT->SetMacroPath(".:/star-sw/StRoot/macros/:./StRoot/macros:./StRoot/macros/graphics:./StRoot/macros/analysis:./StRoot/macros/test:./StRoot/macros/examples:./StRoot/macros/html:./StRoot/macros/qa:./StRoot/macros/calib:./StRoot/macros/mudst:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/graphics:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/analysis:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/test:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/examples:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/html:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/qa:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/calib:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/mudst:/afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/macros:/afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/tutorials");
     gROOT->LoadMacro("bfc.C");
-    bfc(0, "fzin agml sdt20211016", "" );
+    TString bfcOpt = "fzin agml " + sdt;
+    if ( misalign ) bfcOpt += " misalign";
+    cout << "build_geom: bfc options [" << bfcOpt.Data() << "]" << endl;
+    bfc(0, bfcOpt.Data(), "" );
 
     gSystem->Load("libStarClassLibrary.so");
     gSystem->Load("libStEvent.so" );
