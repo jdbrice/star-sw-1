@@ -282,6 +282,18 @@ public:
     // XY and diagonal strips -- which is why this is a lookup and not a number.
     bool stripCenter( int row, int strip, UChar_t orientation, double &center ) const;
 
+    // Everything hardwareMap() puts on a raw hit about where its strip is, in
+    // one call: centre, the two edges (diagonals only -- XY strips have no edge
+    // table and keep -1, as they always did) and the length. Quadrant-local mm.
+    //
+    // hardwareMap() itself now goes through this, so a maker that builds raw
+    // hits outside the DAQ path -- StFttSlowSimMaker does -- can fill the same
+    // fields the same way instead of leaving them unset. They are NOT
+    // initialised by StFttRawHit's constructors, so "unset" means whatever was
+    // on the stack.
+    bool stripEdges( int row, int strip, UChar_t orientation,
+                     float &center, float &leftEdge, float &rightEdge, float &length ) const;
+
     // The inverse: which strip does a quadrant-local precision coordinate fall
     // on? Uses the same maps, so it round trips with stripCenter() by
     // construction rather than by two formulas agreeing.

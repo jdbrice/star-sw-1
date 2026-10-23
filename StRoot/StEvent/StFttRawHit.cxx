@@ -29,13 +29,35 @@ mRow(255),
 mStrip(255),
 mOrientation(kFttUnknownOrientation),
 mIdTruth(0),
-mQaTruth(0)
+mQaTruth(0),
+// These three were in NO constructor, so a raw hit built outside the DAQ path
+// -- StFttSlowSimMaker builds its own -- carried whatever was on the stack
+// until something called setStripEdges(). -1 is what StFttDb uses for "no
+// value", e.g. the edges of an XY strip, which has no edge table.
+mStripCenter(-1),
+mStripLeftEdge(-1),
+mStripRightEdge(-1),
+mStripLength(-1)
 { /*noop*/ }
 
 StFttRawHit::StFttRawHit(   UChar_t mSector, UChar_t mRDO, UChar_t mFEB, 
                             UChar_t mVMM, UChar_t mChannel, UShort_t mADC, 
                             UShort_t mBCID, Short_t mTB, Short_t mBCIDDelta){
     setRaw( mSector, mRDO, mFEB, mVMM, mChannel, mADC, mBCID, mTB, mBCIDDelta);
+    // This ctor does not delegate, so the strip geometry has to be defaulted
+    // here as well -- see the note in the default ctor.
+    mPlane       = 255;
+    mQuadrant    = kFttUnknownQuadrant;
+    mRow         = 255;
+    mStrip       = 255;
+    mOrientation = kFttUnknownOrientation;
+    mIdTruth     = 0;
+    mQaTruth     = 0;
+    mTime        = -32000;
+    mStripCenter = -1;
+    mStripLeftEdge  = -1;
+    mStripRightEdge = -1;
+    mStripLength    = -1;
 }
 
 void StFttRawHit::setRaw(   UChar_t mSector, UChar_t mRDO, UChar_t mFEB, 

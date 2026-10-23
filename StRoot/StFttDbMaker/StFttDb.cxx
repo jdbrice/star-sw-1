@@ -760,55 +760,11 @@ bool StFttDb::hardwareMap( StFttRawHit * hit ) const{
         UChar_t orientation = getOrientation( rob, hit->feb()+1, hit->vmm()+1, row );
         hit->setMapping( iPlane, iQuad, row, strip, orientation );
 
-        // set strip info
-        Float_t stripCenter = -1;
-        Float_t stripLeftEdge = -1;
-        Float_t stripRightEdge = -1;
-        Float_t stripLength = -1;
-        if (orientation == kFttHorizontal || orientation == kFttVertical){
-            if ( scMapXY.count( strip ) > 0 )
-                stripCenter = scMapXY.at(strip);
-            else {
-                LOG_ERROR << "Cannot find StripCenter for " << strip << endm;
-            }
-            if ( slMapRow1.count( strip ) > 0 && row == 0)// for Strip Length infomation
-                stripLength = slMapRow1.at(strip);
-            else if (slMapRow2.count( strip ) > 0 && row == 1)
-            {
-                stripLength = slMapRow2.at(strip);
-            } else if (slMapRow3.count( strip ) > 0 && row == 2)
-            {
-                stripLength = slMapRow3.at(strip);
-            } else {
-                LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
-            }
-        }
-        if (orientation == kFttDiagonalH || orientation == kFttDiagonalV) {
-            if ( scMapDiag.count(strip) > 0 )
-                stripCenter    = scMapDiag.at(strip);
-            else {
-                LOG_ERROR << "Cannot find StripCenter for Diag " << strip << endm;
-            }
-            if (seMapDiagLeft.count(strip) > 0)
-                stripLeftEdge  = seMapDiagLeft.at(strip)-gapPitch/2.;
-            else {
-                LOG_ERROR << "Cannot find StripLeftEdge for Diag " << strip << endm;
-            }
-            if (seMapDiagRight.count(strip) > 0)
-                stripRightEdge = seMapDiagRight.at(strip)+gapPitch/2.;
-            else {
-                LOG_ERROR << "Cannot find StripRightEdge for " << strip << endm;
-            }
-            if (slMapRow4.count(strip) > 0 && row == 3)// for Strip Length infomation
-                stripLength = slMapRow4.at(strip);
-            else if (slMapRow5.count(strip) > 0 && row == 4)
-            {
-                stripLength = slMapRow5.at(strip);
-            } else
-            {
-                LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
-            }
-        }
+        // set strip info -- one owner, shared with anything that builds raw
+        // hits outside the DAQ path (see StFttDb.h)
+        Float_t stripCenter = -1, stripLeftEdge = -1, stripRightEdge = -1, stripLength = -1;
+        stripEdges( row, strip, orientation, stripCenter, stripLeftEdge, stripRightEdge, stripLength );
+
         hit->setStripEdges( stripCenter, stripLeftEdge, stripRightEdge );
         hit->setStripLength(stripLength);
 
@@ -818,6 +774,64 @@ bool StFttDb::hardwareMap( StFttRawHit * hit ) const{
 }
 //_____________________________________________________________________________
 // Endpoints of one strip, in quadrant-local mm. See the header for the frame.
+// Lifted verbatim out of hardwareMap(), which now calls this. Behaviour is
+// unchanged including the LOG_ERRORs and the -1 defaults.
+bool StFttDb::stripEdges( int row, int strip, UChar_t orientation,
+                          float &center, float &leftEdge, float &rightEdge, float &length ) const
+{
+    center = -1; leftEdge = -1; rightEdge = -1; length = -1;
+
+    if (orientation == kFttHorizontal || orientation == kFttVertical){
+        if ( scMapXY.count( strip ) > 0 )
+            center = scMapXY.at(strip);
+        else {
+            LOG_ERROR << "Cannot find StripCenter for " << strip << endm;
+        }
+        if ( slMapRow1.count( strip ) > 0 && row == 0)// for Strip Length infomation
+            length = slMapRow1.at(strip);
+        else if (slMapRow2.count( strip ) > 0 && row == 1)
+        {
+            length = slMapRow2.at(strip);
+        } else if (slMapRow3.count( strip ) > 0 && row == 2)
+        {
+            length = slMapRow3.at(strip);
+        } else {
+            LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
+        }
+        return center > 0;
+    }
+
+    if (orientation == kFttDiagonalH || orientation == kFttDiagonalV) {
+        if ( scMapDiag.count(strip) > 0 )
+            center    = scMapDiag.at(strip);
+        else {
+            LOG_ERROR << "Cannot find StripCenter for Diag " << strip << endm;
+        }
+        if (seMapDiagLeft.count(strip) > 0)
+            leftEdge  = seMapDiagLeft.at(strip)-gapPitch/2.;
+        else {
+            LOG_ERROR << "Cannot find StripLeftEdge for Diag " << strip << endm;
+        }
+        if (seMapDiagRight.count(strip) > 0)
+            rightEdge = seMapDiagRight.at(strip)+gapPitch/2.;
+        else {
+            LOG_ERROR << "Cannot find StripRightEdge for " << strip << endm;
+        }
+        if (slMapRow4.count(strip) > 0 && row == 3)// for Strip Length infomation
+            length = slMapRow4.at(strip);
+        else if (slMapRow5.count(strip) > 0 && row == 4)
+        {
+            length = slMapRow5.at(strip);
+        } else
+        {
+            LOG_ERROR << "Cannot find StripLength for row " << row << " Strip " << strip << endm;
+        }
+        return center > 0;
+    }
+    return false;
+}
+
+
 // See the block comment in StFttDb.h. One owner for "where is strip N".
 bool StFttDb::stripCenter( int row, int strip, UChar_t orientation, double &center ) const
 {
