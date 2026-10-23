@@ -1,0 +1,170 @@
+<HTML>
+<HEAD><TITLE>Forward geometry API: StFttDb and StFstDb</TITLE></HEAD>
+<BODY BGCOLOR="#ffffff">
+
+<H1>Forward geometry API: what lives in StFttDb and StFstDb</H1>
+
+<p>One place to look before writing geometry code for the forward upgrade &mdash; a new
+maker, an alignment table writer, a check macro. Everything below is a public entry point on
+the DB class that owns the numbers, so nothing here has to be re-derived or copied out of a
+reader. <b>If you find yourself copying an index expression out of someone else's loop, the
+function you want is probably on this page; if it is not, it should be added rather than
+copied.</b></p>
+
+<p>Status column: <tt>main</tt> = already upstream, <tt>PR</tt> = on a pull-request branch,
+<tt>local</tt> = committed on akio202607 only and still needs a branch.</p>
+
+<H2>Conventions you have to know first</H2>
+<ul>
+  <li><b>Units are not uniform.</b> <tt>StFttDb</tt>'s shifts and strip geometry are
+      <b>mm</b>; its z locations, its TGeoHMatrix transforms and every Survey table
+      translation are <b>cm</b>. <tt>StFstDb</tt> is cm throughout.
+  <li><b>The two detectors index survey tables differently.</b> This is the one that bites.
+      <ul>
+        <li><b>FTT rows are POSITIONAL</b>: <tt>row = 4*station + pent</tt>, which is what
+            AGML's <tt>&lt;Misalign row="N"/&gt;</tt> indexes. The Id column is only checked.
+        <li><b>FST rows are addressed by the Id COLUMN</b>:
+            <tt>Id = 1000 + (wedge-1)*3 + sensor</tt>. Row order is irrelevant; a row with
+            the wrong Id lands on the wrong sensor however the table is sorted.
+      </ul>
+      A writer that assumes one convention for the other produces a shuffled table that
+      still loads and still looks plausible.
+  <li><b>Quadrants and pentagons are not the same index.</b> AGML orders the four pentagons
+      of a station A,D,C,B by rotation about z; StFttDb numbers quadrants A,B,C,D. The
+      permutation is {0,3,2,1}, measured from the built geometry
+      (<tt>script/fttQuadConvention.C</tt>). It is its own inverse, which is a property of
+      this particular permutation and not something to rely on &mdash; use the named
+      functions.
+  <li><b>Reflections are not rotations.</b> <tt>getGloablOffset_ClusterPoint()</tt> returns
+      a translation plus axis sign flips. AGML rotates instead. The two agree in quadrants
+      A and C and differ by 140&ndash;200 mm in B and D. The TGeoHMatrix API below carries
+      the rotation properly; the (d,s) API is what the existing reconstruction uses and is
+      unchanged.
+  <li><b>DB timestamps pick the geometry.</b> Run 22: <tt>-10</tt> ideal (all identity),
+      <tt>-11</tt> survey, <tt>-15</tt> survey + first alignment, <tt>-16</tt> the alignment
+      lane. See <tt>StRoot/StFttDbMaker/macro/Geometry/ftt/README</tt>.
+</ul>
+
+<H2>StFttDb &mdash; geometry and indexing</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>function</TH><TH>what it gives you</TH><TH>units / frame</TH><TH>status</TH></TR>
+
+<TR BGCOLOR="#e8e8e8"><TD COLSPAN="4"><b>survey-table indexing</b> &mdash; what an alignment writer needs</TD></TR>
+<TR><TD><tt>surveyRow(station, quad)</tt></TD>
+    <TD>the row a correction for that quadrant goes in. <b>This is the one you need to WRITE
+        a table.</b></TD><TD>0..15, or -1</TD><TD>local</TD></TR>
+<TR><TD><tt>surveyRowToStationQuad(row, station, quad)</tt></TD>
+    <TD>the reverse: which quadrant a row you just read belongs to.</TD>
+    <TD>bool</TD><TD>local</TD></TR>
+<TR><TD><tt>quadToPent(quad)</tt> / <tt>pentToQuad(pent)</tt></TD>
+    <TD>the A,B,C,D &harr; A,D,C,B permutation underneath, if you need it bare.</TD>
+    <TD>0..3, or -1</TD><TD>local</TD></TR>
+
+<TR BGCOLOR="#e8e8e8"><TD COLSPAN="4"><b>quadrant placement</b></TD></TR>
+<TR><TD><tt>loadGeometryFromDb(stgcOnTpc, stationOnStgc, pentOnStation)</tt></TD>
+    <TD>build the offsets from AGML placeholder + the three survey levels. Called by
+        StFttDbMaker; falls back to the hardcoded values if pentOnStation is missing.</TD>
+    <TD>&mdash;</TD><TD>PR&nbsp;#23</TD></TR>
+<TR><TD><tt>setUseDbGeometry(bool)</tt> / <tt>useDbGeometry()</tt></TD>
+    <TD>ask for the DB path (default) or the hardcoded one.</TD><TD>&mdash;</TD><TD>PR&nbsp;#23</TD></TR>
+<TR><TD><tt>geometryFromDb()</tt></TD>
+    <TD><b>whether a DB load actually happened.</b> Check this before trusting anything
+        frame-related &mdash; the hardcoded fallback is a frozen 2021 survey, up to 48 mm
+        from AGML nominal.</TD><TD>bool</TD><TD>PR&nbsp;#23</TD></TR>
+<TR><TD><tt>xShift(quad,plane)</tt>, <tt>yShift(...)</tt>, <tt>zLoc(...)</tt></TD>
+    <TD>the offsets actually in use. Prefer these over the static arrays, which are only the
+        placeholder once the DB is in play.</TD><TD>mm, mm, cm</TD><TD>PR&nbsp;#23</TD></TR>
+<TR><TD><tt>resetGeometryToHardcoded()</tt></TD>
+    <TD>go back to the compiled-in survey.</TD><TD>&mdash;</TD><TD>PR&nbsp;#23</TD></TR>
+
+<TR BGCOLOR="#e8e8e8"><TD COLSPAN="4"><b>local &harr; global as a real transform</b></TD></TR>
+<TR><TD><tt>quadToGlobal(quad, plane)</tt></TD>
+    <TD>the composed TGeoHMatrix for that quadrant. A survey row with a real rotation, or a
+        new level such as TpcPosition, multiplies in here.</TD><TD>cm</TD><TD>local</TD></TR>
+<TR><TD><tt>localToGlobal(plane, quad, l[3], g[3])</tt></TD>
+    <TD>quadrant-local point to global.</TD><TD>cm</TD><TD>local</TD></TR>
+<TR><TD><tt>globalToLocal(plane, quad, g[3], l[3])</tt></TD>
+    <TD>and back.</TD><TD>cm</TD><TD>local</TD></TR>
+<TR><TD><tt>buildQuadMatrices()</tt></TD>
+    <TD>rebuild them after poking the shifts; the loaders call it for you.</TD>
+    <TD>&mdash;</TD><TD>local</TD></TR>
+<TR><TD><tt>getGloablOffset_ClusterPoint(...)</tt></TD>
+    <TD>the (translation, sign) pair the existing reconstruction uses. Unchanged, and still
+        what StFttClusterPointMaker and StFttSlowSimMaker go through.</TD>
+    <TD>mm</TD><TD>main</TD></TR>
+
+<TR BGCOLOR="#e8e8e8"><TD COLSPAN="4"><b>strip geometry</b> &mdash; where a strip physically is</TD></TR>
+<TR><TD><tt>stripSegment(row, strip, orientation, x1,y1, x2,y2)</tt></TD>
+    <TD>the strip's two endpoints. Precision coordinate is
+        <tt>(strip-0.5)*stripPitch</tt>; the along-strip extent comes from the
+        Row*_StripLength tables.</TD><TD>quadrant-local mm</TD><TD>local</TD></TR>
+<TR><TD><tt>stripsCross(rowA,stripA,orientA, rowB,stripB,orientB, crossX,crossY, tolerance)</tt></TD>
+    <TD>do an X strip and a U strip cross inside both of their lengths? The geometric gate
+        for any cluster pairing. <tt>tolerance</tt> (mm) widens each segment at both ends,
+        for the strip width and for a cluster's position not being exactly its max-ADC strip
+        centre.</TD><TD>quadrant-local mm</TD><TD>local</TD></TR>
+<TR><TD><tt>reverseHardwareMap(...)</tt></TD>
+    <TD>(plane,quad,row,strip) back to (rob,feb,vmm,ch) &mdash; what a simulator needs to
+        write a raw hit.</TD><TD>&mdash;</TD><TD>local</TD></TR>
+</TABLE>
+
+<H2>StFstDb &mdash; geometry and indexing</H2>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>function</TH><TH>what it gives you</TH><TH>units / frame</TH><TH>status</TH></TR>
+<TR><TD><tt>sensorSurveyId(wedge, sensor)</tt></TD>
+    <TD>the Id a row must carry. <b>This is the one you need to WRITE an
+        fstSensorOnWedge table.</b> wedge 1..36, sensor 0..2.</TD>
+    <TD>1000..1107, or -1</TD><TD>local</TD></TR>
+<TR><TD><tt>decodeSensorSurveyId(id, wedge, sensor)</tt></TD>
+    <TD>the reverse, and what the reader itself uses.</TD><TD>bool</TD><TD>local</TD></TR>
+<TR><TD><tt>getHMatrixSensorOnGlobal(wedge, sensor)</tt></TD>
+    <TD>the fully composed sensor-to-global transform,
+        <tt>tpc2Global * fst2Tpc * hss2Fst * wedge2Hss * sensor2Wedge</tt>.</TD>
+    <TD>cm</TD><TD>main</TD></TR>
+<TR><TD><tt>getGeoHMatrixSensorOnWedge(wedge, sensor)</tt></TD>
+    <TD>just the last factor.</TD><TD>cm</TD><TD>main</TD></TR>
+<TR><TD><tt>getGeoHMatrixFstOnTpc()</tt>, <tt>...HssOnFst()</tt>, <tt>...WedgeOnHss()</tt>,
+        <tt>...TpcOnGlobal()</tt></TD>
+    <TD>the individual levels, if you want to compose them yourself or vary one.</TD>
+    <TD>cm</TD><TD>main</TD></TR>
+</TABLE>
+
+<H2>Gotchas worth reading once</H2>
+<ul>
+  <li><b>Check <tt>geometryFromDb()</tt> before anything frame-related.</b> With the DB off,
+      StFttDb uses a frozen 2021 survey, not an ideal geometry &mdash; up to 48 mm and
+      ~15 strips from AGML nominal. "No DB" and "ideal" are different detectors.
+  <li><b>The simulation's geometry and the reconstruction's may not agree.</b> AGML
+      misalignment does not reach a starsim run today, so MC geometry is nominal while
+      StFttDb applies a survey. StFttSlowSimMaker hides this by inverting the same live
+      StFttDb call it will later be reconstructed with, so positions round-trip and
+      residuals look clean &mdash; but the strip indices are displaced by 1&ndash;15 strips
+      depending on quadrant and axis. Anything channel-level in simulation (occupancy per
+      VMM, acceptance edges, dead masks) is affected; the residual plot you would check is
+      not.
+  <li><b>mm against cm</b> is the most common slip in this code. The Survey tables are cm,
+      the shifts are mm, and <tt>loadGeometryFromDb()</tt> multiplies by 10 for exactly
+      that reason.
+  <li><b>Returns are -1 or false on a bad index</b>, never an exception and never a silent
+      0, so check them &mdash; a quadrant of -1 used as an array index is the failure this
+      is trying to prevent.
+</ul>
+
+<H2>Still to do</H2>
+<ul>
+  <li>Most of the list above is marked <tt>local</tt>: committed on akio202607 and not yet
+      on a PR branch. The DB-geometry block is PR&nbsp;#23
+      (<tt>fwd-fttdb-db-geometry</tt>); the strip geometry, the TGeoHMatrix transforms and
+      the index maps still need branches of their own.
+  <li><tt>stripSegment()</tt>/<tt>stripsCross()</tt> are written for the four existing
+      orientations. A UV plane would add orientations rather than change the interface.
+  <li>No equivalent of <tt>stripsCross()</tt> exists for the FST, where the question is
+      different (strips run along R, and the z constraint does the work instead).
+</ul>
+
+<HR>
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>
