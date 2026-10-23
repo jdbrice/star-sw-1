@@ -219,6 +219,34 @@ public:
     // Rebuild the matrices from the current offsets. Called by the loaders; public
     // so a test can force it after poking the shifts.
     void buildQuadMatrices();
+
+    // ---- AGML quadrant-local <-> StFttDb quadrant-local ------------------------
+    // The simulation reports a hit in AGML's quadrant-local frame (g2t_fts_hit's
+    // xlocal, which is STMG-local: STMG sits at x=0,y=0 inside STFM, so its x,y
+    // ARE the pentagon's). StFttDb's local frame is a different one -- different
+    // origin AND different handedness, because AGML rotates the four pentagons
+    // while StFttDb reflects them. Neither is wrong; they are two conventions,
+    // and this is the bridge between them.
+    //
+    // Composing StFttDb's reflection S = diag(sx,sy) with AGML's pentagon
+    // rotation R gives T = S^-1 R, which works out to
+    //     quad A  S=diag( 1, 1)  R=identity   ->  T = identity
+    //     quad B  S=diag( 1,-1)  R=rot(-90)   ->  T = (x,y) -> (y,x)
+    //     quad C  S=diag(-1,-1)  R=rot(180)   ->  T = identity
+    //     quad D  S=diag(-1, 1)  R=rot(+90)   ->  T = (x,y) -> (y,x)
+    // i.e. a pure frame rotation with NO translation -- measured as exactly 0 in
+    // all 16 (quadrant, station) at sdt20211112.000001, and that is only true
+    // when both sides were built from the same survey tables. In hardcoded mode
+    // the two origins are 8-48 mm apart, so this REQUIRES geometryFromDb() and
+    // refuses otherwise rather than returning a quietly wrong point.
+    //
+    // The map is its own inverse, so the same call converts either way; the
+    // second name exists only so the calling code reads correctly.
+    // Units are whatever the caller uses -- this rotates, it does not rescale,
+    // so do not mix the cm of quadToGlobal() with the mm of getGloablOffset().
+    bool agmlQuadLocalToDbLocal( UChar_t plane, UChar_t quad, const double a[3], double d[3] ) const;
+    bool dbLocalToAgmlQuadLocal( UChar_t plane, UChar_t quad, const double d[3], double a[3] ) const
+        { return agmlQuadLocalToDbLocal( plane, quad, d, a ); }
     // ---- strip geometry: where a strip physically is, in quadrant-local mm ----
     // The four orientations are two strip layers on each of two foils, running at
     // 45 degrees to each other, so an X strip and a U strip either cross inside the

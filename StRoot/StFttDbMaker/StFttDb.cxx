@@ -1199,6 +1199,26 @@ bool StFttDb::globalToLocal( UChar_t plane, UChar_t quad, const double g[3], dou
     return true;
 }
 
+// See the block comment in StFttDb.h for where the swap comes from.
+bool StFttDb::agmlQuadLocalToDbLocal( UChar_t plane, UChar_t quad,
+                                      const double a[3], double d[3] ) const
+{
+    if ( quad >= nQuadPerPlane || plane >= nPlane ) return false;
+    if ( !mGeoFromDb ) {
+        LOG_WARN << "StFttDb::agmlQuadLocalToDbLocal needs the DB geometry: the two frames "
+                 << "share an origin only when both are built from the same survey tables. "
+                 << "In hardcoded mode they are 8-48 mm apart, so refusing." << endm;
+        return false;
+    }
+    // quadrants B and D: AGML's +-90 degree rotation against StFttDb's reflection
+    const bool swap = ( quad == 1 || quad == 3 );
+    const double ax = a[0], ay = a[1];      // alias-safe: a and d may be the same array
+    d[0] = swap ? ay : ax;
+    d[1] = swap ? ax : ay;
+    d[2] = a[2];
+    return true;
+}
+
 void StFttDb::getGloablOffset( UChar_t plane, UChar_t quad, 
                                 float &dx, float &sx,
                                 float &dy, float &sy, 

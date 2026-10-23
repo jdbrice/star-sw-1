@@ -61,6 +61,19 @@ public:
    static int  sensorSurveyId(int wedge, int sensor);
    static bool decodeSensorSurveyId(int id, int &wedge, int &sensor);
 
+   // ---- sensor-local <-> global ------------------------------------------
+   // The same convenience StFttDb::localToGlobal()/globalToLocal() give for an
+   // sTGC quadrant, so a caller does not have to fetch the matrix and remember
+   // which of LocalToMaster/MasterToLocal it wanted. The matrix is the fully
+   // composed tpc2Global * fst2Tpc * hss2Fst * wedge2Hss * sensor2Wedge, so
+   // these move with the survey tables -- which is the point: a hit and the
+   // GenFit plane it is fitted on have to come from the same place.
+   //
+   // wedge 1..36, sensor 0..2. Units are cm, as TGeo uses. False means the
+   // index was out of range or the geometry has not been loaded.
+   static bool sensorLocalToGlobal(int wedge, int sensor, const double l[3], double g[3]);
+   static bool globalToSensorLocal(int wedge, int sensor, const double g[3], double l[3]);
+
    const fstPedNoise_st *getPedNoise() const 		{return mFstPedNoise;}
    const fstGain_st *getGain() const     		{return mFstGain;    }
    const fstMapping_st *getMapping() const  		{return mFstMapping; }

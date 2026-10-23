@@ -156,6 +156,24 @@ bool StFstDb::decodeSensorSurveyId(int id, int &wedge, int &sensor)
 }
 
 
+bool StFstDb::sensorLocalToGlobal(int wedge, int sensor, const double l[3], double g[3])
+{
+   const TGeoHMatrix *m = getHMatrixSensorOnGlobal(wedge, sensor);
+   if (!m) return false;
+   m->LocalToMaster(l, g);
+   return true;
+}
+
+
+bool StFstDb::globalToSensorLocal(int wedge, int sensor, const double g[3], double l[3])
+{
+   const TGeoHMatrix *m = getHMatrixSensorOnGlobal(wedge, sensor);
+   if (!m) return false;
+   m->MasterToLocal(g, l);
+   return true;
+}
+
+
 void StFstDb::Print(Option_t *opt) const
 {
    mGeoHMatrixTpcOnGlobal->Print();
