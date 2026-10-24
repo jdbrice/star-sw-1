@@ -21,6 +21,23 @@ TString _fstChain = "fstFastSim";
 TString _fwdTrackChain = "fwdTrack";
 TString _geom = "y2024 agml usexgeom";
 
+// fwdTrack uses StFttDb's statics (X_shift_Quad*, ...) but libStFwdTrackMaker is
+// NOT linked against libStFttDbMaker, so unless something else in the chain pulls
+// that library in, loading fwdTrack dies with
+//   dlopen error: libStFwdTrackMaker.so: undefined symbol: StFttDb::X_shift_QuadC
+// and StBFChain::Load's assert(libraryload!=kStErr) aborts the job. With
+// RunFttChain=false there is no fttSim to pull it in, so name the DB makers
+// explicitly. They are cheap and the FST one is needed for the same reason.
+TString _dbChain = "fttDb fstDb";
+
+// Which DB table lane the reconstruction reads. This MUST match the lane the
+// sample was generated on, or reco applies different sTGC constants than GEANT
+// used -- see the sdt note in build_geom.C: the trailing field is a TIME, so
+// plain "sdt20211112" is midnight and silently selects the nominal tables.
+// Run-22 post-strip-frame-fix is sdt20211112.000004; the old default here was
+// sdt20211016, which is the unaligned lane.
+TString _sdt = "sdt20211016";
+
 void DisableTrackFitting() {
     // Disable track fitting
     StFwdTrackMaker * fwdTrack = (StFwdTrackMaker*) chain->GetMaker( "fwdTrack" );
@@ -72,7 +89,7 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
     }
     
     // Form the complete chain
-    _chain = Form("fzin %s sdt20211016 %s %s %s %s MakeEvent StEvent McEvent ReverseField bigbig evout cmudst tree", _geom.Data(), _fttChain.Data(), _fcsChain.Data(), _fstChain.Data(), _fwdTrackChain.Data()); 
+    _chain = Form("fzin %s %s %s %s %s %s %s MakeEvent StEvent McEvent ReverseField bigbig evout cmudst tree", _geom.Data(), _sdt.Data(), _dbChain.Data(), _fttChain.Data(), _fcsChain.Data(), _fstChain.Data(), _fwdTrackChain.Data());
     // Note, I dont include the PicoWrite and PicoVtxless in chain because they load a bunch of things I dont want (and somehow cannot remove with -options)
     printf("Chain: \n%s\n", _chain.Data());
     
