@@ -55,7 +55,7 @@
 !
 ! 
                  NLEVEL = NLEVEL - 1
-                 call gmtod( g2t_fts_hit(i).x, g2t_fts_hit(i).xlocal )
+                 call gmtod( g2t_fts_hit(i).x, g2t_fts_hit(i).xlocal, 1 )
                  NLEVEL = NLEVEL + 1
 
               enddo * G2R_GET_HIT
