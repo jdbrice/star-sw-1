@@ -83,15 +83,26 @@
 # The confirmation above needs no decomposition of the table and stands on its
 # own. .000004's comments are rewritten.
 #
-# ALSO FOUND. The Sep-30 cache this campaign ran on is no longer reproducible:
-# rebuilding sdt20211112.000003 today gives 9 FST sensor nodes -- wedge 6 on all
-# three discs, FTUS_16/17/18, 52/53/54, 88/89/90 -- displaced by (0.155,-0.032)
-# cm, twice the FST survey, from where the Sep-30 file has them. Two FRESH
-# builds at .000003 and .000004 differ in exactly the 16 STFM pentagons and zero
-# FST nodes, so this is the FST DB having changed since (Dmitry deactivated the
-# old 2021-10-25 entries on 10-16), not anything in this campaign. iter2 and
-# iter3 used the same cache so the measurement above is unaffected, but
-# iteration 4 will run on a fresh build and that FST shift comes with it.
+# ALSO FOUND, and now understood. The Sep-30 cache this campaign ran on is not
+# reproducible: rebuilding sdt20211112.000003 today moves 9 FST sensor nodes --
+# wedge 6 on all three discs -- by (0.155,-0.032) cm, twice the FST survey
+# (-0.0775,+0.016).
+#
+# The mechanism: dev2022sm puts the 12 wedges of each FST disc into TWO groups at
+# two xy values 2x the survey apart, which is the half-support-structure split
+# (hssOnFst). The Sep-30 cache splits them 5/7 -- wedges 1-5 in one group, 6-12 in
+# the other -- while a fresh build splits them 6/6, which is the physically
+# sensible half. The one wedge that changes groups is wedge 6, hence the 9 sensors.
+# Dmitry's 10-16 deactivation of the 11 old 2021-10-25 FST entries included exactly
+# one hssOnFst row, which fits. Two FRESH builds at .000003 and .000004 agree with
+# each other exactly, so none of this comes from the campaign.
+#
+# iter2 and iter3 used the same cache, so the measurement above is a clean
+# difference and is unaffected. Iteration 4 inherits the 6/6 boundary.
+#
+# Noted on the way: the y2024 tag applies NO FST survey at all -- all 108 sensors
+# sit at exactly (0,0) in both Run-24 caches -- so Run-24 tracking runs on ideal
+# FST geometry. That is why the Run-24 cache pair shows zero FST movement.
 #
 # ANALYSIS: script/stgcQuadOffsets.C on <outdir>/blinddiag, then
 # script/stgcTableAddDelta.py .000003 + deltas -> .000004, then
