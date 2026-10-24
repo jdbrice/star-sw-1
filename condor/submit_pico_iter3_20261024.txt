@@ -83,26 +83,33 @@
 # The confirmation above needs no decomposition of the table and stands on its
 # own. .000004's comments are rewritten.
 #
-# ALSO FOUND, and now understood. The Sep-30 cache this campaign ran on is not
-# reproducible: rebuilding sdt20211112.000003 today moves 9 FST sensor nodes --
-# wedge 6 on all three discs -- by (0.155,-0.032) cm, twice the FST survey
-# (-0.0775,+0.016).
+# ALSO: THE FST GEOMETRY UNDER THIS CAMPAIGN IS THE OLD, WRONG ONE.
 #
-# The mechanism: dev2022sm puts the 12 wedges of each FST disc into TWO groups at
-# two xy values 2x the survey apart, which is the half-support-structure split
-# (hssOnFst). The Sep-30 cache splits them 5/7 -- wedges 1-5 in one group, 6-12 in
-# the other -- while a fresh build splits them 6/6, which is the physically
-# sensible half. The one wedge that changes groups is wedge 6, hence the 9 sensors.
-# Dmitry's 10-16 deactivation of the 11 old 2021-10-25 FST entries included exactly
-# one hssOnFst row, which fits. Two FRESH builds at .000003 and .000004 agree with
-# each other exactly, so none of this comes from the campaign.
+# The Sep-30 cache this campaign ran on is not reproducible: rebuilding
+# sdt20211112.000003 today moves 9 FST sensor nodes -- wedge 6 on all three discs
+# -- by (0.155,-0.032) cm, twice the FST survey (-0.0775,+0.016).
 #
-# iter2 and iter3 used the same cache, so the measurement above is a clean
-# difference and is unaffected. Iteration 4 inherits the 6/6 boundary.
+# Cause: commit d4378cbde9 (2026-10-22), "FST geometry: halfid split the 12 wedges
+# 5/7, not 6/6" -- iwedgem.ge.5 -> .ge.6 in FstmGeoSM.xml and FstmGeoM.xml. halfid
+# indexes the two rows of Geometry/fst/hssOnFst, so with ge.5 a third of the
+# sensors took the WRONG half's survey row; the built geometry split 45/63 instead
+# of 54/54. The 6/6 split is right and was verified when the fix went in (see the
+# comment in the XML). Any cache built before 10-22 has the 5/7 geometry.
+#
+# So BOTH iteration 2 and iteration 3 were fitted against an FST geometry in which
+# wedge 6 of each disc carries the wrong half's survey. The 1.755 cm result above
+# is a DIFFERENCE between two runs on the same cache and is immune. Absolute
+# alignment constants from either iteration are not: they carry that error.
+# Iteration 4 should use a FRESH cache, which fixes it but makes iter3->iter4 not a
+# one-variable comparison.
+#
+# The error is x-dominant (1.55 mm in x against 0.32 in y) on 9 of 108 sensors,
+# which is ~0.45 mm of equivalent rms -- the same coordinate as the unexplained dx
+# excess but an order of magnitude too small to be it.
 #
 # Noted on the way: the y2024 tag applies NO FST survey at all -- all 108 sensors
 # sit at exactly (0,0) in both Run-24 caches -- so Run-24 tracking runs on ideal
-# FST geometry. That is why the Run-24 cache pair shows zero FST movement.
+# FST geometry, and that is why the Run-24 cache pair shows zero FST movement.
 #
 # ANALYSIS: script/stgcQuadOffsets.C on <outdir>/blinddiag, then
 # script/stgcTableAddDelta.py .000003 + deltas -> .000004, then
