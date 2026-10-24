@@ -225,6 +225,16 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
         gSystem->Load( "libStFttClusterMaker.so" );
         gSystem->Load( "libStFttClusterPointMaker.so" );
 
+        // STOPGAP. The real fix for the ordering is in the slow-sim PR branches in
+        // fcstrk13, which put each slow sim into its own bfc chain so that bfc
+        // orders it: fcstrk13 commits 2f3eb26a77 ("put FttSimHit in fttChain,
+        // before FttClu") and 1e6c787aab ("put fstSlowSim in fstChain"), review
+        // #26. fcstrk11 is behind both -- it has no fttSlowSim entry at all and
+        // fstSlowSim with an empty chain field -- so the hand-assembly below stands
+        // in until those land. Once they do, delete it and add "fttSlowSim" to
+        // _fttChain; only StFttClusterPointMaker will still need adding by hand,
+        // since bfc's FttPoint is StFttPointMaker.
+        //
         // ALL FOUR go in with AddBefore("fwdTrack"), in order. AddMaker()
         // APPENDS to the end of the chain, and bfc has already put fwdTrack at
         // position 9 of 12 -- so the three makers below used to run AFTER the
