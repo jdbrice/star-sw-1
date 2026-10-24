@@ -1,0 +1,84 @@
+How to get your AgML XML into the geometry libraries (and how to tell that you did)
+akio / 2026-10-24
+
+Short version
+-------------
+`cons +StarGeometry` and `cons +xgeometry` do NOT run the AgML generator. The
+generator lives in the Conscript rule for StarVMC/Geometry (the XML directory),
+not in the rules for the two library directories. If you build only the library
+directories, cons finds no generated source locally, falls back to the release
+copy under $STAR, compiles THAT, links a perfectly good library and exits 0.
+You get the release geometry with a green build and no warning.
+
+    cons +StarVMC/Geometry      # generate .cxx/.h and .age from YOUR XML
+    cons +StarGeometry          # TGeo path  -> libStarGeometry.so
+    cons +xgeometry             # GEANT path -> libxgeometry.so
+
+Run the first one whenever you touch StarVMC/Geometry/*.xml. Both library builds
+are incremental afterwards; only the modules whose XML changed recompile.
+
+Where the generated files belong
+--------------------------------
+In $OBJ, as real files, with the source directories holding only what git tracks:
+
+    StarVMC/StarGeometry/                      README
+    StarVMC/xgeometry/                         README, xgeometry.age
+    $OBJ/StarVMC/StarGeometry/                 161 .cxx, 161 .h, 161 .o
+    $OBJ/StarVMC/xgeometry/                    179 .age, 179 .F, 179 .o
+
+That is exactly the release layout; compare against
+$STAR/.$STAR_HOST_SYS/obj/StarVMC/ if you are unsure.
+
+Do not leave generated .cxx/.h in StarVMC/StarGeometry or generated .age in
+StarVMC/xgeometry. cons symlinks a source-directory copy into $OBJ *and* lists
+the release copy, so every object lands on the link line twice:
+30593 "multiple definition" errors for StarGeometry, 763 for xgeometry. The
+temptation is then to delete the source-directory copies, which does link --
+and silently gives you release geometry, because of the paragraph above.
+
+Running mgr/MakeGeometry by hand is not needed and is how this got broken. Its
+shebang points at /usr/local/bin/perl, which does not exist here, and without
+-r it writes the generated files into the source directories, i.e. straight into
+the double-listing state. cons does the whole job.
+
+Verifying you actually got your own geometry
+--------------------------------------------
+A green cons proves nothing. Check the generated source in $OBJ, then the cache:
+
+1. Which source did cons compile? Look for the -c argument in the build log.
+   A path under $STAR/... means you got the release copy.
+
+2. The two markers we care about, in $OBJ (both paths, C++ and Fortran):
+
+     grep -o 'iwedgem *>= *[0-9]' $OBJ/StarVMC/StarGeometry/FstmGeoSM.cxx
+     grep -io 'iwedgem *\.ge\. *[0-9]'  $OBJ/StarVMC/xgeometry/FstmGeoSM.age
+       ours = 6   release = 5     (FST halfid 6/6 wedge split, d4378cbde9)
+
+     grep -o 'float feeso=.*zplane' $OBJ/StarVMC/StarGeometry/StgmGeo1.cxx
+     grep -o 'real \*4 feeSO.*zplane' $OBJ/StarVMC/xgeometry/StgmGeo1.age
+       must be float/real*4, never int (see StgmGeo1.xml)
+
+3. Build a cache and dump it:
+
+     root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/build_geom.C("dev2022sm","x.root",true,"sdt20211112.000004")'
+     root4star -l -b -q 'script/dumpGeomNodes.C("x.root","x.txt")'
+
+   16 STFM nodes, 108 FTUS nodes. The four sTGC station z must be
+   312.342 / 329.953 / 347.637 / 365.422 (int truncation gives
+   312.8385 / 330.8385 / 346.8385 / 364.8385).
+
+   ge.5 vs ge.6 shows up as exactly 9 of the 108 FTUS moving by
+   (dx,dy) = (1.55, -0.32) mm -- 3 sensors on each of the 3 disks, the wedges
+   that halfid put in the wrong half. That is 2x the hssOnFst row difference
+   (t0 +-0.0775 cm, t1 -+0.0160 cm).
+
+The two paths are independent, and that is the trap
+---------------------------------------------------
+libStarGeometry.so (TGeo, from .cxx) is what the fGeom caches and GenFit
+tracking use. libxgeometry.so (GEANT, from .age via Fortran) is what simulation
+uses. Generating one does not generate the other. Between 2026-10-23 and
+2026-10-24 the ge.6 fix was in the TGeo path only, so every fGeom cache built on
+or after 10-23 had the 6/6 FST split while every GEANT sample still had 5/7.
+Measured: fGeom...sdt20211112.000003.root (Sep 30, ge.5) vs .000004 (Oct 24,
+ge.6) differ by precisely those 9 sensors. So the iter-2 cache was 5/7 and the
+iter-3 cache was 6/6 -- they are not both 5/7.

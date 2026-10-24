@@ -8,6 +8,15 @@
 // AgMLDbFunctor's default operator() returns the unit matrix and the geometry is
 // nominal however many Misalign tags the module carries.
 // sdt picks WHICH tables: the misalignment is read at that timestamp.
+//
+// sdt is a date AND a time, "sdtYYYYMMDD[.HHMMSS]", and the trailing field of a
+// StarDb file name is that time, not a version counter: pentOnStation.20211112
+// .000004.C begins at 2021-11-12 00:00:04. So plain "sdt20211112" is midnight and
+// sorts BEFORE it -- it silently selects the newest table at or before midnight
+// (pentOnStation.20211110.000001.C, i.e. the nominal sTGC) and you get a cache
+// with no alignment in it and no warning. To pick up the .000004 lane you must
+// pass sdt20211112.000004. Check the log for the "LoadTable: .L .../StarDb/..."
+// lines and confirm the file names are the ones you meant.
 void build_geom( TString geomtag = "y2023", TString output="fGeom.root",
                  bool misalign = false, TString sdt = "sdt20211016" ) {
 
@@ -33,6 +42,19 @@ void build_geom( TString geomtag = "y2023", TString output="fGeom.root",
     TFile *geom = TFile::Open( output.Data() );
 
     if ( 0 == geom ) {
+        // Pre-warm CINT with the Survey table wrapper. The <Misalign> tags make
+        // AgPosition ask St_db_Maker for Geometry/{fst,stgc}/* during Construct()
+        // below, and St_db_Maker reads the StarDb/*.C table macros through CINT.
+        // By that point CINT can fail to parse tables/St_Survey_Table.h
+        // ("Error: unrecognized language construct ... St_Survey_Table.h:20",
+        // the ClassDefTable line), and the failed load then trips
+        // St_db_Maker::LoadTable's assert(!ee) and aborts the whole build. The
+        // same header parses fine right after bfc(), so parsing it once here --
+        // while the interpreter is still clean -- avoids it. Verified harmless:
+        // with and without this line, dev2022sm/sdt20211112.000004 produces
+        // caches whose 16 STFM and 108 FTUS node positions agree exactly.
+        gROOT->ProcessLine("#include \"tables/St_Survey_Table.h\"");
+
         AgModule::SetStacker( new StarTGeoStacker() );
         AgPosition::SetDebug(2);
         cout << "Building geometry for tag [" << geomtag.Data() << "]" << endl;
