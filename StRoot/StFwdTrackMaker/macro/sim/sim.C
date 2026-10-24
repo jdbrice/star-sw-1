@@ -21,15 +21,6 @@ TString _fstChain = "fstFastSim";
 TString _fwdTrackChain = "fwdTrack";
 TString _geom = "y2024 agml usexgeom";
 
-// fwdTrack uses StFttDb's statics (X_shift_Quad*, ...) but libStFwdTrackMaker is
-// NOT linked against libStFttDbMaker, so unless something else in the chain pulls
-// that library in, loading fwdTrack dies with
-//   dlopen error: libStFwdTrackMaker.so: undefined symbol: StFttDb::X_shift_QuadC
-// and StBFChain::Load's assert(libraryload!=kStErr) aborts the job. With
-// RunFttChain=false there is no fttSim to pull it in, so name the DB makers
-// explicitly. They are cheap and the FST one is needed for the same reason.
-TString _dbChain = "fttDb fstDb";
-
 // Which DB table lane the reconstruction reads. This MUST match the lane the
 // sample was generated on, or reco applies different sTGC constants than GEANT
 // used -- see the sdt note in build_geom.C: the trailing field is a TIME, so
@@ -89,7 +80,7 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
     }
     
     // Form the complete chain
-    _chain = Form("fzin %s %s %s %s %s %s %s MakeEvent StEvent McEvent ReverseField bigbig evout cmudst tree", _geom.Data(), _sdt.Data(), _dbChain.Data(), _fttChain.Data(), _fcsChain.Data(), _fstChain.Data(), _fwdTrackChain.Data());
+    _chain = Form("fzin %s %s %s %s %s %s MakeEvent StEvent McEvent ReverseField bigbig evout cmudst tree", _geom.Data(), _sdt.Data(), _fttChain.Data(), _fcsChain.Data(), _fstChain.Data(), _fwdTrackChain.Data());
     // Note, I dont include the PicoWrite and PicoVtxless in chain because they load a bunch of things I dont want (and somehow cannot remove with -options)
     printf("Chain: \n%s\n", _chain.Data());
     
