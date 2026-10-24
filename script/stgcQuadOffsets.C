@@ -8,6 +8,7 @@
 // Residual measured is d = hit - projection, so the CORRECTION to apply is -d.
 // Quadrants come from the real StFttDb footprints (see FwdTracker.h).
 double gMu[4][4][2], gSig[4][4][2]; int gOK[4][4][2];  // [disk][quad][0=dx,1=dy]
+int gEdge[4][4][2];                                    // peak search or fit ran into a limit
 // NOTE: disk1/quadA has ZERO V-strip entries in the data -- only one orientation is
 // populated there, which is the online-QA-vs-offline-map H/V swap suspected since
 // 2026-07-21. Cells with no usable fit are EXCLUDED from the averages rather than
@@ -15,8 +16,16 @@ double gMu[4][4][2], gSig[4][4][2]; int gOK[4][4][2];  // [disk][quad][0=dx,1=dy
 TH1F* soSum(TFile* f, const char* base, const char* q, int disk){
   return (TH1F*)f->Get(Form("%s_disk%d_quad%s", base, disk, q));
 }
+// The peak is searched only over +-2.9 cm and the fit's mean is then limited to
+// peak+-1.2. That is plenty while the tables are converged and the residual sits near
+// zero, but it CLIPS SILENTLY if a code change moves the residual: the 17.55 mm
+// strip-frame fix (825d1fe21e) moved every quadrant's peak to ~1.755 cm in one step,
+// which is already more than half the search range. gEdge flags a cell whose peak
+// landed against the end of the search range, or whose fitted mean ran into its own
+// parameter limit -- in either case the number is a boundary, not a measurement, and
+// the window has to be widened before the delta is believed.
 void soFit(TH1F* h, int d, int q, int c){
-  gMu[d][q][c]=0; gSig[d][q][c]=0; gOK[d][q][c]=0;
+  gMu[d][q][c]=0; gSig[d][q][c]=0; gOK[d][q][c]=0; gEdge[d][q][c]=0;
   if(!h || h->GetEntries()<200) return;
   int b0=h->GetXaxis()->FindBin(-2.9), b1=h->GetXaxis()->FindBin(2.9);
   double best=-1; int bb=b0;
@@ -24,6 +33,7 @@ void soFit(TH1F* h, int d, int q, int c){
     double v=h->GetBinContent(ib-1)+h->GetBinContent(ib)+h->GetBinContent(ib+1);
     if(v>best){ best=v; bb=ib; }
   }
+  if(bb<=b0+3 || bb>=b1-3) gEdge[d][q][c]=1;        // peak against the search range
   double mu0=h->GetXaxis()->GetBinCenter(bb), lo=mu0-1.2, hi=mu0+1.2;
   TF1* fn=new TF1(Form("so%d%d%d",d,q,c),"gaus(0)+pol1(3)",lo,hi);
   double base=0.5*(h->GetBinContent(h->GetXaxis()->FindBin(lo))+h->GetBinContent(h->GetXaxis()->FindBin(hi)));
@@ -33,6 +43,9 @@ void soFit(TH1F* h, int d, int q, int c){
   double A=fn->GetParameter(0), eA=fn->GetParError(0);
   gMu[d][q][c]=fn->GetParameter(1); gSig[d][q][c]=(eA>0)?A/eA:0;
   gOK[d][q][c]=(gSig[d][q][c]>0)?1:0;
+  // 1% of the half-width: Minuit parks a parameter exactly on its limit, so this is
+  // a tolerance against rounding, not a near-miss criterion.
+  if(gMu[d][q][c] <= lo+0.012 || gMu[d][q][c] >= hi-0.012) gEdge[d][q][c]=1;
 }
 // writeRow: one Survey_st row in the style of the existing StarDb/Geometry/stgc files
 // (same 1-byte memcpy for the comment as every sibling file; the readable text is the
@@ -73,11 +86,23 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1
   }
   printf(">>> MEASURED RESIDUALS  d = hit - projection  [cm]\n");
   printf(">>> disk quad      dx    (sig)      dy    (sig)\n");
-  for(int d=0;d<4;d++){ for(int q=0;q<4;q++)
-      printf(">>>   %d   %s     %s   %s\n", d, qn[q],
-             gOK[d][q][0] ? Form("%+6.3f (%5.1f)", gMu[d][q][0], gSig[d][q][0]) : "   --  (no V hits)",
-             gOK[d][q][1] ? Form("%+6.3f (%5.1f)", gMu[d][q][1], gSig[d][q][1]) : "   --  (no H hits)");
-  }
+  // de/qe, not d/q: CINT does not reliably reset a for-variable reused across two
+  // loops in one function, and the loop can then run zero times with no error.
+  int nEdge=0;
+  for(int de=0;de<4;de++){ for(int qe=0;qe<4;qe++){
+      const char* mark = "";
+      if( (gOK[de][qe][0] && gEdge[de][qe][0]) || (gOK[de][qe][1] && gEdge[de][qe][1]) ){
+        mark = "  <- AT WINDOW EDGE"; nEdge++;
+      }
+      printf(">>>   %d   %s     %s   %s%s\n", de, qn[qe],
+             gOK[de][qe][0] ? Form("%+6.3f (%5.1f)", gMu[de][qe][0], gSig[de][qe][0]) : "   --  (no V hits)",
+             gOK[de][qe][1] ? Form("%+6.3f (%5.1f)", gMu[de][qe][1], gSig[de][qe][1]) : "   --  (no H hits)",
+             mark);
+  } }
+  if(nEdge)
+    printf(">>>  WARNING: %d cell(s) have a peak or a fitted mean sitting on a limit of the\n"
+           ">>>  +-2.9 cm search / +-1.2 cm fit window. Those numbers are the boundary, not a\n"
+           ">>>  measurement -- widen the window in soFit() before using any delta from them.\n", nEdge);
   // global average
   double gx=0, gy=0; int nx=0, ny=0;
   for(int d=0;d<4;d++) for(int q=0;q<4;q++){
@@ -127,6 +152,15 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1
     for(int dd=0; dd<4; dd++) for(int qq=0; qq<4; qq++){
       if(!gOK[dd][qq][0] || !gOK[dd][qq][1]){
         printf(">>> DELTA %d %s     (incomplete, leave unchanged)\n", dd, qn[qq]);
+        continue;
+      }
+      // A cell sitting on the search/fit boundary gets NO parseable DELTA line at all,
+      // the same shape as the incomplete branch above, so stgcTableAddDelta.py cannot
+      // consume a boundary value by accident. Widen the window in soFit() and rerun --
+      // unlike a low-sigma cell, this is not a weak measurement, it is a broken one.
+      if(gEdge[dd][qq][0] || gEdge[dd][qq][1]){
+        printf(">>> DELTA %d %s     (at window edge, leave unchanged -- widen soFit() and rerun)\n",
+               dd, qn[qq]);
         continue;
       }
       // Per-coordinate, not per-cell: quad C has excellent dy fits (150+ sigma) and weak
