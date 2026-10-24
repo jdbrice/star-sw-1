@@ -53,37 +53,45 @@
 # -- so only the anchors matter, and 2 of 384 VMMs is nothing for a per-quadrant
 # mean over 90 files.
 #
-# PREDICTION, and the acceptance criterion. The .000003 comments carry the
-# geo+align decomposition, so the delta can be applied on paper first. Subtracting
-# 1.755*(sx,sy) from the ALIGN term of all 16 cells:
+# RESULT, 2026-10-24. All 90 jobs clean. blinddiag_iter3.root, read with
+# script/stgcQuadOffsets.C("blinddiag_iter3.root",0,2,5.9) -- note the 4th
+# argument: with the default 2.9 cm peak-search half-width the macro flagged
+# quadrant C's dx at stations 3 and 4 as sitting on the window boundary.
 #
-#       mean |align| over the 15 fitted cells    dx        dy
-#       .000003 as it stands                   1.244 cm  1.702 cm
-#       after -1.755*(sx,sy)                   0.511 cm  0.149 cm
+# The per-quadrant residual moved by exactly the predicted 1.755*(sx,sy):
 #
-# dy collapses by 11x and dx by 2.4x: the fitted sTGC "alignment" was almost
-# entirely this bug, which is what 8bdfb264bd already said about scMapXY. Note the
-# leftover dx of ~5 mm is the same size as the unexplained dx absorption rms of
-# 5.23 mm -- that thread is still open and this is where to look next.
+#       dy    n=15   mean +0.008 mm   rms 0.41 mm   max |dev| 1.26 mm
+#       dx    n=10   mean +0.088 mm   rms 0.49 mm   max |dev| 1.02 mm
+#       both  n=25   mean +0.040 mm   rms 0.44 mm
 #
-# So the criterion is NOT "every entry shrinks" -- t0/t1 are prev + delta and some
-# grow in magnitude. It is: the measured per-quadrant residual moves by
-# +1.755*(sx,sy), and the align term of the regenerated table lands near zero.
+# over 25 independently fitted coordinates at 4.8-175 sigma. Excluded: disk1
+# quad A (zero V-strip hits, anomalous in iteration 2 as well) and the 5 dx
+# cells below the 5-sigma floor, quadrant C stations 3 and 4 among them -- and
+# those were weak in iteration 2 too (2.9 and 2.6 sigma), so it is not new.
 #
-# SMOKE TEST, 2026-10-24, 400 events of st_physics_23063028_raw_0000004, this exact
-# command line. Per-quadrant peak of the precise coordinate (3-bin sliding mode),
-# pre-fix (pico_iter2_20260930, same file, 13000 events) -> post-fix:
+# Because the delta is a universal constant to better than half a millimetre,
+# StarDb/Geometry/stgc/pentOnStation.20211112.000004.C applies the ANALYTIC
+# -1.755*(sx,sy) to all 16 cells instead of the fitted per-cell deltas, which
+# would have left those 5 dx cells held at a value known to be 17.55 mm wrong.
 #
-#       quad   dx_V            dy_H          predicted sign
-#       A    +0.1 -> +1.7    +0.1 -> +1.9    (+,+)
-#       B    +0.3 -> +1.3    -0.1 -> -1.7    (+,-)
-#       C    -0.3 -> -1.9    +0.1 -> -1.5    (-,-)
-#       D    -0.1 -> -1.7    +5.1 -> +1.5    (-,+)
+# RETRACTED. An earlier version of this header claimed the fitted sTGC
+# "alignment" collapsed 11x in dy once the constant was removed. That was read
+# out of the geo(..)+align(..) text in .000003's comments, which is STALE:
+# stgcTableAddDelta.py updates t0/t1 and leaves the comments alone, so by
+# .000003 they still described iteration 1 (row 1's comment implies t1 = 5.428,
+# the actual value is 4.605). Using the real numbers the claim does not survive.
+# The confirmation above needs no decomposition of the table and stands on its
+# own. .000004's comments are rewritten.
 #
-# (disk 0; all four disks show the same pattern. Magnitudes scatter around 1.755
-# because these are 0.2 cm bins with 300-1300 entries, not fits.) Every sign is
-# the predicted one, so the 90 jobs are measuring a known quantity precisely, not
-# looking for an effect. The smoke output is in pico_iter3_smoke/ -- delete it.
+# ALSO FOUND. The Sep-30 cache this campaign ran on is no longer reproducible:
+# rebuilding sdt20211112.000003 today gives 9 FST sensor nodes -- wedge 6 on all
+# three discs, FTUS_16/17/18, 52/53/54, 88/89/90 -- displaced by (0.155,-0.032)
+# cm, twice the FST survey, from where the Sep-30 file has them. Two FRESH
+# builds at .000003 and .000004 differ in exactly the 16 STFM pentagons and zero
+# FST nodes, so this is the FST DB having changed since (Dmitry deactivated the
+# old 2021-10-25 entries on 10-16), not anything in this campaign. iter2 and
+# iter3 used the same cache so the measurement above is unaffected, but
+# iteration 4 will run on a fresh build and that FST shift comes with it.
 #
 # ANALYSIS: script/stgcQuadOffsets.C on <outdir>/blinddiag, then
 # script/stgcTableAddDelta.py .000003 + deltas -> .000004, then
