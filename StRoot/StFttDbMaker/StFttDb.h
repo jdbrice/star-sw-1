@@ -256,20 +256,25 @@ public:
     // to control for.
     //
     // stripSegment() returns the strip's two endpoints. The precision coordinate is
-    // (strip-0.5)*stripPitch, matching StFttSlowSimMaker::computeRowStrip(); the
+    // the measured strip centre, scMapXY/scMapDiag, which is what both
+    // StFttClusterMaker and StFttSlowSimMaker::computeRowStrip() now use; the
     // along-strip extent comes from the Row*_StripLength tables already loaded here.
     // Rows 0-2 are Vertical/Horizontal, rows 3-4 Diagonal, in the rotated frame
     //     x' = (x + y - 2a)/sqrt2,  y' = (y - x)/sqrt2,  a = D_StripGroupEdge[0]
     // with the sign of y' set by row AND orientation -- kFttDiagonalV runs positive
     // on row 4, kFttDiagonalH on row 3 (see StFttClusterPointMaker::MakeLocalPoints).
     // The precision coordinate of one strip, in quadrant-local mm: the single
-    // place that answers "where is strip N". Everything else should ask here
-    // rather than recompute, which is the whole point -- the formula
-    // (strip-0.5)*stripPitch that StFttClusterMaker.cxx:363 and
-    // StFttSlowSimMaker::computeRowStrip() both use is this value minus a
-    // CONSTANT 17.5500 mm for XY strips and 26.7400 mm for diagonals
+    // place that answers "where is strip N". Everything else asks here rather
+    // than recompute, which is the whole point. The formula
+    // (strip-0.5)*stripPitch that StFttClusterMaker and
+    // StFttSlowSimMaker::computeRowStrip() used until 2026-10-24 is this value
+    // minus a CONSTANT 17.5500 mm for XY strips and 26.7400 mm for diagonals
     // (script/fttStripCenterCheck.C measures both over every strip, spread
     // ~1e-13, so the maps carry no per-strip information beyond the offset).
+    // Both now call this and stripFromLocal(), which script/fttStripRoundTrip.C
+    // checks are exact inverses over all 805 strips at three sub-strip probes
+    // each -- the property that made it safe to change them, and that would have
+    // broken had either side been changed alone.
     //
     // Which is right is settled empirically, not geometrically: assuming the
     // FST->sTGC fit absorbed 17.55*(sx,sy), the residual against

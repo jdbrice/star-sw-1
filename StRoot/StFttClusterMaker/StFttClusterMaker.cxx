@@ -354,18 +354,48 @@ void StFttClusterMaker::CalculateClusterInfo( StFttCluster * clu ){
 
     clu->setNStrips( clu->rawHits().size() );
 
-    // Compute the sumAdc, strip gravity center, and variance
-    float m0Sum = 0;
+    // Compute the sumAdc, strip gravity center, and variance.
+    //
+    // The position weight is accumulated separately from sumAdc: a strip whose
+    // centre is missing from the DB map has no position and must stay out of the
+    // centroid, but its charge is real and sumAdc has to remain the full cluster
+    // charge -- StFttChargeSharingMaker's X-U ratios are built on it. In
+    // practice the two sums are equal; no production log has ever shown
+    // StFttDb's "Cannot find StripCenter".
+    float m0Sum = 0;   // sumAdc, every strip
+    float w0Sum = 0;   // weight of the strips that have a position
     float m1Sum = 0;
     float m2Sum = 0;
+    int   nNoCenter = 0;
 
     std::for_each (clu->rawHits().begin(), clu->rawHits().end(), [&](const StFttRawHit *h) {
-        float x = ( h->strip() * 3.2 - 1.6 ); // replace with CONST
-        
         m0Sum += h->adc();
-        m1Sum += (h->adc() * x); 
+
+        // Strip centre in QUADRANT-local mm, from StFttDb's strip map, put on the
+        // raw hit by ApplyHardwareMap() above (so simulated hits get it too).
+        //
+        // This was the analytic ( strip*3.2 - 1.6 ), which is the STRIP-local
+        // coordinate: it places strip 0 at -1.6 mm while the map places it at
+        // +15.95 mm. The 17.55 mm between them is the real gap from the
+        // quadrant-local origin -- the pentagon corner, which StFttDb's origin
+        // sits on to 0.000 mm (script/fttOriginProbe.C) -- out to the first
+        // strip's leading edge, and nothing downstream ever added it. Every
+        // reconstructed FTT point was short by that much in its precision
+        // coordinate, and the sTGC alignment absorbed it as a per-quadrant
+        // translation. Diagonal strips carry 26.74 mm instead, which is why this
+        // has to be a lookup and not a constant. See StFttDb::stripCenter().
+        const float x = h->stripCenter();
+        if ( x < 0 ) { nNoCenter++; return; }   // unmapped strip: charge but no position
+
+        w0Sum += h->adc();
+        m1Sum += (h->adc() * x);
         m2Sum += ( h->adc() * x * x );
     });
+
+    if ( nNoCenter > 0 && mDebug ) {
+        LOG_WARN << "CalculateClusterInfo: " << nNoCenter << " of " << clu->rawHits().size()
+                 << " strips have no centre in the DB map; left out of the centroid" << endm;
+    }
 
     if ( mDebug ) {
         LOG_INFO << "m0Sum = " << m0Sum << endm; 
@@ -378,14 +408,16 @@ void StFttClusterMaker::CalculateClusterInfo( StFttCluster * clu ){
     // m2Sum = accumulated variance (2nd moment)
 
     clu->setSumAdc( m0Sum );
-    if ( m0Sum > 0 ){
-        clu->setX( m1Sum / m0Sum );
-        float var = (m2Sum - m1Sum*m1Sum / m0Sum) / m0Sum;
+    if ( w0Sum > 0 ){
+        clu->setX( m1Sum / w0Sum );
+        float var = (m2Sum - m1Sum*m1Sum / w0Sum) / w0Sum;
         //AAA fix: for single-strip clusters var==0 (all charge in one strip,
         // m2Sum/m0Sum = mean²). A zero sigma gives GenFit infinite weight in
         // the precise direction, forcing the track through the strip centre exactly
         // and causing numerical instability. Clamp to pitch/sqrt(12) = 0.924 mm.
-        // x is computed as strip*3.2 - 1.6, so units here are mm (pitch = 3.2 mm).
+        // x is a strip centre in quadrant-local mm, so units here are mm
+        // (pitch = 3.2 mm). The 17.55 mm frame fix above is a constant added to
+        // every x in the cluster, so it leaves this variance unchanged.
         const float kSigmaMin = 3.2f / sqrtf(12.f); // 0.924 mm = pitch/sqrt12
         clu->setSigma( std::max( sqrtf(std::max(var, 0.f)), kSigmaMin ) );
     } else {
@@ -471,10 +503,18 @@ std::vector<StFttCluster*> StFttClusterMaker::FindClusters( std::vector< StFttRa
         // default forever. StFttClusterPointMaker used a row-averaged fallback
         // (YX_StripGroupEdge[row]+maxStripLength/2) for the off-axis coordinate instead,
         // which collapses ~92% of same-row hits (identical maxStripLength) to one
-        // constant position, discarding real per-strip resolution. maxAdcHit->stripCenter()
-        // comes from the same scMapXY table already used (correctly, verified against
-        // real data) for the precision coordinate via cluster x()/y() -- no row dependence
-        // in that lookup, so this is safe for all rows, not just row 0.
+        // constant position, discarding real per-strip resolution.
+        //
+        // Correction (2026-10-24): that comment claimed stripCenter() "comes from the
+        // same scMapXY table already used for the precision coordinate via cluster
+        // x()/y()". It did not -- x() used the bare analytic form and was 17.55 mm
+        // away from this value. As of the frame fix in CalculateClusterInfo() the
+        // claim is finally true. Note it also makes x() and maxStripCenter() nearly
+        // EQUAL, so StFttClusterPointMaker's point x,y now sit on y=x rather than
+        // y=x+17.55: still the same 45 degree line, because the off-axis coordinate
+        // is a placeholder either way. See project_ftt_hitxy_placeholder -- a
+        // precision coordinate is the wrong KIND of quantity for the along-strip
+        // slot, which should be the row band's centre; that is a separate fix.
         clu->setMaxStripCenter( maxAdcHit->stripCenter( ) );
 
         // Now find the cluster edges

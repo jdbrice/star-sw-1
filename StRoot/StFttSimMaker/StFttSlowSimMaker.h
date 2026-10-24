@@ -103,7 +103,11 @@ public:
     void setStripAdcThreshold( float adc ) { mStripAdcThreshold = adc; }
 
 private:
-    static bool computeRowStrip( UChar_t orientation, double local_x, double local_y, int &row, int &centerStrip, double &subStripOffset );
+    // Takes the StFttDb explicitly rather than reading mFttDb so it stays
+    // callable from a test macro without a maker instance. db must be non-null:
+    // the strip address comes from StFttDb's map, not from a formula here, which
+    // is the only way sim and reco cannot drift apart.
+    static bool computeRowStrip( const StFttDb *db, UChar_t orientation, double local_x, double local_y, int &row, int &centerStrip, double &subStripOffset );
     double gainFluctuation( double relWidth );
     // The part of mGainSpread left once the independent part is taken out.
     // The two draws MULTIPLY, so their relative widths combine as

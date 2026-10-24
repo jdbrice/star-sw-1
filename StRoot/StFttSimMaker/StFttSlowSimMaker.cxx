@@ -206,7 +206,7 @@ Int_t StFttSlowSimMaker::Make()
             UChar_t orientation = attempts[a];
             int row = -1, centerStrip = -1;
             double subStripOffset = 0; // true hit position within the center strip, relative to its own center, mm
-            if ( !computeRowStrip( orientation, local_x, local_y, row, centerStrip, subStripOffset ) ) continue;
+            if ( !computeRowStrip( mFttDb, orientation, local_x, local_y, row, centerStrip, subStripOffset ) ) continue;
 
             // Per-layer gain draw: this is what decorrelates X from U. Drawn
             // after the row/strip check so that a view which produces no hit
@@ -315,20 +315,29 @@ double StFttSlowSimMaker::gainFluctuation( double relWidth )
 // (row, strip) address, self-consistently with whatever the real code
 // computes forward:
 //   - kFttVertical/kFttHorizontal (rows 0-2): StFttClusterMaker::
-//     CalculateClusterInfo()'s x = strip*stripPitch - stripPitch/2 gives the
-//     measured axis; StFttDb::YX_StripGroupEdge bands the row axis into rows
-//     0/1/2.
+//     CalculateClusterInfo() takes the measured axis straight from StFttDb's
+//     strip-centre map, so the inverse here is StFttDb::stripFromLocal(), the
+//     same map read backwards; StFttDb::YX_StripGroupEdge bands the row axis
+//     into rows 0/1/2.
 //   - kFttDiagonalV/kFttDiagonalH (rows 3-4): StFttClusterPointMaker::
 //     MakeLocalPoints()'s rotation x=a+(root2/2)(x'-y'), y=a+(root2/2)(x'+y')
 //     (a = StFttDb::D_StripGroupEdge[0]) inverts to x'=(x+y-2a)/root2,
 //     y'=(y-x)/root2; row 3 vs 4 is just the sign of y' (MakeLocalPoints
 //     negates y' for row==3, both DiagonalV and DiagonalH); x' feeds the same
-//     strip*pitch-pitch/2 inversion as X/Y.
-// Returns false if the position falls outside this orientation's coverage
-// (row 0-2 case) -- strip-range validity for either case is enforced later
-// by reverseHardwareMap() itself.
-bool StFttSlowSimMaker::computeRowStrip( UChar_t orientation, double local_x, double local_y, int &row, int &centerStrip, double &subStripOffset )
+//     stripFromLocal() inversion as X/Y, on the diagonal map.
+// Returns false if the position falls outside this orientation's coverage: the
+// row 0-2 band test, or stripFromLocal() finding no strip at that coordinate.
+//
+// Both branches used to invert the analytic strip*pitch - pitch/2 by hand. That
+// is the STRIP-local coordinate, and reco was inverting the same formula, so the
+// round trip closed on a frame 17.55 mm (26.74 for diagonals) away from the
+// quadrant-local one the strip maps are in. Reco now reads the map; this reads
+// the same map backwards, so the two cannot disagree by construction -- which is
+// also why the two changes had to land together. Fixing reco alone would have
+// put every simulated hit 17.55 mm from its own truth position.
+bool StFttSlowSimMaker::computeRowStrip( const StFttDb *db, UChar_t orientation, double local_x, double local_y, int &row, int &centerStrip, double &subStripOffset )
 {
+    if ( !db ) return false;
     if ( kFttVertical == orientation || kFttHorizontal == orientation ) {
         double measuredAxis = ( kFttVertical == orientation ) ? local_x : local_y;
         double rowAxis      = ( kFttVertical == orientation ) ? local_y : local_x;
@@ -339,11 +348,10 @@ bool StFttSlowSimMaker::computeRowStrip( UChar_t orientation, double local_x, do
         else if ( rowAxis >= StFttDb::YX_StripGroupEdge[0] ) row = 0;
         if ( row < 0 ) return false; // falls inside the inner (beampipe-side) cutout
 
-        centerStrip = (int) std::lround( (measuredAxis + StFttDb::stripPitch / 2.0) / StFttDb::stripPitch );
-        // true hit position relative to centerStrip's own center (see header
-        // comment on setChargeShareSigma): centerStrip's center sits at
-        // (centerStrip-0.5)*stripPitch in this same measuredAxis coordinate.
-        subStripOffset = measuredAxis - ( centerStrip - 0.5 ) * StFttDb::stripPitch;
+        // subStripOffset comes back as the true hit position relative to
+        // centerStrip's OWN centre (see the header comment on
+        // setChargeShareSigma), which is what stripFromLocal() returns.
+        if ( !db->stripFromLocal( row, orientation, measuredAxis, centerStrip, subStripOffset ) ) return false;
         return centerStrip >= 0;
     }
 
@@ -361,8 +369,13 @@ bool StFttSlowSimMaker::computeRowStrip( UChar_t orientation, double local_x, do
         if ( kFttDiagonalV == orientation ) row = ( y_prime >= 0 ) ? 4 : 3;
         else                                row = ( y_prime >= 0 ) ? 3 : 4;
 
-        centerStrip = (int) std::lround( (x_prime + StFttDb::stripPitch / 2.0) / StFttDb::stripPitch );
-        subStripOffset = x_prime - ( centerStrip - 0.5 ) * StFttDb::stripPitch;
+        // Diagonal strips use their own map (scMapDiag, offset 26.74 mm, not
+        // 17.55). Their ABSOLUTE position additionally depends on
+        // D_StripGroupEdge[0] = 11.49 mm in MakeLocalPoints()'s rotation, which
+        // is unverified against the chamber drawing -- but it cancels in this
+        // round trip, and diagonal hits are skipped by StFwdHitLoader, so
+        // tracking does not see it either way.
+        if ( !db->stripFromLocal( row, orientation, x_prime, centerStrip, subStripOffset ) ) return false;
         return centerStrip >= 0;
     }
 
