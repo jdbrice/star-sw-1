@@ -12,12 +12,28 @@ bool RunFwdChain = true;
 bool RunMuDstMaker = true;
 
 // When true, run FTT through the real StFttDb reconstruction chain
-// (StFttDbMaker -> StFttSimHitMaker -> StFttClusterMaker ->
+// (StFttDbMaker -> StFttSlowSimMaker -> StFttClusterMaker ->
 // StFttClusterPointMaker, mUseGeantData=false) in place of reading GEANT
 // truth directly (MakeGeantPoints, mUseGeantData=true) -- exercises the
 // same geometry/clustering code real data uses.
 // Set false for the old/original GEANT-truth-direct behavior.
 bool UseFttSimHitMaker = true;
+
+// When true, run FST through the real raw-hit reconstruction chain
+//   StFstSlowSimMaker -> StFstRawHitMaker -> StFstClusterMaker -> StFstHitMaker
+// instead of StFstFastSimMaker, which is a parallel reimplementation of the
+// clustering and hit positioning. The BFC options already exist and
+// BigFullChain.h states the recipe: use fstSlowSim WITH fstRawHit,fstCluster,
+// fstHit and WITHOUT fstFastSim. StFstSlowSimMaker publishes "fstRawAdcSimu",
+// which StFstRawHitMaker already knew how to consume.
+//
+// Implies RunFstChain (the BFC fst tags have to be in the chain string) and
+// switches the tracker's FST input from GEANT truth to StEvent, since the
+// point is to read back what the real clustering produced. Read the SCOPE
+// section of StFstSlowSimMaker.h first: v0 is one raw hit per GEANT hit, so
+// every cluster is single-strip and nothing about cluster size or resolution
+// is meaningful yet -- it is a geometry/chain closure tool.
+bool UseFstSlowSim = false;
 
 bool UseCachedGeom = true;
 bool UseConstBz = false;
@@ -86,6 +102,16 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
 
     // Setup the chain for reading an FZD
     TString _chain = "";
+
+    // FST slow sim replaces the fast sim with the real raw-hit chain, and needs
+    // the fst tags in the chain string -- so it forces RunFstChain on rather
+    // than silently doing nothing when the two toggles disagree.
+    if (UseFstSlowSim) {
+        RunFstChain = true;
+        _fstChain = "fstSlowSim fstRawHit fstCluster fstHit";
+        cout << "UseFstSlowSim: FST through the real raw-hit chain, _fstChain = "
+             << _fstChain << endl;
+    }
 
     // Now turn off parts of the chain that we don't need
     if (!RunFttChain)
@@ -174,8 +200,8 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
     gSystem->Load("StFwdResidualMaker.so");
     gSystem->Load("StFwdAlignmentMaker.so");
 
-    // Configure FST FastSim
-    if (RunFstChain){ // otherwise it is not loaded
+    // Configure FST FastSim -- not present at all when the slow sim is driving
+    if (RunFstChain && !UseFstSlowSim){ // otherwise it is not loaded
         StFstFastSimMaker *fstFastSim = (StFstFastSimMaker*) chain->GetMaker( "fstFastSim" );;
         if (fstFastSim) {
             printf("fstFastSim = %p\n", fstFastSim);
@@ -190,30 +216,52 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
     }
 
     if ( UseFttSimHitMaker ) {
-        // Real chain: StFttDbMaker -> StFttSimHitMaker -> StFttClusterMaker ->
+        // Real chain: StFttDbMaker -> StFttSlowSimMaker -> StFttClusterMaker ->
         // StFttClusterPointMaker (mUseGeantData=false), same makers/order as
-        // fwd_afterburner_db.C's real-data chain, with StFttSimHitMaker in
+        // fwd_afterburner_db.C's real-data chain, with StFttSlowSimMaker in
         // place of StFttRawHitMaker/StFttHitCalibMaker.
         gSystem->Load( "libStFttDbMaker.so" );
-        gSystem->Load( "libStFttSimHitMaker.so" );
+        gSystem->Load( "libStFttSimMaker.so" );
         gSystem->Load( "libStFttClusterMaker.so" );
         gSystem->Load( "libStFttClusterPointMaker.so" );
 
-        StFttDbMaker * fttDbMk = new StFttDbMaker();
-        chain->AddMaker(fttDbMk);
+        // ALL FOUR go in with AddBefore("fwdTrack"), in order. AddMaker()
+        // APPENDS to the end of the chain, and bfc has already put fwdTrack at
+        // position 9 of 12 -- so the three makers below used to run AFTER the
+        // tracker (indeed after StTreeMaker and StPicoDstMaker; the logs show
+        // StFttClusterMaker::Init firing dead last) while only the point maker
+        // was inserted before it. The point maker therefore ran on whatever
+        // clusters the PREVIOUS event had left behind, and nothing the FTT
+        // produced could reach the tracker in the same event.
+        //
+        // AddBefore inserts immediately before the named maker, so four calls
+        // in this order give  db -> slowSim -> cluster -> point -> fwdTrack.
+        // There is no bfc option for either StFttSlowSimMaker or
+        // StFttClusterPointMaker (fttSim is the FAST simulator and FttPoint is
+        // StFttPointMaker), which is why this is assembled by hand.
+        // With RunFwdChain=false there is no fwdTrack to insert before, and
+        // AddBefore on a name that is not in the chain does not place the maker.
+        // Appending is the right answer in that case -- nothing downstream
+        // consumes the points -- so decide once and use it for all four.
+        bool fttHaveAnchor = ( chain->GetMaker("fwdTrack") != 0 );
+        if ( !fttHaveAnchor )
+            cout << "UseFttSimHitMaker: no fwdTrack in the chain, appending the FTT makers" << endl;
 
-        StFttSimHitMaker * fttSimHit = new StFttSimHitMaker();
-        chain->AddMaker(fttSimHit);
+        StFttDbMaker * fttDbMk = new StFttDbMaker();
+        if ( fttHaveAnchor ) chain->AddBefore("fwdTrack", fttDbMk); else chain->AddMaker(fttDbMk);
+
+        StFttSlowSimMaker * fttSlowSim = new StFttSlowSimMaker();
+        if ( fttHaveAnchor ) chain->AddBefore("fwdTrack", fttSlowSim); else chain->AddMaker(fttSlowSim);
 
         StFttClusterMaker * fttClu = new StFttClusterMaker();
         fttClu->SetTimeCut( 1 /*kTimeCutModeAcceptAll*/, -9999, 9999 ); // no real timing in MC
-        chain->AddMaker(fttClu);
+        if ( fttHaveAnchor ) chain->AddBefore("fwdTrack", fttClu); else chain->AddMaker(fttClu);
 
         StFttClusterPointMaker * fttClusterPointMaker = new StFttClusterPointMaker("fttClusterPointMaker");
         fttClusterPointMaker->SetDebug(0); // was 1 -- extra per-hit debug prints
         // mUseGeantData left at its constructor default (false) -- take the
         // real MakeLocalPoints/MakeGlobalPoints path through StFttDb.
-        chain->AddBefore("fwdTrack", fttClusterPointMaker);
+        if ( fttHaveAnchor ) chain->AddBefore("fwdTrack", fttClusterPointMaker); else chain->AddMaker(fttClusterPointMaker);
     } else {
         // Old/original behavior: read GEANT truth directly in global
         // coordinates (StFttClusterPointMaker::MakeGeantPoints()) -- never
@@ -248,9 +296,16 @@ void sim(Int_t n=1000, Int_t run=1, const char* pid="JPsi", float vz=0.0) {
             fwdTrack->setDeltaPval( 1e-1 );
             fwdTrack->setRelChi2Change( 1e-6 );
             
-            // fwdTrack->setFttHitSource( 0 /*StFwdHitLoader::GEANT*/ );
-            fwdTrack->setFttHitSource( 1 /*StFwdHitLoader::IGNORE*/ );
-            fwdTrack->setFstHitSource( 0 /*StFwdHitLoader::GEANT*/ );
+            // StFwdHitLoader::DataSource is { GEANT=0, STEVENT=1, MUDST=2, IGNORE=3 },
+            // so the 1 here is STEVENT. It used to be commented "IGNORE", which is
+            // the opposite of what it does -- the value was right, the label was not.
+            // STEVENT is correct either way round: with UseFttSimHitMaker the point
+            // maker fills StEvent from the real clustering, without it the same maker
+            // fills StEvent from GEANT truth. Only the contents differ.
+            fwdTrack->setFttHitSource( 1 /*StFwdHitLoader::STEVENT*/ );
+            // FST: GEANT truth, unless the slow sim is running the real chain, in
+            // which case read back the StFstHits that StFstHitMaker produced.
+            fwdTrack->setFstHitSource( UseFstSlowSim ? 1 /*STEVENT*/ : 0 /*GEANT*/ );
 
             // DisableTrackFitting();
             // DoOnlyGlobalTrackFitting();
