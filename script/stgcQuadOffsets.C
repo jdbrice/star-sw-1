@@ -9,6 +9,12 @@
 // Quadrants come from the real StFttDb footprints (see FwdTracker.h).
 double gMu[4][4][2], gSig[4][4][2]; int gOK[4][4][2];  // [disk][quad][0=dx,1=dy]
 int gEdge[4][4][2];                                    // peak search or fit ran into a limit
+// Half-width of the peak SEARCH range, cm. 2.9 is the historical value and the right
+// one while the tables are converged. Widen it when the residual has genuinely moved
+// -- iteration 3 needed 5.9 for quadrant C's dx -- and the value used is printed with
+// the results, because a residual only means something against the window it was
+// found in. The FIT window stays peak+-1.2 either way.
+double gSearchHalf = 2.9;
 // NOTE: disk1/quadA has ZERO V-strip entries in the data -- only one orientation is
 // populated there, which is the online-QA-vs-offline-map H/V swap suspected since
 // 2026-07-21. Cells with no usable fit are EXCLUDED from the averages rather than
@@ -27,7 +33,7 @@ TH1F* soSum(TFile* f, const char* base, const char* q, int disk){
 void soFit(TH1F* h, int d, int q, int c){
   gMu[d][q][c]=0; gSig[d][q][c]=0; gOK[d][q][c]=0; gEdge[d][q][c]=0;
   if(!h || h->GetEntries()<200) return;
-  int b0=h->GetXaxis()->FindBin(-2.9), b1=h->GetXaxis()->FindBin(2.9);
+  int b0=h->GetXaxis()->FindBin(-gSearchHalf), b1=h->GetXaxis()->FindBin(gSearchHalf);
   double best=-1; int bb=b0;
   for(int ib=b0+2; ib<=b1-2; ib++){
     double v=h->GetBinContent(ib-1)+h->GetBinContent(ib)+h->GetBinContent(ib+1);
@@ -77,14 +83,16 @@ void closeTable(FILE* fp){ fprintf(fp,"\nreturn (TDataSet *)tableSet;\n}\n"); }
 //                  sat at (AGML placeholder + previous table). The absolute form would
 //                  re-inject the hardcoded origin AND discard the previous table's
 //                  alignment. Only the delta is written; add it to the previous table.
-void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1){
+void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1,
+                     double searchHalf = 2.9){
+  gSearchHalf = searchHalf;
   TFile* f=TFile::Open(file);
   const char* qn[4]={"A","B","C","D"};
   for(int d=0;d<4;d++) for(int q=0;q<4;q++){
     soFit(soSum(f,"hBlindDxAll_V",qn[q],d), d,q,0);
     soFit(soSum(f,"hBlindDyAll_H",qn[q],d), d,q,1);
   }
-  printf(">>> MEASURED RESIDUALS  d = hit - projection  [cm]\n");
+  printf(">>> MEASURED RESIDUALS  d = hit - projection  [cm]   (peak searched over +-%.1f cm)\n", gSearchHalf);
   printf(">>> disk quad      dx    (sig)      dy    (sig)\n");
   // de/qe, not d/q: CINT does not reliably reset a for-variable reused across two
   // loops in one function, and the loop can then run zero times with no error.
@@ -101,8 +109,9 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1
   } }
   if(nEdge)
     printf(">>>  WARNING: %d cell(s) have a peak or a fitted mean sitting on a limit of the\n"
-           ">>>  +-2.9 cm search / +-1.2 cm fit window. Those numbers are the boundary, not a\n"
-           ">>>  measurement -- widen the window in soFit() before using any delta from them.\n", nEdge);
+           ">>>  +-%.1f cm search / +-1.2 cm fit window. Those numbers are the boundary, not a\n"
+           ">>>  measurement -- rerun with a larger 4th argument before using their deltas.\n",
+           nEdge, gSearchHalf);
   // global average
   double gx=0, gy=0; int nx=0, ny=0;
   for(int d=0;d<4;d++) for(int q=0;q<4;q++){
@@ -159,8 +168,8 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1
       // consume a boundary value by accident. Widen the window in soFit() and rerun --
       // unlike a low-sigma cell, this is not a weak measurement, it is a broken one.
       if(gEdge[dd][qq][0] || gEdge[dd][qq][1]){
-        printf(">>> DELTA %d %s     (at window edge, leave unchanged -- widen soFit() and rerun)\n",
-               dd, qn[qq]);
+        printf(">>> DELTA %d %s     (at window edge, leave unchanged -- rerun with a larger\n"
+               ">>>                    4th argument than %.1f)\n", dd, qn[qq], gSearchHalf);
         continue;
       }
       // Per-coordinate, not per-cell: quad C has excellent dy fits (150+ sigma) and weak
