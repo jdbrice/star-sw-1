@@ -42,8 +42,10 @@ public:
    THashList *getRotations() const                                                {return mgRotList; }
    const TGeoHMatrix *getGeoHMatrixTpcOnGlobal() const                            {return mGeoHMatrixTpcOnGlobal; }
    const TGeoHMatrix *getGeoHMatrixFstOnTpc() const                               {return &mGeoHMatrixFstOnTpc; }
-   const TGeoHMatrix *getGeoHMatrixHssOnFst() const                               {return &mGeoHMatrixHssOnFst; }
-   const TGeoHMatrix *getGeoHMatrixWedgeOnHss() const                             {return &mGeoHMatrixWedgeOnHss; }
+   /// hssOnFst is per half (halfId(wedge)) and fstWedgeOnHss per wedge, so both
+   /// take an index now; the old no-argument form silently returned row 0.
+   const TGeoHMatrix *getGeoHMatrixHssOnFst(Int_t half) const                     {return &mGeoHMatrixHssOnFst[half]; }
+   const TGeoHMatrix *getGeoHMatrixWedgeOnHss(Int_t wedge) const                   {return &mGeoHMatrixWedgeOnHss[wedge - 1]; }
    const TGeoHMatrix *getGeoHMatrixSensorOnWedge(Int_t wedge, Int_t sensor) const {return &mGeoHMatrixSensorOnWedge[wedge - 1][sensor]; }
 
    /// GEANT g2t volume_id -> reco numbering. One place, so simulation and
@@ -96,6 +98,12 @@ public:
    static int  sensorSurveyId(int wedge, int sensor);
    static bool decodeSensorSurveyId(int id, int &wedge, int &sensor);
 
+   /// The half of the support structure a wedge is mounted on: the row of
+   /// Geometry/fst/hssOnFst that applies to it. 0 for the x>0 half, 1 for x<0;
+   /// -1 if the wedge index is out of range. See StFstDb.cxx for why it is
+   /// derived from the wedge azimuth rather than from a wedge-number cut.
+   static int  halfId(int wedge);
+
    // ---- sensor-local <-> global ------------------------------------------
    // The same convenience StFttDb::localToGlobal()/globalToLocal() give for an
    // sTGC quadrant, so a caller does not have to fetch the matrix and remember
@@ -115,7 +123,9 @@ public:
    const fstControl_st *getControl() const  		{return mFstControl; }
    const fstChipConfig_st *getChipStatus() const 	{return mFstChipStatus; }
       
-   Int_t setGeoHMatrices(Survey_st **tables);
+   /// nRows, when given, is the row count of each of the four survey tables in
+   /// the same order, so a short table is caught instead of read past the end.
+   Int_t setGeoHMatrices(Survey_st **tables, const Int_t *nRows = 0);
    void setPedNoise(fstPedNoise_st *pedNoise) 	    { mFstPedNoise   = pedNoise;   }
    void setGain(fstGain_st *gain)		    { mFstGain       = gain;       }
    void setMapping(fstMapping_st *mapping)    	    { mFstMapping    = mapping;    }
@@ -127,11 +137,16 @@ public:
 private:
    Int_t moduleFromSector(Int_t sector) const;  ///< phi/30deg sector -> module 1-12, from kFstphiStart/Stop
 
+   enum { kFstNumHss = 2 };     ///< halves of the support structure = rows of hssOnFst
+
    static THashList 	*mgRotList; ///< A list of TGeoHMatrix transormations for each FST sensor
    TGeoHMatrix *mGeoHMatrixTpcOnGlobal;
    TGeoHMatrix mGeoHMatrixFstOnTpc;
-   TGeoHMatrix mGeoHMatrixHssOnFst;
-   TGeoHMatrix mGeoHMatrixWedgeOnHss;
+   /// hssOnFst has one row per HALF and fstWedgeOnHss one row per WEDGE, so both
+   /// are arrays. They used to be single matrices filled from row 0 and applied
+   /// to all 36 wedges -- see the comment on halfId() in StFstDb.cxx.
+   TGeoHMatrix mGeoHMatrixHssOnFst[kFstNumHss];
+   TGeoHMatrix mGeoHMatrixWedgeOnHss[kFstNumWedges];
    TGeoHMatrix mGeoHMatrixSensorOnWedge[kFstNumWedges][kFstNumSensorsPerWedge];
 
    fstPedNoise_st 	*mFstPedNoise;

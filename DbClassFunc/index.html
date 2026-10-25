@@ -105,6 +105,31 @@ rescale, so it is in whatever the caller used.
     <TD><TT>diskNominalZ + sensorZOffset</TT>. This is what a hit's z should be;
         StFstHitMaker now uses it instead of the bare disk nominal.</TD></TR>
 
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Which survey row applies to a wedge</B> &nbsp;
+    <TT>Geometry/fst/hssOnFst</TT> has one row per HALF and
+    <TT>Geometry/fst/fstWedgeOnHss</TT> one row per WEDGE &mdash; both used to be
+    read from row 0 and applied to all 36 wedges</TD></TR>
+
+<TR><TD><TT>halfId</TT> (static)</TD>
+    <TD>wedge(1-36)</TD><TD>half(0-1), else -1</TD>
+    <TD>The row of <TT>hssOnFst</TT> for that wedge. 0 is the x&gt;0 half
+        (modules 1-6, centre azimuth +75 to -75 deg), 1 is x&lt;0. Taken from the
+        wedge azimuth, <TT>cos(centre) &gt; 0</TT>, not from a wedge-number cut:
+        AGML's own cut is <TT>iwedgem.ge.6</TT> (0-based) but the pre-generated
+        geometry the release ships still has <TT>.ge.5</TT> and splits the disk
+        5/7 instead of 6/6. The two tables differ by
+        2 x (0.0775, -0.016) cm, so a wrong half is 1.55 mm in x.</TD></TR>
+
+<TR><TD><TT>getGeoHMatrixHssOnFst</TT></TD>
+    <TD>half(0-1), from <TT>halfId</TT></TD><TD>const TGeoHMatrix* [cm]</TD>
+    <TD>Half-of-support-structure on FST. Run 22 translations are
+        (-0.0775, +0.016, 0) and (+0.0775, -0.016, 0) cm, rotations identity.</TD></TR>
+
+<TR><TD><TT>getGeoHMatrixWedgeOnHss</TT></TD>
+    <TD>wedge(1-36)</TD><TD>const TGeoHMatrix* [cm]</TD>
+    <TD>Wedge on half. Identity in every lane we carry; this is the table a
+        wedge-level alignment would be written to.</TD></TR>
+
 <TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Sensor local &lt;-&gt; global</B> &nbsp; cm</TD></TR>
 
 <TR><TD><TT>sensorLocalToGlobal</TT> (static)</TD>

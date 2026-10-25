@@ -1,6 +1,7 @@
 /* $Id: StFstDb.cxx,v */
 
 #include <assert.h>
+#include "TMath.h"
 #include "StFstDb.h"
 #include "StMessMgr.h"
 #include "StTpcDb/StTpcDb.h"
@@ -186,7 +187,7 @@ Int_t StFstDb::moduleFromSector(Int_t sector) const
    return -1;
 }
 //_____________________________________________________________________________
-Int_t StFstDb::setGeoHMatrices(Survey_st **tables)
+Int_t StFstDb::setGeoHMatrices(Survey_st **tables, const Int_t *nRows)
 {
    //using namespace StFstConsts;
 
@@ -215,13 +216,37 @@ Int_t StFstDb::setGeoHMatrices(Survey_st **tables)
    mGeoHMatrixFstOnTpc.SetRotation(&fstOnTpc->r00);
    mGeoHMatrixFstOnTpc.SetTranslation(&fstOnTpc->t0);
 
-   mGeoHMatrixHssOnFst.SetName("hssOnFst");
-   mGeoHMatrixHssOnFst.SetRotation(&hssOnFst->r00);
-   mGeoHMatrixHssOnFst.SetTranslation(&hssOnFst->t0);
+   // hssOnFst has one row PER HALF and fstWedgeOnHss one row PER WEDGE. Both used
+   // to be read as a single matrix from row 0 and then applied to all 36 wedges,
+   // so every wedge got half 0's survey and wedge 1's survey. Harmless only while
+   // the tables are identity (fstWedgeOnHss is, in every lane we carry) or while
+   // the caller cancels the matrix again, which StFstHitMaker did: with the Run 22
+   // tables it would have handed the x<0 half the x>0 half's offset, wrong by
+   // 2 x (0.0775, -0.016) cm. FstmGeoSM.xml indexes them the same way we do here:
+   //     <Misalign table="Geometry/fst/fstWedgeOnHss" row="iwedgem+12*idisk" />
+   //     <Misalign table="Geometry/fst/hssOnFst"      row="halfid" />
+   const Int_t nHss   = (nRows && nRows[1] > 0) ? nRows[1] : kFstNumHss;
+   const Int_t nWedge = (nRows && nRows[2] > 0) ? nRows[2] : kFstNumWedges;
 
-   mGeoHMatrixWedgeOnHss.SetName("wedgeOnHss");
-   mGeoHMatrixWedgeOnHss.SetRotation(&wedgeOnHss->r00);
-   mGeoHMatrixWedgeOnHss.SetTranslation(&wedgeOnHss->t0);
+   if (nHss < kFstNumHss || nWedge < kFstNumWedges) {
+      LOG_WARN << "StFstDb: hssOnFst has " << nHss << " rows (expected " << kFstNumHss
+               << ") and fstWedgeOnHss " << nWedge << " (expected " << kFstNumWedges
+               << "); missing rows are left as the identity" << endm;
+   }
+
+   for (Int_t half = 0; half < kFstNumHss; half++) {
+      mGeoHMatrixHssOnFst[half].SetName(Form("hssOnFst%i", half));
+      if (half >= nHss) continue;
+      mGeoHMatrixHssOnFst[half].SetRotation(&hssOnFst[half].r00);
+      mGeoHMatrixHssOnFst[half].SetTranslation(&hssOnFst[half].t0);
+   }
+
+   for (Int_t iw = 0; iw < kFstNumWedges; iw++) {
+      mGeoHMatrixWedgeOnHss[iw].SetName(Form("wedgeOnHss%02i", iw + 1));
+      if (iw >= nWedge) continue;
+      mGeoHMatrixWedgeOnHss[iw].SetRotation(&wedgeOnHss[iw].r00);
+      mGeoHMatrixWedgeOnHss[iw].SetTranslation(&wedgeOnHss[iw].t0);
+   }
    for (int i = 0; i < kFstNumSensors; i++, sensorsOnWedges++) {
       int id = sensorsOnWedges->Id;
       TGeoHMatrix *comb = (TGeoHMatrix *) mgRotList->FindObject(Form("R%04i", id));
@@ -257,7 +282,10 @@ Int_t StFstDb::setGeoHMatrices(Survey_st **tables)
       }
 
       //calculate sensor global position
-      TGeoHMatrix sensorGlobal = (*mGeoHMatrixTpcOnGlobal) * mGeoHMatrixFstOnTpc * mGeoHMatrixHssOnFst * mGeoHMatrixWedgeOnHss * mGeoHMatrixSensorOnWedge[wedge - 1][sensor];
+      const int half = halfId(wedge);
+      if (half < 0) continue;
+
+      TGeoHMatrix sensorGlobal = (*mGeoHMatrixTpcOnGlobal) * mGeoHMatrixFstOnTpc * mGeoHMatrixHssOnFst[half] * mGeoHMatrixWedgeOnHss[wedge - 1] * mGeoHMatrixSensorOnWedge[wedge - 1][sensor];
 
       comb->SetRotation(sensorGlobal.GetRotationMatrix());
       comb->SetTranslation(sensorGlobal.GetTranslation());
@@ -310,6 +338,50 @@ bool StFstDb::decodeSensorSurveyId(int id, int &wedge, int &sensor)
 }
 
 
+/**
+ * Which half of the support structure a wedge sits on, i.e. which of the two
+ * hssOnFst rows applies to it.
+ *
+ * FstmGeoSM.xml decides this with a cut on the wedge number,
+ *
+ *     halfid = 0
+ *     <If expr="iwedgem.ge.6"> halfid = 1 </If>           (0-based iwedgem)
+ *
+ * and we deliberately do NOT restate that cut. A wedge-number cut is only as
+ * good as the assumption that reco wedge numbering and AGML's iwedgem run the
+ * same way round, which is exactly the kind of assumption that produced the
+ * FTT positional-row bug and the FST module reflection. The halves are a
+ * PHYSICAL split of the disk, so take it from the wedge's own azimuth:
+ *
+ *     AGML:  wedge_zrot      = 75.0 - 30.0*iwedgem        iwedgem = 0..11
+ *     reco:  centre azimuth  = 15*(kFstphiStart + kFstphiStop)  degrees
+ *                            = 75, 45, 15, -15, -45, -75, -105, -135, -165,
+ *                              165, 135, 105     for module 1..12
+ *
+ * The two agree term by term, so module i IS iwedgem i-1 -- but the point is
+ * that the six wedges with halfid 0 are precisely those with |azimuth| < 90,
+ * i.e. the x>0 half. cos(centre) > 0 is therefore the same answer, derived
+ * from geometry instead of from numbering, and it stays right if either
+ * numbering is ever changed.
+ *
+ * NOTE this reproduces AGML's FIXED form, iwedgem.ge.6, which splits the disk
+ * 6/6. The pre-generated geometry the release ships still has the original
+ * .ge.5 and splits it 5/7 (see d4378cbde9: 45 and 63 sensors move, not 54 and
+ * 54). Where that difference is live -- a misaligned geometry built from the
+ * shipped sources, with reco applying the survey -- it shows up as exactly the
+ * wedges at azimuth -75 taking the wrong half's row, 1.55 mm in x.
+ */
+int StFstDb::halfId(int wedge)
+{
+   if (wedge < 1 || wedge > kFstNumWedges) return -1;
+
+   const int m = (wedge - 1) % kFstNumWedgePerDisk;   // module, 0-based
+   const double centre = 0.5 * (kFstphiStart[m] + kFstphiStop[m]) * TMath::Pi() / 6.0;
+
+   return (TMath::Cos(centre) > 0.0) ? 0 : 1;
+}
+
+
 bool StFstDb::sensorLocalToGlobal(int wedge, int sensor, const double l[3], double g[3])
 {
    const TGeoHMatrix *m = getHMatrixSensorOnGlobal(wedge, sensor);
@@ -332,8 +404,10 @@ void StFstDb::Print(Option_t *opt) const
 {
    mGeoHMatrixTpcOnGlobal->Print();
    mGeoHMatrixFstOnTpc.Print();
-   mGeoHMatrixHssOnFst.Print();
-   mGeoHMatrixWedgeOnHss.Print();
+
+   for (Int_t half = 0; half < kFstNumHss; half++) mGeoHMatrixHssOnFst[half].Print();
+
+   for (Int_t iw = 0; iw < kFstNumWedges; iw++) mGeoHMatrixWedgeOnHss[iw].Print();
 
    for (Int_t iL = 0; iL < kFstNumWedges; iL++) {
       for (Int_t iS = 0; iS < kFstNumSensorsPerWedge; iS++) {
