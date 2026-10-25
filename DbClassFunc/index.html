@@ -1,0 +1,300 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=euc-jp">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; Linux 2.0.32 i686) [Netscape]">
+   <TITLE> OGAWA Akio Home page </TITLE>
+<header>
+  <!-- Changed by: Akio Ogawa, 28-Jan-2002 -->
+</header>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+<BODY>
+
+  <tr>
+    <td colspan=2 align=right> <font size="-1"> 
+            <script language="JavaScript">
+            <!-- Hide script from old browsers
+             document.write("Last modified "+ document.lastModified)
+             // end of script --></script></font></td>
+  </tr>
+
+<H1>StFstDb and StFttDb class functions</H1>
+<HR>
+
+													       
+
+<P>
+Functions added for the forward upgrade, on top of what is in <TT>main</TT>.
+Ranges below are inclusive. All of these return a status (<TT>bool</TT> false,
+or <TT>-1</TT>) rather than a silently wrong value when an index is out of range
+or the geometry is not loaded.
+</P>
+
+<P>
+<B>Watch the units.</B> Strip geometry and the quadrant offsets are in
+<B>mm</B>; everything that goes through TGeo -- <TT>quadToGlobal</TT>,
+<TT>localToGlobal</TT>, <TT>globalToLocal</TT> and the FST sensor-local pair --
+is in <B>cm</B>. <TT>agmlQuadLocalToDbLocal</TT> is a pure rotation and does not
+rescale, so it is in whatever the caller used.
+</P>
+
+<H2>StFstDb</H2>
+
+<TABLE BORDER=1 CELLPADDING=4 CELLSPACING=0>
+<TR BGCOLOR="#ccccee">
+  <TH ALIGN=LEFT>Function</TH><TH ALIGN=LEFT>In</TH><TH ALIGN=LEFT>Out</TH><TH ALIGN=LEFT>What it does</TH>
+</TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>GEANT g2t volume_id -> reco numbering</B>
+    &nbsp; <TT>volume_id = 1000*diskDigit(4-6) + 10*geantWedge(1-12) + sensorDigit(1-3)</TT></TD></TR>
+
+<TR><TD><TT>getDiskFromG2TVolumeId</TT></TD>
+    <TD>volume_id</TD><TD>disk(1-3), else -1</TD>
+    <TD>Strips the disk digit. The GEANT digit is 4-6 (FSTD_4/5/6), NOT 1-3.</TD></TR>
+
+<TR><TD><TT>getModuleFromG2TVolumeId</TT></TD>
+    <TD>volume_id</TD><TD>module(1-12), else -1</TD>
+    <TD>Module within the disk. The GEANT wedge runs the other way round from the
+        phi sector, <TT>sector = (3 - geantWedge) mod 12</TT>, and
+        kFstphiStart/Stop reflect back, so the two cancel.</TD></TR>
+
+<TR><TD><TT>getWedgeFromG2TVolumeId</TT></TD>
+    <TD>volume_id</TD><TD>wedge(1-36), else -1</TD>
+    <TD>Reco wedge, <TT>module + (disk-1)*12</TT>.</TD></TR>
+
+<TR><TD><TT>getSensorFromG2TVolumeId</TT></TD>
+    <TD>volume_id</TD><TD>sensor(0-2), else -1</TD>
+    <TD>0 = inner, 1 and 2 = the two halves of the outer sensor.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Survey table rows</B> &nbsp;
+    FST rows are keyed by <TT>Id</TT>, not by position (the FTT is the other way round)</TD></TR>
+
+<TR><TD><TT>sensorSurveyId</TT> (static)</TD>
+    <TD>wedge(1-36), sensor(0-2)</TD><TD>Id = 1000 + (wedge-1)*3 + sensor</TD>
+    <TD>What a table WRITER needs: the Id a correction for that sensor goes under.</TD></TR>
+
+<TR><TD><TT>decodeSensorSurveyId</TT> (static)</TD>
+    <TD>Id</TD><TD>bool; wedge(1-36), sensor(0-2)</TD>
+    <TD>The reverse, for reading a table back and saying which sensor a row is.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Sensor local &lt;-&gt; global</B> &nbsp; cm</TD></TR>
+
+<TR><TD><TT>sensorLocalToGlobal</TT> (static)</TD>
+    <TD>wedge(1-36), sensor(0-2), sensor-local xyz[3][cm]</TD><TD>bool; global xyz[3][cm]</TD>
+    <TD>Composes the loaded survey matrices. False if the index is out of range
+        or the geometry has not been loaded.</TD></TR>
+
+<TR><TD><TT>globalToSensorLocal</TT> (static)</TD>
+    <TD>wedge(1-36), sensor(0-2), global xyz[3][cm]</TD><TD>bool; sensor-local xyz[3][cm]</TD>
+    <TD>The inverse of the above.</TD></TR>
+</TABLE>
+
+<P><FONT SIZE="-1">Also private: <TT>moduleFromSector(sector(0-11)) -> module(1-12)</TT>,
+built from <TT>kFstphiStart/kFstphiStop</TT>.</FONT></P>
+
+<H2>StFttDb</H2>
+
+<TABLE BORDER=1 CELLPADDING=4 CELLSPACING=0>
+<TR BGCOLOR="#ccccee">
+  <TH ALIGN=LEFT>Function</TH><TH ALIGN=LEFT>In</TH><TH ALIGN=LEFT>Out</TH><TH ALIGN=LEFT>What it does</TH>
+</TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>GEANT g2t volume_id -> StFttDb numbering</B>
+    &nbsp; <TT>volume_id = 100*station(0-3) + 10*pentagon(0-3) + layer(1-2)</TT>.
+    What g2t calls "plane" is the PENTAGON; StFttDb's "plane" is the station.</TD></TR>
+
+<TR><TD><TT>getStationFromG2TVolumeId</TT></TD>
+    <TD>volume_id</TD><TD>station(0-3), else -1</TD>
+    <TD>Station, i.e. StFttDb's "plane".</TD></TR>
+
+<TR><TD><TT>getQuadFromG2TVolumeId</TT></TD>
+    <TD>volume_id</TD><TD>quad(0-3) = A,B,C,D, else -1</TD>
+    <TD>AGML places the pentagons in rotation order A,D,C,B, so this applies the
+        permutation {0,3,2,1}. Measured 16 of 16 (station, pentagon) cells.</TD></TR>
+
+<TR><TD><TT>getLayerFromG2TVolumeId</TT></TD>
+    <TD>volume_id</TD><TD>layer(1-2), else -1</TD>
+    <TD>The two gas layers of a pentagon: 1 = front foil, 2 = back.</TD></TR>
+
+<TR><TD><TT>getOrientationFromG2TVolumeId</TT></TD>
+    <TD>volume_id</TD><TD>kFttVertical or kFttHorizontal, else -1</TD>
+    <TD>Even volume_id = vertical/X strips, odd = horizontal/Y.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Survey table rows and quadrant numbering</B>
+    &nbsp; FTT rows are POSITIONAL, <TT>row = 4*station + pentagon</TT></TD></TR>
+
+<TR><TD><TT>quadToPent</TT> (static)</TD>
+    <TD>quad(0-3)</TD><TD>pentagon(0-3)</TD>
+    <TD>StFttDb A,B,C,D -> AGML pentagon index.</TD></TR>
+
+<TR><TD><TT>pentToQuad</TT> (static)</TD>
+    <TD>pentagon(0-3)</TD><TD>quad(0-3)</TD>
+    <TD>And back.</TD></TR>
+
+<TR><TD><TT>surveyRow</TT> (static)</TD>
+    <TD>station(0-3), quad(0-3)</TD><TD>row(0-15), else -1</TD>
+    <TD>What a table WRITER needs: the row a correction for that (station, quad) goes in.</TD></TR>
+
+<TR><TD><TT>surveyRowToStationQuad</TT> (static)</TD>
+    <TD>row(0-15)</TD><TD>bool; station(0-3), quad(0-3)</TD>
+    <TD>The reverse, for reading a table back.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>DB geometry mode</B></TD></TR>
+
+<TR><TD><TT>setUseDbGeometry</TT> / <TT>useDbGeometry</TT></TD>
+    <TD>bool / -</TD><TD>- / bool</TD>
+    <TD>Ask for the DB geometry rather than the hardcoded statics.</TD></TR>
+
+<TR><TD><TT>geometryFromDb</TT></TD>
+    <TD>-</TD><TD>bool</TD>
+    <TD>Whether a DB load actually HAPPENED, not just that it was asked for.
+        Check this, not <TT>useDbGeometry()</TT>.</TD></TR>
+
+<TR><TD><TT>loadGeometryFromDb</TT></TD>
+    <TD>St_Survey* for stgcOnTpc, stationOnStgc, pentOnStation</TD>
+    <TD>kStOK / kStWarn</TD>
+    <TD>Loads the three survey levels and rebuilds the matrices.</TD></TR>
+
+<TR><TD><TT>resetGeometryToHardcoded</TT></TD>
+    <TD>-</TD><TD>-</TD>
+    <TD>Back to the compiled-in placeholder values.</TD></TR>
+
+<TR><TD><TT>buildQuadMatrices</TT></TD>
+    <TD>-</TD><TD>-</TD>
+    <TD>Rebuild the transforms from the current offsets. The loaders call it;
+        public so a test can force it after poking the shifts.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>The offsets actually in use</B>
+    &nbsp; prefer these over the statics once the DB is in play</TD></TR>
+
+<TR><TD><TT>xShift</TT> / <TT>yShift</TT></TD>
+    <TD>quad(0-3), plane(0-3)</TD><TD>double [mm]</TD>
+    <TD>Quadrant offset from the pin hole to (0,0).</TD></TR>
+
+<TR><TD><TT>zLoc</TT></TD>
+    <TD>quad(0-3), plane(0-3)</TD><TD>double [cm]</TD>
+    <TD>Per-quadrant plane z.</TD></TR>
+
+<TR><TD><TT>getGloablOffset_ClusterPoint</TT></TD>
+    <TD>plane(0-3), quad(0-3)</TD>
+    <TD>dx, sx, dy, sy, dz, sz; d in [mm] (dz [cm]), s = +1 or -1</TD>
+    <TD>The offset-and-reflection form used by the cluster/point path, as
+        distinct from the raw-hit <TT>getGloablOffset</TT>. Returns a translation
+        plus axis REFLECTIONS, which is exactly why it cannot reproduce
+        quadrants B and D -- see <TT>localToGlobal</TT> below and prefer that.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Quadrant local &lt;-&gt; global, as a real transform</B>
+    &nbsp; cm. Composes the survey levels as matrix PRODUCTS, so a row with a real
+    rotation is one more factor, not a re-derivation.</TD></TR>
+
+<TR><TD><TT>quadToGlobal</TT></TD>
+    <TD>quad(0-3), plane(0-3)</TD><TD>const TGeoHMatrix&amp; [cm]</TD>
+    <TD>The full quadrant-local -> global transform.</TD></TR>
+
+<TR><TD><TT>localToGlobal</TT></TD>
+    <TD>plane(0-3), quad(0-3), quad-local xyz[3][cm]</TD><TD>bool; global xyz[3][cm]</TD>
+    <TD>Carries the AGML rotation properly. A single-axis reflection cannot
+        reproduce quadrants B and D, which is why the old offset form differed
+        from the built geometry by ~140-200 mm there.</TD></TR>
+
+<TR><TD><TT>globalToLocal</TT></TD>
+    <TD>plane(0-3), quad(0-3), global xyz[3][cm]</TD><TD>bool; quad-local xyz[3][cm]</TD>
+    <TD>The inverse.</TD></TR>
+
+<TR><TD><TT>agmlQuadLocalToDbLocal</TT><BR><TT>dbLocalToAgmlQuadLocal</TT></TD>
+    <TD>plane(0-3), quad(0-3), xyz[3] (caller's units)</TD><TD>bool; xyz[3]</TD>
+    <TD>Rotates between the AGML quadrant frame and StFttDb's. A pure frame
+        rotation, no translation (measured as exactly 0 in all 16 cells), so the
+        map is its own inverse and the second name is only for readability.
+        REQUIRES <TT>geometryFromDb()</TT> and refuses otherwise -- in hardcoded
+        mode the two origins are 8-48 mm apart. Does not rescale, so do not mix
+        the cm of <TT>quadToGlobal</TT> with the mm of <TT>getGloablOffset</TT>.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Strip geometry</B> &nbsp; quadrant-local
+    <B>mm</B>. rows 0-2 are XY strips, rows 3-4 are the diagonals; strip is
+    0-based and bounded by the loaded map.</TD></TR>
+
+<TR><TD><TT>stripCenter</TT></TD>
+    <TD>row(0-4), strip, orientation</TD><TD>bool; center [mm]</TD>
+    <TD>Strip centre. A lookup, not a formula: the XY and diagonal offsets
+        differ, so no single added constant fixes both.</TD></TR>
+
+<TR><TD><TT>stripEdges</TT></TD>
+    <TD>row(0-4), strip, orientation</TD>
+    <TD>bool; center, leftEdge, rightEdge, length [mm]</TD>
+    <TD>Everything <TT>hardwareMap()</TT> puts on a raw hit, in one call. Edges
+        are diagonals only; XY strips keep -1. Lets a maker that builds raw hits
+        outside the DAQ path fill the same fields the same way.</TD></TR>
+
+<TR><TD><TT>stripFromLocal</TT></TD>
+    <TD>row(0-4), orientation, precisionCoord [mm]</TD>
+    <TD>bool; strip, offsetInStrip [mm]</TD>
+    <TD>The inverse of <TT>stripCenter</TT>, off the same maps, so it round trips
+        by construction rather than by two formulas agreeing.</TD></TR>
+
+<TR><TD><TT>stripSegment</TT></TD>
+    <TD>row(0-4), strip, orientation</TD><TD>bool; x1,y1,x2,y2 [mm]</TD>
+    <TD>The strip as a line segment in the quadrant.</TD></TR>
+
+<TR><TD><TT>stripsCross</TT></TD>
+    <TD>rowA, stripA, orientA, rowB, stripB, orientB, tolerance [mm]</TD>
+    <TD>bool; crossX, crossY [mm]</TD>
+    <TD>True if the two strips cross within both of their lengths. tolerance
+        widens each segment at both ends, for the strip width and for a cluster
+        position not being exactly its max-ADC strip centre.</TD></TR>
+
+<TR><TD><TT>loadStripCenterFromFile</TT><BR><TT>loadStripEdgeFromFile</TT><BR><TT>loadStripLengthFromFile</TT></TD>
+    <TD>filename</TD><TD>bool</TD>
+    <TD>Load the three strip maps.</TD></TR>
+
+<TR><TD><TT>reverseHardwareMap</TT><BR><FONT SIZE="-1">(two overloads)</FONT></TD>
+    <TD>plane(0-3), quad(0-3), row(0-4), strip, orientation (in/out)<BR>
+        or just row(0-4), strip</TD>
+    <TD>bool; rob(1-16), feb, vmm, ch(0-63), orientation<BR>or feb, vmm, ch</TD>
+    <TD>The inverse of <TT>hardwareMap()</TT>: which electronics channel reads a
+        given strip. Needed to build raw hits outside the DAQ path, e.g. in the
+        slow simulator. <TT>rob = quad + plane*4 + 1</TT>; feb, vmm and ch are as
+        the fttHardwareMap DB table numbers them. (row,strip) alone is AMBIGUOUS,
+        both an H and a V channel exist there, so pre-set <TT>orientation</TT> to
+        pick one, or leave it <TT>kFttUnknownOrientation</TT> to take whichever
+        comes first. The short overload has no rob and cannot disambiguate.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Per-run VMM time anchors</B>
+    &nbsp; Calibrations/ftt/fttDataWindowsB</TD></TR>
+
+<TR><TD><TT>dataWindowStampRun</TT></TD>
+    <TD>-</TD><TD>int run, -1 if none</TD>
+    <TD>The run the loaded anchors were measured in, from the stamp in spare slot
+        384. Needed because VMM dbcid anchors reset at random every run start,
+        while STAR DB entries carry a begin time only -- so a run with no entry
+        of its own is handed the PREVIOUS run's.</TD></TR>
+
+<TR><TD><TT>setDataWindowAnchorsValid</TT><BR><TT>dataWindowAnchorsValid</TT></TD>
+    <TD>bool / -</TD><TD>- / bool</TD>
+    <TD>Set once StFttDbMaker has confirmed stamp == the run being reconstructed.</TD></TR>
+
+<TR><TD><TT>getAnchor</TT></TD>
+    <TD>StFttRawHit*</TD><TD>bool; anchor [VMM dbcid ticks]</TD>
+    <TD>True only if anchors are validated for this run AND this VMM has one
+        (anchor -1 in the table means no usable calibration for that VMM).</TD></TR>
+
+<TR><TD><TT>clearDataWindows</TT></TD>
+    <TD>-</TD><TD>-</TD>
+    <TD>Forget loaded windows, anchors and stamp. Called before every load, so a
+        run whose fetch fails cannot silently keep the previous run's entry.</TD></TR>
+</TABLE>
+
+
+<HR>OGAWA, Akio
+<ADDRESS>
+<A HREF="mailto://akio@bnl.gov">akio@bnl.gov</A></ADDRESS>
+
+</BODY>
+</HTML>
+
+
+
+
+
+
+
