@@ -119,49 +119,25 @@ Int_t StFttSlowSimMaker::Make()
         int track_id  = crossing.trackId;
         int volume_id = crossing.volumeId;
 
-        // volume_id = 100*station + 10*pentagon + layer, where layer is 1
-        // (front foil) or 2 (back foil): each station in
-        // StarVMC/Geometry/StgmGeo/StgmGeo1.xml places four STFM pentagons in
-        // turn inside STGM, and each pentagon holds two STMG gas layers.
-        // Both station and pentagon are 0-based, from g2t_stg_volume_id():
-        //     station = (numbv(1)-1)/4 ; plane = MOD(numbv(1)-1,4)
-        // Careful with the names: what g2t calls "plane" is the PENTAGON, and
-        // its "station" is the hundreds digit. This is the station, so call it
-        // that -- StFttDb's "plane" is the same thing, the pentagon is not.
-        // No -1 before the divide: 10*pentagon + layer <= 32 can never carry
-        // into the hundreds, so it would change nothing for a real volume_id,
-        // while hiding a bad one -- 400 (station 4) would decode as 3 and slip
-        // past the range check below instead of being reported.
-        int station_id = volume_id / 100;
-        int agmlQuad   = (volume_id / 10) % 10;
-        // front (even volume_id) = vertical/X strips, back (odd) = horizontal/Y strips --
-        // same convention as StFttClusterPointMaker::MakeGeantPoints() / StFttFastSimMaker
-        UChar_t intendedOrientation = (volume_id % 2 == 0) ? kFttVertical : kFttHorizontal;
+        // volume_id -> StFttDb numbering. One decode, owned by StFttDb, so the
+        // slow sim and reconstruction cannot drift; see StFttDb.cxx for the
+        // layout and the measured AGML-pentagon -> quadrant permutation.
+        int station_id  = mFttDb->getStationFromG2TVolumeId( volume_id );
+        int quadrant_id = mFttDb->getQuadFromG2TVolumeId( volume_id );
+        UChar_t intendedOrientation = (UChar_t)mFttDb->getOrientationFromG2TVolumeId( volume_id );
 
-        if ( volume_id < 1 ||
-             station_id < 0 || station_id >= (int)StFttDb::nPlane ||
-             agmlQuad   < 0 || agmlQuad   >= (int)StFttDb::nQuadPerPlane ) {
-            // Not a position we can place: the sTGC geometry cannot produce
-            // such a volume_id, so this means the geometry and this decoding
-            // have gone out of step -- say so rather than dropping it quietly.
+        if ( station_id < 0 || quadrant_id < 0 ) {
+            // The sTGC geometry cannot produce such a volume_id, so the geometry
+            // and StFttDb's decoding have gone out of step -- say so rather than
+            // dropping it quietly.
             if ( nBadVolumeId < 10 ) {
                 LOG_WARN << "StFttSlowSimMaker::Make() - g2t_stg_hit volume_id " << volume_id
-                         << " decodes to station " << station_id << ", pentagon " << agmlQuad
-                         << ", outside the sTGC geometry; is StgmGeo's volume numbering still "
+                         << " is outside the sTGC geometry; is StgmGeo's volume numbering still "
                          << "100*station + 10*pentagon + layer?" << endm;
             }
             nBadVolumeId++;
             continue;
         }
-
-        // AGML places the four pentagons of a station in rotation order
-        // (A, D, C, B) while StFttDb numbers quadrants A, B, C, D, so the
-        // GEANT pentagon copy number and the StFttDb quadrant index differ by
-        // this permutation. Measured on a particle-gun sample: of the truth
-        // hits whose local position lands on strips, 100% agree with this
-        // table and none contradict it (see status_ftt_sim_maker.txt).
-        static const int kAgmlToDbQuadrant[4] = { 0, 3, 2, 1 };
-        int quadrant_id = kAgmlToDbQuadrant[ agmlQuad ];
 
         // GEANT truth global position, cm: the dE-weighted centroid of this
         // crossing's steps. deSum > 0 for every crossing we built, but guard

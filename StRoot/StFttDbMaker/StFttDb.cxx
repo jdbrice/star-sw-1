@@ -115,6 +115,72 @@ size_t StFttDb::vmmId( StFttRawHit * h ) {
 }
 
 
+// GEANT g2t volume_id -> StFttDb numbering.
+//
+//   volume_id = 100*station + 10*pentagon + layer
+//
+// Each station in StarVMC/Geometry/StgmGeo/StgmGeo1.xml places four STFM
+// pentagons in turn inside STGM, and each pentagon holds two STMG gas layers, so
+// station and pentagon are both 0-based and layer is 1 (front foil) or 2 (back).
+// From g2t_stg_volume_id(): station = (numbv(1)-1)/4, plane = MOD(numbv(1)-1,4).
+// Mind the names: what g2t calls "plane" is the PENTAGON. StFttDb's "plane" is
+// the station, and the pentagon is the quadrant.
+//
+// AGML places the four pentagons of a station in rotation order A, D, C, B while
+// StFttDb numbers quadrants A, B, C, D, so the two differ by a permutation.
+// Re-measured on a 2pi electron-gun sample (script/fttQuadMap.C, 4152 hits,
+// dev2022sm / sdt20211112.000004): the mean hit position of all 16
+// (station, pentagon) cells lands in the quadrant this table gives, with
+// A(+,+) B(+,-) C(-,-) D(-,+) -- 16 of 16, no exceptions, on the geometry
+// currently generated (iwedgem.ge.6 and the float zplane in libxgeometry).
+//
+// No -1 before the divides: 10*pentagon + layer <= 32 can never carry into the
+// hundreds, so it would change nothing for a real volume_id while hiding a bad
+// one -- 400 would decode as station 3 and slip past the range check.
+Int_t StFttDb::getStationFromG2TVolumeId( Int_t volumeId ) const
+{
+   if ( volumeId < 1 ) return -1;
+
+   const Int_t station = volumeId / 100;
+
+   if ( station < 0 || station >= (Int_t)nPlane ) return -1;
+
+   return station;
+}
+//_____________________________________________________________________________
+Int_t StFttDb::getQuadFromG2TVolumeId( Int_t volumeId ) const
+{
+   if ( getStationFromG2TVolumeId( volumeId ) < 0 ) return -1;
+
+   const Int_t agmlQuad = ( volumeId / 10 ) % 10;
+
+   if ( agmlQuad < 0 || agmlQuad >= (Int_t)nQuadPerPlane ) return -1;
+
+   static const Int_t kAgmlToDbQuadrant[4] = { 0, 3, 2, 1 };   // A, D, C, B
+
+   return kAgmlToDbQuadrant[ agmlQuad ];
+}
+//_____________________________________________________________________________
+Int_t StFttDb::getLayerFromG2TVolumeId( Int_t volumeId ) const
+{
+   if ( getQuadFromG2TVolumeId( volumeId ) < 0 ) return -1;
+
+   const Int_t layer = volumeId % 10;
+
+   if ( layer < 1 || layer > 2 ) return -1;
+
+   return layer;
+}
+//_____________________________________________________________________________
+// Even volume_id = vertical/X strips, odd = horizontal/Y strips, the same
+// convention StFttClusterPointMaker::MakeGeantPoints() and StFttFastSimMaker use.
+Int_t StFttDb::getOrientationFromG2TVolumeId( Int_t volumeId ) const
+{
+   if ( getLayerFromG2TVolumeId( volumeId ) < 0 ) return -1;
+
+   return ( volumeId % 2 == 0 ) ? kFttVertical : kFttHorizontal;
+}
+//_____________________________________________________________________________
 void StFttDb::getTimeCut( StFttRawHit * hit, int &mode, int &l, int &h ){
         mode = mTimeCutMode;
         l = mTimeCutLow;

@@ -193,6 +193,16 @@ public:
     int  loadGeometryFromDb( St_Survey *stgcOnTpc, St_Survey *stationOnStgc, St_Survey *pentOnStation );
     // The values getGloablOffset*() actually uses. Prefer these over the statics, which
     // are only the placeholder once the DB is in play.
+    /// GEANT g2t volume_id -> StFttDb numbering, in one place so the slow
+    /// simulator and reconstruction cannot drift. volume_id is
+    /// 100*station + 10*pentagon + layer; all four return -1 for an id the
+    /// sTGC geometry cannot produce. See StFttDb.cxx for the measured
+    /// AGML-pentagon -> quadrant permutation.
+    Int_t getStationFromG2TVolumeId( Int_t volumeId ) const;      ///< station 0-3, StFttDb's "plane"
+    Int_t getQuadFromG2TVolumeId( Int_t volumeId ) const;         ///< quadrant 0-3 in A,B,C,D order
+    Int_t getLayerFromG2TVolumeId( Int_t volumeId ) const;        ///< 1 or 2, the two gas layers
+    Int_t getOrientationFromG2TVolumeId( Int_t volumeId ) const;  ///< kFttVertical or kFttHorizontal
+
     double xShift( int quad, int plane ) const { return mXShift[quad][plane]; }  // mm
     double yShift( int quad, int plane ) const { return mYShift[quad][plane]; }  // mm
     double zLoc  ( int quad, int plane ) const { return mZLoc  [quad][plane]; }  // cm
