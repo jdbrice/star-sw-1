@@ -550,7 +550,9 @@ class TrackFitter {
             LOG_INFO << "PlanarMeasurement pos check (detid=" << fh->_detid << "):"
                   << " FwdHit=(" << fh->getX() << "," << fh->getY() << "," << fh->getZ() << ")"
                   << " GenFit=(" << measGlobal.X() << "," << measGlobal.Y() << "," << measGlobal.Z() << ")"
-                  << " deltaPhi=" << (TMath::ATan2(fh->getY(), fh->getX()) * TMath::RadToDeg() - TMath::ATan2(fh->getY(), fh->getX()) * TMath::RadToDeg())
+                  << " deltaPhi=" << ( TMath::ATan2(measGlobal.Y(), measGlobal.X()) * TMath::RadToDeg()
+                                       - TMath::ATan2(fh->getY(), fh->getX()) * TMath::RadToDeg() )
+                  << " deltaR=" << ( measGlobal.Perp() - TMath::Sqrt(fh->getX()*fh->getX() + fh->getY()*fh->getY()) )
                   << endm;
         }
 
