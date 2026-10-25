@@ -49,7 +49,7 @@ const int   kFstzDirct[kFstNumWedgePerDisk]   = {1,-1,1,-1,1,-1,1,-1,1,-1,1,-1};
 const float kFstphiStart[kFstNumWedgePerDisk] = {2.0, 2.0, 0.0, 12.0, 10.0, 10.0, 8.0, 8.0, 6.0, 6.0, 4.0, 4.0}; // * pi/6
 const float kFstphiStop[kFstNumWedgePerDisk]  = {3.0, 1.0, 1.0, 11.0, 11.0,  9.0, 9.0, 7.0, 7.0, 5.0, 5.0, 3.0}; // * pi/6
 const float kFstrStart[kFstNumRStripsPerWedge]= {5.000, 7.875, 10.750, 13.625, 16.500, 19.375, 22.250, 25.125}; // in cm
-const float kFstrStop[kFstNumRStripsPerWedge] = {7.875, 10.750, 136.25, 16.500, 19.375, 22.250, 25.125, 28.000}; // in cm
+const float kFstrStop[kFstNumRStripsPerWedge] = {7.875, 10.750, 13.625, 16.500, 19.375, 22.250, 25.125, 28.000}; // in cm, kFstrStart shifted by one pitch; [2] read 136.25 until 2026-10-25
 
 //general APV chip constants
 const unsigned char kFstNumTimeBins = 9;    // 9 time bins for ADC sampling (maximum time bin number, 3 or 9)
