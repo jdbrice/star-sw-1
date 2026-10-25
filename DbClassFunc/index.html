@@ -66,16 +66,17 @@ rescale, so it is in whatever the caller used.
     <TD>volume_id</TD><TD>sensor(0-2), else -1</TD>
     <TD>0 = inner, 1 and 2 = the two halves of the outer sensor.</TD></TR>
 
-<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Survey table rows</B> &nbsp;
-    FST rows are keyed by <TT>Id</TT>, not by position (the FTT is the other way round)</TD></TR>
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Rows of the misalignment table
+    <TT>Geometry/fst/fstSensorOnWedge</TT></B> &nbsp;
+    keyed by the <TT>Id</TT> COLUMN, not by position (the FTT table is the other way round)</TD></TR>
 
 <TR><TD><TT>sensorSurveyId</TT> (static)</TD>
     <TD>wedge(1-36), sensor(0-2)</TD><TD>Id = 1000 + (wedge-1)*3 + sensor</TD>
-    <TD>What a table WRITER needs: the Id a correction for that sensor goes under.</TD></TR>
+    <TD>Writing <TT>fstSensorOnWedge</TT>: the <TT>Id</TT> a correction for that sensor goes under.</TD></TR>
 
 <TR><TD><TT>decodeSensorSurveyId</TT> (static)</TD>
     <TD>Id</TD><TD>bool; wedge(1-36), sensor(0-2)</TD>
-    <TD>The reverse, for reading a table back and saying which sensor a row is.</TD></TR>
+    <TD>Reading <TT>fstSensorOnWedge</TT> back: which sensor a given row is for.</TD></TR>
 
 <TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Sensor local &lt;-&gt; global</B> &nbsp; cm</TD></TR>
 
@@ -120,8 +121,9 @@ built from <TT>kFstphiStart/kFstphiStop</TT>.</FONT></P>
     <TD>volume_id</TD><TD>kFttVertical or kFttHorizontal, else -1</TD>
     <TD>Even volume_id = vertical/X strips, odd = horizontal/Y.</TD></TR>
 
-<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Survey table rows and quadrant numbering</B>
-    &nbsp; FTT rows are POSITIONAL, <TT>row = 4*station + pentagon</TT></TD></TR>
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Rows of the misalignment table
+    <TT>Geometry/stgc/pentOnStation</TT></B>, and quadrant numbering &nbsp;
+    rows are POSITIONAL, <TT>row = 4*station + pentagon</TT></TD></TR>
 
 <TR><TD><TT>quadToPent</TT> (static)</TD>
     <TD>quad(0-3)</TD><TD>pentagon(0-3)</TD>
@@ -133,11 +135,11 @@ built from <TT>kFstphiStart/kFstphiStop</TT>.</FONT></P>
 
 <TR><TD><TT>surveyRow</TT> (static)</TD>
     <TD>station(0-3), quad(0-3)</TD><TD>row(0-15), else -1</TD>
-    <TD>What a table WRITER needs: the row a correction for that (station, quad) goes in.</TD></TR>
+    <TD>Writing <TT>pentOnStation</TT>: the row a correction for that (station, quad) goes in.</TD></TR>
 
 <TR><TD><TT>surveyRowToStationQuad</TT> (static)</TD>
     <TD>row(0-15)</TD><TD>bool; station(0-3), quad(0-3)</TD>
-    <TD>The reverse, for reading a table back.</TD></TR>
+    <TD>Reading <TT>pentOnStation</TT> back: which (station, quad) a given row is for.</TD></TR>
 
 <TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>DB geometry mode</B></TD></TR>
 
