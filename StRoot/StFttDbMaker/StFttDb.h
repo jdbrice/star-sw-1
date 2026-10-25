@@ -203,12 +203,43 @@ public:
     Int_t getLayerFromG2TVolumeId( Int_t volumeId ) const;        ///< 1 or 2, the two gas layers
     Int_t getOrientationFromG2TVolumeId( Int_t volumeId ) const;  ///< kFttVertical or kFttHorizontal
 
+    // ---- which of the two gas foils a measurement is on ------------------------
+    // StgmGeo1.xml places TWO gas volumes (STMG) inside each pentagon (STFM), at
+    //     z = -+( PENT_hcdz/2 + PENT_dz + PENT_gdz/2 ) = -+0.5841 cm
+    // about the pentagon centre, i.e. 1.1682 cm apart, with PENT_dz = 0.1593,
+    // PENT_gdz = 2*PENT_dz and PENT_hcdz = PENT_dz/0.3. The stack is
+    // PCB-Gas-PCB-Honeycomb-PCB-Gas-PCB.
+    //
+    // Every StFttPoint is built from ONE cluster (StFttClusterPointMaker makes a
+    // point per X cluster and a point per Y cluster; it does not combine them), so
+    // every point sits on a definite foil and has a definite z. Before this was
+    // put in, all of them were given the pentagon centre instead, which is 0.5841
+    // cm from where the measurement was actually made -- 0 of 27056 points in a
+    // 2000-event closure run landed within 1.5 mm of the right z.
+    //
+    // The diagonal strips are a second strip layer etched on the SAME foil as the
+    // primary one, so orientation fixes the foil:
+    //     kFttVertical,   kFttDiagonalV -> layer 2 -> +0.5841
+    //     kFttHorizontal, kFttDiagonalH -> layer 1 -> -0.5841
+    // Measured per (station, quadrant, layer) over all 16 cells with
+    // script/zOffsetMap.C: layer 1 at -0.584, layer 2 at +0.584, no station or
+    // quadrant dependence.
+    static double foilZOffset;                            ///< cm, half the foil separation
+    static double layerZOffset( int layer );              ///< layer 1-2 -> -+foilZOffset, 0 if out of range
+    static double orientationZOffset( UChar_t orientation ); ///< same, keyed by orientation
+    static Int_t  layerFromOrientation( UChar_t orientation ); ///< 1, 2, or -1
+
     double xShift( int quad, int plane ) const { return mXShift[quad][plane]; }  // mm
     double yShift( int quad, int plane ) const { return mYShift[quad][plane]; }  // mm
     double zLoc  ( int quad, int plane ) const { return mZLoc  [quad][plane]; }  // cm
 
     void getGloablOffset( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
-    void getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz );
+    // orientation defaults to kFttUnknownOrientation, which adds NO foil offset, so
+    // a caller that only wants the x/y reflection (the slow sim, going global->local)
+    // is unaffected. Pass a real orientation to get the z of the foil that
+    // measurement was made on.
+    void getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, float &dx, float &sx, float &dy, float &sy, float &dz, float &sz,
+                                       UChar_t orientation = kFttUnknownOrientation );
 
     // ---- quadrant local <-> global, as a real transform ------------------------
     // getGloablOffset_ClusterPoint() returns (d,s) pairs with s = +-1, i.e. a

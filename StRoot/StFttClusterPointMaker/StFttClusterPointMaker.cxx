@@ -355,7 +355,23 @@ void StFttClusterPointMaker::MakeGlobalPoints() {
         float dx = 0, dy = 0, dz = 0; //offset to global coordiantes
         float sx = 1, sy = 1, sz = 1; //reflection to global coordinates
 
-        mFttDb->getGloablOffset_ClusterPoint( p->plane(), p->quadrant(), dx, sx, dy, sy, dz, sz );
+        // Which gas foil this point was measured on. Every point here comes from a
+        // SINGLE cluster (one per X cluster, one per Y cluster -- they are not
+        // combined), and addCluster() stores it at the slot named by its own
+        // orientation, so the occupied slot IS the orientation. The two foils are
+        // 1.1682 cm apart in z, so without this the point's z is 0.5841 cm from
+        // where the measurement was made.
+        UChar_t pointOrientation = kFttUnknownOrientation;
+        for ( int iOrient = 0; iOrient < 4; iOrient++ ) {
+            if ( p->cluster( iOrient ) ) { pointOrientation = (UChar_t)iOrient; break; }
+        }
+        if ( kFttUnknownOrientation == pointOrientation && mDebug ) {
+            LOG_WARN << "StFttClusterPointMaker::MakeGlobalPoints - point carries no cluster, "
+                     << "so its foil is unknown and it keeps the pentagon-centre z" << endm;
+        }
+
+        mFttDb->getGloablOffset_ClusterPoint( p->plane(), p->quadrant(), dx, sx, dy, sy, dz, sz,
+                                              pointOrientation );
 
         StThreeVectorD global;
         // Scale by 10 to convert from mm to cm, since the geometry is in mm but the points are in cm

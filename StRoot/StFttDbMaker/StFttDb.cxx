@@ -30,6 +30,9 @@ double StFttDb::rowLength = 180; // mm
 double StFttDb::lowerQuadOffsetX = 101.6; // mm
 // double StFttDb::idealPlaneZLocations[] = { 281.082,304.062,325.058,348.068 };//ideal position
 double StFttDb::idealPlaneZLocations[] = { 312.342,329.953,347.637,365.422 };//suvery data, cm or mm? now just use quad A's data
+// cm. StgmGeo1.xml: PENT_hcdz/2 + PENT_dz + PENT_gdz/2 with PENT_dz = 0.1593,
+// PENT_gdz = 2*PENT_dz, PENT_hcdz = PENT_dz/0.3. The two gas foils sit at -+this.
+double StFttDb::foilZOffset = 0.5841;
 double StFttDb::LocalStripZLocations[] = { 1.1    ,1.53   ,2.18   ,2.61    };// from yingying's measurement, cm ,
 double StFttDb::idealPlaneZLocations_QuadA[] = {312.342,329.953,347.637,365.422};//cm
 double StFttDb::idealPlaneZLocations_QuadB[] = {312.165,330.094,347.543,365.409};//cm
@@ -179,6 +182,32 @@ Int_t StFttDb::getOrientationFromG2TVolumeId( Int_t volumeId ) const
    if ( getLayerFromG2TVolumeId( volumeId ) < 0 ) return -1;
 
    return ( volumeId % 2 == 0 ) ? kFttVertical : kFttHorizontal;
+}
+//_____________________________________________________________________________
+Int_t StFttDb::layerFromOrientation( UChar_t orientation )
+{
+   // The diagonal strips share a foil with the primary strips of the same sense
+   // (StFttSlowSimMaker.cxx: "Vertical+DiagonalV = front foil,
+   // Horizontal+DiagonalH = back foil"), so both map to the same layer.
+   // Layer 2 is the one getOrientationFromG2TVolumeId() calls Vertical, since
+   // an even volume_id is an even layer digit.
+   if ( kFttVertical   == orientation || kFttDiagonalV == orientation ) return 2;
+   if ( kFttHorizontal == orientation || kFttDiagonalH == orientation ) return 1;
+   return -1;
+}
+//_____________________________________________________________________________
+double StFttDb::layerZOffset( int layer )
+{
+   // Signed, in the pentagon's own frame: layer 1 is the -z foil, layer 2 the +z
+   // one, measured over all 16 (station, quadrant) cells with script/zOffsetMap.C.
+   if ( 1 == layer ) return -foilZOffset;
+   if ( 2 == layer ) return +foilZOffset;
+   return 0.0;
+}
+//_____________________________________________________________________________
+double StFttDb::orientationZOffset( UChar_t orientation )
+{
+   return layerZOffset( layerFromOrientation( orientation ) );
 }
 //_____________________________________________________________________________
 void StFttDb::getTimeCut( StFttRawHit * hit, int &mode, int &l, int &h ){
@@ -1403,7 +1432,8 @@ void StFttDb::getGloablOffset( UChar_t plane, UChar_t quad,
 void StFttDb::getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad, 
                                 float &dx, float &sx,
                                 float &dy, float &sy, 
-                                float &dz, float &sz ){
+                                float &dz, float &sz,
+                                UChar_t orientation ){
     // TODO: connect to DB for calibrated positions. 
     // for now we use the ideal positions (from simulated geometry)
     // calibration will come later
@@ -1428,6 +1458,14 @@ void StFttDb::getGloablOffset_ClusterPoint( UChar_t plane, UChar_t quad,
         dy = mYShift[quad][plane];
         dz = mZLoc[quad][plane];
     }
+
+    // Which of the pentagon's two gas foils this measurement was made on. Added
+    // to the plane z, which is the pentagon CENTRE, not a foil. Adding it here is
+    // correct only because sz is +1 and this path applies no rotation: if the
+    // per-quadrant tilts (up to 8.2 mrad, see note_stgc_survey_20261001.txt) are
+    // ever adopted, this offset has to move INSIDE the rotation -- it is a
+    // displacement along the chamber normal, not along global z.
+    dz += orientationZOffset( orientation );
 
     // these are the reflections of a pentagon into the symmetric shape for quadrants A, B, C, D
     if ( quad == 1 )
