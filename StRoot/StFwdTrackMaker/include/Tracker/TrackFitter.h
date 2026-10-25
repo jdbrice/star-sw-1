@@ -492,14 +492,15 @@ class TrackFitter {
         }
 
         // Compute the hit position in the plane's local (u,v) Cartesian frame.
-        // FST planes have U pointing radially and V pointing counterclockwise (increasing
-        // global phi), so with dphi = signed angular offset of the hit from the sensor centre:
-        //   hitOnPlane[0] = r·cos(dphi) − r_origin   (displacement along U, radial)
-        //   hitOnPlane[1] = r·sin(dphi)               (displacement along V, azimuthal CCW)
-        // _localPosition stores strip-native (r, phi_from_strip0_edge) with no embedded
-        // global rotation.  kFstzDirct[e] = +1 if strips count counterclockwise, -1 if
-        // clockwise, so dphi = kFstzDirct[e] * (strip_phi - phi_half) gives the correct
-        // signed angular offset in global phi.
+        // U is the sensor's local x in global (the wedge bisector) and V its local
+        // y, both from the node matrix, and the origin is the node's own origin:
+        //   hitOnPlane[0] = r*cos(phiLocal)   (along U)
+        //   hitOnPlane[1] = r*sin(phiLocal)   (along V)
+        // with phiLocal the strip's ABSOLUTE azimuth in that local frame, taken
+        // from the sensor shape's own phi limits below. This description used to
+        // read "dphi = signed angular offset of the hit from the sensor centre"
+        // with a "- r_origin" on the first component; both belonged to the
+        // earlier convention and are gone -- see the note at the assignment.
         // V is NOT normalised: the sensor's own local frame carries the front/back
         // flip, so no sign convention is needed here.
         // For FTT, the stored global position is projected directly onto the plane.
@@ -533,8 +534,26 @@ class TrackFitter {
                 phiLocalDeg = phi1 + (sLocal + 0.5) * pitch;
             }
             const double phiLocal = phiLocalDeg * TMath::DegToRad();
-            float r_origin = plane->getO().Perp();          // radial distance of plane origin
-            hitOnPlane[0]  = r * TMath::Cos(phiLocal) - r_origin;
+            // hitOnPlane is the strip's position in the sensor's OWN (u,v) basis,
+            // measured from the plane origin O -- and O is the FTUS node
+            // translation (createAllFstPlanes below), i.e. the origin of the very
+            // frame (r, phiLocal) is expressed in. So the local coordinates are
+            // r*cos and r*sin, with nothing subtracted.
+            //
+            // There used to be a "- r_origin" here, r_origin = plane->getO().Perp().
+            // It came from 4736667a4c, where dphi was measured from the sensor
+            // CENTRE and the comment read "r_origin = radial distance of plane
+            // origin": coherent only if O sat at the sensor's radial midpoint on
+            // the bisector. It does not -- FTUS is a TUBS about the beam axis, so
+            // O.Perp() is identically 0 in an ideal geometry and the term never
+            // did anything. It woke up the day the cache carried the survey, when
+            // O.Perp() became the survey shift magnitude: measured 0.3093 cm on
+            // one half and 0.4026 cm on the other, pulling every FST measurement
+            // inward along its wedge bisector by that much, coherently, on data
+            // only -- MC never saw it because our samples are ideal. The
+            // convention it belonged to is gone too: phiLocal is now an absolute
+            // local azimuth from the shape limits, not an offset from the centre.
+            hitOnPlane[0]  = r * TMath::Cos(phiLocal);
             hitOnPlane[1]  = r * TMath::Sin(phiLocal);
         } else {
             TVector3 diff = TVector3(fh->getX(), fh->getY(), fh->getZ()) - plane->getO();
