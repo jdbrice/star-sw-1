@@ -115,6 +115,30 @@ public:
    static double sensorZOffset(int disk, int wedge, int sensor); ///< signed cm from the disk nominal
    static double sensorZ(int disk, int wedge, int sensor);       ///< diskNominalZ + sensorZOffset
 
+   // ---- strip -> position, the ONE implementation ---------------------------
+   // Moved here verbatim from StFstHitMaker so that the producer, the slow
+   // simulation and anything that has to rebuild a hit from its strips all read
+   // the convention from one place. Before this, StFstHitMaker held it,
+   // StFstSlowSimMaker held the same algebra inverted, and StFwdHitLoader
+   // patched its output -- three copies of kFstzFilp x kFstzDirct and two of
+   // kFstStripGapPhi, which is why a change to one of them could not be made
+   // safely. TrackFitter.h keeps its own GEOMETRY-driven version on purpose
+   // (the fit must work from the AGML shape, and that one follows the wedge
+   // mirror automatically); script/checkStripMap.C is what keeps the two models
+   // from drifting apart.
+   //
+   // phiStrip is a double on purpose: clustering makes it a charge-weighted
+   // mean, and truncating it to int costs a third of a pitch.
+   static double stripR  (int rStrip);                                    ///< cm, 0 out of range
+   static double stripPhi(int disk, int wedge, int sensor,
+                          int rStrip, double phiStrip);                   ///< rad, 0 out of range
+   /// Nominal-frame CARTESIAN position of a strip, cm. Returns false (and leaves
+   /// xyz untouched) if any index is out of range. z is sensorZ(), so it follows
+   /// fstmConfig(); x,y are r and phi of the strip in the ideal detector, which
+   /// is already a coordinate in the frame the survey matrices call "local".
+   static bool   stripPosition(int disk, int wedge, int sensor,
+                               int rStrip, double phiStrip, double xyz[3]);
+
    // ---- survey-table index convention ------------------------------------
    // fstSensorOnWedge rows are addressed by the Id COLUMN, not by their
    // position in the table: the reader below takes Id and derives (wedge,

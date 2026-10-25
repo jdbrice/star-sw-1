@@ -105,7 +105,6 @@ Int_t StFstHitMaker::Make()
                         float  charge = 0., chargeErr = 0.;
 			unsigned char  maxTb = -1;
 			int	 key = -1;
-			float phiInner = -999.9, phiOuter = -999.9;
 
 			for (std::vector< StFstCluster * >::iterator clusterIter = clusterCollectionPtr->getClusterVec().begin(); clusterIter != clusterCollectionPtr->getClusterVec().end(); ++clusterIter) {
 				idTruth         = (*clusterIter)->getIdTruth();
@@ -128,69 +127,27 @@ Int_t StFstHitMaker::Make()
 				newHit->setId(key);
 				newHit->setIdTruth(idTruth);
 
-                                int moduleIdx;
-				if(disk == 1) // Disk 1
-					moduleIdx = wedge;
-				else if(disk == 2)// Disk 2
-					moduleIdx = wedge-12;
-				else if(disk == 3)// Disk 3
-					moduleIdx = wedge-24;
-				// The simple transformation will be updated with the geomtry table in database later
-				if(disk == 1 || disk == 3)
-				{// Disk 1 & 3
-					phiInner = kFstphiStart[moduleIdx-1]*TMath::Pi()/6.0 + 0.5*kFstzDirct[moduleIdx-1]*kFstStripPitchPhi;
-					phiOuter = kFstphiStop[moduleIdx-1]*TMath::Pi()/6.0  - 0.5*kFstzDirct[moduleIdx-1]*kFstStripPitchPhi;
+				// strip -> nominal position, from the ONE place that owns the
+				// convention. This block used to hold it inline: phiInner and
+				// phiOuter from kFstphiStart/kFstphiStop, the per-wedge and
+				// per-disk flips from kFstzFilp x kFstzDirct, and the
+				// outer-sensor kFstStripGapPhi -- all of which
+				// StFstSlowSimMaker restates inverted and StFwdHitLoader
+				// patches afterwards. StFstDb::stripPosition() is that algebra
+				// moved verbatim, so the producer, the simulation and anything
+				// rebuilding a hit from its strips cannot drift apart. The z it
+				// returns is sensorZ(), so it follows fstmConfig(): the silicon
+				// the strip is on, on the face the wedge is really mounted.
+				Double_t g[3] = {0, 0, 0};
+				if (!StFstDb::stripPosition(disk, (int)newHit->getWedge(), sensor,
+				                            meanRStrip, meanPhiStrip, g)) {
+					LOG_WARN << "Make() - no strip position for disk " << (int)disk
+					         << " wedge " << (int)newHit->getWedge() << " sensor "
+					         << (int)sensor << " rStrip " << meanRStrip
+					         << "; hit dropped" << endm;
+					delete newHit;
+					continue;
 				}
-				else if(disk == 2)
-				{ // Disk 2
-					phiInner = kFstphiStop[moduleIdx-1]*TMath::Pi()/6.0  - 0.5*kFstzDirct[moduleIdx-1]*kFstStripPitchPhi;
-					phiOuter = kFstphiStart[moduleIdx-1]*TMath::Pi()/6.0 + 0.5*kFstzDirct[moduleIdx-1]*kFstStripPitchPhi;
-				}
-				double local[3] = {0};
-				if(meanRStrip < kFstNumRStripsPerWedge/2)
-				{ // inner
-					local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
-					local[1] = phiInner + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi;
-				}
-				else
-				{// outer
-					if(sensor == 1){
-						local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
-						local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
-					}
-					if(sensor == 2){
-						local[0] = kFstrStart[meanRStrip] + 0.5*kFstStripPitchR;
-						local[1] = phiOuter - kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*meanPhiStrip*kFstStripPitchPhi + kFstzFilp[disk-1]*kFstzDirct[moduleIdx-1]*0.5*kFstStripGapPhi;
-					}
-				}
-
-				// The nominal disk z is the front/back MEAN, so using it alone put
-				// every hit 1.742 cm (inner sensor) or 0.347 cm (outer) away from
-				// the silicon it was measured on -- wedges alternate front/back,
-				// with the parity inverted on disk 2. StFstDb owns both the
-				// nominal and the offset so the sim and the reco cannot drift.
-				//
-				// The offset goes on the NOMINAL z here, i.e. before the survey
-				// matrix below, which is the right order: it is a displacement
-				// along the sensor normal, so it belongs in the local frame and
-				// any survey rotation has to act on it. (Every FST survey rotation
-				// is the identity today, so the order is not yet observable.)
-				local[2] = StFstDb::sensorZ(disk, (int)newHit->getWedge(), sensor);
-				// (local[0], local[1]) are r and phi of the strip in the IDEAL
-				// detector, so the cartesian form below is already a coordinate in
-				// the frame the survey matrices call "local": every rotation in
-				// Geometry/fst/{fstOnTpc,hssOnFst,fstWedgeOnHss,fstSensorOnWedge}
-				// is the identity and every fstSensorOnWedge row is identity in
-				// every lane we carry, so the chain holds misalignment only and
-				// its local frame is the nominal STAR frame, not a sensor frame.
-				// It is therefore stored as it stands. The MasterToLocal that used
-				// to be here applied M^-1 to a point that was already in M's local
-				// frame, and the LocalToMaster in the loop below then applied M --
-				// an exact round trip that cancelled the whole survey, silently.
-				Double_t g[3];
-				g[0] = local[0] * cos(local[1]);
-				g[1] = local[0] * sin(local[1]);
-				g[2] = local[2];
 				newHit->setLocalPosition(g[0], g[1], g[2]); //nominal-frame position
 				fstHitCollection->addHit(newHit);
 			} //cluster loop over

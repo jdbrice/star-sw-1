@@ -126,6 +126,37 @@ rescale, so it is in whatever the caller used.
     <TD><TT>diskNominalZ + sensorZOffset</TT>. This is what a hit's z should be;
         StFstHitMaker now uses it instead of the bare disk nominal.</TD></TR>
 
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Strip -&gt; position, the one implementation</B> &nbsp;
+    moved verbatim out of StFstHitMaker so the producer, the slow simulation and
+    the MuDst rebuild cannot drift apart</TD></TR>
+
+<TR><TD><TT>stripR</TT> (static)</TD>
+    <TD>rStrip(0-7)</TD><TD>double [cm]; 0 if out of range</TD>
+    <TD><TT>kFstrStart[rStrip] + 0.5*kFstStripPitchR</TT>, i.e. the middle of the
+        R strip. 5.000 to 22.100 cm in steps of 2.875 cm (the R pitch).</TD></TR>
+
+<TR><TD><TT>stripPhi</TT> (static)</TD>
+    <TD>disk(1-3), wedge(1-36), sensor(0-2), rStrip(0-7), phiStrip(0-127, double)</TD>
+    <TD>double [rad]; 0 if out of range</TD>
+    <TD>The wedge edge from <TT>kFstphiStart/kFstphiStop</TT> (start and stop swap
+        on disk 2), stepped by <TT>phiStrip</TT> in the direction
+        <TT>kFstzFilp[disk-1]*kFstzDirct[module-1]</TT>, with
+        <TT>&plusmn;0.5*kFstStripGapPhi</TT> (1 deg total) for the two outer halves.
+        Inner vs outer is decided by <TT>rStrip</TT>, not by <TT>sensor</TT> &mdash;
+        kept exactly as StFstHitMaker always did it; the two disagree for a few
+        hits per thousand. phiStrip is double because clustering makes it a
+        charge-weighted mean.</TD></TR>
+
+<TR><TD><TT>stripPosition</TT> (static)</TD>
+    <TD>disk(1-3), wedge(1-36), sensor(0-2), rStrip(0-7), phiStrip(double),
+        xyz[3] out</TD>
+    <TD>bool; xyz[3] [cm] cartesian, nominal frame</TD>
+    <TD><TT>(stripR*cos(stripPhi), stripR*sin(stripPhi), sensorZ)</TT>, so the z
+        follows <TT>fstmConfig</TT>. False if any index is out of range. An outer
+        <TT>rStrip</TT> carried on sensor id 0 has no phi in this convention and
+        is placed on the beam line (0, 0, sensorZ) with a warning, which is what
+        StFstHitMaker has always done.</TD></TR>
+
 <TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Which survey row applies to a wedge</B> &nbsp;
     <TT>Geometry/fst/hssOnFst</TT> has one row per HALF and
     <TT>Geometry/fst/fstWedgeOnHss</TT> one row per WEDGE &mdash; both used to be

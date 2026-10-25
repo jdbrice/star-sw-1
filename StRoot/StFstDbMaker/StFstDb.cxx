@@ -191,6 +191,89 @@ double StFstDb::sensorZ(int disk, int wedge, int sensor)
    return z0 + sensorZOffset(disk, wedge, sensor);
 }
 //_____________________________________________________________________________
+double StFstDb::stripR(int rStrip)
+{
+   if (rStrip < 0 || rStrip >= kFstNumRStripsPerWedge) return 0.0;
+
+   return kFstrStart[rStrip] + 0.5 * kFstStripPitchR;
+}
+//_____________________________________________________________________________
+double StFstDb::stripPhi(int disk, int wedge, int sensor, int rStrip, double phiStrip)
+{
+   if (disk < 1 || disk > kFstNumDisk) return 0.0;
+   if (wedge < 1 || wedge > kFstNumWedges) return 0.0;
+   if (sensor < 0 || sensor >= kFstNumSensorsPerWedge) return 0.0;
+   if (rStrip < 0 || rStrip >= kFstNumRStripsPerWedge) return 0.0;
+
+   const int    m     = 1 + (wedge - 1) % kFstNumWedgePerDisk;   // module 1-12 in the disk
+   const double pitch = kFstStripPitchPhi;
+   const double dirct = kFstzDirct[m - 1];
+   const double sgn   = kFstzFilp[disk - 1] * dirct;
+
+   // The wedge's two phi edges. Disk 2 is mounted the other way round, so its
+   // start and stop swap roles -- the same inversion kFstzFilp carries for z.
+   double phiInner = 0.0, phiOuter = 0.0;
+
+   if (2 == disk) {
+      phiInner = kFstphiStop [m - 1] * TMath::Pi() / 6.0 - 0.5 * dirct * pitch;
+      phiOuter = kFstphiStart[m - 1] * TMath::Pi() / 6.0 + 0.5 * dirct * pitch;
+   }
+   else {
+      phiInner = kFstphiStart[m - 1] * TMath::Pi() / 6.0 + 0.5 * dirct * pitch;
+      phiOuter = kFstphiStop [m - 1] * TMath::Pi() / 6.0 - 0.5 * dirct * pitch;
+   }
+
+   // INNER vs OUTER is decided by rStrip, not by sensor, which is how
+   // StFstHitMaker has always done it and is reproduced here exactly. The two
+   // disagree for a handful of hits (36 of 6812 in a 2000-event closure land at
+   // +-1.390 cm, i.e. an inner rStrip on an outer sensor id), and those hits get
+   // the inner phi with the outer z. Pre-existing; fixing it is a separate
+   // change with its own before/after, not something to slip in here.
+   if (rStrip < kFstNumRStripsPerWedge / 2) return phiInner + sgn * phiStrip * pitch;
+
+   // Outer: the two halves sit either side of the 1 degree gap on the wedge
+   // centreline, sensor 1 before it and sensor 2 after it.
+   const double gap = (1 == sensor) ? -sgn * 0.5 * kFstStripGapPhi
+                                    : (2 == sensor ?  sgn * 0.5 * kFstStripGapPhi : 0.0);
+
+   return phiOuter - sgn * phiStrip * pitch + gap;
+}
+//_____________________________________________________________________________
+bool StFstDb::stripPosition(int disk, int wedge, int sensor, int rStrip,
+                            double phiStrip, double xyz[3])
+{
+   if (disk < 1 || disk > kFstNumDisk) return false;
+   if (wedge < 1 || wedge > kFstNumWedges) return false;
+   if (sensor < 0 || sensor >= kFstNumSensorsPerWedge) return false;
+   if (rStrip < 0 || rStrip >= kFstNumRStripsPerWedge) return false;
+
+   // An OUTER rStrip carried on sensor id 0 has no phi in this convention: the
+   // gap term is defined for the two outer halves only. StFstHitMaker left
+   // local[0] = local[1] = 0 in that case, i.e. put the hit on the beam line at
+   // the sensor's z, and that is reproduced exactly rather than quietly improved
+   // -- it is the same rStrip-vs-sensor mismatch described in stripPhi() and it
+   // belongs in its own change.
+   if (rStrip >= kFstNumRStripsPerWedge / 2 && 0 == sensor) {
+      LOG_WARN << "StFstDb::stripPosition: outer rStrip " << rStrip
+               << " on sensor id 0 (disk " << disk << " wedge " << wedge
+               << "); no phi is defined, placing it on the beam line as"
+               << " StFstHitMaker always has" << endm;
+      xyz[0] = 0.0;
+      xyz[1] = 0.0;
+      xyz[2] = sensorZ(disk, wedge, sensor);
+      return true;
+   }
+
+   const double r   = stripR(rStrip);
+   const double phi = stripPhi(disk, wedge, sensor, rStrip, phiStrip);
+
+   xyz[0] = r * TMath::Cos(phi);
+   xyz[1] = r * TMath::Sin(phi);
+   xyz[2] = sensorZ(disk, wedge, sensor);
+
+   return true;
+}
+//_____________________________________________________________________________
 Int_t StFstDb::getWedgeFromG2TVolumeId(Int_t volumeId) const
 {
    const Int_t disk   = getDiskFromG2TVolumeId(volumeId);
