@@ -22,7 +22,7 @@
 ClassImp(StFstHitMaker);
 
 
-StFstHitMaker::StFstHitMaker( const char *name ) : StMaker(name), mSensorTransforms(0)
+StFstHitMaker::StFstHitMaker( const char *name ) : StMaker(name), mSensorTransforms(0), mApplySurvey(kFALSE)
 {}
 
 
@@ -170,21 +170,28 @@ Int_t StFstHitMaker::Make()
 				// with the parity inverted on disk 2. StFstDb owns both the
 				// nominal and the offset so the sim and the reco cannot drift.
 				//
-				// This adds the offset to the GLOBAL z, which is right only
-				// because the disks are normal to the beam and every FST survey
-				// rotation is currently the identity. If FST ever takes real
-				// rotations from the survey, the offset must move inside the
-				// sensor matrix instead: it is a displacement along the sensor
-				// normal, not along global z.
+				// The offset goes on the NOMINAL z here, i.e. before the survey
+				// matrix below, which is the right order: it is a displacement
+				// along the sensor normal, so it belongs in the local frame and
+				// any survey rotation has to act on it. (Every FST survey rotation
+				// is the identity today, so the order is not yet observable.)
 				local[2] = StFstDb::sensorZ(disk, (int)newHit->getWedge(), sensor);
-				Double_t g[3], l[3];
+				// (local[0], local[1]) are r and phi of the strip in the IDEAL
+				// detector, so the cartesian form below is already a coordinate in
+				// the frame the survey matrices call "local": every rotation in
+				// Geometry/fst/{fstOnTpc,hssOnFst,fstWedgeOnHss,fstSensorOnWedge}
+				// is the identity and every fstSensorOnWedge row is identity in
+				// every lane we carry, so the chain holds misalignment only and
+				// its local frame is the nominal STAR frame, not a sensor frame.
+				// It is therefore stored as it stands. The MasterToLocal that used
+				// to be here applied M^-1 to a point that was already in M's local
+				// frame, and the LocalToMaster in the loop below then applied M --
+				// an exact round trip that cancelled the whole survey, silently.
+				Double_t g[3];
 				g[0] = local[0] * cos(local[1]);
 				g[1] = local[0] * sin(local[1]);
 				g[2] = local[2];
-				int sensorId = 1000 + ((int)newHit->getWedge() - 1) * kFstNumSensorsPerWedge + (int)newHit->getSensor();
-				TGeoHMatrix *geoMSensor = (TGeoHMatrix *) mSensorTransforms->FindObject(Form("R%04i", sensorId));
-				geoMSensor->MasterToLocal(g,l);
-				newHit->setLocalPosition(l[0], l[1], l[2]); //set local position on sensor
+				newHit->setLocalPosition(g[0], g[1], g[2]); //nominal-frame position
 				fstHitCollection->addHit(newHit);
 			} //cluster loop over
 		}//end clusterCollectionPtr
@@ -202,27 +209,39 @@ Int_t StFstHitMaker::Make()
 				local[1] = newHit->localPosition(1);
 				local[2] = newHit->localPosition(2);
 
-                //Ye: simple transformation. Need to revisit
-		// The simple transformation will be updated with the geomtry table in database later
-				int sensorId = 1000 + ((int)newHit->getWedge() - 1) * kFstNumSensorsPerWedge + (int)newHit->getSensor();
-				TGeoHMatrix *geoMSensorOnGlobal = (TGeoHMatrix *) mSensorTransforms->FindObject(Form("R%04i", sensorId));
-				geoMSensorOnGlobal->LocalToMaster(local, global);
+				// nominal -> global. The survey matrix is applied ONLY when asked
+				// for: see SetApplySurvey() in the header for the two open
+				// questions behind that default.
+				//
+				// Both of the things that used to live here hid the survey rather
+				// than applying it. Before 9e70bfd0a9 the LocalToMaster result was
+				// overwritten by three lines converting (local[0], local[1]) as
+				// polar (r, phi), which was consistent with a producer that stored
+				// the global (r, phi, z) but discarded the matrix. 9e70bfd0a9 moved
+				// the producer to cartesian via MasterToLocal, which made this an
+				// exact round trip -- so the matrix cancelled either way, and no
+				// FST hit has ever carried the survey. For the Run 22 tables that
+				// is (+0.7126, -3.0102) mm for the x>0 half and (+2.2626, -3.3302)
+				// mm for the x<0 half, the same two groups the misaligned AGML
+				// geometry moves its sensors by (d4378cbde9).
+				if (mApplySurvey) {
+					int sensorId = StFstDb::sensorSurveyId((int)newHit->getWedge(), (int)newHit->getSensor());
+					TGeoHMatrix *geoMSensorOnGlobal = (TGeoHMatrix *) mSensorTransforms->FindObject(Form("R%04i", sensorId));
 
-                                // The three lines that used to sit here overwrote the
-                                // LocalToMaster result above, converting (local[0],
-                                // local[1]) as if they were polar (r,phi). That was only
-                                // correct under the OLD convention, where
-                                // setLocalPosition() received the global (r,phi,z).
-                                // Commit 9e70bfd0a9 changed the producer at line ~177 to
-                                // store sensor-local CARTESIAN coordinates, so the
-                                // overwrite has produced nonsense (r ~ 1 cm) ever since.
-                                //
-                                // Removing it is a pure bug fix: producer and consumer use
-                                // the SAME matrix with inverse operations, so the round
-                                // trip is the identity and the global position returns to
-                                // exactly its pre-9e70bfd0a9 value. It does NOT start
-                                // applying the DB/survey alignment -- the transforms
-                                // cancel either way.
+					if (geoMSensorOnGlobal) {
+						geoMSensorOnGlobal->LocalToMaster(local, global);
+					}
+					else {
+						LOG_WARN << "StFstHitMaker: no survey matrix R" << sensorId
+						         << ", leaving the hit at its nominal position" << endm;
+						global[0] = local[0]; global[1] = local[1]; global[2] = local[2];
+					}
+				}
+				else {
+					global[0] = local[0];
+					global[1] = local[1];
+					global[2] = local[2];
+				}
 
 				StThreeVectorF vecGlobal(global);
 				newHit->setPosition(vecGlobal); //set global position
