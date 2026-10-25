@@ -80,6 +80,71 @@ Int_t StFstDb::getDiskFromG2TVolumeId(Int_t volumeId) const
    return diskDigit - 3;   // -> 1, 2, 3, the numbering StFstConsts uses
 }
 //_____________________________________________________________________________
+double StFstDb::diskNominalZ(int disk)
+{
+   // FstmGeoSM.xml, <var name="zdisk" value="{151.750, 165.248, 178.781}" />.
+   // These are the same three numbers StFstHitMaker.cxx used to hardcode; the
+   // nominal z is unavoidably duplicated between the XML and here, so keep them
+   // in one place on this side at least.
+   static const double kZDisk[kFstNumDisk] = { 151.750, 165.248, 178.781 };
+
+   if (disk < 1 || disk > kFstNumDisk) return 0.0;
+
+   return kZDisk[disk - 1];
+}
+//_____________________________________________________________________________
+int StFstDb::wedgeOrientation(int disk, int wedge)
+{
+   if (disk < 1 || disk > kFstNumDisk) return 0;
+   if (wedge < 1 || wedge > kFstNumWedges) return 0;
+
+   const int iwedgem = (wedge - 1) % kFstNumWedgePerDisk;   // 0-based within the disk
+
+   // The two arrays this needs already exist in StFstConsts.h and are the ones
+   // StFstHitMaker uses for the phi logic, so take the front/back sense from them
+   // rather than restating it -- then the z and the phi cannot drift apart:
+   //     kFstzDirct[iwedgem] = {1,-1,1,-1,...}  the alternation with wedge parity
+   //     kFstzFilp[disk-1]   = {1,-1,1}         the inversion on disk 2
+   // FstmGeoSM.xml is the authority behind them: a wedge goes to the BACK (-z,
+   // plus <Rotation alphax="180">) when modulus2 == 0 on disks 1 and 3 but when
+   // modulus2 == 1 on disk 2.
+   //     <If expr="idisk.ne.1"> <If expr="...modulus2....eq.0"> ... </If> </If>
+   //     <If expr="idisk.eq.1"> <If expr="...modulus2....eq.1"> ... </If> </If>
+   // The leading minus is the measured sign: disk 1 wedge 1 has both array
+   // entries +1 and sits at -1.7408 cm. Verified against all 36 wedges.
+   return -kFstzFilp[disk - 1] * kFstzDirct[iwedgem];
+}
+//_____________________________________________________________________________
+double StFstDb::sensorZOffset(int disk, int wedge, int sensor)
+{
+   // FstmGeoSM.xml:
+   //   innersilicon_z = ibase2 + HybridThickness + 0.03/2
+   //                  = (sRingThickness + oBaseThickness + ioTubeLength
+   //                     + iBaseThicknessAB + iBaseThickness) + 0.035 + 0.015
+   //                  = (0.3969 + 0.20 + 0.835 + 0.06 + 0.20) + 0.05 = 1.7419
+   //   outersilicon_z = sRingThickness - HybridThickness - 0.03/2
+   //                  = 0.3969 - 0.035 - 0.015                        = 0.3469
+   // Sensor 0 is the inner one; 1 and 2 are the two halves of the outer, which
+   // share a z.
+   static const double kInnerZ = 1.7419;   // cm
+   static const double kOuterZ = 0.3469;   // cm
+
+   if (sensor < 0 || sensor >= kFstNumSensorsPerWedge) return 0.0;
+
+   const int orientation = wedgeOrientation(disk, wedge);
+   if (0 == orientation) return 0.0;
+
+   return orientation * ((0 == sensor) ? kInnerZ : kOuterZ);
+}
+//_____________________________________________________________________________
+double StFstDb::sensorZ(int disk, int wedge, int sensor)
+{
+   const double z0 = diskNominalZ(disk);
+   if (0.0 == z0) return 0.0;
+
+   return z0 + sensorZOffset(disk, wedge, sensor);
+}
+//_____________________________________________________________________________
 Int_t StFstDb::getWedgeFromG2TVolumeId(Int_t volumeId) const
 {
    const Int_t disk   = getDiskFromG2TVolumeId(volumeId);

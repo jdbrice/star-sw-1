@@ -55,6 +55,33 @@ public:
    Int_t getDiskFromG2TVolumeId(Int_t volumeId) const;     ///< disk 1-3 (the id digit is 4-6)
    static const TGeoHMatrix *getHMatrixSensorOnGlobal(int wedge, int sensor);
 
+   // ---- nominal disk z, and where the silicon actually sits ------------------
+   // A wedge is mounted on the FRONT or the BACK of its disk, alternating with
+   // wedge parity, and the silicon is offset from the disk's nominal z by a
+   // different amount for the inner and the outer sensors. FstmGeoSM.xml:
+   //
+   //   zdisk              = {151.750, 165.248, 178.781}
+   //   innersilicon_z     = ibase2 + HybridThickness + 0.03/2        = 1.7419
+   //   outersilicon_z     = sRingThickness - HybridThickness - 0.03/2 = 0.3469
+   //   modulus2           = {0,1,0,1,0,1,0,1,0,1,0,1}
+   //
+   // and the back wedges (which also carry <Rotation alphax="180">) are the ones
+   // with modulus2 == 0 on disks 1 and 3, but modulus2 == 1 on disk 2 -- the
+   // parity is INVERTED on disk 2, which is why a single formula gets one disk
+   // wrong. Measured per (disk, wedge, sensor) with script/zOffsetMap.C: inner
+   // -+1.7419, outer -+0.3469, rms 0.003 cm, and the disk-2 flip confirmed on
+   // all 12 wedges.
+   //
+   // StFstHitMaker used to assign the bare nominal disk z to every hit, i.e. the
+   // front/back mean, leaving every hit 1.742 cm (inner) or 0.347 cm (outer) from
+   // the silicon it was measured on. 0 of 6812 hits in a 2000-event closure run
+   // landed within 1.5 mm of the right z.
+   static double diskNominalZ(int disk);               ///< disk 1-3 -> cm, 0 if out of range
+   /// +1 front (+z) / -1 back, from kFstzFilp and kFstzDirct; 0 if out of range
+   static int    wedgeOrientation(int disk, int wedge);
+   static double sensorZOffset(int disk, int wedge, int sensor); ///< signed cm from the disk nominal
+   static double sensorZ(int disk, int wedge, int sensor);       ///< diskNominalZ + sensorZOffset
+
    // ---- survey-table index convention ------------------------------------
    // fstSensorOnWedge rows are addressed by the Id COLUMN, not by their
    // position in the table: the reader below takes Id and derives (wedge,

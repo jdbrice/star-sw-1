@@ -164,9 +164,19 @@ Int_t StFstHitMaker::Make()
 					}
 				}
 
-				if(disk == 1) local[2] = 151.750; //unit: cm
-				else if(disk == 2) local[2] = 165.248; //unit: cm
-				else if(disk == 3) local[2] = 178.781; //unit: cm
+				// The nominal disk z is the front/back MEAN, so using it alone put
+				// every hit 1.742 cm (inner sensor) or 0.347 cm (outer) away from
+				// the silicon it was measured on -- wedges alternate front/back,
+				// with the parity inverted on disk 2. StFstDb owns both the
+				// nominal and the offset so the sim and the reco cannot drift.
+				//
+				// This adds the offset to the GLOBAL z, which is right only
+				// because the disks are normal to the beam and every FST survey
+				// rotation is currently the identity. If FST ever takes real
+				// rotations from the survey, the offset must move inside the
+				// sensor matrix instead: it is a displacement along the sensor
+				// normal, not along global z.
+				local[2] = StFstDb::sensorZ(disk, (int)newHit->getWedge(), sensor);
 				Double_t g[3], l[3];
 				g[0] = local[0] * cos(local[1]);
 				g[1] = local[0] * sin(local[1]);
