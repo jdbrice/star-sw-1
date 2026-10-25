@@ -134,8 +134,15 @@ rescale, so it is in whatever the caller used.
 
 <TR><TD><TT>sensorLocalToGlobal</TT> (static)</TD>
     <TD>wedge(1-36), sensor(0-2), sensor-local xyz[3][cm]</TD><TD>bool; global xyz[3][cm]</TD>
-    <TD>Composes the loaded survey matrices. False if the index is out of range
-        or the geometry has not been loaded.</TD></TR>
+    <TD>Composes the loaded survey matrices,
+        <TT>fstOnTpc * hssOnFst[half] * fstWedgeOnHss[wedge] * fstSensorOnWedge</TT>,
+        all four in cm. <TT>tpcOnGlobal</TT> is NOT in the product: AGML misaligns
+        FSTM in CAVE with <TT>Geometry/fst/*</TT> only, so including it moved the
+        hit 2.4/1.7/2.0 mm (plus 0.8 mm from the TPC's -0.48 mrad over the 165 cm
+        z lever arm) out of the frame of the GenFit plane. Run 22 totals are
+        (+0.0713, -0.3010, 0) cm for half 0 and (+0.2263, -0.3330, 0) cm for half 1.
+        False if the index is out of range (wedge 1-36, sensor 0-2) or the geometry
+        has not been loaded.</TD></TR>
 
 <TR><TD><TT>globalToSensorLocal</TT> (static)</TD>
     <TD>wedge(1-36), sensor(0-2), global xyz[3][cm]</TD><TD>bool; sensor-local xyz[3][cm]</TD>

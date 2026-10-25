@@ -40,6 +40,10 @@ class StFstDb : public StObject
 public:
    StFstDb();
    THashList *getRotations() const                                                {return mgRotList; }
+   /// The TPC's own alignment. Kept for reference and NOT part of the composed
+   /// sensor-on-global matrix: AGML misaligns FSTM in CAVE with Geometry/fst/*
+   /// only, so applying it would move the hits out of the frame of the GenFit
+   /// planes built from those same TGeo nodes. See setGeoHMatrices().
    const TGeoHMatrix *getGeoHMatrixTpcOnGlobal() const                            {return mGeoHMatrixTpcOnGlobal; }
    const TGeoHMatrix *getGeoHMatrixFstOnTpc() const                               {return &mGeoHMatrixFstOnTpc; }
    /// hssOnFst is per half (halfId(wedge)) and fstWedgeOnHss per wedge, so both

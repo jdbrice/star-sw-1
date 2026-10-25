@@ -195,7 +195,8 @@ Int_t StFstDb::setGeoHMatrices(Survey_st **tables, const Int_t *nRows)
    mgRotList = new THashList(kFstNumWedges * kFstNumSensorsPerWedge, 0);
    mgRotList->SetOwner(kFALSE);
 
-   //get TPC positionement relative to STAR
+   // TPC positioning relative to STAR. Loaded for the record only -- see the
+   // composition below: it is NOT applied to the FST, because AGML does not.
    if (gStTpcDb) {
       mGeoHMatrixTpcOnGlobal = (TGeoHMatrix *)&gStTpcDb->Tpc2GlobalMatrix();
    }
@@ -285,7 +286,19 @@ Int_t StFstDb::setGeoHMatrices(Survey_st **tables, const Int_t *nRows)
       const int half = halfId(wedge);
       if (half < 0) continue;
 
-      TGeoHMatrix sensorGlobal = (*mGeoHMatrixTpcOnGlobal) * mGeoHMatrixFstOnTpc * mGeoHMatrixHssOnFst[half] * mGeoHMatrixWedgeOnHss[wedge - 1] * mGeoHMatrixSensorOnWedge[wedge - 1][sensor];
+      // tpcOnGlobal is deliberately NOT in this product. It is the TPC's own
+      // alignment, not part of the FST survey, and AGML does not apply it to the
+      // FST: FstmGeoSM.xml places FSTM straight into CAVE and misaligns it with
+      // Geometry/fst/* only, so the TGeo nodes -- which are what
+      // FwdGeomUtils::buildFstSensorMap hands GenFit as the sensor planes -- are
+      // displaced by fstOnTpc * hssOnFst[half] alone. Including tpcOnGlobal here
+      // put every FST hit in a different frame from the plane it is fitted on:
+      // 2.4/1.7/2.0 mm of translation plus 0.8 mm from the -0.48 mrad R02 acting
+      // on the FST's 165 cm z lever arm, which no table of ours accounts for.
+      // Without it the composed matrix equals the AGML node displacement exactly,
+      // so hit and plane agree to the bit. Put it back when, and only when, the
+      // XML starts misaligning the TPC-to-global step as well.
+      TGeoHMatrix sensorGlobal = mGeoHMatrixFstOnTpc * mGeoHMatrixHssOnFst[half] * mGeoHMatrixWedgeOnHss[wedge - 1] * mGeoHMatrixSensorOnWedge[wedge - 1][sensor];
 
       comb->SetRotation(sensorGlobal.GetRotationMatrix());
       comb->SetTranslation(sensorGlobal.GetTranslation());

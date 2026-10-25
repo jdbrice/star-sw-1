@@ -210,8 +210,12 @@ Int_t StFstHitMaker::Make()
 				local[2] = newHit->localPosition(2);
 
 				// nominal -> global. The survey matrix is applied ONLY when asked
-				// for: see SetApplySurvey() in the header for the two open
-				// questions behind that default.
+				// for: see SetApplySurvey() in the header for the two reasons
+				// behind that default. Both are about the simulated geometry and
+				// the measured residuals; the frame question that used to be the
+				// first of them is settled -- StFstDb no longer puts tpcOnGlobal
+				// in the product, so this matrix is exactly the displacement AGML
+				// gives the TGeo nodes the GenFit planes are built from.
 				//
 				// Both of the things that used to live here hid the survey rather
 				// than applying it. Before 9e70bfd0a9 the LocalToMaster result was
@@ -222,8 +226,10 @@ Int_t StFstHitMaker::Make()
 				// exact round trip -- so the matrix cancelled either way, and no
 				// FST hit has ever carried the survey. For the Run 22 tables that
 				// is (+0.7126, -3.0102) mm for the x>0 half and (+2.2626, -3.3302)
-				// mm for the x<0 half, the same two groups the misaligned AGML
-				// geometry moves its sensors by (d4378cbde9).
+				// mm for the x<0 half -- which is, to the bit, how far the
+				// misaligned AGML geometry moves the sensors of those same two
+				// groups (d4378cbde9; measured off the fGeom.root cache, 54 nodes
+				// each).
 				if (mApplySurvey) {
 					int sensorId = StFstDb::sensorSurveyId((int)newHit->getWedge(), (int)newHit->getSensor());
 					TGeoHMatrix *geoMSensorOnGlobal = (TGeoHMatrix *) mSensorTransforms->FindObject(Form("R%04i", sensorId));

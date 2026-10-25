@@ -4,11 +4,16 @@
 //   root4star -l -b -q 'script/fstSurveyMatrix.C("20211112.000004")'
 //
 // StFstDb composes, per sensor,
-//     R%04i = tpcOnGlobal * fstOnTpc * hssOnFst[half] * fstWedgeOnHss[wedge] * fstSensorOnWedge[id]
+//     R%04i = fstOnTpc * hssOnFst[half] * fstWedgeOnHss[wedge] * fstSensorOnWedge[id]
 // and StFstHitMaker::SetApplySurvey(true) applies exactly that to the nominal hit
-// position. The FST tables are translations only, so anything else in R -- a rotation,
-// or a translation that varies smoothly with azimuth -- comes from tpcOnGlobal, which
-// is the TPC's own alignment and has nothing to do with the FST survey.
+// position. tpcOnGlobal used to head that product and no longer does: it is the TPC's
+// own alignment, AGML does not apply it to the FST, and with it in place the hits sat
+// in a different frame from the GenFit planes. It is still printed below, as a
+// reference, so the size of what is being left out stays visible.
+//
+// The FST tables are translations only, so R should be a pure translation; a rotation,
+// or a translation that varies smoothly with azimuth, means something unintended has
+// got back into the product.
 //
 // Prints each factor separately, then the composed matrix for one sensor per wedge, so
 // a per-wedge pattern is visible as a pattern rather than as a single mean.
@@ -36,7 +41,7 @@ void fstSurveyMatrix(const char* sdt = "20211112.000004",
     }
     if (!db) { printf("fstSurveyMatrix: no StFstDb in the chain\n"); return; }
 
-    printf("\n--- tpcOnGlobal (gStTpcDb, NOT part of the FST survey) ---\n");
+    printf("\n--- tpcOnGlobal (gStTpcDb, NOT applied: not part of the FST survey) ---\n");
     const TGeoHMatrix* mt = db->getGeoHMatrixTpcOnGlobal();
     if (mt) {
         const Double_t* tt = mt->GetTranslation();
