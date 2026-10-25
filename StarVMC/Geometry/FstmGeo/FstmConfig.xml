@@ -4,6 +4,18 @@
  
 
     <Modules>FstmGeo, FstmGeoS, FstmGeoM, FstmGeoSM</Modules>
+
+    <!-- fcstrk11, 2026-10-25: FSTMv1m and FSTMv1sm select fstmconfig=2, NOT the
+         value="1" PR #28 gives them. The wedge mirroring is real (seen on the
+         detector and the installation photographs), fstmconfig=2 is AGML
+         wholewedge 2.0 = as installed, and Flemming already made 2 the module
+         default in FstmGeoM.xml / FstmGeoSM.xml; the value="1" here overrode
+         it for exactly the setups dev2022m, dev2022sm and dev2026 use. Asked of
+         Jason as item 1 of PR28.txt; applied locally so our dev tags build the
+         detector as it is. Consequence: no configuration can build the
+         pre-mirror geometry any more, so a cache for a sample generated before
+         2026-10-25 has to come from the fGeom.*.root files already on disk (or
+         from temporarily putting these two values back). -->
     
     <Setup  name  = "FSTMof" comment="No FSTM" module="FstmGeo" onoff="off" />
 
@@ -41,7 +53,7 @@
             onoff  = "on"
             simu   = "2"
             >
-      <Init struct="FSTG" var="fstmconfig" value="1"/>
+      <Init struct="FSTG" var="fstmconfig" value="2"/>
     </Setup>
 
     <Setup  name   = "FSTMv2m"
@@ -60,7 +72,7 @@
             onoff  = "on"
             simu   = "2"
             >
-      <Init struct="FSTG" var="fstmconfig" value="1"/>
+      <Init struct="FSTG" var="fstmconfig" value="2"/>
     </Setup>
 
         <Setup  name   = "FSTMv2sm"

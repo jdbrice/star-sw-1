@@ -123,8 +123,18 @@ int StFstDb::wedgeOrientation(int disk, int wedge)
    const int iwedgem = (wedge - 1) % kFstNumWedgePerDisk;   // 0-based within the disk
 
    // The two arrays this needs already exist in StFstConsts.h and are the ones
-   // StFstHitMaker uses for the phi logic, so take the front/back sense from them
-   // rather than restating it -- then the z and the phi cannot drift apart:
+   // StFstHitMaker (and StFstSlowSimMaker, line ~362) use for the strip-to-phi
+   // direction, so take the front/back sense from them rather than restating it:
+   //
+   // CAREFUL: fstmConfig() flips the Z sense only, NOT the phi sense. That is
+   // deliberate. Physically, turning a wedge over reverses both -- but our phi
+   // convention is already the one the INSTALLED detector has, because it was
+   // judged on data: FstWedgeAligner's 36 measured per-wedge corrections are
+   // 1-3 mrad, where a reversed strip direction would be hundreds (half a wedge
+   // is ~300 mrad). MC cannot judge it at all, since the slow sim and the hit
+   // maker apply the same sign and the error cancels. So before 2026-10-25 the
+   // phi sense was as-installed while this z sense was pre-mirror: the two
+   // disagreed with each other, and kFstmAsInstalled is what makes them agree.
    //     kFstzDirct[iwedgem] = {1,-1,1,-1,...}  the alternation with wedge parity
    //     kFstzFilp[disk-1]   = {1,-1,1}         the inversion on disk 2
    // FstmGeoSM.xml is the authority behind them: a wedge goes to the BACK (-z,
