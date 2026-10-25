@@ -290,6 +290,10 @@
 
         <Create block="SCON"  />
         <Placement block="SCON" in="Cave"  >
+	  <!--
+	  TODO... need to apply sconOnTpc
+	  -->
+	  <Misalign table="Geometry/tpc/TpcPosition"             opts="left,print" />	  
         </Placement>
         
         <Create block="SCON"  />

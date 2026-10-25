@@ -24,8 +24,7 @@ June 14, 2021
 During installation review it was decided to move the middle ring modules
 to avoid interference. This is equivalent to rotate the middle ring by 180 deg around the vertical axis.
 
-
-
+09/17/2026 Flemming Added steering control for selection of mirror configuration of wedges.
 -->
     <Replace match="GeV">*1.0E+0;</Replace>    
     <Replace match="MeV">*1.0E-3;</Replace>    
@@ -155,6 +154,7 @@ to avoid interference. This is equivalent to rotate the middle ring by 180 deg a
 
 	<Structure name="FSTG" comment="FstmGeo geometry configuration">
 	  <var name="version" comment="Geometry version" />
+	  <var name="fstmconfig" type="float" comment="Config  version" />
 	</Structure>
 
 
@@ -436,7 +436,10 @@ to avoid interference. This is equivalent to rotate the middle ring by 180 deg a
 	zcool = obase2 + 0.418
 	dcool = oBaseThickness -0.15
 
-	<Fill name="FSTG"><var name="version" value="1.2" /></Fill>
+	<Fill name="FSTG">
+	  <var name="version" value="1.2" />
+	  <var name="fstmconfig" value="2" />
+	</Fill>
 
         <Fill name="mothervol" comment=" TUBE for the mothervolume" >
             <var name="version"  value="1.0" />
@@ -444,7 +447,7 @@ to avoid interference. This is equivalent to rotate the middle ring by 180 deg a
             <var name="y"        value="0.0" />
             <var name="z"        value="134.0" />
             <var name="rmin"     value="4.1" />
-            <var name="rmax"     value="34.00" />
+            <var name="rmax"     value="33.70" />
             <var name="dz"       value="30.0" />
 	    <var name="zdisk"    value="{151.750, 165.248, 178.781}" />
         </Fill>
@@ -452,13 +455,19 @@ to avoid interference. This is equivalent to rotate the middle ring by 180 deg a
         <Fill name="wholewedge" comment="whole wedge shape" >
             <var name="version"  value="1.0" />
             <var name="rmin"     value="5" />
-            <var name="rmax"     value="34" />
+            <var name="rmax"     value="33.7" />
             <var name="phi1"     value="-17" />
             <var name="phi2"     value="17" />
             <var name="dz"       value="4.0/2" />  <!-- cooling tube connect at z=3.018 -->
             <var name="modulus2" value="{0,1,0,1,0,1,0,1,0,1,0,1}" />
         </Fill>
 
+       <Fill name="wholewedge" comment="whole wedge shape" >
+            <var name="version"  value="2.0" />
+            <var name="rmax"     value="33.7" />
+            <var name="modulus2" value="{1,0,1,0,1,0,1,0,1,0,1,0}" />
+        </Fill>
+ 
         <Fill name="ring" comment=" supporting half ring" >
             <var name="version"  value="1.0" />
             <var name="rmin"     value="30.0" />
@@ -726,6 +735,9 @@ to avoid interference. This is equivalent to rotate the middle ring by 180 deg a
             <var name="dz"       value="0.03/2" />
         </Fill>
 
+	<Use struct="FSTG"/>
+	<Use struct="wholewedge" select="version" value="FSTG_fstmconfig" />
+
         <!-- ////////////////////////////////////////////////////////////////////////////
                 Material mixture
         -->
@@ -820,7 +832,10 @@ to avoid interference. This is equivalent to rotate the middle ring by 180 deg a
 	zcenter = mothervol_z+mothervol_dz
         <Create    block="FSTM" />
         <Placement block="FSTM" in="CAVE" x="0.0" y="0.0" z="zcenter" >
-            <Misalign table="Geometry/fst/fstOnTpc" row="0"/>
+            <Misalign table="Geometry/fst/fstOnTpc" row="0"  opts="print"/><!-- opts="left" probably needed -->
+	    <!-- TODO 
+		 <Misalign table="Geometry/tpc/TpcPosition" opts="left" />
+	    -->
         </Placement>
 
         <!-- FST mother container -->

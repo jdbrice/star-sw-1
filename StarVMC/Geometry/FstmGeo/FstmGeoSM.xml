@@ -21,6 +21,11 @@ It was copied from FstmGeo.xml on June 15. 2021
   -Compressed heatsinks into individual volumes located within the inner and outer PEEK bases.
   -Removed significant amount of unnecessary commented code.
 
+08/10/2026 Flemming Fix wedge position by mirroring ackording to actual installation.
+Added some setup diagnostic info.
+The change in the rmax variable for the wholewedge  rmax was to accomodate the outer support materil.
+
+09/17/2026 Flemming Added steering control for selection of mirror configuration of wedges.
 -->
     <Replace match="GeV">*1.0E+0;</Replace>
     <Replace match="MeV">*1.0E-3;</Replace>
@@ -121,7 +126,7 @@ It was copied from FstmGeo.xml on June 15. 2021
           ioTubeLength/0.835/   <!-- Has to keep spacing -->
         </varlist>
 
-    <varlist type="float">codeversion/1.1/ </varlist>
+    <varlist type="float">codeversion/1.3/ </varlist>
 
 
 
@@ -130,12 +135,14 @@ It was copied from FstmGeo.xml on June 15. 2021
         -->
 
 	<Structure name="FSTG" comment="FstmGeo geometry configuration">
-	  <var name="version" comment="Geometry version" />
+	  <var name="version" type="float" comment="Geometry version" />
+	  <var name="fstmconfig" type="float" comment="Config  version" />
 	</Structure>
 
+	
 
         <Structure name="mothervol" comment="tubes for the mother volume">
-            <var name="version"   type="float" />
+ 	  <var name="version"   type="float" />
             <var name="x"         type="float" />
             <var name="y"         type="float" />
             <var name="z"         type="float" />
@@ -342,17 +349,20 @@ It was copied from FstmGeo.xml on June 15. 2021
         zcool = obase2 + 0.418
         dcool = oBaseThickness -0.15
 
-    <Info format="FSTM simplified code version = {6.1f}">codeversion</Info>
+	<Info format="FSTMSM simplified code version = {6.1f}">codeversion</Info>
 
-	<Fill name="FSTG"><var name="version" value="1.3" /></Fill>
-
-        <Fill name="mothervol" comment=" TUBE for the mothervolume" >
+	<Fill name="FSTG">
+	  <var name="version" value="1" />
+	  <var name="fstmconfig" value="2" />
+	</Fill>
+	
+	<Fill name="mothervol" comment=" TUBE for the mothervolume" >
             <var name="version"  value="1.0" />
             <var name="x"        value="0.0" />
             <var name="y"        value="0.0" />
             <var name="z"        value="134.0" />
             <var name="rmin"     value="4.1" />
-            <var name="rmax"     value="34.00" />
+            <var name="rmax"     value="33.70" />
             <var name="dz"       value="30.0" />
             <var name="zdisk"    value="{151.750, 165.248, 178.781}" />
         </Fill>
@@ -360,11 +370,17 @@ It was copied from FstmGeo.xml on June 15. 2021
         <Fill name="wholewedge" comment="whole wedge shape" >
             <var name="version"  value="1.0" />
             <var name="rmin"     value="5" />
-            <var name="rmax"     value="34" />
+            <var name="rmax"     value="33.7" />
             <var name="phi1"     value="-17" />
             <var name="phi2"     value="17" />
             <var name="dz"       value="4.0/2" />  <!-- cooling tube connect at z=3.018 -->
-            <var name="modulus2" value="{0,1,0,1,0,1,0,1,0,1,0,1}" />
+	    <var name="modulus2" value="{0,1,0,1,0,1,0,1,0,1,0,1}" />
+        </Fill>
+	
+       <Fill name="wholewedge" comment="whole wedge shape" >
+            <var name="version"  value="2.0" />
+            <var name="rmax"     value="33.7" />
+            <var name="modulus2" value="{1,0,1,0,1,0,1,0,1,0,1,0}" />
         </Fill>
 
         <Fill name="ring" comment=" supporting half ring" >
@@ -373,6 +389,7 @@ It was copied from FstmGeo.xml on June 15. 2021
             <var name="rmid"     value="32.23" />
             <var name="rmax"     value="33.5" />
             <var name="phi1"     value="15.0" />
+
             <var name="phi2"     value="7.08451" />
             <var name="dz"       value="sRingThickness/2" />
         </Fill>
@@ -490,7 +507,7 @@ It was copied from FstmGeo.xml on June 15. 2021
             <var name="z"         value="{ibase2-0.2626, sRingThickness+0.305}" />
         </Fill>
 
-        <Fill name="outerhybrida" comment="outer hybrid a" >
+	<Fill name="outerhybrida" comment="outer hybrid a" >
             <var name="version"  value="1.0" />
             <var name="z"        value="sRingThickness-HybridThickness/2" />
             <var name="rmin"     value="15.774" />
@@ -550,6 +567,9 @@ It was copied from FstmGeo.xml on June 15. 2021
             <var name="dz"       value="0.03/2" />
         </Fill>
 
+	<Use struct="FSTG"/>
+	<Use struct="wholewedge" select="version" value="FSTG_fstmconfig" />
+	
         <!-- ////////////////////////////////////////////////////////////////////////////
                 Material mixture
         -->
@@ -725,12 +745,12 @@ The factors are the weights fraction for stainless and NOVEC
 
                         halfid = 0
                         <!-- halfid splits the 12 wedges of a disk into two halves, which index
-                         the two rows of Geometry/fst/hssOnFst. ge.5 put 5 wedges in
-                         one half and 7 in the other, so a third of the sensors took
-                         the wrong half's survey row. Confirmed against the built
-                         geometry: the misaligned sensors split 45/63 instead of
-                         54/54. ge.6 gives 6 and 6. [Flemming, 2026-10-22] -->
-                    <If expr="iwedgem.ge.6">
+                             the two rows of Geometry/fst/hssOnFst. ge.5 put 5 wedges in
+                             one half and 7 in the other, so a third of the sensors took
+                             the wrong half's survey row. Confirmed against the built
+                             geometry: the misaligned sensors split 45/63 instead of
+                             54/54. ge.6 gives 6 and 6. [Flemming, 2026-10-22] -->
+                        <If expr="iwedgem.ge.6">
                             halfid = 1
                         </If>
                                            
@@ -740,7 +760,12 @@ The factors are the weights fraction for stainless and NOVEC
                             <Misalign table="Geometry/fst/fstWedgeOnHss"  row="iwedgem+12*idisk" />
                             <Misalign table="Geometry/fst/hssOnFst"       row="halfid" />
                         </Placement>
-
+			<If expr="iwedgem.le.1">
+			  <Info format=" FTUS wedgeno {2I}">iwedgem</Info>
+			  <Info format=" FTUS inner_zi {6.2f}">inner_silicon_motherz</Info>
+			  <Info format=" FTUS outer_si {6.2f}">outer_silicon_motherz</Info>
+			  <Info format=" FTUS zrot     {6.2f}">wedge_zrot</Info>
+			</If>
                         <Placement block="FTUS" in="FSTM" x="0" y="0" z="inner_silicon_motherz" rmin="innersilicon_rmin" phi1="innersilicon_phi1" rmax="innersilicon_rmax" phi2="innersilicon_phi2"    dz="innersilicon_dz" konly="ONLY" ncopy="1+3*iwedgem+36*idisk" >
                             <Rotation alphax="wedge_xrot"/>
                             <Rotation alphaz="wedge_zrot"/>
@@ -782,7 +807,7 @@ The factors are the weights fraction for stainless and NOVEC
         </Volume> 
 
 
-        <!-- Whole wedge container -->
+        <!--  wedge container -->
         <Volume name="FSTW" comment="Whole wedge container" assembly="true" >
             <Attribute for="FSTW" seen="1" colo="3" />
             <Material name="air" />

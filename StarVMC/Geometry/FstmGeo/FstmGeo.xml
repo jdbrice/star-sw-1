@@ -135,7 +135,9 @@ Remove the inner support tubes as it could not be attached to detector.
           ioTubeLength/0.835/   <!-- Has to keep spacing -->
         </varlist>
 
-
+	<varlist type="float" comment ="Refpoint outer supporting structure attached to crbon fibre cone" >
+	  outsuprefpoint/147.4/
+	</varlist> 
 
         <!-- ////////////////////////////////////////////////////////////////////////////
                 Declare structures
@@ -411,6 +413,7 @@ Remove the inner support tubes as it could not be attached to detector.
             <var name="dz"        type="float" />
         </Structure>
 
+
         <!-- ////////////////////////////////////////////////////////////////////////////
                 Fill some variables with actual offsets
                 Fill the structures
@@ -433,7 +436,7 @@ Remove the inner support tubes as it could not be attached to detector.
             <var name="y"        value="0.0" />
             <var name="z"        value="134.0" />
             <var name="rmin"     value="4.1" />
-            <var name="rmax"     value="34.00" />
+            <var name="rmax"     value="33.70" />
             <var name="dz"       value="30.0" />
             <var name="zdisk"    value="{151.750, 165.248, 178.781}" />
         </Fill>
@@ -441,7 +444,7 @@ Remove the inner support tubes as it could not be attached to detector.
         <Fill name="wholewedge" comment="whole wedge shape" >
             <var name="version"  value="1.0" />
             <var name="rmin"     value="5" />
-            <var name="rmax"     value="34" />
+            <var name="rmax"     value="33.7" />
             <var name="phi1"     value="-17" />
             <var name="phi2"     value="17" />
             <var name="dz"       value="4.0/2" />  <!-- cooling tube connect at z=3.018 -->
@@ -714,6 +717,9 @@ Remove the inner support tubes as it could not be attached to detector.
             <var name="dz"       value="0.03/2" />
         </Fill>
 
+
+
+
         <!-- ////////////////////////////////////////////////////////////////////////////
                 Material mixture
         -->
@@ -754,7 +760,7 @@ Remove the inner support tubes as it could not be attached to detector.
             <Component name="Si" a="28.1" z="14" w="0.191"  />
             <Component name="O"  a="16"   z="8"  w="0.339"  />
             <Component name="C"  a="12"   z="6"  w="0.213"  />
-            <Component name="H"  a="1"    z="1"  w="0.028"  />
+            <Component name="H"  a="1.00784" z="1"  w="0.028"  />
             <Component name="Cl" a="35.5" z="17" w="0.009"  />
             <Component name="Cu" a="63.5" z="29" w="0.122" />
             <Component name="Pb" a="207"  z="82" w="0.039"  />
@@ -764,7 +770,7 @@ Remove the inner support tubes as it could not be attached to detector.
         <!-- 3M Novec 7200 (C4F9OC2H5) for cooling liquid -->
         <Mixture name="NOVEC7200" dens="1.44">
             <Component name="O" a="16" z="8"  w="0.061" />
-            <Component name="H" a="1"  z="1"  w="0.019" />
+            <Component name="H" a="1.00784"  z="1"  w="0.019" />
             <Component name="C" a="12" z="6"  w="0.272"  />
             <Component name="F" a="19"  z="9" w="0.648"  /><!-- think these were switched -->
         </Mixture>
@@ -792,7 +798,7 @@ Remove the inner support tubes as it could not be attached to detector.
             <Component name="Si" a="28.08" z="14" w="0.6*1*28./60." />
             <Component name="O" a="16" z="8" w="0.6*2*16./60.+0.4*4*16./174." />
             <Component name="C" a="12" z="6" w="0.4*8*12./174." />
-            <Component name="H" a="1"  z="1" w="0.4*14*1./174." />
+            <Component name="H" a="1.00784"  z="1" w="0.4*14*1./174." />
         </Mixture>
 
         <!--  referred from IstdGeo1a.xml for readout connectors and spacers -->
@@ -820,7 +826,7 @@ Remove the inner support tubes as it could not be attached to detector.
             <Shape     type="TUBE" rmin="4.8" rmax="mothervol_rmax" dz="mothervol_dz" />
 
             <Create    block="FSTD" />
-            <Info format="Position FSTD 1 at {6.2f}">mothervol_zdisk(1)</Info>
+            <Info format="Position_FSTD_1 at {6.2f}">mothervol_zdisk(1)</Info>
             <Placement block="FSTD" in="FSTM" x="0.0" y="0.0" z="mothervol_zdisk(1)-zcenter" ncopy="4" />
             <Placement block="FSTD" in="FSTM" x="0.0" y="0.0" z="mothervol_zdisk(2)-zcenter" ncopy="5" >
               <Rotation alphaz="30"/>
@@ -837,7 +843,7 @@ Remove the inner support tubes as it could not be attached to detector.
 
             <!-- Shape will be dynamically sized to include all disks placed -->
             <!--  not so from the geant 3 version  -->
-            <Shape     type="TUBE" rmin="4.8" rmax="34" dz="5" />
+            <Shape     type="TUBE" rmin="4.8" rmax="33.7" dz="5" />
 
             <!-- 12 wedges -->
             <Create block="FTUO" />

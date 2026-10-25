@@ -1,0 +1,432 @@
+<Document file="StarVMC/Geometry/FstmGeo/FstoGeo1.xml">
+
+
+<!--
+
+March 18, 2026  F.Videbaek
+  Initial version of outer support structures, cable trays and content
+
+  They are defined as varlist up front and used in geometrystructures used in particular for placement.
+ There is a bit of missing material at the outer edge of the inner mech structure. I will adjust the outer radiues so the total mateerial should be ok.(approximately
+The outer radius could be make slightly bigger to adjust this.
+
+Work Completed in July
+
+-->
+    <Replace match="GeV">*1.0E+0;</Replace>
+    <Replace match="MeV">*1.0E-3;</Replace>
+    <Replace match="keV">*1.0E-6;</Replace>
+
+    <Module name="FstoGeo1" comment="Forward Silicon TrackerSupport">
+      <Author name=" Flemming Videbaek"/>
+      <Created date="09 March, 2026"/>
+      <CDE>AGECOM,GCONST,GCUNIT</CDE>
+      <Content>
+	OFSR,   <!-- OFSR Outer support ring for FST -->
+        OFSB,   <!-- OFSB Outer support bars (4) for FST -->
+	OFSD,   <!-- outer support bar (4) for FST -->
+	OFSC,   <!-- OFSC Outer extended support bars (4) for FST -->    <!-- extension bar for OSB Al rather the SS -->
+	OFCA,   <!-- Cable trays master vol - contains air and cables wide trays -->
+	OFCB,    <!-- air to contain cables -->
+	OFCG,    <!-- cable -->
+	OFCC,    <!-- cooling tray -->
+	OFCD,     <!--  air ditto -->
+	OFCE,     <!-- tubings 6 tubes per trays-->
+	OFCF      <!-- novex cooling fluid -->
+      </Content>
+      
+      <!-- ////////////////////////////////////////////////////////////////////////////
+	   Declare varlists        -->
+      <varlist type="float" comment ="Refpoint outer supporting structure attached to crbon fibre cone" >
+	outsuprefpoint/147.94/,
+	outframeref/141.80/
+      </varlist> 
+      
+      <varlist type="float">
+	x, y, offset, ang
+      </varlist>
+      
+      
+      
+      
+      <!-- ////////////////////////////////////////////////////////////////////////////
+           Declare structures
+      -->
+      
+      <Structure name="FSTO" comment="FstoGeo1 geometry configuration">
+	<var name="version" comment="Geometry version" />
+      </Structure>
+      
+      
+      
+      <!--  New structure for support rings and holder staves -->
+      
+      
+      <Structure name="supring" comment="outer support ring">
+        <var name="version"   type="float" />
+        <var name="rmin"         type="float" />
+        <var name="rmax"         type="float" />
+	<var name="z1" type="float" />
+	<var name="z2" type="float" />
+        <var name="dz"        type="float" />
+      </Structure>
+      
+      <Structure name="supbar" comment="outer support bars">
+        <var name="version"   type="float" />
+	<var name="rpos"     type="float" />
+	<var name="ri"       type="float" />
+	<var name="ro"       type="float" />
+	<var name="ra"       type="float" />
+	<var name="angle(4)" type="float" />
+	<var name="dz1"      type="float"/>
+	<var name="dz2"      type="float"/>
+	<var name="dz"       type="float"/>
+      </Structure>
+      
+      <Structure name="cabt" comment="wide trays">
+        <var name="version"   type="float" />
+	<var name="x(4)" type="float" />
+	<var name="y(4)" type="float" />
+	<var name="rot(4)" type="float"/>
+	<var name="dx" type="float" />
+	<var name="dxi" type="float" />
+	<var name="dy" type="float" />
+	<var name="dyi" type="float" />
+	<var name="dz" type="float" />
+	<var name="cr" type="float" />
+      </Structure>
+      
+      <Structure name="coolt" comment="narrow trays">
+        <var name="version"   type="float" />
+	<var name="x(4)" type="float" />
+	<var name="y(4)" type="float" />
+	<var name="rot(4)" type="float"/>
+	<var name="dx" type="float" />
+	<var name="dxi" type="float" />
+	<var name="dy" type="float" />
+	<var name="dyi" type="float" />
+	<var name="dz" type="float" />
+	<var name="cri" type="float" />
+	<var name="cro" type="float" />
+
+      </Structure>
+      
+      <!-- ////////////////////////////////////////////////////////////////////////////
+           Fill some variables with actual offsets
+           Fill the structures
+	   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      -->
+      
+      <Info format="FSTO end of volume {6.2f}">outsuprefpoint</Info>
+      
+      <Fill name="FSTO"><var name="version" value="1.0" /> </Fill>
+      
+      <Fill name="supring" comment="outer supportring" >
+        <var name="version"  value="1.0" />
+        <var name="rmin"     value="36.83" />
+        <var name="rmax"     value="37.47" />
+	<var name="z1"       value="outframeref+13.97" />
+	<var name="z2"       value="outframeref+13.97+73.66" />
+        <var name="dz"       value="2.54" />
+      </Fill>
+      
+      <Fill name="supbar" comment="outer supportbar">
+	<var name="version"   value="1.0" /> 
+	<var name="rpos"    value="36.83-1.40" />
+	<var name="ri"       value="1.45/2" /> <!-- increased to get to correct weight -->
+	<var name="ro"      value="2.21/2" />
+	<var name="ra"      value="2.80/2"/>
+	<var name="angle"   value="{55.0,125.0, 235.0, 305.0}"/>
+	<var name="dz1"     value="42.13" />
+	<var name="dz2"     value="86.4-42.13"/>
+	<!--	  <var name="dz"      value="88.90/2"/>-->
+      </Fill>
+	
+	<Fill name="cabt" comment="wide trays parameter">
+          <var name="version" value="1.0"/>
+	  <var name="x" value="{14.64,34.9,-14.64,-34.9}" />
+	  <var name="y" value="{31.87,-3.3,31.87,-3.3}" />
+	  <var name="rot" value="{-24.0, -90.0, 24.0, 90.0}"/>
+	  <var name="dx"  value="6.35/2"/>
+	  <var name="dxi" value="6.35/2-0.32" />
+	  <var name="dy"  value="2.5/2" />
+	  <var name="dyi" value="2.5/2-0.32/2" />
+	  <var name="dz"  value="86.36/2.0" />
+	  <var name="cr"  value="0.55" />
+	</Fill>
+
+	<Fill name="coolt" comment="cooling tray trays parameter">
+          <var name="version" value="1.0"/>
+	  <var name="x" value="{3.86, 3.86, -3.86, -3.86}"/>
+	  <var name="y" value="{34.93, -34.93, 34.93, -34.93}"/>
+	  <var name="rot" value="{0, -180, 0, -180}"/>
+	  <var name="dx"  value="5.08/2"/>
+	  <var name="dxi" value="5.08/2-0.15" />
+	  <var name="dy"  value="2.22/2" />
+	  <var name="dyi" value="2.22/2-0.15/2" />
+	  <var name="dz"  value="86.4/2.0" />
+	  <var name="cri" value="2.54/8.0" comment="inner tube radius" />
+	  <var name="cro" value="0.3750*2.54/2" comment="outer tube radius" />
+
+	</Fill>
+
+
+        <!-- ////////////////////////////////////////////////////////////////////////////
+                Material mixture
+        -->
+
+
+
+        <!-- 3M Novec 7200 (C4F9OC2H5) for cooling liquid -->
+        <Mixture name="NOVEC7200" dens="1.44">
+            <Component name="O" a="16" z="8"  w="0.061" />
+            <Component name="H" a="1.00784"  z="1"  w="0.019" />
+            <Component name="C" a="12" z="6"  w="0.272"  />
+            <Component name="F" a="19"  z="9" w="0.648"  /><!-- think these were switched -->
+        </Mixture>
+
+	<Mixture name="POLYETH" dens="1.20">
+           <Component name="H" a="1.00784"  z="1"  w="0.077" />
+	   <Component name="C" a="12" z="6" w="0.923"/>
+        </Mixture>
+
+	<Mixture name="Fstcablemix" dens="1.16">
+           <Component name="H" a="1.00784"  z="1"  w="0.107*0.61" />
+	   <Component name="C" a="12" z="6" w="0.680*0.61"/>
+	   <Component name="N" a="14" z="7" w="0.099*0.61"/>
+	   <Component name="O" a="16" z="8" w="0.113*0.61"/>
+	   <Component name="Cu" a="64" z="27" w="0.390"/>
+        </Mixture>
+
+        <!-- Stainless steel 316 for the cooling tube (choose maximum of each element except Fe) -->
+
+        <Mixture name="StainlessSteel316" dens="8">
+            <Component name="Fe" a="55.845"         z="26"  w="0.62085" />
+            <Component name="C"  a="12.0096"        z="6"   w="0.0008" />
+            <Component name="Mn" a="54.938043"      z="25"  w="0.02" />
+            <Component name="Si" a="28.085"         z="14"  w="0.0075" />
+            <Component name="P"  a="30.973761998"   z="15"  w="0.00045" />
+            <Component name="S"  a="32.06"          z="16"  w="0.0003" />
+            <Component name="Cr" a="51.9961"        z="24"  w="0.18" />
+            <Component name="Mo" a="95.95"          z="42"  w="0.03" />
+            <Component name="Ni" a="58.6934"        z="28"  w="0.14" />
+            <Component name="N"  a="14.00643"       z="7"   w="0.0001" />
+        </Mixture>
+
+
+
+
+
+        <!-- ///////////////////////////////////////////////////////////////////////////
+                Place the volumes
+        -->
+ 	<Create block="OFSR" />
+	<Placement block="OFSR" in="CAVE" x="0.0" y="0.0" z="supring_z1" />
+	<Placement block="OFSR" in="CAVE" x="0.0" y="0.0" z="supring_z2" />
+
+	<Create block="OFSB" />
+
+	ang= supbar_angle(1)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSB" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1/2"/>
+	ang= supbar_angle(2)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSB" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1/2"/>
+	ang= supbar_angle(3)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSB" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1/2"/>
+	ang= supbar_angle(4)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSB" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1/2"/>
+
+
+	<!-- suppart bar Al part where the SS inner bar sits -->
+	<Create block="OFSD" />
+
+	ang= supbar_angle(1)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSD" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1/2"/>
+	ang= supbar_angle(2)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSD" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1/2"/>
+	ang= supbar_angle(3)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSD" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1/2"/>
+	ang= supbar_angle(4)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSD" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1/2"/>
+
+	<Create block="OFSC" />
+	ang= supbar_angle(1)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSC" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1+supbar_dz2/2"/>
+	ang= supbar_angle(2)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSC" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1+supbar_dz2/2"/>
+	ang= supbar_angle(3)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSC" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1+supbar_dz2/2"/>
+	ang= supbar_angle(4)*(PI/180.0)
+	x=supbar_rpos*cos(ang)
+	y=supbar_rpos*sin(ang)
+	<Placement block="OFSC" in="CAVE" x="x" y="y" z="outframeref+supbar_dz1+supbar_dz2/2"/>
+
+	<!-- 4 wide cable tray to be placed -->
+	<Create block="OFCA" />
+	<Placement block="OFCA" in="CAVE" x="cabt_x(1)" y="cabt_y(1)" z="cabt_dz+outsuprefpoint">
+	  <Rotation alphaz="cabt_rot(1)" />
+	</Placement>
+	<Placement block="OFCA" in="CAVE" x="cabt_x(2)" y="cabt_y(2)" z="cabt_dz+outsuprefpoint">
+	  <Rotation alphaz="cabt_rot(2)" />
+	</Placement>
+
+	<Placement block="OFCA" in="CAVE" x="cabt_x(3)" y="cabt_y(3)" z="cabt_dz+outsuprefpoint">
+	  <Rotation alphaz="cabt_rot(3)" />
+	</Placement>
+
+	<Placement block="OFCA" in="CAVE" x="cabt_x(4)" y="cabt_y(4)" z="cabt_dz+outsuprefpoint">
+	  <Rotation alphaz="cabt_rot(4)" />
+	</Placement>
+
+	<!-- 4 narrow cable tray to be placed - cooling lines -->
+	<Create block="OFCC" />
+	<Placement block="OFCC" in="CAVE" x="coolt_x(1)" y="coolt_y(1)" z="coolt_dz+outsuprefpoint">
+	  <Rotation alphaz="coolt_rot(1)" />
+	</Placement>
+	<Placement block="OFCC" in="CAVE" x="coolt_x(2)" y="coolt_y(2)" z="coolt_dz+outsuprefpoint">
+	  <Rotation alphaz="coolt_rot(2)" />
+	</Placement>
+
+	<Placement block="OFCC" in="CAVE" x="coolt_x(3)" y="coolt_y(3)" z="coolt_dz+outsuprefpoint">
+	  <Rotation alphaz="coolt_rot(3)" />
+	</Placement>
+
+	<Placement block="OFCC" in="CAVE" x="coolt_x(4)" y="coolt_y(4)" z="cabt_dz+outsuprefpoint">
+	  <Rotation alphaz="coolt_rot(4)" />
+	</Placement>
+
+
+       <!-- //////////////////////////////////////////////////
+                Declare volumes
+        -->
+
+	<Volume name ="OFSR" comment="Outer Ring">
+
+	  <Material name="StainlessSteel316"/>
+	  <Shape type="TUBE" rmin="supring_rmin" rmax="supring_rmax" dz="supring_dz/2.0" />
+	  <Attribute for="OFSR" seen="1" colo="2" />
+	</Volume>
+
+	<Volume name ="OFSB" comment="Support bar inner part">
+	  <Material name="StainlessSteel316"/>
+	  <Shape type="TUBE" rmin="0.0" rmax="supbar_ri" dz="supbar_dz1/2.0" />
+	  <Attribute for="OFSB" seen="1" colo="2" />
+	</Volume>
+
+	<Volume name ="OFSD" comment="Support bar inner part Al">
+	  <Material name="Aluminium"/>
+	  <Shape type="TUBE" rmin="supbar_ro" rmax="supbar_ra" dz="supbar_dz1/2.0" />
+	  <Attribute for="OFSD" seen="1" colo="7" />
+	</Volume>
+
+	<Volume name ="OFSC" comment="Support bar outer part">
+	  <Material name="Aluminium"/>
+	  <Shape type="TUBE" rmin="0.0" rmax="supbar_ra" dz="supbar_dz2/2.0" />
+	  <Attribute for="OFSC" seen="1" colo="3" />
+	</Volume>
+
+
+	<Volume name="OFCA" comment="ms volume for cable trays">
+	  <Material name="Aluminium"/>
+	  <Shape type="BOX" dx="cabt_dx" dy="cabt_dy" dz="cabt_dz"/>
+	  <Attribute for="OFCA" seen="1" colo="3"/>
+	  
+	  <Create block="OFCB" />
+	  <Placement block="OFCB" in="OFCA" x="0" y="0.16" z="0"/>
+	
+	</Volume>
+
+	<Volume name="OFCB" comment="air  volume for cable trays">
+	  <Material name="Air"/>
+	  <Shape type="BOX" dx="cabt_dxi" dy="cabt_dyi" dz="cabt_dz"/>
+	  <Attribute for="OFCB" seen="1" colo="4"/>
+
+	  <!-- Place 9 Cableslines -->
+	  <Create block="OFCG" />
+	  <Info format="Create_ OFCG at {6.2f}">cabt_cr</Info>
+	  <Placement block="OFCG" in="OFCB" x="-cabt_cr*2-0.0" y="-cabt_dyi+cabt_cr" z="0"/>
+	  <Placement block="OFCG" in="OFCB" x="-cabt_cr*4-0.0" y="-cabt_dyi+cabt_cr" z="0"/>
+	  <Placement block="OFCG" in="OFCB" x="-cabt_cr*0-0.0" y="-cabt_dyi+cabt_cr" z="0"/>
+	  <Placement block="OFCG" in="OFCB" x="cabt_cr*2-0.0" y="-cabt_dyi+cabt_cr" z="0"/>
+	  <Placement block="OFCG" in="OFCB" x="cabt_cr*4-0.0" y="-cabt_dyi+cabt_cr" z="0"/>
+	  <!--  next layer 4 cables -->
+	  <Placement block="OFCG" in="OFCB" x="-cabt_cr*3-0.0" y="-cabt_dyi+3*cabt_cr-0.1" z="0"/>
+	  <Placement block="OFCG" in="OFCB" x="-cabt_cr*1-0.0" y="-cabt_dyi+3*cabt_cr-0.1" z="0"/>
+	  <Placement block="OFCG" in="OFCB" x="cabt_cr*1-0.0" y="-cabt_dyi+3*cabt_cr-0.1" z="0"/>
+	  <Placement block="OFCG" in="OFCB" x="cabt_cr*3-0.0" y="-cabt_dyi+3*cabt_cr-0.1" z="0"/>
+	</Volume>
+
+
+	<Volume name="OFCG" comment="Plastic tubing density increased" >
+	  <Material name="FSTCABLEMIX"/>
+	  <Shape type="TUBE" rmin="0.0" rmax="cabt_cr" dz="cabt_dz"/>
+	  <Attribute for="OFCG" seen="1" colo="4"/>
+
+	</Volume>
+
+
+	<Volume name="OFCC" comment="masters volume for cooling trays trays">
+	  <Material name="Aluminium"/>
+	  <Shape type="BOX" dx="coolt_dx" dy="coolt_dy" dz="coolt_dz"/>
+	  <Attribute for="OFCC" seen="1" colo="6"/>
+	  
+	  <Create block="OFCD" />
+	  <Placement block="OFCD" in="OFCC" x="0" y="0.075" z="0"/>
+	
+	</Volume>
+
+	<Volume name="OFCD" comment="air  volume for cooling">
+	  <Material name="Air"/>
+	  <Shape type="BOX" dx="coolt_dxi" dy="coolt_dyi" dz="coolt_dz"/>
+	  <Attribute for="OFCD" seen="1" colo="4"/>
+
+	  <!-- Place 6 cooling lines -->
+	  <Create block="OFCE" />
+	  <Placement block="OFCE" in="OFCD" x="-coolt_cro*2-0.2" y="-coolt_dyi+coolt_cro" z="0"/>
+	  <Placement block="OFCE" in="OFCD" x="0" y="-coolt_dyi+coolt_cro" z="0"/>
+	  <Placement block="OFCE" in="OFCD" x="+coolt_cro*2+0.2" y="-coolt_dyi+coolt_cro" z="0"/>
+
+	  <Placement block="OFCE" in="OFCD" x="-coolt_cro*2-0.2" y="-coolt_dyi+3*coolt_cro" z="0"/>
+	  <Placement block="OFCE" in="OFCD" x="+coolt_cro*2+0.2" y="-coolt_dyi+3*coolt_cro" z="0"/>
+	  <Placement block="OFCE" in="OFCD" x="0" y="-coolt_dyi+3*coolt_cro" z="0"/>
+	</Volume>
+
+	<Volume name="OFCE" comment="Plastic tubing density increased" >
+	  <Material name="POLYETH"/>
+	  <Shape type="TUBE" rmin="0.0" rmax="coolt_cro" dz="coolt_dz"/>
+	  <Attribute for="OFCE" seen="1" colo="4"/>
+
+	  <Create block="OFCF"/>
+	  <Placement block="OFCF" in="OFCE" x="0.0" y="0.0" z="0.0"/>
+	</Volume>
+
+	<Volume name="OFCF" comment="Plastic tubing" >
+	  <Material name="NOVEC7200"/>
+	  <Shape type="TUBE" rmin="0.0" rmax="coolt_cri" dz="coolt_dz"/>
+	  <Attribute for="OFCF" seen="1" colo="4"/>
+
+	</Volume>
+
+    </Module>
+</Document>

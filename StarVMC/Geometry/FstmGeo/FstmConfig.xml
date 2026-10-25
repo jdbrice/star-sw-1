@@ -41,8 +41,18 @@
             onoff  = "on"
             simu   = "2"
             >
-
+      <Init struct="FSTG" var="fstmconfig" value="1"/>
     </Setup>
+
+    <Setup  name   = "FSTMv2m"
+            comment= "Misaligned configuration for the Forward Silicon Tracker"
+            module = "FstmGeoM" 
+            onoff  = "on"
+            simu   = "2"
+            >
+      <Init struct="FSTG" var="fstmconfig" value="2"/>
+    </Setup>
+
 
     <Setup  name   = "FSTMv1sm"
             comment= "Misaligned Simplified configuration for the Forward Silicon Tracker"
@@ -50,12 +60,23 @@
             onoff  = "on"
             simu   = "2"
             >
-
+      <Init struct="FSTG" var="fstmconfig" value="1"/>
     </Setup>
+
+        <Setup  name   = "FSTMv2sm"
+            comment= "Misaligned Simplified configuration for the Forward Silicon Tracker"
+            module = "FstmGeoSM" 
+            onoff  = "on"
+            simu   = "2"
+            >
+      <Init struct="FSTG" var="fstmconfig" value="2"/>
+      
+	</Setup>
+
 
 
   </Detector> 
-   
+
 </Document>
   
  

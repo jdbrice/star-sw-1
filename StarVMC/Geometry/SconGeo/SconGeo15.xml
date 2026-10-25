@@ -1,0 +1,597 @@
+<Document file="StarVMC/Geometry/SconGeo/SconGeo15.xml">
+    
+  <Module name="SCONGEO15" comment=" is Support structures from SVTT moved into CAVE: "  >
+
+        <Author name="Yuri Fisyak"  />
+        <Created date=" 01 July 2025 26 "  />
+<!-- modified by Flemming Videbaek to be pure agml code not mortran -->
+
+        <CDE  >
+            AGECOM
+            GCONST
+            GCUNIT
+        </CDE>
+        
+        <Content  >
+            SCOM,SCON,SNMX,SROD,SRON,SROI,SROH,SBSP,SAKM,SPOK,SASH,SDSK,SDSA,SPOA,SPOB,BOLT,SPOC,SPOD,SAKH,SBRL,SBRX
+        </Content>
+        
+        <Structure name="SVTG"  >
+            <var name="Version" type="float"  />
+            <var name="RsizeMin" type="float"  />
+            <var name="RsizeMax" type="float"  />
+            <var name="SupportVer" type="float"  />
+            <var name="ConeVer" type="float"  />
+            <var name="ifMany" type="float"  />
+        </Structure>
+        
+        <Structure name="SSUP"  >
+            <var name="Version" type="float"  />
+            <var name="NomexThk1" type="float"  />
+            <var name="NomexThk2" type="float"  />
+            <var name="Cone1z" type="float"  />
+            <var name="Cone1dZ" type="float"  />
+            <var name="Cone2dZ" type="float"  />
+            <var name="Cone3dZ" type="float"  />
+            <var name="Cone4z" type="float"  />
+            <var name="rO1" type="float"  />
+            <var name="rO3" type="float"  />
+            <var name="rO4" type="float"  />
+            <var name="RodLen" type="float"  />
+            <var name="RodDist" type="float"  />
+            <var name="RodID" type="float"  />
+            <var name="RodOD" type="float"  />
+            <var name="RodIDx" type="float"  />
+            <var name="RodODx" type="float"  />
+            <var name="carbonShell" type="float"  />
+            <var name="carbonDens" type="float"  />
+            <var name="nomexDens" type="float"  />
+        </Structure>
+
+        <Structure name="SSUB"  >
+            <var name="Version" type="float"  />
+            <var name="KMountId" type="float"  />
+            <var name="KMountOd" type="float"  />
+            <var name="KMntThk" type="float"  />
+	    <var name="AlScrThk" type="float" />  <!-- new -->
+            <var name="zG10Start" type="float" />
+            <var name="G10Thk0" type="float"/>
+            <var name="G10Thk1" type="float"/>
+            <var name="G10Thk2" type="float"/>
+            <var name="G10Thk3" type="float"/>
+            <var name="G10RI" type="float"/>
+            <var name="G10RO" type="float"/>
+
+
+            <var name="KMCutOd" type="float"  />
+            <var name="KMCutId" type="float"  />
+            <var name="KMCutOA" type="float"  />
+            <var name="KMCutOff" type="float"  />
+            <var name="SRingId" type="float"  />
+            <var name="SRingOd" type="float"  />
+            <var name="SRingThk" type="float"  />
+            <var name="SRCutPhi" type="float"  />
+            <var name="SRCutWid" type="float"  />
+            <var name="SRCutOut" type="float"  />
+            <var name="SRCutIn" type="float"  />
+          
+	    <var name="SRollId" type="float"  />
+            <var name="SRollOd" type="float"  />
+            <var name="SRollLen" type="float"  />
+            <var name="SWireLen" type="float"  />
+            <var name="rbolt" type="float"/>
+            <var name="dZBolt" type="float"  />
+            <var name="SpokeLen" type="float" />
+            <var name="SpokeOD"  type="float"  />
+          </Structure>
+
+<!--
+	    <var name="MBlkHgh" type="float"  />
+            <var name="MBlkOWid" type="float"  />
+            <var name="MBlkOLen" type="float"  />
+            <var name="MBlkIWid" type="float"  />
+            <var name="MBlkILen" type="float"  />
+            <var name="MBlkORad" type="float"  />
+            <var name="MBlkIRad" type="float"  />
+            <var name="MRodDia" type="float"  />
+-->
+
+
+        
+        <varlist type="REAL"  >
+            conez(7),coneRi(7),coneRO(7)
+        </varlist>
+        
+        <varlist type="REAL"  >
+            conezx(7),coneRix(7),coneROx(7)
+        </varlist>
+        
+        <varlist type="REAL"  >
+            phi,xbuf,xbuf1,xbuf2,rr,xx,yy,zz
+        </varlist>
+        
+        <varlist type="INTEGER"  >
+            i,j
+        </varlist>
+        
+        <Fill name="SVTG" comment="Basic SVT dimensions"  >
+            <var name="Version" value="4" comment=" geometry version "  />
+            <var name="RsizeMin" value="4.100" comment=" STV innermost radius "  />
+            <var name="RsizeMax" value="46.107" comment=" STV outermost radius "  />
+            <var name="SupportVer" value="1" comment=" versioning of the shield "  />
+            <var name="ConeVer" value="1" comment=" versioning of the support cone "  />
+            <var name="ifMany" value="0" comment=" whether we use the geant MANY option "  />
+        </Fill>
+        
+        <Fill name="SSUP" comment="Support structures"  >
+            <var name="Version" value="1" comment=" geometry version "  />
+            <var name="NomexThk1" value="0.5" comment="   support cone NOMEX thickness at begin    "  />
+            <var name="NomexThk2" value="0.35" comment="   support cone NOMEX thickness at end    "  />
+            <var name="Cone1z" value="111.448/2" comment="  start of cylinder part of cone    "  />
+            <var name="Cone1dZ" value="3.9" comment="  cylinder part for beam support wheel, start of conic part    "  />
+            <var name="Cone2dZ" value="174.6-81.7" comment="  end of conic part    "  />
+            <var name="Cone3dZ" value="174.6" comment="  end of cylinder part    "  />
+            <var name="Cone4z" value="461.409/2" comment="  end of ring attached to TPC   "  />
+            <var name="rO1" value="22.0" comment="  Outer radius at beam support wheel       "  />
+            <var name="rO3" value="38.9" comment="  Outer radius of cylinder part of cone  "  />
+            <var name="rO4" value="38.9" comment="  Outer radius of cylinder part of cone   "  />
+            <var name="RodLen" value="111.4" comment=" Length of support rods "  />
+            <var name="RodDist" value="20.1" comment="  distance from center to IP "  />
+            <var name="RodID" value="3.64" comment=" ID of Carbon support rods  "  />
+            <var name="RodOD" value="4.50" comment=" OD of Carbon support rods  "  />
+            <var name="RodIDx" value="8.72" comment=" ID of Carbon support rods  "  />
+            <var name="RodODx" value="9.58" comment=" OD of Carbon support rods  "  />
+
+            <var name="carbonShell" value="0.04" comment=" 0.4mm carbon fiber shell  "  />
+            <var name="carbonDens" value="1.78" comment=" 1.78 g/cm^3 is a typical carbon composite density  "  />
+            <var name="nomexDens" value="0.048" comment=" Ballpark figure  "  />
+        </Fill>
+        
+        <Fill name="SSUB" comment="beampipe support"  >
+            <var name="Version" value="1" comment=" geometry version "  />
+            <var name="KMountId" value="31.34" comment=" id of beampipe support kinematic mount "  />
+            <var name="KMountOd" value="38.96" comment=" od of beampipe support kinematic mount "  />
+            <var name="KMntThk" value="0.64" comment=" thickness of support kinematic mount "  />
+            <var name="AlScrThk" value="0.15" comment=" Alulimium screen BoB Soja  "  />
+            <var name="zG10Start" value="54.2" comment=" start of G10 beam holder "  />
+            <var name="G10Thk0" value="2.90" comment=" Full thinkness of G10 support + roller "  />
+            <var name="G10Thk1" value="2.40" comment=" Full thinkness of G10 support "  />
+            <var name="G10Thk2" value="1.6" comment=" thikness  "  />
+            <var name="G10Thk3" value="0.6" comment=" thikness  "  />
+            <var name="G10RI" value="4.1" comment=" radius  "  />
+            <var name="G10RO" value="6.4" comment=" radius  "  />
+            <var name="SRollId" value="0.2" comment=" support roller Id "  />
+            <var name="SRollOd" value="0.62" comment=" support roller Od "  />
+            <var name="SRollLen" value="2.54" comment=" support roller length "  />
+            <var name="SWireLen" value="5.08" comment=" support roller axis length "  />
+            <var name="rbolt" value="0.3" comment=" bolt      "  />
+            <var name="dZBolt" value="0.7" comment=" bolt     "  />
+            <var name="SpokeLen" value="12.5" comment=" spoke "  />
+            <var name="SpokeOD" value="0.2" comment=" spoke "  />
+        </Fill>
+        
+
+        <Use struct="SVTG"  />
+	<Use struct="SSUB"  />
+        <Use struct="SSUP" select="version" value="SVTG_ConeVer "  />
+
+        conez(1)  = SSUP_Cone1z              ! start of cone 
+        coneRo(1) = SSUP_rO1 
+        coneRi(1) = coneRo(1) - SSUP_NomexThk1 - 2*SSUP_carbonShell 
+        conez(2)  = conez(1)  + SSUP_Cone1dz  ! cylinder part of cone with nomex 0.5 cm 
+        coneRo(2) = coneRo(1) 
+        coneRi(2) = coneRi(1) 
+        conez(3)  = conez(2)                 ! start of cone with nomex 0.35 cm 
+        coneRo(3) = coneRo(2) 
+        coneRi(3) = coneRo(1) - SSUP_NomexThk2 - 2*SSUP_carbonShell 
+        conez(4)  = conez(1)  + SSUP_Cone2dz   
+        coneRo(4) = SSUP_ro3  
+        coneRi(4) = coneRo(4) - SSUP_NomexThk2 - 2*SSUP_carbonShell 
+        conez(5)  = conez(1)  + SSUP_Cone3dz   
+        coneRo(5) = coneRo(4) 
+        coneRi(5) = coneRi(4) 
+        conez(6)  = conez(1) - 0.1 ! expand mother volume 
+
+        conezx(1)  = SSUP_Cone1z              ! start of cone 
+        coneRox(1) = SSUP_rO1  - SSUP_carbonShell 
+        coneRix(1) = coneRox(1) - SSUP_NomexThk1 
+        conezx(2)  = conezx(1)  + SSUP_Cone1dz  ! cylinder part of cone with nomex 0.5 cm 
+        coneRox(2) = coneRox(1) 
+        coneRix(2) = coneRix(1) 
+        conezx(3)  = conezx(2)                 ! start of cone with nomex 0.35 cm 
+        coneRox(3) = coneRox(2) 
+        coneRix(3) = coneRox(1) - SSUP_NomexThk2  
+        conezx(4)  = conezx(1)  + SSUP_Cone2dz  ! end of cone and star of cylinder  
+        coneRox(4) = SSUP_ro3  - SSUP_carbonShell 
+        coneRix(4) = coneRox(4) - SSUP_NomexThk2 
+        conezx(5)  = conezx(1)  + SSUP_Cone3dz  ! end of cylinder 
+        coneRox(5) = coneRox(4) 
+        coneRix(5) = coneRix(4) 
+
+
+       <Mixture name="StainlessSteel316" dens="8">
+            <Component name="Fe" a="55.845"         z="26"  w="0.62085" />
+            <Component name="C"  a="12.0096"        z="6"   w="0.0008" />
+            <Component name="Mn" a="54.938043"      z="25"  w="0.02" />
+            <Component name="Si" a="28.085"         z="14"  w="0.0075" />
+            <Component name="P"  a="30.973761998"   z="15"  w="0.00045" />
+            <Component name="S"  a="32.06"          z="16"  w="0.0003" />
+            <Component name="Cr" a="51.9961"        z="24"  w="0.18" />
+            <Component name="Mo" a="95.95"          z="42"  w="0.03" />
+            <Component name="Ni" a="58.6934"        z="28"  w="0.14" />
+            <Component name="N"  a="14.00643"       z="7"   w="0.0001" />
+        </Mixture>
+
+        <Create    block="SCOM" />
+        <Placement block="SCOM" in="Cave" x="0.0" y="0.0" z="0.0" konly="MANY" >
+	  <!--
+	  TODO... need to apply sconOnTpc
+	  -->
+	  <Misalign table="Geometry/tpc/TpcPosition"             opts="left,print" />	  
+        </Placement>
+ 
+        <Volume name="SCOM" comment="is supporting cone mother volume">
+          <Material name="Air"  />
+          <Attribute for="SCOM" seen="0" colo="1"  />
+	  
+	  <Shape type="PCON"  
+		 zi="{ -conez(5), -conez(4), -conez(3), -conez(2), -conez(2) , -conez(6), -conez(6), 
+		        conez(6),  conez(6),  conez(2),  conez(2),  conez(3) ,  conez(4),  conez(5) }" 
+		 rmn="{coneRi(5), coneRi(4),coneRi(3),coneRi(2),svtg_RSizeMin,svtg_RSizeMin,svtg_RSizeMin,
+		      svtg_RSizeMin,svtg_RSizeMin,svtg_RSizeMin, coneRi(2), coneRi(3), coneRi(4),coneRi(5) }" 
+		 rmx="{coneRo(5), coneRo(4), coneRo(3), coneRo(2), coneRo(2), coneRo(1), coneRo(1)+0.6,coneRo(1)+0.6, 
+		      coneRo(1), coneRo(2), coneRo(2), coneRo(3), coneRo(4), coneRo(5)}" 
+		 nz="14" 
+		 phi1="0" 
+		 dphi="360" />
+	  
+          <Create block="SCON"  />
+          <Placement block="SCON" in="SCOM" x="0.0" y="0.0" z="0.0" >
+          </Placement>
+          
+          <Create block="SCON"  />
+          <Placement block="SCON"  in="SCOM" x="0.0" y="0.0" z="0.0" >
+            <Rotation thetaz="180"  />
+          </Placement>
+          
+          
+          <Create block="SBSP"/>	
+	    <Placement block="SBSP" z="conez(6)" konly="'MANY'" in="SCOM" x="0.0" y="0.0"  >
+	    </Placement>
+            
+            <Placement z="-conez(6)" konly="'MANY'" block="SBSP"  >
+              <Rotation thetaz="180"  />
+            </Placement>
+ 
+         <Create block="SROD"  />
+          <Placement y="ssup_rodDist" block="SROD" in="SCOM" x="0.0" z="0.0" >
+          </Placement>
+          
+          <Placement y="-ssup_rodDist" block="SROD"  in="SCOM" x="0.0" z="0.0" >
+          </Placement>
+ 
+
+         </Volume>
+          
+        <Volume name="SCON" comment="is the Silicon tracker supporting cone mother volume"  >
+            <Material name="Carbon"  />
+            <Material dens="ssup_carbonDens" name="CarbonFiber"  />
+            <Attribute for="SCON" seen="1" colo="6"  />
+            <Shape type="PCON" zi="{conez(6),conez(2),conez(3),conez(4),conez(5)}" rmn="{coneRi(1),coneRi(2),coneRi(3),coneRi(4),coneRi(5)}" rmx="{coneRo(1),coneRo(2),coneRo(3),coneRo(4),coneRo(5)}" nz="5" phi1="0" dphi="360"  />
+
+	    <Create block="SNMX"/>
+            <Placement block="SNMX" in="SCON" >
+            </Placement>
+            
+        </Volume>
+
+        <Volume name="SNMX" comment="is the Nomex structure"  >
+            <Mixture name="Nomex" dens="ssup_nomexDens"  >
+                <Component name="C" a="12" z="6" w="5"  />
+                <Component name="H" a="1.00784" z="1" w="8"  />
+                <Component name="O" a="16" z="8" w="2"  />
+            </Mixture>
+            
+            <Attribute for="SNMX" seen="1" colo="6"  />
+            <Shape type="PCON" zi="{conez(6),conezx(2),conezx(3),conezx(4),conezx(5)}" rmn="{coneRix(1),coneRix(2),coneRix(3),coneRix(4),coneRix(5)}" rmx="{coneRox(1),coneRox(2),coneRox(3),coneRox(4),coneRox(5)}" nz="5" phi1="0" dphi="360"  />
+
+        </Volume>
+ 
+
+        <Volume name="SROD" comment="is the SVT Carbon composite support rod"  >
+
+            <Material name="Carbon"  />
+            <Material dens="ssup_carbonDens" name="CarbonFiber"  />
+            <Attribute for="SROD" seen="1" colo="6"  />
+            <Shape type="ELTU" p2="ssup_RodOD/2" dz="conez(6)" p1="ssup_RodODx/2"  />
+	    <Create block="SRON"/>
+            <Placement block="SRON" in="SROD">
+            </Placement>
+            
+        </Volume>
+
+
+       <Volume name="SRON" comment="Is the creamy nomex filling"  >
+
+            <Mixture name="Nomex" dens="ssup_nomexDens"  >
+                <Component name="C" a="12" z="6" w="5"  />
+                <Component name="H" a="1.00784" z="1" w="8"  />
+                <Component name="O" a="16" z="8" w="2"  />
+            </Mixture>
+            
+            <Attribute for="SRON" seen="1" colo="6"  />
+
+            <Shape type="ELTU" p2="ssup_rodod/2-ssup_carbonShell" p1="ssup_rododx/2-ssup_carbonShell"  />
+
+	    <Create block="SROI"/>
+            <Placement block="SROI"  >
+            </Placement>
+
+        </Volume>
+ 
+  
+        <Volume name="SROI" comment="Is the inner carbon fiber shell"  >
+
+            <Material name="CarbonFiber"  />
+            <Attribute for="SROI" seen="1" colo="6"  />
+            <Shape type="ELTU" p2="ssup_rodid/2+ssup_carbonShell" p1="ssup_rodidx/2+ssup_carbonShell"  />
+	  
+	    <Create block="SROH"/>
+            <Placement block="SROH"  >
+            </Placement>
+
+        </Volume>
+
+        <Volume name="SROH" comment="SROH is the hole in SROD">
+
+            <Material name="Air"  />
+            <Attribute for="SROH" seen="1" colo="6"  />
+            <Shape type="ELTU" p1="ssup_rodIDx/2" p2="ssup_rodID/2"  />
+	  
+        </Volume>
+	
+	<!-- ******************************************************************************* -->
+	
+	<Volume  name="SBSP" comment="is the beampipe support mother volume"  >
+          <Material name="Air"  />
+          <Attribute for="SBSP" seen="0" colo="1"  />
+          zz = SSUB_zG10Start-SSUB_G10Thk0-conez(6) 
+          xx = conez(1)-conez(6) 
+          yy = conez(2)-conez(6) 
+          <Shape type="PCON" zi="{zz,0,0,xx,xx,yy}" rmn="{svtg_RSizeMin,svtg_RSizeMin,svtg_RSizeMin,svtg_RSizeMin,svtg_RSizeMin,svtg_RSizeMin}" rmx="{ssub_KMountOd/2,ssub_KMountOd/2,coneRi(1)+0.1,coneRi(1)+0.1,coneRi(1),coneRi(1)}" nz="6" phi1="0" dphi="360"  />
+	  
+	  <Create block="SAKM"/>
+          <Placement block="SAKM"  >
+          </Placement>
+          
+	  <Create block="SASH"/>
+          <Placement z="SSUB_AlScrThk/2" block="SASH"  >
+          </Placement>
+	  
+          <Create block="SDSA"/>
+          <Placement z="-SSUB_dZBolt" block="SDSA"  >
+          </Placement>
+          
+	  <Create block="SPOA" />
+          <Do var="i" from="1" to="4"  >
+            phi = 45  + 90*(i-1)  
+            rr = svtg_RSizeMin + SSUB_SpokeLen/2 + 0.8 
+            xx = rr*cos(degrad*phi) 
+            yy = rr*sin(degrad*phi) 
+            zz = conez(1)-conez(6)-1.0 
+            <Placement y="yy" x="xx" z="zz" konly="'MANY'" block="SPOA"  >
+              <Rotation thetaz="90" thetax="90" thetay="0" phiz="phi" phiy="0" phix="phi+90"  />
+            </Placement>
+            
+          </Do>
+          
+        </Volume>
+        
+
+              
+  
+        
+        <Volume name="SAKM" comment="is the beampipe support aluminum kinematic mount*"  >
+          <Material name="Aluminium"  />
+          <Attribute for="SAKM" seen="1" colo="3"  />
+          zz=conez(1)-conez(6) 
+          <Shape type="PCON" zi="{0,zz,zz,conez(2)-conez(6)}" rmn="{SSUB_KMountId/2,SSUB_KMountId/2,SSUB_KMountId/2,SSUB_KMountId/2+SSUP_Cone1dZ}" rmx="{SSUP_rO1,SSUP_rO1,coneRi(1),coneRi(1)}" nz="4" phi1="0" dphi="360"  />
+          
+	  <Create block="SAKH"  />
+          <Placement y="+20.1" x="+1.4+0.1" z="(conez(2)-conez(6))/2" block="SAKH"  >
+          </Placement>
+          
+          <Placement y="+20.1" x="-1.4-0.1" z="(conez(2)-conez(6))/2" block="SAKH"  >
+          </Placement>
+          
+          <Placement y="-20.1" x="+1.4+0.1" z="(conez(2)-conez(6))/2" block="SAKH"  >
+          </Placement>
+          
+          <Placement y="-20.1" x="-1.4-0.1" z="(conez(2)-conez(6))/2" block="SAKH"  >
+          </Placement>
+          
+        </Volume>
+        
+        <Block name="SAKH" comment="is the hole in beampipe support aluminum kinematic mount*"  >
+            <Material name="Air"  />
+            <Attribute for="SAKH" seen="1" colo="3"  />
+            <Shape type="TUBE" rmax="1.4" rmin="0" dz="(conez(2)-conez(6))/2"  />
+        </Block>
+        
+        <Volume name="SPOA" comment="is beam spoke assembly lower part"  >
+            <Material name="Air"  />
+            <Attribute for="SPOA" seen="0" colo="2"  />
+            <Shape type="BOX" dz="SSUB_SpokeLen/2+0.95" dx="SSUB_SWireLen" dy="1.5"  />
+            <Create block="SPOK"  />
+            <Placement y="0.8-0.2" block="SPOK"  >
+            </Placement>
+            
+            zz = -(SSUB_KMountId/2 - svtg_RSizeMin)/2 + 0.8  
+            <Create block="SPOB"/>
+            <Placement z="-SSUB_SpokeLen/2" block="SPOB"  >
+            </Placement>
+            
+            <Create block="SPOC"/>
+            <Placement y="0.4-0.2" z="SSUB_SpokeLen/2" block="SPOC"  >
+            </Placement>
+            
+            <Create block="SBRL"  />
+            <Create block="SBRX"  />
+            <Placement y="1.0" x="0" z="zz-1.9" block="SBRL"  >
+                <Rotation alphay="90"  />
+            </Placement>
+            
+            <Placement y="1.0" x="0" z="zz-1.9" block="SBRX"  >
+                <Rotation alphay="90"  />
+            </Placement>
+            
+        </Volume>
+        
+        <Block name="SPOB" comment="is beam spoke assembly"  >
+            <Mixture name="G10" dens="1.7"  >
+                <Component name="Si" a="28.08" z="14" w="0.6*1*28./60."  />
+                <Component name="O" a="16" z="8" w="0.6*2*16./60."  />
+                <Component name="C" a="12" z="6" w="0.4*8*12./174."  />
+                <Component name="H" a="1" z="1" w="0.4*14*1./174."  />
+                <Component name="O" a="16" z="8" w="0.4*4*16./174."  />
+            </Mixture>
+            
+            <Material name="G10"  />
+            <Attribute for="SPOB" seen="1" colo="6"  />
+            <Shape type="BOX" dz="0.8" dx="1.6" dy="1.25"  />
+            <Create block="BOLT"  />
+            <Placement y="-0.9" x="-1.3" block="BOLT"  >
+            </Placement>
+            
+            <Create block="BOLT"  />
+            <Placement y="-0.9" x="+1.3" block="BOLT"  >
+            </Placement>
+            
+        </Block>
+        
+        <Block name="SPOC" comment="is beam spoke assembly upper part"  >
+            <Material name="Air"  />
+            <Attribute for="SPOC" seen="0" colo="2"  />
+            <Shape type="BOX" dz="SSUB_dzbolt" dx="1.25" dy="0.63"  />
+            <Create block="SPOD"  />
+            <Placement konly="'MANY'" block="SPOD"  >
+            </Placement>
+            
+            <Create block="BOLT"  />
+            <Placement x="-0.5" block="BOLT"  >
+            </Placement>
+            
+            <Create block="BOLT"  />
+            <Placement x="+0.5" block="BOLT"  >
+            </Placement>
+            
+        </Block>
+        
+        <Block name="SPOD" comment="is beam spoke assembly upper part"  >
+            <Material name="G10"  />
+            <Attribute for="SPOC" seen="1" colo="6"  />
+            <Shape type="BOX" dz="0.6" dx="1.25" dy="0.63"  />
+        </Block>
+        
+        <Block name="SPOK" comment="is beam line support spokes"  >
+            <Material name="Aluminium"  />
+            <Attribute for="SPOK" seen="1" colo="3"  />
+            <Shape type="TUBE" rmax="SSUB_SpokeOD/2" rmin="0" dz="SSUB_SpokeLen/2"  />
+        </Block>
+        
+        <Block name="SASH" comment="is the beampipe support aluminum EM shield"  >
+            <Material name="Aluminium"  />
+            <Material dens="0.125" name="AluminiumMesh"  />
+            <Attribute for="SASH" seen="1" colo="3"  />
+            <Shape type="TUBE" rmax="SSUB_KMountId/2" rmin="SSUB_G10RO" dz="SSUB_AlScrThk/2"  />
+        </Block>
+        
+        <Block name="SDSA" comment="is the mother fpr beampipe support"  >
+            <Material name="Air"  />
+            <Attribute for="SDSA" seen="0" colo="1"  />
+            zz = 0 
+            <Shape type="TUBE" rmax="SSUB_G10RO" rmin="SSUB_G10RI" dz="SSUB_dZBolt"  />
+            <Create block="BOLT"  />
+            <Placement y="0" x="(SSUB_G10RI+SSUB_G10RO)/2-0.5" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="0" x="(SSUB_G10RI+SSUB_G10RO)/2+0.5" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="0" x="-(SSUB_G10RI+SSUB_G10RO)/2-0.5" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="0" x="-(SSUB_G10RI+SSUB_G10RO)/2+0.5" z="zz" block="BOLT"  >
+            </Placement>
+            
+
+            <Placement y="4.3" x="-2.3" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="4.3" x="2.3" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="-4.3" x="-2.3" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="-4.3" x="2.3" z="zz" block="BOLT"  >
+            </Placement>
+            
+
+            <Placement y="-2.3" x="4.3" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="2.3" x="4.3" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="-2.3" x="-4.3" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Placement y="2.3" x="-4.3" z="zz" block="BOLT"  >
+            </Placement>
+            
+            <Create block="SDSK"  />
+            <Placement z="zz" konly="'MANY'" block="SDSK"  >
+            </Placement>
+            
+
+        </Block>
+        
+        <Block name="SDSK" comment="is the beampipe support G10"  >
+            <Mixture name="G10" dens="1.7"  >
+                <Component name="Si" a="28.08" z="14" w="0.6*1*28./60."  />
+                <Component name="O" a="16" z="8" w="0.6*2*16./60."  />
+                <Component name="C" a="12" z="6" w="0.4*8*12./174."  />
+                <Component name="H" a="1.00784" z="1" w="0.4*14*1./174."  />
+                <Component name="O" a="16" z="8" w="0.4*4*16./174."  />
+            </Mixture>
+            
+            <Material name="G10"  />
+            <Attribute for="SDSK" seen="1" colo="6"  />
+            <Shape type="TUBE" rmax="SSUB_G10RO" rmin="SSUB_G10RI" dz="SSUB_G10Thk3/2"  />
+        </Block>
+        
+        <Block name="BOLT" comment="is the bolt"  >
+            <Material name="StainlessSteel316"  />
+            <Attribute for="BOLT" seen="1" colo="4"  />
+            <Shape type="TUBE" rmax="SSUB_rbolt" rmin="0" dz="SSUB_dZBolt"  />
+        </Block>
+        
+        <Block name="SBRL" comment="is the ceramic roller supporting the beampipe"  >
+            <Material a="20.719" name="PYREX" dens="2.23" radl="12.6" absl="50.7" z="10.307"  />
+            <Attribute for="SBRL" seen="1" colo="6"  />
+            <Shape type="TUBE" rmax="ssub_SRollOd/2" rmin="ssub_SRollId/2" dz="ssub_SRollLen/2"  />
+        </Block>
+        
+        <Block name="SBRX" comment="is the stainless steel roller axis"  >
+            <Material name="StainlessSteel316"  />
+            <Attribute for="SBRX" seen="1" colo="4"  />
+            <Shape type="TUBE" rmax="ssub_SRollId/2" rmin="0.0" dz="ssub_SWireLen/2"  />
+        </Block>
+        
+    </Module>
+    
+
+
+</Document>
+

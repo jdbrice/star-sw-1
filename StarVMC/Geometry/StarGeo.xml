@@ -353,6 +353,75 @@
     <Construct sys="etof" config="ETOFv14f"  />
   </Geometry>
 
+  <!-- y2022c / ft2022c are Jason's, ported from STAR Gitea PR #28 (head 6024f8010d,
+       not merged into main as of 2026-10-25). Only the two y2022 tags and the
+       configurations they need are ported; PR #28's y2023c/y2024c/y2025a/y2025b/
+       y2026/y2026a/y2027 tags, the StarDb/FwdGeo alias machinery and the
+       StBFChain "FwdGeo" option are not here. The <Construct> lists are PR #28's
+       verbatim, reformatted one per line.
+       y2022c is the first PRODUCTION tag with a misalignable FST (FSTMv2m to
+       FstmGeoM, 13 Misalign tags): every y2022..y2025 tag before it used FSTMv1
+       with FstmGeo.xml, which has none, so no production MC could carry the
+       survey.
+       Three things come with it: SCON14a (support cone conever=5), FSTOon (the
+       new FSTO outer-support system) and fstmconfig=2, which MIRRORS the wedge
+       mounting parity (modulus2 {1,0,1,...} instead of {0,1,0,...}); see
+       FstmGeoM.xml. The mirror is Flemming's 2026-08-10 "fix wedge position
+       according to actual installation", and it is NOT what our reco constants
+       (kFstzFilp x kFstzDirct) were validated against. -->
+  <Geometry tag="y2022c" comment="STAR production tag y2022">
+    <Construct sys="cave" config="CAVE06"  />
+    <Construct sys="upst" config="UPSTon"  />
+    <Construct sys="shld" config="SHLDon"  />
+    <Construct sys="zcal" config="ZCALon"  />
+    <Construct sys="scon" config="SCON14a"  />
+    <Construct sys="pipe" config="PIPE12ft" />
+    <Construct sys="targ" config="TARGv1b" />
+    <Construct sys="tpce" config="TPCEv61" />
+    <Construct sys="btof" config="BTOFv8"  />
+    <Construct sys="vpdd" config="VPDD08"  />
+    <Construct sys="calb" config="CALB02"  />
+    <Construct sys="ecal" config="ECALv6"  />
+    <Construct sys="bbcm" config="BBCMin"  />
+    <Construct sys="epdm" config="EPDMv1"  />
+    <Construct sys="magp" config="MAGPon"  />
+    <Construct sys="mutd" config="MUTD16"  />
+    <Construct sys="wcal" config="WCALv1" simu="1" />
+    <Construct sys="hcal" config="HCALv1" simu="1" />
+    <Construct sys="fstm" config="FSTMv2m" />
+    <Construct sys="fsto" config="FSTOon"/>
+    <Construct sys="stgm" config="STGCv1" />
+    <Construct sys="etof" config="ETOFv14f"  />
+  </Geometry>
+
+  <!-- Forward-tracking twin of y2022c: everything at midrapidity off, simplified
+       and misaligned FST (FSTMv2sm to FstmGeoSM). No xgeometry case for it, so
+       it is a reco/TGeo tag only, like dev2026. -->
+  <Geometry tag="ft2022c" comment="y2022 forward tracking geometry">
+    <Construct sys="cave" config="CAVE06"  />
+    <Construct sys="upst" config="UPSTof"  />
+    <Construct sys="shld" config="SHLDof"  />
+    <Construct sys="zcal" config="ZCALof"  />
+    <Construct sys="scon" config="SCON14a"  />
+    <Construct sys="pipe" config="PIPE12ft" />
+    <Construct sys="targ" config="TARGv1b" />
+    <Construct sys="tpce" config="TPCEof" />
+    <Construct sys="btof" config="BTOFof"  />
+    <Construct sys="vpdd" config="VPDD08"  />
+    <Construct sys="calb" config="CALBof"  />
+    <Construct sys="ecal" config="ECALof"  />
+    <Construct sys="bbcm" config="BBCMin"  />
+    <Construct sys="epdm" config="EPDMv1"  />
+    <Construct sys="magp" config="MAGPof"  />
+    <Construct sys="mutd" config="MUTDof"  />
+    <Construct sys="wcal" config="WCALv1" simu="1" />
+    <Construct sys="hcal" config="HCALv1" simu="1" />
+    <Construct sys="fstm" config="FSTMv2sm" />
+    <Construct sys="fsto" config="FSTOon"/>
+    <Construct sys="stgm" config="STGCv1" />
+    <Construct sys="etof" config="ETOFof"  />
+  </Geometry>
+
 
   <Geometry tag="dev2022m" comment="development tag for the 2022 forward star upgrade (misaligned FST)">
     <Construct sys="cave" config="CAVE06"  />

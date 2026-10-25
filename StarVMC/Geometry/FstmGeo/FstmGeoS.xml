@@ -340,7 +340,7 @@ It was copied from FstmGeo.xml on June 15. 2021
             <var name="y"        value="0.0" />
             <var name="z"        value="134.0" />
             <var name="rmin"     value="4.1" />
-            <var name="rmax"     value="34.00" />
+            <var name="rmax"     value="33.70" />
             <var name="dz"       value="30.0" />
             <var name="zdisk"    value="{151.750, 165.248, 178.781}" />
         </Fill>
@@ -695,6 +695,11 @@ The factors are the weights fraction for stainless and NOVEC
             <Create block="FSTW" />
             <For var="iwedge" from="0" to="5">  <!-- even wedges -->
                 <!-- Wedge -->
+			<If expr="iwedge.le.1">
+			  <Info format=" FSTW wedgeno {2I}">iwedge</Info>
+			  <Info format=" FSTW z {6.2f}">-wholewedge_dz</Info>
+			</If>
+
                 <Placement block="FSTW" in="FSTD" x="0" y="0" z="-wholewedge_dz" >
                     <Rotation alphax="180"/>
                     <Rotation alphaz="15+30*2*iwedge"/>

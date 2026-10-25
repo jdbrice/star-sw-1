@@ -1,0 +1,15 @@
+<Document file="StarVMC/Geometry/FstmGeo/FstoConfig.xml">
+
+<Detector name="FSTO" comment="STAR Fst detector outer support">
+
+<Modules>FstoGeo1</Modules>
+<!-- Fst Outer support, cable trays , cooling lines -->
+<Setup name="FSTOof" module="FstoGeo1" onoff="off" comment="OFF" />
+<Setup name="FSTOon" 
+       onoff="on" 
+       simu="2" 
+       module="FstoGeo1" 
+       comment="Fst outer support" >
+</Setup>
+</Detector>
+</Document>

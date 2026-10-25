@@ -1,8 +1,8 @@
 <Document  file="StarVMC/Geometry/SconGeo/SconConfig.xml">
 
-  <Detector name="SCON" comment="Beam Beam Counter configurations"> 
+  <Detector name="SCON" comment="Support Cone configurations"> 
  
-    <Modules>SconGeo</Modules>
+   <Modules>SconGeo,SconGeo15</Modules>
 
     <Setup  name   = "SCONof" comment="FGT off" module="SconGeo" onoff="off"  simu="1"/>
 
@@ -70,6 +70,21 @@
 
       <Init struct="svtg" var="conever" value="4.0" />      
 
+    </Setup>
+
+     <Setup  name   = "SCON14a"  simu="1"
+	    comment= "Default configuration for the SVT support cone"
+	    module = "SconGeo"
+	    onoff  = "on" > 
+
+      <Init struct="svtg" var="conever" value="5.0" />      
+
+    </Setup>
+ 
+    <Setup  name   = "SCON15"  simu="1"
+	    comment= "Default configuration for the support cone"
+	    module = "SconGeo15"
+	    onoff  = "on" > 
     </Setup>
 
 
