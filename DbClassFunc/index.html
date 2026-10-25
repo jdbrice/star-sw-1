@@ -78,6 +78,33 @@ rescale, so it is in whatever the caller used.
     <TD>Id</TD><TD>bool; wedge(1-36), sensor(0-2)</TD>
     <TD>Reading <TT>fstSensorOnWedge</TT> back: which sensor a given row is for.</TD></TR>
 
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Where the silicon actually sits in z</B> &nbsp; cm &nbsp;
+    a wedge is mounted FRONT or BACK, alternating, and the parity is inverted on disk 2</TD></TR>
+
+<TR><TD><TT>diskNominalZ</TT> (static)</TD>
+    <TD>disk(1-3)</TD><TD>double [cm]; 0 if out of range</TD>
+    <TD>151.750 / 165.248 / 178.781, the <TT>zdisk</TT> values from FstmGeoSM.xml.
+        This is the front/back MEAN, so no sensor is actually at it.</TD></TR>
+
+<TR><TD><TT>wedgeOrientation</TT> (static)</TD>
+    <TD>disk(1-3), wedge(1-36)</TD><TD>+1 front (+z) / -1 back; 0 if out of range</TD>
+    <TD>Which face of the disk the wedge is mounted on, as
+        <TT>-kFstzFilp[disk-1]*kFstzDirct[iwedgem]</TT> &mdash; the same two
+        StFstConsts arrays the phi logic uses, so z and phi cannot drift apart.
+        Back wedges also carry a 180 deg rotation about x in the XML.</TD></TR>
+
+<TR><TD><TT>sensorZOffset</TT> (static)</TD>
+    <TD>disk(1-3), wedge(1-36), sensor(0-2)</TD><TD>double [cm], signed</TD>
+    <TD>Offset of the silicon from the disk nominal: <B>-+1.7419</B> for the inner
+        sensor (0) and <B>-+0.3469</B> for the two outer halves (1, 2), sign from
+        <TT>wedgeOrientation</TT>. Both are XML expressions, confirmed by
+        measurement to 0.3 mm.</TD></TR>
+
+<TR><TD><TT>sensorZ</TT> (static)</TD>
+    <TD>disk(1-3), wedge(1-36), sensor(0-2)</TD><TD>double [cm]</TD>
+    <TD><TT>diskNominalZ + sensorZOffset</TT>. This is what a hit's z should be;
+        StFstHitMaker now uses it instead of the bare disk nominal.</TD></TR>
+
 <TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Sensor local &lt;-&gt; global</B> &nbsp; cm</TD></TR>
 
 <TR><TD><TT>sensorLocalToGlobal</TT> (static)</TD>
@@ -141,6 +168,30 @@ built from <TT>kFstphiStart/kFstphiStop</TT>.</FONT></P>
     <TD>row(0-15)</TD><TD>bool; station(0-3), quad(0-3)</TD>
     <TD>Reading <TT>pentOnStation</TT> back: which (station, quad) a given row is for.</TD></TR>
 
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Which of the two gas foils</B> &nbsp; cm &nbsp;
+    each pentagon holds two gas layers 1.1682 cm apart, and every point sits on one of them</TD></TR>
+
+<TR><TD><TT>foilZOffset</TT> (static data)</TD>
+    <TD>-</TD><TD>double = 0.5841 [cm]</TD>
+    <TD>Half the separation of the two gas volumes, from StgmGeo1.xml's
+        <TT>PENT_hcdz/2 + PENT_dz + PENT_gdz/2</TT>.</TD></TR>
+
+<TR><TD><TT>layerFromOrientation</TT> (static)</TD>
+    <TD>orientation (kFttVertical / kFttHorizontal / kFttDiagonalV / kFttDiagonalH)</TD>
+    <TD>layer 1 or 2; -1 if unknown</TD>
+    <TD>V and DiagonalV share a foil (layer 2); H and DiagonalH share the other
+        (layer 1). The diagonal strips are a second strip layer etched on the
+        SAME foil, not a separate chamber.</TD></TR>
+
+<TR><TD><TT>layerZOffset</TT> (static)</TD>
+    <TD>layer(1-2)</TD><TD>double [cm], signed; 0 if out of range</TD>
+    <TD>Layer 1 at <B>-0.5841</B>, layer 2 at <B>+0.5841</B>, in the pentagon's own
+        frame. Measured over all 16 (station, quadrant) cells.</TD></TR>
+
+<TR><TD><TT>orientationZOffset</TT> (static)</TD>
+    <TD>orientation</TD><TD>double [cm], signed</TD>
+    <TD>The same thing keyed by orientation, which is what a cluster carries.</TD></TR>
+
 <TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>DB geometry mode</B></TD></TR>
 
 <TR><TD><TT>setUseDbGeometry</TT> / <TT>useDbGeometry</TT></TD>
@@ -178,12 +229,16 @@ built from <TT>kFstphiStart/kFstphiStop</TT>.</FONT></P>
     <TD>Per-quadrant plane z.</TD></TR>
 
 <TR><TD><TT>getGloablOffset_ClusterPoint</TT></TD>
-    <TD>plane(0-3), quad(0-3)</TD>
+    <TD>plane(0-3), quad(0-3), orientation (optional, default
+        kFttUnknownOrientation)</TD>
     <TD>dx, sx, dy, sy, dz, sz; d in [mm] (dz [cm]), s = +1 or -1</TD>
     <TD>The offset-and-reflection form used by the cluster/point path, as
         distinct from the raw-hit <TT>getGloablOffset</TT>. Returns a translation
         plus axis REFLECTIONS, which is exactly why it cannot reproduce
-        quadrants B and D -- see <TT>localToGlobal</TT> below and prefer that.</TD></TR>
+        quadrants B and D -- see <TT>localToGlobal</TT> below and prefer that.
+        <B>dz is the pentagon centre plus the foil offset for the orientation
+        given</B>; the default adds no foil offset, so a caller that only wants
+        the x/y reflection is unaffected.</TD></TR>
 
 <TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Quadrant local &lt;-&gt; global, as a real transform</B>
     &nbsp; cm. Composes the survey levels as matrix PRODUCTS, so a row with a real
