@@ -89,9 +89,30 @@ rescale, so it is in whatever the caller used.
 <TR><TD><TT>wedgeOrientation</TT> (static)</TD>
     <TD>disk(1-3), wedge(1-36)</TD><TD>+1 front (+z) / -1 back; 0 if out of range</TD>
     <TD>Which face of the disk the wedge is mounted on, as
-        <TT>-kFstzFilp[disk-1]*kFstzDirct[iwedgem]</TT> &mdash; the same two
+        <TT>&plusmn;kFstzFilp[disk-1]*kFstzDirct[iwedgem]</TT> &mdash; the same two
         StFstConsts arrays the phi logic uses, so z and phi cannot drift apart.
-        Back wedges also carry a 180 deg rotation about x in the XML.</TD></TR>
+        The leading sign comes from <TT>fstmConfig</TT> below. Back wedges also
+        carry a 180 deg rotation about x in the XML.</TD></TR>
+
+<TR><TD><TT>setFstmConfig</TT> (static)</TD>
+    <TD>config: 2 = as installed (default), 1 = pre-mirror</TD><TD>void</TD>
+    <TD>Which way round the wedges are mounted, same meaning and same two values
+        as <TT>FSTG_fstmconfig</TT> in FstmGeoM/SM.xml. 2 is the real detector
+        (AGML <TT>wholewedge</TT> 2.0, <TT>modulus2 {1,0,1,0,...}</TT>), built by
+        y2022c / ft2022c; 1 is the parity of every geometry before 2026-10-25
+        (<TT>wholewedge</TT> 1.0, <TT>{0,1,0,1,...}</TT>), needed to reconstruct
+        samples made on y2022-y2025, dev2021, dev2022, dev2022m, dev2022sm or
+        dev2026. The two differ by 2 x 1.7419 cm (inner) and 2 x 0.3469 cm
+        (outer) at all 36 wedges, and by 0.0000 cm in x and y. Any other value
+        is refused with a warning and the setting is left unchanged.</TD></TR>
+
+<TR><TD><TT>fstmConfig</TT> (static)</TD>
+    <TD>none</TD><TD>Int_t: 1 or 2</TD>
+    <TD>The value in force; 2 (as installed) unless <TT>setFstmConfig</TT> has
+        been called. Verify a sample with
+        <TT>script/checkSensorZvsGeom.C(cache, config)</TT>, which agrees
+        108/108 on the matching geometry and reports 108 "wrong face" with
+        a worst |diff| of 3.4838 cm on the other.</TD></TR>
 
 <TR><TD><TT>sensorZOffset</TT> (static)</TD>
     <TD>disk(1-3), wedge(1-36), sensor(0-2)</TD><TD>double [cm], signed</TD>

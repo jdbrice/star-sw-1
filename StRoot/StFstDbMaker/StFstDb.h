@@ -83,8 +83,35 @@ public:
    // the silicon it was measured on. 0 of 6812 hits in a 2000-event closure run
    // landed within 1.5 mm of the right z.
    static double diskNominalZ(int disk);               ///< disk 1-3 -> cm, 0 if out of range
-   /// +1 front (+z) / -1 back, from kFstzFilp and kFstzDirct; 0 if out of range
+   /// +1 front (+z) / -1 back, from kFstzFilp and kFstzDirct; 0 if out of range.
+   /// Which way round depends on fstmConfig(), below.
    static int    wedgeOrientation(int disk, int wedge);
+
+   // ---- which way the wedges are mounted ----------------------------------
+   // Same meaning and the same two values as FSTG_fstmconfig in FstmGeoM.xml /
+   // FstmGeoSM.xml, so one word covers the XML and the reco:
+   //
+   //   kFstmAsInstalled (2)  DEFAULT. The mounting parity of the real detector,
+   //                         seen on it and on the installation photographs;
+   //                         Flemming's mirror of 2026-08-10, AGML wholewedge
+   //                         version 2.0, modulus2 {1,0,1,0,...}. This is what
+   //                         y2022c / ft2022c build, and what DATA needs.
+   //   kFstmPreMirror   (1)  The parity every geometry carried before the
+   //                         mirror: AGML wholewedge version 1.0, modulus2
+   //                         {0,1,0,1,...}. Needed to reconstruct anything
+   //                         generated on FSTMv1, FSTMv1s, FSTMv1m or FSTMv1sm,
+   //                         i.e. on y2022..y2025, dev2021, dev2022, dev2022m,
+   //                         dev2022sm or dev2026 -- every sample that existed
+   //                         before 2026-10-25.
+   //
+   // The two differ by 2 x 1.7419 cm on an inner sensor and 2 x 0.3469 cm on an
+   // outer one, at every one of the 36 wedges, and by nothing in x or y.
+   // Reconstructing a sample with the wrong one puts the hit on the wrong face
+   // of its disk. The default is deliberately the real detector and not the
+   // old samples, exactly as Flemming set the module default in the XML.
+   enum EFstmConfig { kFstmPreMirror = 1, kFstmAsInstalled = 2 };
+   static void   setFstmConfig(Int_t config);   ///< kFstmPreMirror or kFstmAsInstalled
+   static Int_t  fstmConfig();                  ///< default kFstmAsInstalled
    static double sensorZOffset(int disk, int wedge, int sensor); ///< signed cm from the disk nominal
    static double sensorZ(int disk, int wedge, int sensor);       ///< diskNominalZ + sensorZOffset
 
@@ -144,6 +171,7 @@ private:
    enum { kFstNumHss = 2 };     ///< halves of the support structure = rows of hssOnFst
 
    static THashList 	*mgRotList; ///< A list of TGeoHMatrix transormations for each FST sensor
+   static Int_t          mgFstmConfig; ///< see setFstmConfig(); default kFstmAsInstalled
    TGeoHMatrix *mGeoHMatrixTpcOnGlobal;
    TGeoHMatrix mGeoHMatrixFstOnTpc;
    /// hssOnFst has one row per HALF and fstWedgeOnHss one row per WEDGE, so both

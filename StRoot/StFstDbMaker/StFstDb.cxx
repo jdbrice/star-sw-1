@@ -15,6 +15,7 @@
 #include "tables/St_fstChipConfig_Table.h"
 
 THashList *StFstDb::mgRotList = 0;
+Int_t      StFstDb::mgFstmConfig = StFstDb::kFstmAsInstalled;
 
 ClassImp(StFstDb)
 
@@ -94,6 +95,26 @@ double StFstDb::diskNominalZ(int disk)
    return kZDisk[disk - 1];
 }
 //_____________________________________________________________________________
+void StFstDb::setFstmConfig(Int_t config)
+{
+   if (kFstmPreMirror != config && kFstmAsInstalled != config) {
+      LOG_WARN << "StFstDb::setFstmConfig(" << config << "): only "
+               << (int) kFstmPreMirror << " (pre-mirror) and "
+               << (int) kFstmAsInstalled << " (as installed) exist; ignored" << endm;
+      return;
+   }
+
+   mgFstmConfig = config;
+   LOG_INFO << "StFstDb: FST wedge mounting set to "
+            << (kFstmAsInstalled == config ? "AS INSTALLED (mirrored, AGML wholewedge 2.0)"
+                                           : "PRE-MIRROR (AGML wholewedge 1.0)") << endm;
+}
+//_____________________________________________________________________________
+Int_t StFstDb::fstmConfig()
+{
+   return mgFstmConfig;
+}
+//_____________________________________________________________________________
 int StFstDb::wedgeOrientation(int disk, int wedge)
 {
    if (disk < 1 || disk > kFstNumDisk) return 0;
@@ -111,9 +132,23 @@ int StFstDb::wedgeOrientation(int disk, int wedge)
    // modulus2 == 1 on disk 2.
    //     <If expr="idisk.ne.1"> <If expr="...modulus2....eq.0"> ... </If> </If>
    //     <If expr="idisk.eq.1"> <If expr="...modulus2....eq.1"> ... </If> </If>
-   // The leading minus is the measured sign: disk 1 wedge 1 has both array
-   // entries +1 and sits at -1.7408 cm. Verified against all 36 wedges.
-   return -kFstzFilp[disk - 1] * kFstzDirct[iwedgem];
+   // The sign in front is the whole question. kFstzFilp x kFstzDirct reproduces
+   // AGML's wholewedge version 1.0 (modulus2 {0,1,0,1,...}) with a leading
+   // MINUS: disk 1 wedge 1 has both array entries +1 and sits at -1.7408 cm in
+   // every geometry built before 2026-10-25, measured on all 36 wedges.
+   //
+   // But that parity is not the detector. The wedges are mounted mirrored --
+   // seen on the detector itself and on the installation photographs -- which is
+   // why Flemming added AGML wholewedge version 2.0, modulus2 {1,0,1,0,...}, and
+   // made it the module default. So kFstmAsInstalled drops the minus, and that
+   // is this function's default; kFstmPreMirror restores it for reconstructing
+   // samples built on the old geometry. Measured, by azimuth, on the built
+   // caches: y2022c/ft2022c (wholewedge 2.0) have the opposite sign to
+   // y2022b/dev2022sm (wholewedge 1.0) at all 36 wedges, and nothing else about
+   // the sensor positions differs.
+   const int mirror = (kFstmPreMirror == mgFstmConfig) ? -1 : +1;
+
+   return mirror * kFstzFilp[disk - 1] * kFstzDirct[iwedgem];
 }
 //_____________________________________________________________________________
 double StFstDb::sensorZOffset(int disk, int wedge, int sensor)
