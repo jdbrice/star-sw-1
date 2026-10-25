@@ -272,6 +272,8 @@ class FwdGeomUtils {
                     _fstSensorMat[idx]  = here;
                     _fstSensorPhi1[idx] = seg->GetPhi1();
                     _fstSensorPhi2[idx] = seg->GetPhi2();
+                    _fstSensorRmin[idx] = seg->GetRmin();
+                    _fstSensorRmax[idx] = seg->GetRmax();
                     _fstSensorOK[idx]   = true;
                 }
                 return;
@@ -303,8 +305,15 @@ class FwdGeomUtils {
         // phi1/phi2 (optional, degrees) come back as the SENSOR SHAPE's azimuthal
         // limits in its own local frame -- that is where AGML keeps the 1 deg
         // outer-sensor gap (outer shapes are +-0.5..15.5, inner is a clean +-15).
+        // rmin/rmax (optional, cm) are the shape's radial limits, which is where
+        // AGML keeps the R segmentation: 4 R strips tile each sensor exactly, so
+        // the pitch is (rmax-rmin)/4 and strip i sits at rmin+(i+0.5)*pitch. They
+        // are handed out for the same reason as phi1/phi2 -- so a caller can take
+        // BOTH coordinates from the geometry instead of taking phi from here and
+        // R from kFstrStart, which is what it used to do.
         TVector3 getFstSensorOrigin (int index, TVector3 &u, TVector3 &v,
-                                     double *phi1 = 0, double *phi2 = 0) {
+                                     double *phi1 = 0, double *phi2 = 0,
+                                     double *rmin = 0, double *rmax = 0) {
             buildFstSensorMap();
             if ( index < 0 || index >= kFstNumSensors || !_fstSensorOK[index] ){
                 std::cerr << "Failed to get FST sensor origin for index " << index << std::endl;
@@ -322,6 +331,8 @@ class FwdGeomUtils {
             v.SetXYZ( r[1], r[4], r[7] );
             if (phi1) *phi1 = _fstSensorPhi1[index];
             if (phi2) *phi2 = _fstSensorPhi2[index];
+            if (rmin) *rmin = _fstSensorRmin[index];
+            if (rmax) *rmax = _fstSensorRmax[index];
             if ( _verbose ){
                 LOG_INFO << "FST Sensor " << index << " origin: " << t[0] << ", " << t[1]
                          << ", " << t[2] << " shapePhi [" << _fstSensorPhi1[index] << ","
@@ -333,6 +344,8 @@ class FwdGeomUtils {
     protected:
     // geometry-driven FST sensor map, indexed by disk*36 + wedge*3 + sensor
     TGeoHMatrix _fstSensorMat[kFstNumSensors];
+    double      _fstSensorRmin[kFstNumSensors] = {0};
+    double      _fstSensorRmax[kFstNumSensors] = {0};
     double      _fstSensorPhi1[kFstNumSensors] = {0};
     double      _fstSensorPhi2[kFstNumSensors] = {0};
     bool        _fstSensorOK[kFstNumSensors]   = {false};

@@ -5,6 +5,11 @@
 // There are two legitimate implementations of "where is this strip?" and they
 // must not drift apart:
 //
+// Both coordinates are compared: R from the shape's rmin/rmax against
+// kFstrStart, and phi from the shape's phi1/phi2 against kFstphiStart/Stop and
+// the pitch. (Until 2026-10-25 this macro took R from StFstDb on BOTH sides, so
+// R cancelled and only phi was really tested.)
+//
 //   CONSTANTS  StFstDb::stripPosition(), i.e. the algebra StFstHitMaker has
 //              always used: kFstphiStart/kFstphiStop for the wedge edge,
 //              kFstzFilp x kFstzDirct for the per-wedge and per-disk flip,
@@ -74,9 +79,9 @@ void checkStripMap(const char *cache = "fGeom.root", int fstmConfig = 2, int ver
 
    // ---- the geometry model: one matrix and one shape phi range per sensor ----
    TGeoHMatrix mat[108];
-   double sphi1[108], sphi2[108];
+   double sphi1[108], sphi2[108], srmin[108], srmax[108];
    int    ok[108];
-   for (int iz = 0; iz < 108; iz++) { ok[iz] = 0; sphi1[iz] = 0; sphi2[iz] = 0; }
+   for (int iz = 0; iz < 108; iz++) { ok[iz] = 0; sphi1[iz] = 0; sphi2[iz] = 0; srmin[iz] = 0; srmax[iz] = 0; }
 
    TGeoIterator it(gm->GetTopVolume());
    TGeoNode *nd = 0;
@@ -103,6 +108,8 @@ void checkStripMap(const char *cache = "fGeom.root", int fstmConfig = 2, int ver
       mat[idx] = *here;
       sphi1[idx] = seg->GetPhi1();
       sphi2[idx] = seg->GetPhi2();
+      srmin[idx] = seg->GetRmin();
+      srmax[idx] = seg->GetRmax();
       ok[idx] = 1;
       nFound++;
    }
@@ -115,6 +122,8 @@ void checkStripMap(const char *cache = "fGeom.root", int fstmConfig = 2, int ver
    for (int az = 0; az < 3; az++) for (int bz = 0; bz < 12; bz++) for (int cz = 0; cz < 3; cz++) {
       wedgeMean[az][bz][cz] = 0; wedgeSum[az][bz][cz] = 0; wedgeN[az][bz][cz] = 0;
    }
+   double sumDR[3], sumRDP[3];
+   for (int dz2 = 0; dz2 < 3; dz2++) { sumDR[dz2] = 0; sumRDP[dz2] = 0; }
    double worst[3];     // per sensor class
    double sum[3];
    int    n[3], nBad[3];
@@ -149,7 +158,12 @@ void checkStripMap(const char *cache = "fGeom.root", int fstmConfig = 2, int ver
                      double sLocal = (2 == ks) ? (kp - 64) : kp;
                      phiLocDeg = sphi1[gi] + (sLocal + 0.5) * pitchDeg;
                   }
-                  double rr2 = StFstDb::stripR(kr);
+                  // R from the SHAPE, so this is a real two-source comparison.
+                  // It used to call StFstDb::stripR() on both sides, which made R
+                  // cancel by construction and left the macro testing phi only.
+                  double pitchR = (srmax[gi] - srmin[gi]) / 4.0;
+                  int    iRin   = (0 == ks) ? kr : (kr - 4);
+                  double rr2    = srmin[gi] + (iRin + 0.5) * pitchR;
                   double lp[3], gp[3];
                   lp[0] = rr2 * TMath::Cos(phiLocDeg * TMath::DegToRad());
                   lp[1] = rr2 * TMath::Sin(phiLocDeg * TMath::DegToRad());
@@ -159,6 +173,17 @@ void checkStripMap(const char *cache = "fGeom.root", int fstmConfig = 2, int ver
                   double dx = xyzDb[0] - gp[0];
                   double dy = xyzDb[1] - gp[1];
                   double d  = TMath::Sqrt(dx * dx + dy * dy);
+                  // split it: radial vs azimuthal, so "is R wrong?" is answered
+                  // separately from "is phi wrong?". On an IDEAL cache a nonzero
+                  // dR is a genuine convention difference; on a misaligned one it
+                  // also picks up the survey, which the db side does not carry.
+                  double rdb = TMath::Sqrt(xyzDb[0]*xyzDb[0] + xyzDb[1]*xyzDb[1]);
+                  double rgm = TMath::Sqrt(gp[0]*gp[0] + gp[1]*gp[1]);
+                  double dphiRad = TMath::ATan2(xyzDb[1], xyzDb[0]) - TMath::ATan2(gp[1], gp[0]);
+                  while (dphiRad >  TMath::Pi()) dphiRad -= TMath::TwoPi();
+                  while (dphiRad < -TMath::Pi()) dphiRad += TMath::TwoPi();
+                  sumDR[ks]  += TMath::Abs(rdb - rgm);
+                  sumRDP[ks] += TMath::Abs(rdb * dphiRad);
                   sum[ks] += d; n[ks]++;
                   wedgeSum[kd][kw][ks] += d; wedgeN[kd][kw][ks]++;
                   if (d > 0.01) nBad[ks]++;
@@ -189,10 +214,11 @@ void checkStripMap(const char *cache = "fGeom.root", int fstmConfig = 2, int ver
       }
    }
 
-   printf("\n  sensor   strips      mean |dr|      worst |dr|    over 0.1 mm\n");
+   printf("\n  sensor   strips    mean |dr|    mean |dR|   mean r|dphi|   over 0.1 mm\n");
    for (int mz = 0; mz < 3; mz++)
-      printf("  %5d %8d %13.5f cm %11.5f cm %10d\n",
-             mz, n[mz], (n[mz] ? sum[mz] / n[mz] : 0.0), worst[mz], nBad[mz]);
+      printf("  %5d %8d %11.5f %12.6f %13.5f %12d\n",
+             mz, n[mz], (n[mz] ? sum[mz] / n[mz] : 0.0),
+             (n[mz] ? sumDR[mz] / n[mz] : 0.0), (n[mz] ? sumRDP[mz] / n[mz] : 0.0), nBad[mz]);
    printf("\n  A clean result is mean and worst both ~0 and zero strips over 0.1 mm.\n"
           "  The two models then agree and either can be changed with the other as\n"
           "  the reference. Any disagreement is a real convention difference: the\n"

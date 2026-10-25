@@ -521,7 +521,25 @@ class TrackFitter {
             const int sensor = gidx % 3;                    // 0 inner, 1 and 2 outer
             const double phi1 = ( gidx < (int)mFstSensorPhi1.size() ) ? mFstSensorPhi1[gidx] : 0;
             const double phi2 = ( gidx < (int)mFstSensorPhi2.size() ) ? mFstSensorPhi2[gidx] : 0;
-            const float  r    = fh->_localPosition[0];
+            // R from the geometry, like phi. _localPosition[0] is the strip's
+            // radius as StFstDb::stripR() computes it from kFstrStart, so it is
+            // used only to identify WHICH of the sensor's 4 R strips this is;
+            // the position itself then comes from the shape, the same source as
+            // phi1/phi2. Before this, phi was geometry-driven while R was
+            // constants-driven, and nothing checked that the two agreed. They do
+            // today, exactly -- AGML's 5.0/16.5/28.0 are kFstrStart's strip
+            // edges to the micron -- so this is a no-op now and stays correct if
+            // either side ever moves.
+            const double srmin = ( gidx < (int)mFstSensorRmin.size() ) ? mFstSensorRmin[gidx] : 0;
+            const double srmax = ( gidx < (int)mFstSensorRmax.size() ) ? mFstSensorRmax[gidx] : 0;
+            float r = fh->_localPosition[0];
+            if ( srmax > srmin ) {
+                const double pitchR = ( srmax - srmin ) / kFstNumRStripsPerSensor;
+                int iR = (int) TMath::Floor( ( r - srmin ) / pitchR );
+                if ( iR < 0 ) iR = 0;
+                if ( iR >= kFstNumRStripsPerSensor ) iR = kFstNumRStripsPerSensor - 1;
+                r = srmin + ( iR + 0.5 ) * pitchR;
+            }
             // recover the strip index this hit came from
             const double strip  = fh->_localPosition[1] / kFstStripPitchPhi;
             const int    nStrip = (sensor == 0) ? kFstNumPhiSegPerWedge : kFstNumPhiSegPerWedge / 2;
@@ -863,10 +881,13 @@ class TrackFitter {
         {
             TVector3 u(1, 0, 0); 
             TVector3 v(0, 1, 0);
-            double sphi1 = 0, sphi2 = 0;
-            TVector3 o = fwdGeoUtils.getFstSensorOrigin(globalSensorIndex, u, v, &sphi1, &sphi2);
+            double sphi1 = 0, sphi2 = 0, srmin = 0, srmax = 0;
+            TVector3 o = fwdGeoUtils.getFstSensorOrigin(globalSensorIndex, u, v,
+                                                        &sphi1, &sphi2, &srmin, &srmax);
             mFstSensorPhi1.push_back(sphi1);
             mFstSensorPhi2.push_back(sphi2);
+            mFstSensorRmin.push_back(srmin);
+            mFstSensorRmax.push_back(srmax);
             if (kVerbose > 1) {
                 LOG_INFO << "Adding FST Sensor " << globalSensorIndex << " at " << o.X() << ", " << o.Y() << ", " << o.Z() << endm;
                 LOG_INFO << "\tSensor " << globalSensorIndex << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;
@@ -1096,6 +1117,7 @@ class TrackFitter {
     // This is where the 1 degree outer gap lives, so the strip decode reads it from
     // here instead of from kFstStripGapPhi.
     vector<double> mFstSensorPhi1, mFstSensorPhi2;
+    vector<double> mFstSensorRmin, mFstSensorRmax;  // the shape's radial limits, cm
 
     genfit::SharedPlanePtr mEpdPlane; // EPD plane
 
