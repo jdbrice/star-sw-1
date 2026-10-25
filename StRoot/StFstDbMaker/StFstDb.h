@@ -45,6 +45,14 @@ public:
    const TGeoHMatrix *getGeoHMatrixHssOnFst() const                               {return &mGeoHMatrixHssOnFst; }
    const TGeoHMatrix *getGeoHMatrixWedgeOnHss() const                             {return &mGeoHMatrixWedgeOnHss; }
    const TGeoHMatrix *getGeoHMatrixSensorOnWedge(Int_t wedge, Int_t sensor) const {return &mGeoHMatrixSensorOnWedge[wedge - 1][sensor]; }
+
+   /// GEANT g2t volume_id -> reco numbering. One place, so simulation and
+   /// reconstruction cannot drift. All three return -1 if the id is not FST.
+   /// See StFstDb.cxx for the measured GEANT-wedge -> phi-sector map.
+   Int_t getModuleFromG2TVolumeId(Int_t volumeId) const;   ///< module 1-12 within the disk
+   Int_t getWedgeFromG2TVolumeId(Int_t volumeId) const;    ///< reco wedge 1-36
+   Int_t getSensorFromG2TVolumeId(Int_t volumeId) const;   ///< 0 inner, 1/2 outer halves
+   Int_t getDiskFromG2TVolumeId(Int_t volumeId) const;     ///< disk 1-3 (the id digit is 4-6)
    static const TGeoHMatrix *getHMatrixSensorOnGlobal(int wedge, int sensor);
 
    // ---- survey-table index convention ------------------------------------
@@ -90,6 +98,8 @@ public:
    virtual void Print(Option_t *opt = "") const;
 
 private:
+   Int_t moduleFromSector(Int_t sector) const;  ///< phi/30deg sector -> module 1-12, from kFstphiStart/Stop
+
    static THashList 	*mgRotList; ///< A list of TGeoHMatrix transormations for each FST sensor
    TGeoHMatrix *mGeoHMatrixTpcOnGlobal;
    TGeoHMatrix mGeoHMatrixFstOnTpc;

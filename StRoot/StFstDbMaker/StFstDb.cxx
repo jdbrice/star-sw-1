@@ -32,6 +32,95 @@ StFstDb::StFstDb() : StObject()
   mFstChipStatus         = NULL;
 }
 //_____________________________________________________________________________
+// GEANT g2t volume_id -> reco numbering.
+//
+//   volume_id = diskDigit*1000 + wedgeDigit*10 + sensorDigit
+//
+// with diskDigit 4, 5, 6 -- matching FSTD_4/5/6 in the TGeo tree
+// (HALL/CAVE_1/FSTM_1/FSTD_n/FSTW_m/FTUS_k), NOT 1, 2, 3 -- wedgeDigit the GEANT
+// wedge 1-12 and sensorDigit 1-3.
+//
+// The GEANT wedge runs the OTHER WAY ROUND from the phi sector (sector =
+// floor(phi/30deg)), with a 3-sector offset, identically on all three disks:
+//
+//   gWedge   1  2  3  4  5  6  7  8  9 10 11 12
+//   sector   2  1  0 11 10  9  8  7  6  5  4  3      = (3 - gWedge) mod 12
+//
+// Measured on a 2pi electron-gun sample (script/fstWedgeMap.C, 1566 hits,
+// dev2022sm / sdt20211112.000004): each of the 36 (disk, gWedge) cells puts
+// 82-100% of its hits in that sector and the three disks agree exactly. The
+// remainder falls in the neighbouring sector, which is expected -- the sector is
+// the IDEAL 30 degree bin while the wedges are surveyed -- so a caller that
+// cares about wedge edges should trust this decode over a phi guess.
+//
+// kFstphiStart/kFstphiStop then map that sector back to a module, and THAT map is
+// a reflection too, so the two cancel: the GEANT wedge digit currently equals the
+// reco module index. It is still written as the composition rather than as
+// "return gWedge", so that if the phi constants are ever renumbered this follows
+// them instead of silently becoming wrong.
+Int_t StFstDb::getModuleFromG2TVolumeId(Int_t volumeId) const
+{
+   const Int_t diskDigit  = volumeId / 1000;
+   const Int_t gWedge     = (volumeId % 1000) / 10;
+
+   if (diskDigit < 4 || diskDigit > 6)             return -1;
+   if (gWedge < 1 || gWedge > kFstNumWedgePerDisk) return -1;
+
+   const Int_t sector = (3 - gWedge + kFstNumWedgePerDisk) % kFstNumWedgePerDisk;
+
+   return moduleFromSector(sector);
+}
+//_____________________________________________________________________________
+Int_t StFstDb::getDiskFromG2TVolumeId(Int_t volumeId) const
+{
+   const Int_t diskDigit = volumeId / 1000;
+
+   if (diskDigit < 4 || diskDigit > 6) return -1;
+
+   return diskDigit - 3;   // -> 1, 2, 3, the numbering StFstConsts uses
+}
+//_____________________________________________________________________________
+Int_t StFstDb::getWedgeFromG2TVolumeId(Int_t volumeId) const
+{
+   const Int_t disk   = getDiskFromG2TVolumeId(volumeId);
+   const Int_t module = getModuleFromG2TVolumeId(volumeId);
+
+   if (disk < 1 || module < 1) return -1;
+
+   return module + (disk - 1) * kFstNumWedgePerDisk;   // reco wedge 1-36
+}
+//_____________________________________________________________________________
+// The sensor digit is 1 for the inner sensor and 2, 3 for the two halves of the
+// outer one, which StFstConsts counts as 0, 1, 2.
+Int_t StFstDb::getSensorFromG2TVolumeId(Int_t volumeId) const
+{
+   const Int_t diskDigit = volumeId / 1000;
+
+   if (diskDigit < 4 || diskDigit > 6) return -1;
+
+   const Int_t sensorDigit = volumeId % 10;
+
+   if (sensorDigit < 1 || sensorDigit > kFstNumSensorsPerWedge) return -1;
+
+   return sensorDigit - 1;
+}
+//_____________________________________________________________________________
+Int_t StFstDb::moduleFromSector(Int_t sector) const
+{
+   if (sector < 0 || sector >= kFstNumWedgePerDisk) return -1;
+
+   // kFstphiStart/kFstphiStop are in units of pi/6, one entry per module, and a
+   // module spans the sector given by the lower of the two.
+   for (Int_t m = 0; m < kFstNumWedgePerDisk; m++) {
+      const Int_t a = (Int_t) kFstphiStart[m];
+      const Int_t b = (Int_t) kFstphiStop[m];
+
+      if (((a < b) ? a : b) % kFstNumWedgePerDisk == sector) return m + 1;
+   }
+
+   return -1;
+}
+//_____________________________________________________________________________
 Int_t StFstDb::setGeoHMatrices(Survey_st **tables)
 {
    //using namespace StFstConsts;
