@@ -53,14 +53,27 @@ class FwdGeomUtils {
         }
         double fttZ( int index ) {
 
-            // This ftt_z_delta is needed to match the z location of hits (midpint of active volume?) to the z location of the mother volume.
-            // NOTE: It may be possible to improve this when the higher precision FTT geometry model is added
-            const double ftt_z_delta = -0.5825245;
+            // The STGM pentagon mother z, i.e. the CENTRE of the station, midway
+            // between its two gas foils. No delta.
+            //
+            // This used to add a hardcoded ftt_z_delta = -0.5825245, which is the
+            // foil half-separation with the sign of layer 1 -- so every station's
+            // single z was biased onto one of its two foils. That number is
+            // StFttDb's to own and it does:
+            //     StFttDb::foilZOffset  = 0.5841 cm  (StgmGeo1.xml: PENT_hcdz/2 +
+            //                             PENT_dz + PENT_gdz/2)
+            //     StFttDb::layerZOffset( layer 1-2 ) -> -+foilZOffset
+            // and since c0433886ee every FTT point is placed on the foil it was
+            // measured on, per point, by getGloablOffset_ClusterPoint(). A single
+            // number per station therefore has to be the centre, which is what the
+            // mother node is; carrying one foil's offset here would double-count
+            // for layer 1 and double the error for layer 2. Two values for one
+            // quantity (0.5825245 here, 0.5841 there) is also how they drift.
             stringstream spath;
             spath << "/HALL_1/CAVE_1/STGM_1/STFM_" << (index + 1) * 4 << "/";
             bool can = cd( spath.str().c_str() );
             if ( can && _matrix != nullptr ){
-                return _matrix->GetTranslation()[2] + ftt_z_delta;
+                return _matrix->GetTranslation()[2];
             }
             return 0.0;
         }
@@ -76,18 +89,41 @@ class FwdGeomUtils {
         }
 
         double fstZ( int index ) {
-            // starting in FtsmGeom v1.16? or 1.17
-            // the index are now 4,5,6
-            // hence +4 below
-            // also fixed typo, previously was incorrectly FTSD_
-            const double z_delta = 1.755;
-            stringstream spath;
-            spath << "/HALL_1/CAVE_1/FSTM_1/FSTD_" << (index + 4) << "/";
-            bool can = cd( spath.str().c_str() );
-            if ( can && _matrix != nullptr ){
-                return _matrix->GetTranslation()[2] + z_delta;
+            // The disk's z, taken as the MEAN of that disk's 36 silicon nodes.
+            //
+            // Two things were wrong with reading /HALL_1/CAVE_1/FSTM_1/FSTD_<4+i>
+            // and adding a hardcoded z_delta = 1.755:
+            //
+            //  1. FSTD exists only in FstmGeo.xml / FstmGeoS.xml. Every M variant
+            //     -- FstmGeoM and FstmGeoSM, i.e. dev2022m, dev2022sm, dev2026,
+            //     y2022c, ft2022c -- places the wedges straight into FSTM, so the
+            //     cd() failed and this silently returned 0.0, which fstZ(defaults)
+            //     turned into the caller's hardcoded array. The geometry was never
+            //     consulted in any lane we run.
+            //  2. where it did work (the non-M production tags) the 1.755 is a
+            //     ONE-FACE approximation of a +-1.7419 alternation: wedges mount
+            //     front or back by parity, so for half of them it is on the wrong
+            //     side, 3.5 cm out. See StFstDb::sensorZOffset / wedgeOrientation.
+            //
+            // The mean over the disk's sensors is the right single number: with 6
+            // wedges per face the offsets cancel exactly, so it returns the disk
+            // nominal from the geometry itself -- measured on the dev2022sm and
+            // y2022c caches as 151.750000 / 165.248001 / 178.781006, the same
+            // values the old fallback array carried, now derived rather than
+            // asserted. Per-sensor z, which is what a measurement needs, comes
+            // from getFstSensorOrigin() below (planar mode uses it) or from
+            // StFstDb::sensorZ.
+            buildFstSensorMap();
+            double sum = 0.0;
+            int n = 0;
+            for ( int i = 0; i < kFstNumSensors; i++ ){
+                if ( i / (kFstNumWedgePerDisk * kFstNumSensorsPerWedge) != index ) continue;
+                if ( !_fstSensorOK[i] ) continue;
+                sum += _fstSensorMat[i].GetTranslation()[2];
+                n++;
             }
-            return 0.0;
+            if ( n == 0 ) return 0.0;
+            return sum / n;
         }
 
         TVector3 getFttQuadrant( int index, TVector3 &u, TVector3 &v){
