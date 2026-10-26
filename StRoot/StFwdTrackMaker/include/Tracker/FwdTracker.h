@@ -2151,6 +2151,21 @@ class ForwardTrackMaker {
             auto msp = mTrackFitter->projectToPlane(diskPlane, gtr.mTrack);
             // now look for Si hits near this state
             nearby_hits = findFstHitsNearProjectedState(hitmap.at(disk), msp);
+
+            // Blind record, fstNoAdd only. Deliberately a WIDER window than the
+            // tracking search: the two candidate strip-to-phi decodes differ by up
+            // to 25 deg (section 24 of proposal-PR.txt, measured in the live
+            // chain), while the search above accepts 0.004*20.5 rad = 4.7 deg and
+            // compares the STORED hit position. Recording only what that window
+            // accepts would therefore pre-select production's decode and the
+            // comparison would be circular. 0.7 rad = 40 deg comfortably contains
+            // both hypotheses; the offline pass decides which one the blind
+            // projection actually sits on.
+            if ( mFstNoAdd ) {
+                Seed_t wide = findFstHitsNearProjectedState( hitmap.at(disk), msp,
+                                                             kFstBlindDphi, kFstBlindDr );
+                fillFstBlindRecord( disk, msp.getPos(), wide );
+            }
         } catch (genfit::Exception &e) {
             LOG_WARN << "Unable to get projections: " << e.what() << endm;
         }
@@ -2764,6 +2779,13 @@ class ForwardTrackMaker {
     int  mFttDiagType = -1;   // see fwdDiagFill() above
     bool mFttNoAdd    = false;
     bool mFstNoAdd    = false;   // see the fstNoAdd note at the top of this file
+    static constexpr double kFstBlindDphi = 0.7;   // rad, 40 deg: wider than the
+    static constexpr double kFstBlindDr   = 8.0;   // cm, both decodes must fit in
+    TTree *mFstBlindTree = nullptr;
+    int   bFstDisk = 0, bFstPlane = 0;
+    float bFstLocR = 0, bFstLocP = 0;
+    float bFstHitX = 0, bFstHitY = 0, bFstHitZ = 0;
+    float bFstPrjX = 0, bFstPrjY = 0, bFstPrjZ = 0;
     bool mFttDiagMix  = false;
     TFile *mBlindDiagFile = nullptr;
     TH1F  *hBlindDxAll_V[4]     = {nullptr,nullptr,nullptr,nullptr};
@@ -2922,6 +2944,46 @@ class ForwardTrackMaker {
                 Form("disk%d: H strips, |dy|<%.1fcm, off-axis dx;dx [cm];strips", d, kTightSensitiveCut), 240, -30, 30);
             hTightOffAxisY[d]  = new TH1F(Form("hTightOffAxisY_disk%d", d),
                 Form("disk%d: V strips, |dx|<%.1fcm, off-axis dy;dy [cm];strips", d, kTightSensitiveCut), 240, -30, 30);
+        }
+    }
+
+    // Per-hit FST blind record. The FTT fills HISTOGRAMS during its search; the FST
+    // question (which of two strip-to-phi conventions is right) needs the raw pairs
+    // instead, so this is a TTree: one row per candidate hit near a blind track
+    // state, carrying what offline needs to rebuild BOTH candidate positions --
+    // production's stored one and the AGML decode from the same strips -- and
+    // compare them to a projection that never saw the silicon.
+    void initFstBlindTree() {
+        initBlindDiagHistograms();          // owns the file, keeps one guard
+        if (mFstBlindTree || !mBlindDiagFile) return;
+        mBlindDiagFile->cd();
+        mFstBlindTree = new TTree("fstBlind", "FST candidates vs blind track state");
+        mFstBlindTree->Branch("disk",     &bFstDisk,  "disk/I");
+        mFstBlindTree->Branch("planeIdx", &bFstPlane, "planeIdx/I");   // disk*36+wedge*3+sensor
+        mFstBlindTree->Branch("locR",     &bFstLocR,  "locR/F");       // _localPosition[0], cm
+        mFstBlindTree->Branch("locPhi",   &bFstLocP,  "locPhi/F");     // _localPosition[1], rad
+        mFstBlindTree->Branch("hitX",     &bFstHitX,  "hitX/F");       // production's decode
+        mFstBlindTree->Branch("hitY",     &bFstHitY,  "hitY/F");
+        mFstBlindTree->Branch("hitZ",     &bFstHitZ,  "hitZ/F");
+        mFstBlindTree->Branch("projX",    &bFstPrjX,  "projX/F");      // blind track state
+        mFstBlindTree->Branch("projY",    &bFstPrjY,  "projY/F");
+        mFstBlindTree->Branch("projZ",    &bFstPrjZ,  "projZ/F");
+        LOG_INFO << "FST blind record: filling tree 'fstBlind' in fwd_blind_diag.root" << endm;
+    }
+
+    void fillFstBlindRecord( int disk, const TVector3 &proj, const Seed_t &candidates ) {
+        initFstBlindTree();
+        if (!mFstBlindTree) return;
+        for ( auto h : candidates ) {
+            FwdHit *fh = dynamic_cast<FwdHit*>( h );
+            if ( !fh ) continue;
+            bFstDisk  = disk;
+            bFstPlane = fh->_genfit_plane_index;
+            bFstLocR  = fh->_localPosition[0];
+            bFstLocP  = fh->_localPosition[1];
+            bFstHitX  = fh->getX();  bFstHitY = fh->getY();  bFstHitZ = fh->getZ();
+            bFstPrjX  = proj.X();    bFstPrjY = proj.Y();    bFstPrjZ = proj.Z();
+            mFstBlindTree->Fill();
         }
     }
 
