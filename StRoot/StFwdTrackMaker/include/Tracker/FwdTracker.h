@@ -58,6 +58,19 @@
 //                            finds to the seed, and the types are refit in sequence, so only
 //                            the first (Global) refit is genuinely FST-blind -- every later
 //                            type is matched against hits already in its own fit.
+//   TrackFitter:fstNoAdd     true = look for FST hits near the projected state as usual,
+//                            but never put them on the track. The FST twin of fttNoAdd,
+//                            and the only way to get a genuinely FST-blind projection:
+//                            without it there is NO configuration in which an FST
+//                            residual is unbiased, because fwd_afterburner_db.C seeds
+//                            with FST (setSeedFindingWithFst), which puts FST hits in
+//                            every seed by construction AND makes refitTrack skip the
+//                            FST search entirely (mSeedSource == kFstSeed). Use it with
+//                            FTT seeding so the track is determined by the four sTGC
+//                            stations alone; then the FST projection is independent of
+//                            any FST strip decode, which is what the two-convention
+//                            question needs. Expect the track yield to drop -- that is
+//                            the price of the measurement, not a bug.
 //   TrackFitter:fttDiagMix   true = fill the diagnostic against the PREVIOUS event's sTGC
 //                            hits (tracking still uses this event's). The null test: real
 //                            per-particle correspondence must vanish, geometry survives.
@@ -130,7 +143,10 @@ class ForwardTrackMaker {
 
         mFttDiagType = mConfig.get<int>("TrackFitter:fttDiagType", -1);
         mFttNoAdd    = mConfig.get<bool>("TrackFitter:fttNoAdd",   false);
+        mFstNoAdd    = mConfig.get<bool>("TrackFitter:fstNoAdd",   false);
         mFttDiagMix  = mConfig.get<bool>("TrackFitter:fttDiagMix", false);
+        if ( mFstNoAdd )
+            LOG_INFO << "FST hits will be FOUND but NEVER ADDED to tracks (TrackFitter:fstNoAdd)" << endm;
         if ( mFttDiagType >= 0 || mFttNoAdd || mFttDiagMix )
             LOG_INFO << "FST-blind diagnostic: fttDiagType=" << mFttDiagType
                      << " fttNoAdd=" << mFttNoAdd << " fttDiagMix=" << mFttDiagMix << endm;
@@ -2138,6 +2154,15 @@ class ForwardTrackMaker {
         } catch (genfit::Exception &e) {
             LOG_WARN << "Unable to get projections: " << e.what() << endm;
         }
+        if ( mFstNoAdd ) {
+            // diagnostic-only: the hits were found (and anything watching the search
+            // has seen them), but they never go on the track. Same placement as
+            // fttNoAdd's return in addFttHits: after the search, before the append.
+            LOG_DEBUG << "fstNoAdd: found " << nearby_hits.size()
+                      << " FST hits near disk " << disk << ", adding none" << endm;
+            return 0;
+        }
+
         LOG_DEBUG << "Track already has " << gtr.mSeed.size() << " existing seed points" << endm;
 
         if ( nearby_hits.size() > 0 ){
@@ -2738,6 +2763,7 @@ class ForwardTrackMaker {
 
     int  mFttDiagType = -1;   // see fwdDiagFill() above
     bool mFttNoAdd    = false;
+    bool mFstNoAdd    = false;   // see the fstNoAdd note at the top of this file
     bool mFttDiagMix  = false;
     TFile *mBlindDiagFile = nullptr;
     TH1F  *hBlindDxAll_V[4]     = {nullptr,nullptr,nullptr,nullptr};

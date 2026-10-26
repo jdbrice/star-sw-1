@@ -107,7 +107,7 @@ void loadLibs();
 // is meaningless and the pT-based guards in FwdTracker.h (addFttHits /
 // addFstHits / addEpdHits, "blown-up state") reject nearly every track. That
 // is why modes 0 and -1 yield few or no FTT residuals.
-void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, int residualTrackType=0, const char* extraFileList="", bool enableAlignment=false, bool applyFstWedgeAlignment=false, bool applyFstGapFix=false, bool applyFstMirror=false, int magField=1, bool applyFttXYMirror=false, int fttTimeCutMode=0, bool fieldFstConstBz=true, double fieldZMax=450., int fttTimeCutLow=-40, int fttTimeCutHigh=100, int fttDiagType=-1, bool fttNoAdd=false, bool fttDiagMix=false, bool useDbGeometry=true){
+void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:1095//home/starlib/home/starreco/reco/production_pp500_2022/ReversedFullField/P24ia/2022/108/23108014/st_fwd_23108014_raw_2000026.MuDst.root",size_t nEvents = 100, int debug=0, int residualTrackType=0, const char* extraFileList="", bool enableAlignment=false, bool applyFstWedgeAlignment=false, bool applyFstGapFix=false, bool applyFstMirror=false, int magField=1, bool applyFttXYMirror=false, int fttTimeCutMode=0, bool fieldFstConstBz=true, double fieldZMax=450., int fttTimeCutLow=-40, int fttTimeCutHigh=100, int fttDiagType=-1, bool fttNoAdd=false, bool fttDiagMix=false, bool useDbGeometry=true, bool fstNoAdd=false){
 	cout << "FileList: " << fileList << endl;
 	cout << "nEvents: " << nEvents << endl;
 	cout << "enableAlignment: " << enableAlignment << endl;
@@ -118,6 +118,8 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 	     << (magField==1 ? "  (from MuDst)" : (magField==0 ? "  (forced zero)" : "  (LEGACY: no field at all)")) << endl;
 	cout << "applyFttXYMirror: " << applyFttXYMirror << endl;
 	cout << "fieldFstConstBz: " << fieldFstConstBz << "  fieldZMax: " << fieldZMax << endl;
+	cout << "fstNoAdd: " << fstNoAdd
+	     << (fstNoAdd ? "  (FST hits FOUND but NEVER added to tracks; seeding forced to FTT)" : "") << endl;
 	cout << "fttDiagType: " << fttDiagType << (fttDiagType<0 ? "  (all track types)" : "  (one type only)")
 	     << "  fttNoAdd: " << fttNoAdd << (fttNoAdd ? "  (sTGC hits NEVER added to tracks)" : "")
 	     << "  fttDiagMix: " << fttDiagMix << (fttDiagMix ? "  (diagnostic vs PREVIOUS event)" : "") << endl;
@@ -259,7 +261,16 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		fwdTrack = new StFwdTrackMaker();
 		fwdTrack->SetDebug(debug);
 		fwdTrack->setGeoCache( "fGeom.root" );
-		fwdTrack->setSeedFindingWithFst();
+		// fstNoAdd only means anything with FTT seeding: seeding with FST puts FST
+		// hits in every seed by construction, and also makes refitTrack skip the FST
+		// search altogether (mSeedSource == kFstSeed), so nothing could be blind.
+		// Switch automatically rather than leave a configuration that silently lies.
+		if ( fstNoAdd ) {
+			fwdTrack->setSeedFindingWithFtt();
+			cout << "fstNoAdd: seeding switched from FST to FTT so the FST projection is blind" << endl;
+		} else {
+			fwdTrack->setSeedFindingWithFst();
+		}
 		fwdTrack->setTrackRefit( true );
 
 		// Fitter Options
@@ -288,6 +299,7 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 		// FST-blind diagnostic controls -- see the comment above addFttHits in FwdTracker.h
 		fwdTrack->setConfigKeyValue( "TrackFitter:fttDiagType", (int)fttDiagType );
 		fwdTrack->setConfigKeyValue( "TrackFitter:fttNoAdd",    (bool)fttNoAdd );
+		fwdTrack->setConfigKeyValue( "TrackFitter:fstNoAdd",    (bool)fstNoAdd );
 		fwdTrack->setConfigKeyValue( "TrackFitter:fttDiagMix",  (bool)fttDiagMix );
 
 		if (runDb) fwdTrack->setUseBeamlineFromDB( true ); // use measured beamline for BLC; off for MC
