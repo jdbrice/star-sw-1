@@ -207,8 +207,20 @@ class StFwdHitLoader {
     // with sgnAsIs = -1 for sensor 1, +1 for sensor 2, and 0 for the inner
     // sensor, which carries no gap term at all.
     //
-    // Off by default. StFstHitMaker.cxx:159,163 still wants the same fix for
-    // future productions; this is only how we test it against existing MuDst.
+    // Off by default, and as of 2026-10-29 THE SOURCE IS FIXED: the sign in
+    // StFstDb::stripPhi(), which StFstHitMaker now calls, was corrected, so
+    // anything reconstructed from raw hits with current code already carries the
+    // right gap. This switch is therefore only for EXISTING MuDst written by
+    // older production, and it must NOT be combined with freshly made hits or
+    // the 1 degree is applied twice.
+    //
+    // That fix was settled geometrically, not by fitting: AGML keeps the gap in
+    // the outer sensor shapes (344.5-359.5 and 0.5-15.5 in the wedge frame, the
+    // 1 degree between them being the gap), so the two strip models can be
+    // compared strip by strip. On an ideal cache script/checkStripMap.C gives
+    // 0.00000 cm over all 36864 strips with the corrected sign, and 0.38833 cm
+    // -- exactly one gap width at r = 22.25 cm -- with the old one. GEANT truth
+    // agrees: the MC closure's dphi rms improves 20.651 -> 18.074 mrad.
     void setApplyFstGapFix( bool apply ) { mApplyFstGapFix = apply; }
     bool mApplyFstGapFix = false;
 

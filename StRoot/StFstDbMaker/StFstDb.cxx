@@ -254,8 +254,35 @@ double StFstDb::stripPhi(int disk, int wedge, int sensor, int rStrip, double phi
 
    // Outer: the two halves sit either side of the 1 degree gap on the wedge
    // centreline, sensor 1 before it and sensor 2 after it.
-   const double gap = (1 == sensor) ? -sgn * 0.5 * kFstStripGapPhi
-                                    : (2 == sensor ?  sgn * 0.5 * kFstStripGapPhi : 0.0);
+   //
+   // THE SIGN WAS WRONG HERE UNTIL 2026-10-29, and the error was a full
+   // kFstStripGapPhi -- 1 degree, 3.9 mm at r = 22 cm -- on every outer hit,
+   // i.e. on half of all FST hits. It was suspected from data long before
+   // (fstgap/index.html, four ways on ~58M rows) but could not be settled that
+   // way. It is settled geometrically now: AGML carries this gap in the sensor
+   // shapes themselves -- the two outer FTUS span 344.5-359.5 and 0.5-15.5 in
+   // the wedge frame and the 1 degree they do not cover IS the gap -- so the two
+   // models can be compared strip by strip. script/checkStripMap.C over all
+   // 36864 strips of all 108 sensors, on an ideal cache so no survey can
+   // contaminate it:
+   //
+   //     with the old sign : inner 0.00000, outer 0.38833 cm (= 0.999 deg at
+   //                         r = 22.25 cm, i.e. exactly one gap width)
+   //     with this sign    : 0.00000 cm on all three sensor classes, 0 strips
+   //                         above 0.1 mm
+   //
+   // and it is a sign error, not a double count: for wedge 1, outer sensor 1,
+   // strip 0 the geometry gives 90.3828 deg, this sign gives 90.3828, the old
+   // sign 89.3828 (off by 1.0) and dropping the term entirely 89.8828 (off by
+   // 0.5). Only the flip lands on zero.
+   //
+   // Unconditional, deliberately: the discrepancy is identical in the pre-mirror
+   // and as-installed geometries (checkStripMap gives byte-identical numbers for
+   // the pre-mirror cache under kFstmPreMirror and the mirrored cache under
+   // kFstmAsInstalled), so this is not part of the wedge flip and must not hang
+   // off fstmConfig. There is no configuration in which the old sign is right.
+   const double gap = (1 == sensor) ?  sgn * 0.5 * kFstStripGapPhi
+                                    : (2 == sensor ? -sgn * 0.5 * kFstStripGapPhi : 0.0);
 
    return phiOuter - sgn * phiStrip * pitch + gap;
 }
