@@ -112,6 +112,45 @@ public:
    enum EFstmConfig { kFstmPreMirror = 1, kFstmAsInstalled = 2 };
    static void   setFstmConfig(Int_t config);   ///< kFstmPreMirror or kFstmAsInstalled
    static Int_t  fstmConfig();                  ///< default kFstmAsInstalled
+
+   // ---- the flip changes z, and must NOT change phi ------------------------
+   // Confirmed on the detector with Flemming, 2026-10-29: the mirrored mounting
+   // is real, and so is the z change that comes with it. What does NOT change is
+   // the strip-to-phi relation: a given phi strip sits at the same global azimuth
+   // as it always did, which is why production's phi convention survives the
+   // 117M-hit residuals (per-wedge corrections of 1-3 mrad, where a mirrored phi
+   // would be 15 deg).
+   //
+   // AGML cannot express that split. It implements the flip as a 180 deg rotation
+   // about the wedge's local x axis, which moves the silicon to the other face
+   // (right) AND mirrors the sensor's local phi about the wedge bisector (wrong).
+   // So a geometry-driven decode -- anything that turns a strip into a position
+   // using the FTUS node matrix and shape, as the planar track fit does -- picks
+   // up a phi mirror that the detector does not have, up to 15 deg for an outer
+   // sensor and 30 deg across the inner one. Measured in the live chain: the
+   // stored hit and the geometry decode disagree by up to 25 deg in phi while
+   // agreeing in R to the micron.
+   //
+   // Hence the two senses of this one switch:
+   //
+   //   kFstmAsInstalled (2, DEFAULT)  z  = the installed face (wedgeOrientation)
+   //                                  phi= FLIPPED BACK, i.e. the same phi as
+   //                                       before the XML wedge flip
+   //   kFstmPreMirror   (1)           z  and phi both as they were before the
+   //                                       flip -- for reproducing samples built
+   //                                       on the pre-mirror geometry
+   //
+   // stripPhi() below is deliberately INDEPENDENT of this setting: it already
+   // produces the as-installed phi in both configurations, because the detector's
+   // strip-to-phi relation never changed. The flip is only ever applied to phi
+   // taken FROM THE GEOMETRY, through the two helpers here.
+   static bool   mirrorAgmlLocalPhi();                  ///< true for kFstmAsInstalled
+   /// Mirror a sensor-shape local azimuth about the WEDGE bisector (local 360 deg),
+   /// which is what undoes AGML's 180 deg x-rotation. Mirroring about each sensor's
+   /// own bisector would be wrong: the wedge mirror also exchanges the two outer
+   /// halves, and this reproduces that. Returns phiLocalDeg unchanged when
+   /// mirrorAgmlLocalPhi() is false, so a caller can apply it unconditionally.
+   static double agmlLocalPhi(double phiLocalDeg);
    static double sensorZOffset(int disk, int wedge, int sensor); ///< signed cm from the disk nominal
    static double sensorZ(int disk, int wedge, int sensor);       ///< diskNominalZ + sensorZOffset
 

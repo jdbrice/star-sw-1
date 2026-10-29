@@ -115,6 +115,27 @@ Int_t StFstDb::fstmConfig()
    return mgFstmConfig;
 }
 //_____________________________________________________________________________
+bool StFstDb::mirrorAgmlLocalPhi()
+{
+   return kFstmAsInstalled == mgFstmConfig;
+}
+//_____________________________________________________________________________
+double StFstDb::agmlLocalPhi(double phiLocalDeg)
+{
+   if (!mirrorAgmlLocalPhi()) return phiLocalDeg;
+
+   // Mirror about the wedge bisector, which the FTUS shapes put at local 360 deg:
+   // the inner sensor spans 345..375 and the two outer halves 344.5..359.5 and
+   // 0.5..15.5, i.e. -+15 and -+(0.5..15.5) about 360. Reflecting there is
+   // phi -> 720 - phi, folded back into [0,360).
+   double phi = 720.0 - phiLocalDeg;
+
+   while (phi >= 360.0) phi -= 360.0;
+   while (phi <    0.0) phi += 360.0;
+
+   return phi;
+}
+//_____________________________________________________________________________
 int StFstDb::wedgeOrientation(int disk, int wedge)
 {
    if (disk < 1 || disk > kFstNumDisk) return 0;
