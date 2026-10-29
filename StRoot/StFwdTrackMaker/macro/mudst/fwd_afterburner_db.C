@@ -600,6 +600,14 @@ void loadLibs(){
 	gSystem->Load("libgenfit2");
 	gSystem->Load("libKiTrack");
 	gSystem->Load("libXMLIO.so");
+	// Must precede StFwdTrackMaker: TrackFitter's planar FST decode calls
+	// StFstDb::agmlLocalPhi() to undo AGML's phi mirror (the wedge flip moves z
+	// but not the strip-to-phi relation), so libStFwdTrackMaker carries an
+	// undefined StFstDb symbol -- "nm -D -u" shows
+	// U _ZN7StFstDb12agmlLocalPhiEd -- and dlopen fails without this. The bfc
+	// chains get StFstDbMaker from the fstDb option instead; this macro builds
+	// its chain by hand and so has to ask.
+	gSystem->Load( "libStFstDbMaker.so" );
 	gSystem->Load( "StFwdTrackMaker.so" );
 	gSystem->Load( "StFwdResidualMaker.so" );
 	gSystem->Load( "StFwdAlignmentMaker.so" );

@@ -34,6 +34,7 @@
 #include "FitterUtils.h"
 
 #include "StMemStat.h"
+#include "StFstDbMaker/StFstDb.h"   // agmlLocalPhi: the one owner of the FST phi convention
 
 /* Class for interfacing with GenFit for fitting tracks 
  *
@@ -551,6 +552,23 @@ class TrackFitter {
                 const double sLocal = (sensor == 2) ? (strip - kFstNumPhiSegPerWedge / 2) : strip;
                 phiLocalDeg = phi1 + (sLocal + 0.5) * pitch;
             }
+            // Undo AGML's phi mirror. The wedge flip is real and so is the z
+            // change with it, but the strip-to-phi relation is NOT mirrored: a
+            // given phi strip sits at the same global azimuth it always did,
+            // which is what the data says (FstWedgeAligner's 36 measured
+            // per-wedge corrections are 1-3 mrad, where a mirrored phi would be
+            // 15 deg). AGML has no way to express that split -- it implements
+            // the flip as a 180 deg rotation about the wedge's local x axis,
+            // which moves the silicon to the right face AND mirrors local phi --
+            // so the shape limits above carry a mirror the detector does not
+            // have. StFstDb owns the way back and the switch that controls it
+            // (default kFstmAsInstalled = flip the phi back); it also handles the
+            // outer halves, because reflecting about the wedge bisector maps one
+            // half's phi range onto the other's, which is the same thing as
+            // reading the other half's shape limits. Returns its argument
+            // unchanged under kFstmPreMirror, so this is unconditional here.
+            phiLocalDeg = StFstDb::agmlLocalPhi( phiLocalDeg );
+
             const double phiLocal = phiLocalDeg * TMath::DegToRad();
             // hitOnPlane is the strip's position in the sensor's OWN (u,v) basis,
             // measured from the plane origin O -- and O is the FTUS node

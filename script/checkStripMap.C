@@ -28,7 +28,14 @@
 //   sensor 1 outer : rStrip 4-7, phiStrip 0-63
 //   sensor 2 outer : rStrip 4-7, phiStrip 64-127    <- measured on 300k
 //                                                      production hits
-// STATUS 2026-10-25, READ BEFORE TRUSTING A NUMBER FROM THIS MACRO.
+// STATUS 2026-10-29: this IS a drift guard now. The geometry side applies
+// StFstDb::agmlLocalPhi(), as TrackFitter's planar decode does, so a clean run
+// means the constants model and the geometry model agree. What is left over is
+// the SURVEY: the constants side is nominal while a misaligned cache carries
+// fstOnTpc+hssOnFst, which shows as ~0.22 cm in mean |dR| and a comparable
+// r|dphi|. Run it on an IDEAL cache to see the convention by itself.
+//
+// SUPERSEDED NOTE, 2026-10-25, kept because the reasoning is on the record:
 // The CONSTANTS side is the real StFstDb API. The GEOMETRY side is a
 // REIMPLEMENTATION here of what TrackFitter.h does, not the code itself, and it
 // does not yet agree with it: this macro reports a mean |dr| of 2.83 cm (inner)
@@ -158,6 +165,13 @@ void checkStripMap(const char *cache = "fGeom.root", int fstmConfig = 2, int ver
                      double sLocal = (2 == ks) ? (kp - 64) : kp;
                      phiLocDeg = sphi1[gi] + (sLocal + 0.5) * pitchDeg;
                   }
+                  // Undo AGML's phi mirror, exactly as TrackFitter's planar
+                  // decode now does. Without it the two models differ by the
+                  // wedge mirror -- 2.81 cm (inner), 5.83 cm (outer) in r*dphi --
+                  // which is a property of the geometry description, not of the
+                  // detector. Returns its argument unchanged under
+                  // kFstmPreMirror, so pass fstmConfig=1 with a pre-mirror cache.
+                  phiLocDeg = StFstDb::agmlLocalPhi(phiLocDeg);
                   // R from the SHAPE, so this is a real two-source comparison.
                   // It used to call StFstDb::stripR() on both sides, which made R
                   // cancel by construction and left the macro testing phi only.
