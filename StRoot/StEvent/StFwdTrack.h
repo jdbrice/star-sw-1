@@ -213,11 +213,20 @@ protected:
     UShort_t mQATruth; // MC track quality (percentage of hits coming from corresponding MC track)
 
     float mDCA[3]; // DCA to the primary vertex
-    // vtx index is used to pack the vertex index and the track type 
+    // vtx index is used to pack the vertex index and the track type: 5 bits of
+    // vertex index (0-31) in bits 7..3, 3 bits of track type (0-7) in bits 2..0.
+    // Class version 4 and earlier packed 6+2 -- see the ClassDef note below.
     UChar_t mVtxIndex;
     UShort_t mGlobalTrackIndex;
     
-    ClassDef(StFwdTrack,4)
+    // Version 5: mVtxIndex repacked from 6+2 bits to 5+3, because the track type
+    // outgrew two bits (kBLCVertexConstrained=4, kFCSConstrained=5). The member
+    // LAYOUT is unchanged, so ROOT's schema evolution cannot see the difference by
+    // itself -- the class version is the only thing that tells a 6+2 byte from a
+    // 5+3 one, and so the only thing that makes a "#pragma read" rule for older
+    // files possible. Do not put this back to 4. StPicoFwdTrack carries the same
+    // byte and the same repacking, and goes 1 -> 2 for the same reason.
+    ClassDef(StFwdTrack,5)
 };
 
 #endif
