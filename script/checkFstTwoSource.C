@@ -112,29 +112,47 @@ void checkFstTwoSource(const char* fzd = "ele2pi_np1.y2022c.vz0.run7.fzd",
     TH1F* hRloc = new TH1F("hRlocGeant", "AGML local r of the hit;r_{local} [cm];hits",
                            400, 0, 30);
 
-    // TEST 3: the size of what route A is missing, so the gap is quantified
-    // rather than asserted. la is what globalToSensorLocal() returns, which is
-    // the global position minus the survey delta, NOT a local coordinate.
-    TH1F* hGapX = new TH1F("hGapX", "route A minus AGML local x (= the missing "
-                           "placement);dx [cm];hits", 800, -40, 40);
-    TH1F* hGapY = new TH1F("hGapY", "route A minus AGML local y (= the missing "
-                           "placement);dy [cm];hits", 800, -40, 40);
-    TH1F* hGapZ = new TH1F("hGapZ", "route A minus AGML local z (= the missing "
-                           "placement);dz [cm];hits", 400, 140, 190);
-    // And the one thing route A IS good for: the survey delta it removes.
-    TH1F* hSurvX = new TH1F("hSurvX", "survey delta removed, x;dx [cm];hits", 400, -1, 1);
-    TH1F* hSurvY = new TH1F("hSurvY", "survey delta removed, y;dy [cm];hits", 400, -1, 1);
+    // TEST 3: the real two-source comparison, through
+    // StFstDb::sensorPlacement(). Both variants every event, because which one
+    // should match depends on whether AGML was misaligned:
+    //   S = placement WITH the survey delta (what StFstHitMaker puts hits on)
+    //   N = nominal placement only
+    // 2 um bins over +-0.1 cm resolve the GEANT quantisation (0.1 um) and still
+    // contain the fstOnTpc-sized disagreement we expect; the wide pair catches
+    // anything structural.
+    TH1F* hSx = new TH1F("hSdx", "surveyed route - AGML, local x;dx [cm];hits", 1000, -0.1, 0.1);
+    TH1F* hSy = new TH1F("hSdy", "surveyed route - AGML, local y;dy [cm];hits", 1000, -0.1, 0.1);
+    TH1F* hSz = new TH1F("hSdz", "surveyed route - AGML, local z;dz [cm];hits", 1000, -0.1, 0.1);
+    TH1F* hNx = new TH1F("hNdx", "nominal route - AGML, local x;dx [cm];hits", 1000, -0.1, 0.1);
+    TH1F* hNy = new TH1F("hNdy", "nominal route - AGML, local y;dy [cm];hits", 1000, -0.1, 0.1);
+    TH1F* hNz = new TH1F("hNdz", "nominal route - AGML, local z;dz [cm];hits", 1000, -0.1, 0.1);
+    TH1F* hSxW = new TH1F("hSdxWide", "surveyed route - AGML, local x, wide;dx [cm];hits",
+                          800, -20, 20);
+    TH1F* hSyW = new TH1F("hSdyWide", "surveyed route - AGML, local y, wide;dy [cm];hits",
+                          800, -20, 20);
+    TH1F* hSzW = new TH1F("hSdzWide", "surveyed route - AGML, local z, wide;dz [cm];hits",
+                          800, -20, 20);
+    TH1F* hS3  = new TH1F("hS3", "|surveyed route - AGML|;distance [cm];hits", 1000, 0, 5);
+    TH2F* hS3VsIndex = new TH2F("hS3VsIndex", "|surveyed route - AGML| vs flat sensor "
+                                "index;index 0-107;distance [cm]", 108, -0.5, 107.5, 500, 0, 5);
+    TH2F* hSxVsWedge = new TH2F("hSdxVsWedge", "surveyed dx vs wedge;wedge;dx [cm]",
+                                36, 0.5, 36.5, 400, -1, 1);
+    TH2F* hSyVsWedge = new TH2F("hSdyVsWedge", "surveyed dy vs wedge;wedge;dy [cm]",
+                                36, 0.5, 36.5, 400, -1, 1);
 
     // Per-sensor accumulators, 108 = 36 wedges x 3 sensors in StFstDb's flat
     // index order. Fixed arrays because CINT dislikes local maps.
     int nSen[108], nOk2[108], nOk1[108];
     double sumDz2[108], sumDz1[108];
+    double sumSx[108], sumSy[108], sumSz[108], maxS3[108];
     for (int ia = 0; ia < 108; ia++) {
         nSen[ia] = 0; nOk2[ia] = 0; nOk1[ia] = 0; sumDz2[ia] = 0; sumDz1[ia] = 0;
+        sumSx[ia] = 0; sumSy[ia] = 0; sumSz[ia] = 0; maxS3[ia] = 0;
     }
 
     int nEvUsed = 0, nHit = 0, nNoMatrix = 0, nBadId = 0, nZeroLocal = 0;
     int nThick = 0;
+    int nS10 = 0, nS100 = 0, nS1mm = 0, nSworse = 0;
 
     // The silicon is 0.03 cm thick, so anything inside 0.05 cm of the nominal
     // face is "on it" and the two faces are 3.48 cm apart -- no ambiguity.
@@ -205,14 +223,35 @@ void checkFstTwoSource(const char* fzd = "ele2pi_np1.y2022c.vz0.run7.fzd",
             hRloc->Fill(TMath::Sqrt(lb[0]*lb[0] + lb[1]*lb[1]));
             if (TMath::Abs(lb[2]) > 0.015) nThick++;
 
-            // ---- TEST 3: quantify what route A is missing -----------------
-            double la[3];
-            if (!StFstDb::globalToSensorLocal(wedge, sensor, gp, la)) { nNoMatrix++; continue; }
-            hGapX->Fill(la[0] - lb[0]);
-            hGapY->Fill(la[1] - lb[1]);
-            hGapZ->Fill(la[2] - lb[2]);
-            hSurvX->Fill(la[0] - gp[0]);
-            hSurvY->Fill(la[1] - gp[1]);
+            // ---- TEST 3: the two-source comparison ------------------------
+            // StFstDb::sensorPlacement() is local->global, so MasterToLocal()
+            // takes the truth hit's global position into the sensor frame, which
+            // is the frame AGML reported xlocal in.
+            TGeoHMatrix ms = StFstDb::sensorPlacement(disk, wedge, sensor, true);
+            TGeoHMatrix mn = StFstDb::sensorPlacement(disk, wedge, sensor, false);
+            double ls[3], ln[3];
+            ms.MasterToLocal(gp, ls);
+            mn.MasterToLocal(gp, ln);
+
+            double sdx = ls[0] - lb[0], sdy = ls[1] - lb[1], sdz = ls[2] - lb[2];
+            double ndx = ln[0] - lb[0], ndy = ln[1] - lb[1], ndz = ln[2] - lb[2];
+            double sd3 = TMath::Sqrt(sdx*sdx + sdy*sdy + sdz*sdz);
+
+            hSx->Fill(sdx); hSy->Fill(sdy); hSz->Fill(sdz);
+            hNx->Fill(ndx); hNy->Fill(ndy); hNz->Fill(ndz);
+            hSxW->Fill(sdx); hSyW->Fill(sdy); hSzW->Fill(sdz);
+            hS3->Fill(sd3);
+            hS3VsIndex->Fill(idx, sd3);
+            hSxVsWedge->Fill(wedge, sdx);
+            hSyVsWedge->Fill(wedge, sdy);
+
+            sumSx[idx] += sdx; sumSy[idx] += sdy; sumSz[idx] += sdz;
+            if (sd3 > maxS3[idx]) maxS3[idx] = sd3;
+
+            if      (sd3 < 0.001) nS10++;
+            else if (sd3 < 0.010) nS100++;
+            else if (sd3 < 0.100) nS1mm++;
+            else                  nSworse++;
 
             nSen[idx]++;
             nHit++;
@@ -256,15 +295,73 @@ void checkFstTwoSource(const char* fzd = "ele2pi_np1.y2022c.vz0.run7.fzd",
     printf("    local r  mean %7.3f  rms %7.3f cm\n", hRloc->GetMean(), hRloc->GetRMS());
 
     // TEST 3
-    printf("\n  TEST 3  BLOCKED -- StFstDb has no sensor placement matrix.\n");
-    printf("    globalToSensorLocal() removes the survey delta and nothing else:\n");
-    printf("      survey removed      dx %+8.5f   dy %+8.5f cm\n",
-           hSurvX->GetMean(), hSurvY->GetMean());
-    printf("    so route A minus AGML local is the whole missing placement:\n");
-    printf("      dx %+9.4f   dy %+9.4f   dz %+9.4f cm\n",
-           hGapX->GetMean(), hGapY->GetMean(), hGapZ->GetMean());
-    printf("    A new StFstDb placement function has to close this before the\n");
-    printf("    local x,y halves of step 4 can be measured. See the header.\n");
+    printf("\n  TEST 3  two-source comparison, StFstDb::sensorPlacement vs AGML\n");
+    printf("    AGML was built %s\n", misalign ? "MISALIGNED (survey applied)"
+                                               : "IDEAL (no survey)");
+    printf("    local residual, mean +- rms [um]        dx              dy              dz\n");
+    printf("      surveyed placement   %+10.2f %6.2f %+10.2f %6.2f %+10.2f %6.2f\n",
+           hSx->GetMean()*1e4, hSx->GetRMS()*1e4,
+           hSy->GetMean()*1e4, hSy->GetRMS()*1e4,
+           hSz->GetMean()*1e4, hSz->GetRMS()*1e4);
+    printf("      nominal placement    %+10.2f %6.2f %+10.2f %6.2f %+10.2f %6.2f\n",
+           hNx->GetMean()*1e4, hNx->GetRMS()*1e4,
+           hNy->GetMean()*1e4, hNy->GetRMS()*1e4,
+           hNz->GetMean()*1e4, hNz->GetRMS()*1e4);
+    printf("    (the fine histograms are +-0.1 cm; a mean of 0.00 with rms 0.00 means\n");
+    printf("     everything fell in the overflow -- read the wide ones in the file)\n");
+
+    printf("\n    |surveyed route - AGML|      hits     fraction\n");
+    printf("      < 10 um              %8d     %6.2f %%\n", nS10,    100.0*nS10   /nHit);
+    printf("      10 - 100 um          %8d     %6.2f %%\n", nS100,   100.0*nS100  /nHit);
+    printf("      0.1 - 1 mm           %8d     %6.2f %%\n", nS1mm,   100.0*nS1mm  /nHit);
+    printf("      > 1 mm               %8d     %6.2f %%\n", nSworse, 100.0*nSworse/nHit);
+
+    int nS3ok = 0, nS3seen = 0;
+    double worstS3 = 0.0;
+    for (int id = 0; id < 108; id++) {
+        if (nSen[id] == 0) continue;
+        nS3seen++;
+        if (maxS3[id] < 0.010) nS3ok++;
+        if (maxS3[id] > worstS3) worstS3 = maxS3[id];
+    }
+    printf("    per sensor: %d of %d agree to better than 100 um, worst %8.4f cm\n",
+           nS3ok, nS3seen, worstS3);
+
+    // Split by mounting orientation. A wrong ROTATION ORDER in the placement
+    // (Rz*Rx versus Rx*Rz) is invisible on unflipped wedges and wrong on flipped
+    // ones, so this separates it from anything that affects all 108 equally.
+    int    nFront = 0, nBack = 0;
+    double sFrontX = 0, sFrontY = 0, sBackX = 0, sBackY = 0;
+    double mFront = 0, mBack = 0;
+    for (int ie = 0; ie < 108; ie++) {
+        if (nSen[ie] == 0) continue;
+        int ew = ie / 3 + 1;
+        int ed = 1 + (ew - 1) / 12;
+        if (StFstDb::wedgeOrientation(ed, ew) > 0) {
+            nFront++; sFrontX += sumSx[ie]/nSen[ie]; sFrontY += sumSy[ie]/nSen[ie];
+            if (maxS3[ie] > mFront) mFront = maxS3[ie];
+        } else {
+            nBack++;  sBackX  += sumSx[ie]/nSen[ie]; sBackY  += sumSy[ie]/nSen[ie];
+            if (maxS3[ie] > mBack) mBack = maxS3[ie];
+        }
+    }
+    printf("\n    split by mounting face (orientation from wedgeOrientation)\n");
+    printf("      face   sensors   <dx> [um]   <dy> [um]   worst |d| [cm]\n");
+    if (nFront) printf("      front  %7d %11.1f %11.1f %14.4f\n",
+                       nFront, 1e4*sFrontX/nFront, 1e4*sFrontY/nFront, mFront);
+    if (nBack)  printf("      back   %7d %11.1f %11.1f %14.4f\n",
+                       nBack, 1e4*sBackX/nBack, 1e4*sBackY/nBack, mBack);
+
+    printf("\n    per-sensor surveyed residual, first 12 wedges of disk 1\n");
+    printf("      wedge sens  azim  orient    <dx> [um]   <dy> [um]   max|d| [cm]\n");
+    for (int ig = 0; ig < 36; ig++) {
+        if (nSen[ig] == 0) continue;
+        int gw = ig / 3 + 1;
+        int gs = ig % 3;
+        printf("      %5d %4d %5.0f %7d %12.1f %11.1f %13.4f\n",
+               gw, gs, StFstDb::wedgeAzimuth(gw), StFstDb::wedgeOrientation(1, gw),
+               1e4*sumSx[ig]/nSen[ig], 1e4*sumSy[ig]/nSen[ig], maxS3[ig]);
+    }
 
     // Per-sensor detail only where the parity verdict is not unanimous.
     if (nSplit > 0 || (nAll2 > 0 && nAll1 > 0)) {

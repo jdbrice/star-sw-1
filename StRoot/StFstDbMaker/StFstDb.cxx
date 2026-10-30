@@ -212,6 +212,71 @@ double StFstDb::sensorZ(int disk, int wedge, int sensor)
    return z0 + sensorZOffset(disk, wedge, sensor);
 }
 //_____________________________________________________________________________
+double StFstDb::wedgeAzimuth(int wedge)
+{
+   if (wedge < 1 || wedge > kFstNumWedges) return 0.0;
+
+   // FstmGeoSM.xml / FstmGeoM.xml:  wedge_zrot = 75.0 - 30.0*iwedgem
+   // iwedgem runs 0-11 inside a disk, so the 12 wedges sit at 75, 45, 15, -15,
+   // ... -255 deg. Not reduced to [0,360): the XML's own reduction is commented
+   // out there, and a TGeoRotation does not care.
+   const int iwedgem = (wedge - 1) % kFstNumWedgePerDisk;
+
+   return 75.0 - 30.0 * iwedgem;
+}
+//_____________________________________________________________________________
+TGeoHMatrix StFstDb::sensorPlacement(int disk, int wedge, int sensor, bool applySurvey)
+{
+   TGeoHMatrix nominal;                 // identity until we know the indices are good
+   nominal.SetName(Form("sensorPlacement%02i%03i%02i", disk, wedge, sensor));
+
+   if (disk   < 1 || disk   > kFstNumDisk)             return nominal;
+   if (wedge  < 1 || wedge  > kFstNumWedges)           return nominal;
+   if (sensor < 0 || sensor >= kFstNumSensorsPerWedge) return nominal;
+
+   const int orientation = wedgeOrientation(disk, wedge);
+   if (0 == orientation) return nominal;
+
+   // R = Rz(azimuth) * Rx(flip), the order the two <Rotation> tags are written
+   // in, with Rx(180) = diag(1,-1,-1):
+   //     Rz(t)*diag(1,-1,-1) = [ c  s  0 ; s -c  0 ; 0  0 -1 ]
+   //     Rz(t)               = [ c -s  0 ; s  c  0 ; 0  0 +1 ]
+   // so one sign f = +-1 covers both. Written out rather than built with
+   // TGeoRotation::RotateX/RotateZ, whose composition order is easy to get
+   // backwards and impossible to see in the source.
+   const double th = wedgeAzimuth(wedge) * TMath::DegToRad();
+   const double c  = TMath::Cos(th);
+   const double si = TMath::Sin(th);
+   const double f  = (orientation < 0) ? -1.0 : +1.0;
+
+   double rot[9] = {   c, -si * f, 0.0,
+                      si,   c * f, 0.0,
+                     0.0,     0.0,   f };
+   double tr[3]  = { 0.0, 0.0, sensorZ(disk, wedge, sensor) };
+
+   nominal.SetRotation(rot);
+   nominal.SetTranslation(tr);
+
+   if (!applySurvey) return nominal;
+
+   // The survey delta, in the global frame, so it LEFT-multiplies. This is the
+   // matrix getHMatrixSensorOnGlobal() already composes, from the same tables
+   // StFstHitMaker applies -- see the header for why that is the point, and for
+   // the fstOnTpc caveat.
+   const TGeoHMatrix *survey = getHMatrixSensorOnGlobal(wedge, sensor);
+
+   if (!survey) {
+      LOG_WARN << "StFstDb::sensorPlacement: no survey matrix for wedge " << wedge
+               << " sensor " << sensor << "; returning the nominal placement" << endm;
+      return nominal;
+   }
+
+   TGeoHMatrix placed = (*survey) * nominal;
+   placed.SetName(nominal.GetName());
+
+   return placed;
+}
+//_____________________________________________________________________________
 double StFstDb::stripR(int rStrip)
 {
    if (rStrip < 0 || rStrip >= kFstNumRStripsPerWedge) return 0.0;

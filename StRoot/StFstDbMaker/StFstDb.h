@@ -154,6 +154,49 @@ public:
    static double sensorZOffset(int disk, int wedge, int sensor); ///< signed cm from the disk nominal
    static double sensorZ(int disk, int wedge, int sensor);       ///< diskNominalZ + sensorZOffset
 
+   // ---- where a sensor IS: the placement matrix, the way AGML builds it -----
+   // CAREFUL: getHMatrixSensorOnGlobal() above is NOT this, despite the name.
+   // That name is inherited from StIstDb/StSstDbMaker, where the survey tables
+   // ARE full placements. The FST tables are misalignment DELTAS, so that matrix
+   // comes out as identity rotation plus a few mm of translation, carrying no
+   // wedge azimuth, no disk z and no face offset. Measured at sdt20211112.000004
+   // it is (+0.0713, -0.3010, 0.0000) cm for every wedge of half 0 and
+   // (+0.2263, -0.3330, 0.0000) for every wedge of half 1 -- identical across a
+   // half, which is what proves it cannot be a placement.
+   //
+   // This builds the real thing, as FstmGeoSM.xml places FTUS in FSTM:
+   //
+   //     <Placement block="FTUS" in="FSTM" x="0" y="0" z="..._silicon_motherz">
+   //       <Rotation alphax="wedge_xrot"/>     0, or 180 when the wedge is
+   //       <Rotation alphaz="wedge_zrot"/>     mounted on the far face
+   //
+   // so, for a local vector, global = Rz(azimuth) * Rx(flip) * local + T(0,0,z),
+   // with z = sensorZ() and the flip taken from wedgeOrientation(). FSTM itself
+   // sits at x=y=0 in CAVE, and the XML's z is relative to zcenter, which is why
+   // sensorZ() -- diskNominalZ + sensorZOffset -- is already the global z.
+   //
+   // All three sensors of a wedge share one rotation. The two outer sensors
+   // differ only in the TUBS phi extent of the shape, which is not part of the
+   // placement, so there is no per-sensor azimuth convention to choose here.
+   //
+   // FTUS is a tube segment placed on the beam axis, so its LOCAL ORIGIN IS ON
+   // THAT AXIS, not at the sensor centroid: local r equals global r, and local
+   // x,y are the global x,y turned by -azimuth. Verified against the simulation's
+   // own AGML local coordinates, which average r = 13.1 cm over the 6-27 cm span.
+   //
+   // applySurvey left-multiplies the survey delta, which is exactly what
+   // getHMatrixSensorOnGlobal() already holds, composed from the same tables
+   // StFstHitMaker applies. Plane and measurement therefore come from one
+   // source. NOTE it includes fstOnTpc, which the XML's <Misalign> chain does
+   // NOT -- the XML applies only fstSensorOnWedge, fstWedgeOnHss and hssOnFst --
+   // so ours and AGML's differ by fstOnTpc, (+0.1488, -0.3170, 0.0000) cm at
+   // sdt20211112. That is a real inconsistency between the database and the
+   // geometry, not a bug here; it is kept because the hit maker applies it, and
+   // a plane that dropped it would sit in a different frame from its own hits.
+   static double      wedgeAzimuth(int wedge);   ///< deg; FstmGeoSM wedge_zrot
+   static TGeoHMatrix sensorPlacement(int disk, int wedge, int sensor,
+                                      bool applySurvey = true);
+
    // ---- strip -> position, the ONE implementation ---------------------------
    // Moved here verbatim from StFstHitMaker so that the producer, the slow
    // simulation and anything that has to rebuild a hit from its strips all read
