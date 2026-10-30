@@ -163,7 +163,20 @@ protected:
     Short_t mHCalY;
     Short_t mHCalZ;
 
-    ClassDef(StPicoFwdTrack,1)
+    // Version 2: mVtxIndex is packed 5 bits of vertex index + 3 of track type, not
+    // the 6+2 of upstream version 1, because the track type outgrew two bits
+    // (kBLCVertexConstrained=4). The member layout is unchanged -- one UChar_t --
+    // so the class version is the only thing that tells the two packings apart.
+    //
+    // This tree has packed 5+3 since bc79f521cb (2026-07-09) while still saying
+    // version 1, so picoDsts produced here between then and this bump say 1 on disk
+    // and hold a 5+3 byte. That is why there is deliberately NO "#pragma read" rule
+    // in StPicoDstLinkDef.h here: upstream's rule (on fwd-schema-picodst) treats
+    // every version-1 byte as 6+2, which is right for real upstream files and wrong
+    // for ours -- it turns a BLCVertexConstrained track into a Global one. When that
+    // rule arrives with a merge of main, picoDsts produced here before this commit
+    // must be re-made, or read with a pre-merge library.
+    ClassDef(StPicoFwdTrack,2)
 
 };
 
