@@ -64,6 +64,19 @@
          g2t_fts_hit(i).track_p       = trac
          g2t_fts_hit(i).volume_id     = volume
 *
+*        Detector-local hit position, the same way g2t_fst.F does it: x is
+*        xhloc in genhit.h, so GEANT has already transformed it into the frame
+*        of the sensitive volume. Written unconditionally, so it is the local
+*        position whether or not .x above was filled from the global xx.
+*        STAR PR #36 added xlocal to this table and filled it in g2t_fst.F and
+*        g2t_stg.F, but the FST hits do not take the g2t_fst.F path: FTOS/FTIS/
+*        FTUS are routed here (St_geant_Maker.cxx, "FSTH" -> g2t_fts), and the
+*        g2t_fst AddHits line is commented out. So xlocal was always 0 for FST.
+*
+         g2t_fts_hit(i).xlocal(1)     = x(1)
+         g2t_fts_hit(i).xlocal(2)     = x(2)
+         g2t_fts_hit(i).xlocal(3)     = x(3)
+*
 *                  add to track linked list 
 *
          g2t_fts_hit(i).next_tr_hit_p = g2t_track(trac).hit_fts_p
