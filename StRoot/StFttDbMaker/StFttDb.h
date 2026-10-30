@@ -435,7 +435,7 @@ public:
   std :: map< int , Float_t > seMapDiagLeft; // strip left edge map, just for the diagonal strips 
   std :: map< int , Float_t > seMapDiagRight; // strip right edge map, just for the diagonal strips
 
-  ClassDef(StFttDb,0)   //StAF chain virtual base class for Makers        
+  ClassDef(StFttDb,1)   //StAF chain virtual base class for Makers        
 };
 
 #endif
