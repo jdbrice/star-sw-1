@@ -59,7 +59,11 @@ public:
    Int_t getWedgeFromG2TVolumeId(Int_t volumeId) const;    ///< reco wedge 1-36
    Int_t getSensorFromG2TVolumeId(Int_t volumeId) const;   ///< 0 inner, 1/2 outer halves
    Int_t getDiskFromG2TVolumeId(Int_t volumeId) const;     ///< disk 1-3 (the id digit is 4-6)
-   static const TGeoHMatrix *getHMatrixSensorOnGlobal(int wedge, int sensor);
+   /// The survey DELTA for a sensor, in the global frame -- NOT a placement,
+   /// despite what its old name (getHMatrixSensorOnGlobal, to 2026-10-30) said.
+   /// Identity rotation plus a few mm, the same for every wedge of a half. For
+   /// where a sensor IS, see sensorPlacement() below.
+   static const TGeoHMatrix *getSurveyDeltaSensorOnGlobal(int wedge, int sensor);
 
    // ---- nominal disk z, and where the silicon actually sits ------------------
    // A wedge is mounted on the FRONT or the BACK of its disk, alternating with
@@ -155,8 +159,10 @@ public:
    static double sensorZ(int disk, int wedge, int sensor);       ///< diskNominalZ + sensorZOffset
 
    // ---- where a sensor IS: the placement matrix, the way AGML builds it -----
-   // CAREFUL: getHMatrixSensorOnGlobal() above is NOT this, despite the name.
-   // That name is inherited from StIstDb/StSstDbMaker, where the survey tables
+   // CAREFUL: getSurveyDeltaSensorOnGlobal() above is NOT this. It was called
+   // getHMatrixSensorOnGlobal() until 2026-10-30, and under that name it was
+   // read as a placement and put all 108 FST GenFit planes at the origin.
+   // The name came from StIstDb/StSstDbMaker, where the survey tables
    // ARE full placements. The FST tables are misalignment DELTAS, so that matrix
    // comes out as identity rotation plus a few mm of translation, carrying no
    // wedge azimuth, no disk z and no face offset. Measured at sdt20211112.000004
@@ -185,7 +191,7 @@ public:
    // own AGML local coordinates, which average r = 13.1 cm over the 6-27 cm span.
    //
    // applySurvey left-multiplies the survey delta, which is exactly what
-   // getHMatrixSensorOnGlobal() already holds, composed from the same tables
+   // getSurveyDeltaSensorOnGlobal() already holds, composed from the same tables
    // StFstHitMaker applies. Plane and measurement therefore come from one
    // source. NOTE it includes fstOnTpc, which the XML's <Misalign> chain does
    // NOT -- the XML applies only fstSensorOnWedge, fstWedgeOnHss and hssOnFst --
@@ -241,18 +247,27 @@ public:
    /// derived from the wedge azimuth rather than from a wedge-number cut.
    static int  halfId(int wedge);
 
-   // ---- sensor-local <-> global ------------------------------------------
-   // The same convenience StFttDb::localToGlobal()/globalToLocal() give for an
-   // sTGC quadrant, so a caller does not have to fetch the matrix and remember
-   // which of LocalToMaster/MasterToLocal it wanted. The matrix is the fully
-   // composed tpc2Global * fst2Tpc * hss2Fst * wedge2Hss * sensor2Wedge, so
-   // these move with the survey tables -- which is the point: a hit and the
-   // GenFit plane it is fitted on have to come from the same place.
+   // ---- nominal global <-> surveyed global ---------------------------------
+   // Apply the survey delta to a point that is ALREADY global at its nominal
+   // position, and take it back, so a caller does not have to fetch the matrix
+   // and remember which of LocalToMaster/MasterToLocal it wanted. This is the
+   // step StFstHitMaker takes when SetApplySurvey() is on.
+   //
+   // These are NOT sensor-local <-> global, which is what their names said
+   // until 2026-10-30 (sensorLocalToGlobal/globalToSensorLocal, documented here
+   // as the fully composed tpc2Global * fst2Tpc * hss2Fst * wedge2Hss *
+   // sensor2Wedge). The matrix is fstOnTpc * hssOnFst[half] *
+   // fstWedgeOnHss[wedge] * fstSensorOnWedge -- a misalignment delta, with no
+   // wedge azimuth, no disk z and no mounting flip in it, and tpcOnGlobal is
+   // not in the product either. Feed one a sensor-local point and it silently
+   // returns a wrong answer, which is exactly the trap the old name set. For
+   // local <-> global use sensorPlacement() with TGeo's own
+   // LocalToMaster()/MasterToLocal().
    //
    // wedge 1..36, sensor 0..2. Units are cm, as TGeo uses. False means the
    // index was out of range or the geometry has not been loaded.
-   static bool sensorLocalToGlobal(int wedge, int sensor, const double l[3], double g[3]);
-   static bool globalToSensorLocal(int wedge, int sensor, const double g[3], double l[3]);
+   static bool sensorNominalToSurveyed(int wedge, int sensor, const double nominal[3], double surveyed[3]);
+   static bool surveyedToSensorNominal(int wedge, int sensor, const double surveyed[3], double nominal[3]);
 
    const fstPedNoise_st *getPedNoise() const 		{return mFstPedNoise;}
    const fstGain_st *getGain() const     		{return mFstGain;    }

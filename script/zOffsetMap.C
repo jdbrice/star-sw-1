@@ -130,9 +130,9 @@ void zOffsetMap(const char* fzd = "ele2pi_np1.dev2022sm.vz0.run3.fzd",
     printf("not to add an offset.  wedge: global z of sensor-local origin [cm]\n");
     for (int mw = 1; mw <= 36; mw++) {
         double l0[3] = {0,0,0}, g0[3] = {0,0,0};
-        bool ok = StFstDb::sensorLocalToGlobal(mw, 0, l0, g0);
+        bool ok = StFstDb::sensorNominalToSurveyed(mw, 0, l0, g0);
         double z0 = ok ? g0[2] : -999;
-        bool ok1 = StFstDb::sensorLocalToGlobal(mw, 1, l0, g0);
+        bool ok1 = StFstDb::sensorNominalToSurveyed(mw, 1, l0, g0);
         double z1 = ok1 ? g0[2] : -999;
         printf("  wedge %2d   sensor0 z %9.4f   sensor1 z %9.4f\n", mw, z0, z1);
     }

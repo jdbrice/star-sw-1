@@ -85,7 +85,7 @@ void fstSurveyMatrix(const char* sdt = "20211112.000004",
     printf("\n--- composed R%%04i, one sensor (inner) per wedge ---\n");
     printf("  wedge half   t_x        t_y        t_z     | R01       R10      (z-rot)\n");
     for (int kw = 1; kw <= 36; kw++) {
-        const TGeoHMatrix* mc = StFstDb::getHMatrixSensorOnGlobal(kw, 0);
+        const TGeoHMatrix* mc = StFstDb::getSurveyDeltaSensorOnGlobal(kw, 0);
         if (!mc) { printf("  %5d   -- no matrix\n", kw); continue; }
         const Double_t* tc = mc->GetTranslation();
         const Double_t* rc = mc->GetRotationMatrix();
@@ -104,7 +104,7 @@ void fstSurveyMatrix(const char* sdt = "20211112.000004",
         l3[0] = rr2 * TMath::Cos(phd * TMath::DegToRad());
         l3[1] = rr2 * TMath::Sin(phd * TMath::DegToRad());
         l3[2] = StFstDb::sensorZ(1, lw, 0);
-        if (!StFstDb::sensorLocalToGlobal(lw, 0, l3, g3)) continue;
+        if (!StFstDb::sensorNominalToSurveyed(lw, 0, l3, g3)) continue;
         printf("  %5d  %+8.1f  (%+8.4f,%+8.4f) -> (%+8.4f,%+8.4f)  %+8.5f %+8.5f\n",
                lw, phd, l3[0], l3[1], g3[0], g3[1], g3[0] - l3[0], g3[1] - l3[1]);
     }

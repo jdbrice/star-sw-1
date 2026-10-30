@@ -25,7 +25,7 @@
 //
 // THE GAP, measured here 2026-10-30.
 // StFstDb has no function that returns where a sensor IS. The name
-// getHMatrixSensorOnGlobal() promises one, and in StIstDb/StSstDbMaker -- where
+// getSurveyDeltaSensorOnGlobal() promises one, and in StIstDb/StSstDbMaker -- where
 // the name comes from -- it delivers one, because those detectors' survey tables
 // are full placements. The FST tables are not: they are MISALIGNMENT DELTAS.
 // Composed, R%04i = fstOnTpc * hssOnFst[half] * wedgeOnHss[w] * sensorOnWedge[w][s]

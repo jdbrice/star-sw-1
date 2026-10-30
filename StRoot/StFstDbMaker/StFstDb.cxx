@@ -260,10 +260,10 @@ TGeoHMatrix StFstDb::sensorPlacement(int disk, int wedge, int sensor, bool apply
    if (!applySurvey) return nominal;
 
    // The survey delta, in the global frame, so it LEFT-multiplies. This is the
-   // matrix getHMatrixSensorOnGlobal() already composes, from the same tables
+   // matrix getSurveyDeltaSensorOnGlobal() already composes, from the same tables
    // StFstHitMaker applies -- see the header for why that is the point, and for
    // the fstOnTpc caveat.
-   const TGeoHMatrix *survey = getHMatrixSensorOnGlobal(wedge, sensor);
+   const TGeoHMatrix *survey = getSurveyDeltaSensorOnGlobal(wedge, sensor);
 
    if (!survey) {
       LOG_WARN << "StFstDb::sensorPlacement: no survey matrix for wedge " << wedge
@@ -551,11 +551,21 @@ Int_t StFstDb::setGeoHMatrices(Survey_st **tables, const Int_t *nRows)
 
 
 /**
- * Returns TGeoHMatrix with complete set of transformations from the sensor
- * local coordinate system to the global one. The wedge and sensor id-s are
- * expected to follow the human friendly numbering scheme.
+ * The survey DELTA for one sensor: the composed misalignment
+ * fstOnTpc * hssOnFst[half] * fstWedgeOnHss[wedge] * fstSensorOnWedge, in the
+ * global frame. It is NOT a placement -- it carries no wedge azimuth, no disk z
+ * and no mounting flip, and comes out as identity rotation plus a few mm, the
+ * same for every wedge of a half. sensorPlacement() is the placement, and this
+ * left-multiplies it.
+ *
+ * Called getHMatrixSensorOnGlobal() until 2026-10-30, a name inherited from
+ * StIstDb/StSstDbMaker, where the survey tables ARE full placements. The FST
+ * ones are deltas, and reading the old name literally is what put all 108 FST
+ * GenFit planes at (0.07, -0.30, 0.00) cm.
+ *
+ * The wedge and sensor id-s follow the human friendly numbering scheme.
  */
-const TGeoHMatrix *StFstDb::getHMatrixSensorOnGlobal(int wedge, int sensor)
+const TGeoHMatrix *StFstDb::getSurveyDeltaSensorOnGlobal(int wedge, int sensor)
 {
    if (wedge < 1 || wedge > kFstNumWedges || sensor < 0 || sensor >= kFstNumSensorsPerWedge)
       return 0;
@@ -636,20 +646,26 @@ int StFstDb::halfId(int wedge)
 }
 
 
-bool StFstDb::sensorLocalToGlobal(int wedge, int sensor, const double l[3], double g[3])
+/**
+ * Apply the survey delta to a point that is ALREADY in global coordinates at
+ * its nominal position, and take it back again. NOT local -> global: see
+ * getSurveyDeltaSensorOnGlobal(). This is the step StFstHitMaker takes with the
+ * R%04i matrix when SetApplySurvey() is on.
+ */
+bool StFstDb::sensorNominalToSurveyed(int wedge, int sensor, const double nominal[3], double surveyed[3])
 {
-   const TGeoHMatrix *m = getHMatrixSensorOnGlobal(wedge, sensor);
+   const TGeoHMatrix *m = getSurveyDeltaSensorOnGlobal(wedge, sensor);
    if (!m) return false;
-   m->LocalToMaster(l, g);
+   m->LocalToMaster(nominal, surveyed);
    return true;
 }
 
 
-bool StFstDb::globalToSensorLocal(int wedge, int sensor, const double g[3], double l[3])
+bool StFstDb::surveyedToSensorNominal(int wedge, int sensor, const double surveyed[3], double nominal[3])
 {
-   const TGeoHMatrix *m = getHMatrixSensorOnGlobal(wedge, sensor);
+   const TGeoHMatrix *m = getSurveyDeltaSensorOnGlobal(wedge, sensor);
    if (!m) return false;
-   m->MasterToLocal(g, l);
+   m->MasterToLocal(surveyed, nominal);
    return true;
 }
 
