@@ -4,8 +4,15 @@
 // wedge centreline, the 0.5 degree overhangs that make the 1 degree overlap at
 // each wedge boundary, and the strip numbering and its direction.
 //
-// Default is disk 1 wedges 12, 1, 2 in code numbering = disk0 wedges 11, 0, 1
-// in 0-based talk, i.e. the three wedges around the 60-90 deg one.
+// Default is disk 1, wedges 12, 1 and 2: the 60-90 deg wedge and its two
+// neighbours.
+//
+// NUMBERING IS 1-BASED THROUGHOUT, because that is what the code and the data
+// use: StMuFstHit::getWedge() returns 1-36, getDisk() returns 1-3, and
+// StFstDb::stripPhi rejects wedge < 1. Within a disk, m = 1 + (wedge-1)%12,
+// so m runs 1-12 and wedge 1 is the 60-90 deg one. The 0-based iwedgem =
+// (wedge-1)%12 exists only to index kFstzDirct etc. Talking 0-based flips the
+// odd/even parity of m, which is the whole front/back grouping, so do not.
 //
 // Every phi here is computed with the SAME formula as StFstDb::stripPhi (the
 // constants are inlined because StFstConsts.h is often invisible to CINT), so
@@ -63,7 +70,7 @@ void fstWedgeDrawing(int disk = 1, const Char_t *out = "fstWedgeDrawing.png")
    const double zDisk[3] = {151.750, 165.248, 178.781};
    const double kInnerZ = 1.7419, kOuterZ = 0.3469;
    int mm[3] = {12, 1, 2};                     // code numbering, phi descending
-   const Char_t *lbl[3] = {"wedge 11", "wedge 0", "wedge 1"};
+   const Char_t *lbl[3] = {"wedge 12", "wedge 1", "wedge 2"};
 
    gStyle->SetOptStat(0);
    TCanvas *c = new TCanvas("c", "FST wedge geometry", 1700, 1150);
@@ -97,7 +104,7 @@ void fstWedgeDrawing(int disk = 1, const Char_t *out = "fstWedgeDrawing.png")
       double pmid = 0.5 * (lo + hi) * TMath::DegToRad();
       tA->SetTextAlign(22); tA->SetTextSize(isThree ? 0.045 : 0.032);
       tA->DrawLatex(-21.0 * TMath::Cos(pmid), 21.0 * TMath::Sin(pmid),
-                    Form("%d", (ia0 == 12) ? 11 : ia0 - 1));
+                    Form("%d", ia0));
       if (isThree)
          tA->DrawLatex(-26.0 * TMath::Cos(pmid), 26.0 * TMath::Sin(pmid),
                        (fwdOrient(disk, ia0) > 0) ? "FRONT" : "BACK");
@@ -105,13 +112,13 @@ void fstWedgeDrawing(int disk = 1, const Char_t *out = "fstWedgeDrawing.png")
    tA->SetTextAlign(12); tA->SetTextSize(0.036);
    tA->DrawLatex(-34.5, 34.0, Form("A. disk %d (of disks 1-3) from the IR towards +z", disk));
    tA->SetTextSize(0.030);
-   tA->DrawLatex(-34.5, 31.3, "0-based wedge labels, true scale");
+   tA->DrawLatex(-34.5, 31.3, "wedge 1-12 as in the code, true scale");
    tA->DrawLatex(-34.5, -29.5, "STAR +x points LEFT, +y up:");
    tA->DrawLatex(-34.5, -32.0, "#phi increases CLOCKWISE in this view");
    tA->DrawLatex(-34.5, -34.5, "FRONT = larger z = away from the IR");
    // the two boundaries the other panels talk about
    tA->SetTextAlign(21); tA->SetTextSize(0.032);
-   tA->DrawLatex(0.0, 28.9, "#phi=90#circ  (wedge 0 | wedge 11)");
+   tA->DrawLatex(0.0, 28.9, "#phi=90#circ  (wedge 1 | wedge 12)");
    tA->SetTextAlign(32);
    tA->DrawLatex(-29.2, 0.0, "#phi=0");
    TArrow *axr = new TArrow(0, 0, -9, 0, 0.025, "|>"); axr->SetLineWidth(2); axr->Draw();
@@ -247,7 +254,7 @@ void fstWedgeDrawing(int disk = 1, const Char_t *out = "fstWedgeDrawing.png")
       tC->DrawLatex(zo + ((orient > 0) ? 0.20 : -0.20), 17.0, (orient > 0) ? "FRONT" : "BACK");
       tC->SetTextSize(0.026);
       tC->DrawLatex(zo + ((orient > 0) ? 0.20 : -0.20), 15.3,
-                    (orient > 0) ? "wedge 0" : "wedges 11, 1");
+                    (orient > 0) ? "wedge 1" : "wedges 12, 2");
    }
    tC->SetTextAlign(12); tC->SetTextSize(0.026);
    tC->DrawLatex(z0 - 3.0, 23.0, "inner silicon sits 1.7419 cm");
@@ -263,7 +270,7 @@ void fstWedgeDrawing(int disk = 1, const Char_t *out = "fstWedgeDrawing.png")
    c->cd();
    TPad *pD = new TPad("pD", "", 0.40, 0.00, 1.00, 0.50); pD->Draw();
    pD->cd(); pD->SetLeftMargin(0.07); pD->SetBottomMargin(0.12);
-   TH2F *fd = new TH2F("fd", "D. zoom on the wedge 11 / wedge 0 boundary: the 4 overlapping outer strips;STAR #phi [deg];",
+   TH2F *fd = new TH2F("fd", "D. zoom on the wedge 12 / wedge 1 boundary: the 4 overlapping outer strips;STAR #phi [deg];",
                        100, 89.3, 90.7, 100, 0, 10);
    fd->GetYaxis()->SetLabelSize(0); fd->GetYaxis()->SetTickLength(0);
    fd->Draw();
@@ -284,15 +291,15 @@ void fstWedgeDrawing(int disk = 1, const Char_t *out = "fstWedgeDrawing.png")
       tD->SetTextColor(kAzure + 2); tD->DrawLatex(pw11, 1.2, Form("%d", ii));
    }
    tD->SetTextColor(kOrange + 7); tD->SetTextAlign(12); tD->SetTextSize(0.034);
-   tD->DrawLatex(89.35, 9.5, "wedge 0 (60-90), FRONT: outer strip index grows towards LOWER phi");
+   tD->DrawLatex(89.35, 9.5, "wedge 1 (60-90), FRONT: outer strip index grows towards LOWER phi");
    tD->SetTextColor(kAzure + 2);
-   tD->DrawLatex(89.35, 0.5, "wedge 11 (90-120), BACK: outer strip index grows towards HIGHER phi");
+   tD->DrawLatex(89.35, 0.5, "wedge 12 (90-120), BACK: outer strip index grows towards HIGHER phi");
    tD->SetTextColor(kGreen + 3); tD->SetTextAlign(22);
    tD->DrawLatex(90.0, 10.0 - 0.0, "");
    tD->SetTextColor(kBlack); tD->SetTextAlign(22); tD->SetTextSize(0.030);
    tD->DrawLatex(90.0, 6.9, "1#circ overlap, 4.27 pitches: both wedges have strips 0-3 here");
    tD->SetTextSize(0.027);
-   tD->DrawLatex(90.0, 3.4, "so w0 s0 pairs with w11 s3, s1 with s2 ... (offset 1.0 - 4#times0.234 = 0.0625#circ)");
+   tD->DrawLatex(90.0, 3.4, "so w1 s0 pairs with w12 s3, s1 with s2 ... (offset 1.0 - 4#times0.234 = 0.0625#circ)");
 
    c->cd();
    c->SaveAs(out);

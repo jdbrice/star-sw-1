@@ -38,6 +38,17 @@ and all 36 wedges agree.</b></p>
 <a name="why"></a>
 <H1>1. Why there is an overlap at all</H1>
 
+<p style="background-color:#eeeeff; padding:6px; border:1px solid #99a;">
+<b>Numbering.</b> 1-based throughout, because that is what the code and the data use:
+<tt>StMuFstHit::getWedge()</tt> returns 1&ndash;36, <tt>getDisk()</tt> returns 1&ndash;3, and
+<tt>StFstDb::stripPhi</tt> rejects wedge&nbsp;&lt;&nbsp;1. Within a disk,
+<b>m = 1 + (wedge&minus;1)%12</b>, so m runs 1&ndash;12 and <b>wedge 1 (m=1) is the
+60&ndash;90&deg; one</b>. The 0-based <tt>iwedgem</tt> in <tt>StFstDb</tt> exists only to index
+<tt>kFstzDirct</tt> and friends. This matters here: shifting by one flips the odd/even parity
+of m, and that parity <i>is</i> the front/back grouping. The older
+<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/FstFttFlipTest/geometry.html">geometry page</a>
+numbers wedges 0&ndash;11, so its wedge 0 is this page's wedge 1.</p>
+
 <ul>
   <li>12 wedges per disk, 3 disks. Wedge pitch 30&deg;. Strip pitch
       30/128 = 0.234375&deg;.</li>
@@ -58,7 +69,7 @@ and all 36 wedges agree.</b></p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR><TD><a href="plots/fstWedgeDrawing_disk1.png"><img src="plots/fstWedgeDrawing_disk1.png" height=200></a></TD></TR>
-<TR><TD>Disk&nbsp;0 wedges 11, 0, 1 as <tt>StFstDb::stripPhi</tt> has them &mdash; every angle in
+<TR><TD>Disk&nbsp;1, wedges 12, 1 and 2 as <tt>StFstDb::stripPhi</tt> has them &mdash; every angle in
         the figure is computed with that function's own formula, so the picture is the code's
         claim rather than a drawing of someone's idea of it (<tt>script/fstWedgeDrawing.C</tt>).
         <b>A</b>: the disk seen from the IR towards +z, where STAR +x points left and &phi; runs
@@ -70,7 +81,8 @@ and all 36 wedges agree.</b></p>
 
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
 FRONT/BACK here follow the current <tt>kFstmAsInstalled</tt> default (wedge orientation
-= <tt>kFstzFilp &times; kFstzDirct</tt>, no leading minus). The table on the older
+= <tt>kFstzFilp &times; kFstzDirct</tt>, no leading minus), which makes odd m front on disks 1
+and 3 and back on disk 2. The table on the older
 <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/FstFttFlipTest/geometry.html">geometry page</a>
 lists the pre-mirror sense, so the two pages label the same wedge oppositely.</p>
 
@@ -88,8 +100,9 @@ lists the pre-mirror sense, so the two pages label the same wedge oppositely.</p
 <TR><TD>y3</TD><TD>wedge W+1 (lower &phi;) had a hit in its strips 124&ndash;127</TD></TR>
 </TABLE>
 
-<p>Wedge index increases as &phi; <i>decreases</i> (wedge 0 is 60&ndash;90&deg;, wedge 1 is
-30&ndash;60&deg;), so W+1 is the lower-&phi; neighbour.</p>
+<p>Wedge index increases as &phi; <i>decreases</i> (wedge 1 is 60&ndash;90&deg;, wedge 2 is
+30&ndash;60&deg;), so W+1 is the lower-&phi; neighbour and W&minus;1 the higher-&phi; one,
+both taken mod 12 inside the disk.</p>
 
 <p><b>No tracking, no geometry, no DB geometry call.</b> Every quantity is a hardware index
 straight out of <tt>StMuFstHit</tt>: <tt>getDisk()</tt>, <tt>getWedge()</tt>,
@@ -221,7 +234,7 @@ Counts for my edge strip against the partner wedge's:</p>
 
 <p>The pairing is sharp and reversed, as it must be when the strip directions alternate. But it
 sits one strip off the nominal prediction: <tt>stripPhi</tt> gives partner sum = 3.27
-(w0&nbsp;s0 &harr; w11&nbsp;s3, 0.063&deg; apart), the data peaks at <b>sum = 4</b> with a
+(w1&nbsp;s0 &harr; w12&nbsp;s3, 0.063&deg; apart), the data peaks at <b>sum = 4</b> with a
 centroid near 3.8&ndash;4.0. That is a <b>0.5&ndash;0.75 strip (2&ndash;3 mrad) wedge-to-wedge
 relative offset from nominal</b>.</p>
 
