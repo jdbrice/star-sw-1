@@ -1,0 +1,290 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <TITLE>FST outer sensor overlap: the installed strip-phi sense, measured without tracking</TITLE>
+</HEAD>
+<BODY BGCOLOR="#dfdfff" TEXT="black" LINK="blue" VLINK="darkblue">
+
+<p style="background-color:#eeeeff; padding:6px; border:1px solid #99a;">
+STAR forward upgrade, FST geometry and mapping &mdash;
+<b>Outer sensor overlap</b> &nbsp;|&nbsp;
+<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/FstFttFlipTest/geometry.html">Geometry and mapping</a> &nbsp;|&nbsp;
+<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/survey/FST_Cosmic_ChannelMap.pdf">FST cosmic channel map (PDF)</a>
+</p>
+
+<H1>FST outer sensor overlap: which way do the strips run, as installed?</H1>
+
+<p>Adjacent FST wedges share a 1&deg; band of silicon. A track crossing it fires
+<b>both</b> wedges, and which strips light up together says which end of a wedge
+carries strip&nbsp;0 &mdash; the one thing a bench channel map cannot know, because it
+does not know which way the module faces once it is bolted on.</p>
+
+<p><b>120&thinsp;000 zero-field events settle it: the strip-phi sense our
+reconstruction uses is the installed one, by 50:1 over the mirrored alternative,
+and all 36 wedges agree.</b></p>
+
+<a name="contents"></a>
+<H2>Contents</H2>
+<ul>
+  <li><a href="#why">1. Why there is an overlap at all</a></li>
+  <li><a href="#method">2. What is measured, and why nothing can bias it</a></li>
+  <li><a href="#result">3. Result</a></li>
+  <li><a href="#width">4. The overlap width, measured</a></li>
+  <li><a href="#pairing">5. Strip-to-strip pairing, and a 2-3 mrad residual</a></li>
+  <li><a href="#conclusion">6. Conclusion, and what this does not settle</a></li>
+</ul>
+
+<HR>
+<a name="why"></a>
+<H1>1. Why there is an overlap at all</H1>
+
+<ul>
+  <li>12 wedges per disk, 3 disks. Wedge pitch 30&deg;. Strip pitch
+      30/128 = 0.234375&deg;.</li>
+  <li>The <b>inner</b> sensor is 128 strips = exactly 30&deg;. It abuts its neighbours:
+      <b>no overlap</b>, and it takes no part in this measurement.</li>
+  <li>The <b>outer</b> pair is 64+64 strips at the same pitch = 30&deg; of silicon
+      <i>plus</i> the 1&deg; dead gap on the wedge centreline &rarr;
+      <b>31&deg; of silhouette for a 30&deg; pitch</b>. AGML carries exactly this: the two
+      outer FTUS span 344.5&ndash;359.5 and 0.5&ndash;15.5 in the wedge frame.</li>
+  <li>So each wedge overhangs its nominal boundary by <b>0.5&deg; on both sides</b>. Both
+      neighbours overhang <i>towards each other</i>, so the shared band is
+      <b>1.0&deg; wide and both wedges have silicon across all of it</b>:
+      1.0 / 0.234375 = <b>4.27 strips each</b>, i.e. strips 0&ndash;3 of each wedge, with
+      strip 4 straddling the edge of the band.</li>
+</ul>
+
+<p>Everything below uses only the outer sensors and only wedges in the same disk.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/fstWedgeDrawing_disk1.png"><img src="plots/fstWedgeDrawing_disk1.png" height=200></a></TD></TR>
+<TR><TD>Disk&nbsp;0 wedges 11, 0, 1 as <tt>StFstDb::stripPhi</tt> has them &mdash; every angle in
+        the figure is computed with that function's own formula, so the picture is the code's
+        claim rather than a drawing of someone's idea of it (<tt>script/fstWedgeDrawing.C</tt>).
+        <b>A</b>: the disk seen from the IR towards +z, where STAR +x points left and &phi; runs
+        clockwise. <b>B</b>: unrolled, with the 1&deg; gaps, the 1&deg; overlaps and the strip
+        directions; note the direction alternates wedge to wedge. <b>C</b>: the z section &mdash;
+        inner silicon 1.7419&nbsp;cm from the disk plane, outer 0.3469&nbsp;cm, same side.
+        <b>D</b>: the boundary itself, where both wedges have strips 0&ndash;3, interleaved.</TD></TR>
+</TABLE>
+
+<p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
+FRONT/BACK here follow the current <tt>kFstmAsInstalled</tt> default (wedge orientation
+= <tt>kFstzFilp &times; kFstzDirct</tt>, no leading minus). The table on the older
+<a href="https://www.star.bnl.gov/protected/spin/akio/fcs/FstFttFlipTest/geometry.html">geometry page</a>
+lists the pre-mirror sense, so the two pages label the same wedge oppositely.</p>
+
+<HR>
+<a name="method"></a>
+<H1>2. What is measured, and why nothing can bias it</H1>
+
+<p>For every outer hit in wedge W, record which neighbour edge also fired in the same event:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>y bin</TH><TH>condition</TH></TR>
+<TR><TD>y0</TD><TD>wedge W&minus;1 (higher &phi;) had a hit in its strips 0&ndash;3</TD></TR>
+<TR><TD>y1</TD><TD>wedge W&minus;1 (higher &phi;) had a hit in its strips 124&ndash;127</TD></TR>
+<TR><TD>y2</TD><TD>wedge W+1 (lower &phi;) had a hit in its strips 0&ndash;3</TD></TR>
+<TR><TD>y3</TD><TD>wedge W+1 (lower &phi;) had a hit in its strips 124&ndash;127</TD></TR>
+</TABLE>
+
+<p>Wedge index increases as &phi; <i>decreases</i> (wedge 0 is 60&ndash;90&deg;, wedge 1 is
+30&ndash;60&deg;), so W+1 is the lower-&phi; neighbour.</p>
+
+<p><b>No tracking, no geometry, no DB geometry call.</b> Every quantity is a hardware index
+straight out of <tt>StMuFstHit</tt>: <tt>getDisk()</tt>, <tt>getWedge()</tt>,
+<tt>getSensor()</tt>, <tt>getMeanPhiStrip()</tt>. Three consequences:</p>
+<ul>
+  <li>The XML wedge flip and the strip-map phi flip <b>cannot</b> influence the answer &mdash;
+      there is nothing to configure.</li>
+  <li><tt>StFstRawHit::getPhiStrip()</tt> is <tt>geoId % 128</tt>, i.e. the DB channel map
+      <b>before</b> <tt>stripPhi</tt> applies the phi flip. The indices here are the
+      channel map's own.</li>
+  <li>The x axis is all 128 strips, so the non-edge strips are the accidental-coincidence
+      control inside the same plot.</li>
+</ul>
+
+<p>Checked on the data before using it, not assumed:</p>
+<ul>
+  <li><tt>phiStrip</tt> ranges: sensor 0 &rarr; 0&ndash;127, sensor 1 &rarr; 0&ndash;63,
+      sensor 2 &rarr; 64&ndash;127.</li>
+  <li>APV &rarr; <tt>phiStrip</tt>: apv 0/1/2/3 &rarr; 0&ndash;31 / 32&ndash;63 / 64&ndash;95 /
+      96&ndash;127, repeating &mdash; the assignment in the
+      <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/survey/FST_Cosmic_ChannelMap.pdf">cosmic channel map</a>,
+      with no reversal hidden in the DB map.</li>
+</ul>
+
+<p>The two hypotheses predict <b>disjoint pairs of cells</b>, so they are read straight off.
+Our mapping (P) puts the same-numbered edges of adjacent wedges against each other, because
+<tt>kFstzDirct</tt> = {1,&minus;1,1,&minus;1,...} alternates the strip direction; a physical
+mirror of that (M) is exactly y0&harr;y2 and y1&harr;y3.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>wedges</TH><TH>strips 0&ndash;3 pair with</TH><TH>strips 124&ndash;127 pair with</TH></TR>
+<TR><TD>disks 1,3 odd m &nbsp;/&nbsp; disk 2 even m</TD><TD>y0 &nbsp;(W&minus;1 s0&ndash;3)</TD><TD>y3 &nbsp;(W+1 s124&ndash;127)</TD></TR>
+<TR><TD>disks 1,3 even m &nbsp;/&nbsp; disk 2 odd m</TD><TD>y2 &nbsp;(W+1 s0&ndash;3)</TD><TD>y1 &nbsp;(W&minus;1 s124&ndash;127)</TD></TR>
+</TABLE>
+
+<HR>
+<a name="result"></a>
+<H1>3. Result</H1>
+
+<p>120&thinsp;000 zero-field events (Run&nbsp;24 FieldOff, <tt>run24_mudst.txt</tt>),
+113&thinsp;491 with FST hits, 2&thinsp;033&thinsp;671 FST hits of which 811&thinsp;072 outer,
+16.95 hits/event.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>disk</TH><TH>wedges</TH><TH>hit end</TH>
+    <TH>y0: W&minus;1 s0&ndash;3</TH><TH>y1: W&minus;1 s124&ndash;7</TH>
+    <TH>y2: W+1 s0&ndash;3</TH><TH>y3: W+1 s124&ndash;7</TH><TH>edge hits</TH></TR>
+<TR><TD>1</TD><TD>odd m</TD><TD>s0&ndash;3</TD><TD BGCOLOR="#ffe0a0"><b>2100</b> P</TD><TD>58</TD><TD>47 M</TD><TD>47</TD><TD>4325</TD></TR>
+<TR><TD>1</TD><TD>odd m</TD><TD>s124&ndash;127</TD><TD>49</TD><TD>38 M</TD><TD>53</TD><TD BGCOLOR="#ffe0a0"><b>2250</b> P</TD><TD>4053</TD></TR>
+<TR><TD>1</TD><TD>even m</TD><TD>s0&ndash;3</TD><TD>48 M</TD><TD>52</TD><TD BGCOLOR="#ffe0a0"><b>2092</b> P</TD><TD>49</TD><TD>4559</TD></TR>
+<TR><TD>1</TD><TD>even m</TD><TD>s124&ndash;127</TD><TD>46</TD><TD BGCOLOR="#ffe0a0"><b>2243</b> P</TD><TD>58</TD><TD>38 M</TD><TD>4410</TD></TR>
+<TR><TD>2</TD><TD>odd m</TD><TD>s0&ndash;3</TD><TD>59 M</TD><TD>59</TD><TD BGCOLOR="#ffe0a0"><b>2402</b> P</TD><TD>65</TD><TD>4943</TD></TR>
+<TR><TD>2</TD><TD>odd m</TD><TD>s124&ndash;127</TD><TD>59</TD><TD BGCOLOR="#ffe0a0"><b>2484</b> P</TD><TD>57</TD><TD>49 M</TD><TD>4908</TD></TR>
+<TR><TD>2</TD><TD>even m</TD><TD>s0&ndash;3</TD><TD BGCOLOR="#ffe0a0"><b>2419</b> P</TD><TD>57</TD><TD>60 M</TD><TD>59</TD><TD>4898</TD></TR>
+<TR><TD>2</TD><TD>even m</TD><TD>s124&ndash;127</TD><TD>66</TD><TD>50 M</TD><TD>62</TD><TD BGCOLOR="#ffe0a0"><b>2499</b> P</TD><TD>4921</TD></TR>
+<TR><TD>3</TD><TD>odd m</TD><TD>s0&ndash;3</TD><TD BGCOLOR="#ffe0a0"><b>1981</b> P</TD><TD>48</TD><TD>35 M</TD><TD>46</TD><TD>4320</TD></TR>
+<TR><TD>3</TD><TD>odd m</TD><TD>s124&ndash;127</TD><TD>60</TD><TD>44 M</TD><TD>59</TD><TD BGCOLOR="#ffe0a0"><b>2462</b> P</TD><TD>5002</TD></TR>
+<TR><TD>3</TD><TD>even m</TD><TD>s0&ndash;3</TD><TD>35 M</TD><TD>59</TD><TD BGCOLOR="#ffe0a0"><b>1976</b> P</TD><TD>58</TD><TD>4571</TD></TR>
+<TR><TD>3</TD><TD>even m</TD><TD>s124&ndash;127</TD><TD>46</TD><TD BGCOLOR="#ffe0a0"><b>2453</b> P</TD><TD>49</TD><TD>44 M</TD><TD>4535</TD></TR>
+<TR BGCOLOR="#e8e8ff"><TD colspan=3><b>total</b></TD>
+    <TD colspan=4><b>predicted cells P = 27361&nbsp;&nbsp;&nbsp;mirrored cells M = 547</b></TD><TD></TD></TR>
+</TABLE>
+
+<p><b>M is the accidental floor, not a small signal.</b> In every row the two cells that are
+neither P nor M hold the same ~50 counts as M, and the strips 60&ndash;67 control gives the same
+rate: ~100 counts per cell on ~8&thinsp;500 control hits = 1.2%, against M's 1.1%. The
+mirrored hypothesis has no signal at all.</p>
+
+<p>A second result falls out for free: for every <tt>s0&ndash;3</tt> row the two
+<i>s124&ndash;127</i> cells are empty. <b>Same-numbered edges meet</b>, which only an
+alternating mounting can do &mdash; a uniform strip direction would have put every count in
+those now-empty cells.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR>
+<TD><a href="plots/fwo_frontback.png"><img src="plots/fwo_frontback.png" height=200></a></TD>
+</TR>
+<TR><TD>Left: front wedges (orientation +1). Middle: back wedges. Right: all 36 together.
+        Front wedges pair with W&minus;1, back wedges with W+1, and the two mirrored rows are
+        flat at the accidental level. The all-wedge average washes out to 50/50 by construction
+        &mdash; the predicted cell alternates with the mounting sense, so only the front/back
+        split carries the answer.</TD></TR>
+</TABLE>
+
+<p>Per wedge, <b>all 36 agree</b>: M/P runs 0.006 to 0.033 with no outlier, and the mirrored
+cell equals the accidental level everywhere. A single wedge wired the other way would have
+shown M&nbsp;&asymp;&nbsp;P&nbsp;&asymp;&nbsp;350 in its own panel.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR>
+<TD><a href="plots/fwo_disk1_perwedge.png"><img src="plots/fwo_disk1_perwedge.png" height=200></a></TD>
+</TR>
+<TR><TD>Disk 1, all twelve wedges separately. Odd wedges light the bottom row (W&minus;1,
+        higher &phi;), even wedges the row above it (W+1, lower &phi;), strictly alternating.
+        Every other cell is single digits.</TD></TR>
+</TABLE>
+
+<HR>
+<a name="width"></a>
+<H1>4. The overlap width, measured</H1>
+
+<p>Predicted-cell coincidences against distance from the wedge edge, summed over all 36 wedges:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>strip from edge</TH><TH>0</TH><TH>1</TH><TH>2</TH><TH>3</TH><TH>4</TH><TH>5</TH><TH>6</TH><TH>7</TH><TH>8</TH></TR>
+<TR><TD>coincidences</TD><TD>1654</TD><TD>3518</TD><TD>4160</TD><TD>3638</TD><TD>3054</TD>
+    <TD>1072</TD><TD>447</TD><TD>337</TD><TD>288</TD></TR>
+</TABLE>
+
+<p>Signal through strip 4 and a 3&times; drop at strip 5 &mdash; the
+<b>4.27 strips</b> the 1&deg; band predicts, measured. The deficit at strip 0 is an
+edge-of-sensor clustering effect: the outermost strip's cluster is truncated, so its mean
+migrates inward.</p>
+
+<HR>
+<a name="pairing"></a>
+<H1>5. Strip-to-strip pairing, and a 2-3 mrad residual</H1>
+
+<p>Inside the band the two strip grids interleave, so each strip has a definite partner.
+Counts for my edge strip against the partner wedge's:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>mine \ partner</TH><TH>0</TH><TH>1</TH><TH>2</TH><TH>3</TH></TR>
+<TR><TD>s0</TD><TD>156</TD><TD>162</TD><TD>251</TD><TD>346</TD></TR>
+<TR><TD>s1</TD><TD>146</TD><TD>214</TD><TD>314</TD><TD BGCOLOR="#ffe0a0"><b>1186</b></TD></TR>
+<TR><TD>s2</TD><TD>242</TD><TD>315</TD><TD BGCOLOR="#ffe0a0"><b>1277</b></TD><TD>320</TD></TR>
+<TR><TD>s3</TD><TD>317</TD><TD BGCOLOR="#ffe0a0"><b>1107</b></TD><TD>316</TD><TD>85</TD></TR>
+</TABLE>
+
+<p>The pairing is sharp and reversed, as it must be when the strip directions alternate. But it
+sits one strip off the nominal prediction: <tt>stripPhi</tt> gives partner sum = 3.27
+(w0&nbsp;s0 &harr; w11&nbsp;s3, 0.063&deg; apart), the data peaks at <b>sum = 4</b> with a
+centroid near 3.8&ndash;4.0. That is a <b>0.5&ndash;0.75 strip (2&ndash;3 mrad) wedge-to-wedge
+relative offset from nominal</b>.</p>
+
+<p>This runs on nominal geometry with no survey and no alignment, and 2&ndash;3 mrad is exactly
+the size of FstWedgeAligner's 36 measured per-wedge corrections, so it is most likely just
+those showing up. It does not touch the conclusion, which is a 30&deg;-scale question. It does
+suggest something useful: <b>this method measures wedge-to-wedge relative &phi; alignment to
+well under a strip pitch, without tracking</b>.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/fwo_fine.png"><img src="plots/fwo_fine.png" height=200></a></TD></TR>
+<TR><TD>Edge strip against partner edge strip, all wedges. Two blocks, each anti-diagonal: the
+        low ends (0&ndash;3) pair with the partner's low ends, the high ends (124&ndash;127) with
+        its high ends, in reversed order.</TD></TR>
+</TABLE>
+
+<HR>
+<a name="conclusion"></a>
+<H1>6. Conclusion, and what this does not settle</H1>
+
+<ul>
+  <li><b>The strip-phi sense used in reconstruction is the installed one.</b> P/M = 27361/547,
+      with M at the accidental level and all 36 wedges agreeing individually. The phi flip
+      applied between the channel-map index and <tt>stripPhi</tt> is correct.</li>
+  <li><b>The channel map is not wrong; it is under-determined.</b> The
+      <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/survey/FST_Cosmic_ChannelMap.pdf">cosmic channel map</a>
+      is a bench sheet marked "Outer Sector Face Down" / "Inner Sector Face Up". Its left-right
+      direction only becomes a STAR &phi; direction once you know which way the module faces
+      when installed, and that is the bit this measurement supplies. Its APV&rarr;phi assignment
+      is confirmed by the data, and its inner/outer opposition is not in dispute.</li>
+  <li><b>The alternating mounting is confirmed</b> directly: same-numbered edges meet.</li>
+  <li><b>The 0.5&deg; overhang and 4 overlapping strips per wedge are confirmed</b> by the
+      measured coincidence width.</li>
+</ul>
+
+<p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
+<b>This settles &phi;, not z.</b> The two outer sensors of a coincident pair differ by only
+0.69&nbsp;cm in z, far below what the 2.875&nbsp;cm r-strip pitch can resolve, so the
+front/back question does not follow from this measurement on its own &mdash; only through
+the rigid-body argument that turning a wedge over reverses both senses.
+<br><br>
+The <b>inner</b> sensors are also untouched: they span exactly 30&deg; and have no overlap,
+and a track crosses a wedge at one radius, so same-wedge inner/outer pairs are different
+particles and carry no phi relation (measured: flat). The way in is <b>two disks</b> &mdash; for
+a vertex-pointing track r scales with z (r3/r1 = 178.781/151.75 = 1.178), so a track with
+r1 in 11.57&ndash;13.625&nbsp;cm is inner on disk 1 and outer on disk 3 at the same &phi;.
+Expect sum = const for the 1&ndash;3 pair and difference = const whenever disk 2 is involved,
+since <tt>kFstzFilp</tt> inverts it. Narrow band, so it needs much more data.</p>
+
+<HR>
+<H2>Code and data</H2>
+<ul>
+  <li><tt>script/fstWedgeOverlap.C</tt> &mdash; the measurement. Reads MuDst directly, books one
+      TH2F per wedge plus front/back and per-disk summaries. The input list name must contain
+      <tt>.lis</tt>, <tt>.files</tt> or <tt>.MuDst.root</tt>, or <tt>StMuChainMaker</tt> refuses it.</li>
+  <li><tt>script/fstWedgeDrawing.C</tt> &mdash; the figure, drawn from <tt>stripPhi</tt>'s own formula.</li>
+  <li>Data: Run&nbsp;24 zero-field, <tt>/star/data110/reco/zeroFieldAlignment_2024/FieldOff/</tt>,
+      120&thinsp;000 events of the 12.9&thinsp;M available in the 300-file chain. Output histograms
+      are additive, so a larger sample can be run as condor jobs and merged with <tt>hadd</tt>.</li>
+</ul>
+
+<HR>
+<p><i>akio@bnl.gov</i></p>
+
+</BODY>
+</HTML>
