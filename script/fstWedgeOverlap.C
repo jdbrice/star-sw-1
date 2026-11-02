@@ -73,11 +73,22 @@ int   gFwoInnN[36];        // inner hits per wedge this event
 int   gFwoInnS[36];        // the inner strip, when there is exactly one
 int   gFwoOutN[36];        // outer hits per wedge this event
 int   gFwoOutS[36];
+int   gFwoOccI[4608];      // inner-sensor occupancy, same indexing
+long  gFwoCoinI[3][2][2][4];  // inner edge coincidences [disk][parity][end][y]
+long  gFwoEdgeI[3][2][2];
+long  gFwoProfI[12][2];       // inner: strip from edge, [dist][0=pred 1=mirror]
 int   gFwoOcc[4608];   // [disk-1][m-1][strip] flattened: (d*12 + m)*128 + s
 long  gFwoCoin[3][2][2][4];   // edge hits : [disk-1][parity of m][my edge 0=s0-3 1=s124-127][y]
 long  gFwoCtrl[3][2][4];   // control     : strips 60-67, same bookkeeping
 long  gFwoEdge[3][2][2];      // edge hits seen, same split
 long  gFwoCtrlN[3][2];     // control hits seen
+
+int fwoAnyI(int disk, int m, int lo, int hi)
+{
+   int base = ((disk - 1) * 12 + (m - 1)) * 128;
+   for (int jb = lo; jb <= hi; jb++) if (gFwoOccI[base + jb]) return 1;
+   return 0;
+}
 
 int fwoAny(int disk, int m, int lo, int hi)
 {
@@ -191,10 +202,11 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
       gFwoCtrlN[ij][ik] = 0;
       for (int il = 0; il < 4; il++) gFwoCtrl[ij][ik][il] = 0;
       for (int im = 0; im < 2; im++) {
-         gFwoEdge[ij][ik][im] = 0;
-         for (int in = 0; in < 4; in++) gFwoCoin[ij][ik][im][in] = 0;
+         gFwoEdge[ij][ik][im] = 0; gFwoEdgeI[ij][ik][im] = 0;
+         for (int in = 0; in < 4; in++) { gFwoCoin[ij][ik][im][in] = 0; gFwoCoinI[ij][ik][im][in] = 0; }
       }
    }
+   for (int io2 = 0; io2 < 12; io2++) { gFwoProfI[io2][0] = 0; gFwoProfI[io2][1] = 0; }
 
    long nEvSeen = 0, nEvWithFst = 0, nHitTot = 0, nHitOuter = 0, nRawTot = 0, nIOPair = 0;
    long nStop = (nEvents > 0 && nEvents < nAvail) ? nEvents : nAvail;
@@ -214,7 +226,7 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
       nEvWithFst++;
       nHitTot += nh;
 
-      for (int iz = 0; iz < 4608; iz++) gFwoOcc[iz] = 0;
+      for (int iz = 0; iz < 4608; iz++) { gFwoOcc[iz] = 0; gFwoOccI[iz] = 0; }
       for (int iz2 = 0; iz2 < 36; iz2++) { gFwoInnN[iz2] = 0; gFwoOutN[iz2] = 0; gFwoInnS[iz2] = -1; gFwoOutS[iz2] = -1; }
 
       // pass 1: occupancy of the outer sensors
@@ -237,8 +249,14 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
                gFwoInnS[kk] = ci;
             }
          }
-         if (sp < 1 || sp > 2) continue;                 // outer only
          if (dp < 1 || dp > 3 || wp < 1 || wp > 36) continue;
+         if (sp == 0) {                                  // inner occupancy
+            int mi2 = 1 + (wp - 1) % 12;
+            int ci2 = (int)(fp + 0.5);
+            if (ci2 >= 0 && ci2 <= 127)
+               gFwoOccI[((dp - 1) * 12 + (mi2 - 1)) * 128 + ci2] = 1;
+         }
+         if (sp < 1 || sp > 2) continue;                 // outer only below
          int mp = 1 + (wp - 1) % 12;
          int cp = (int)(fp + 0.5);
          if (cp < 0 || cp > 127) continue;
@@ -299,6 +317,48 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
                if (gFwoOcc[((dq - 1) * 12 + (nbr - 1)) * 128 + nstrip])
                   hFine->Fill(myslot, is);
             }
+         }
+      }
+
+      // INNER edge coincidences. The inner sensor spans exactly 128 pitches with
+      // no gap, so on nominal geometry it has NO overlap at all and these must be
+      // accidental. If the strip PITCH is larger than nominal the inner silicon
+      // spills past 30 deg and does overlap; if instead the 1 deg GAP is wider,
+      // the inner is untouched. That is what separates the two, and the outer
+      // measurement cannot: both move the same combination 127+(gap-30)/pitch.
+      //   The inner runs the opposite way to the outer inside a wedge, so its
+      // predicted cell is the outer's with the two ends swapped.
+      for (int iq2 = 0; iq2 < nh; iq2++) {
+         StMuFstHit *hq2 = fc->getHit(iq2);
+         if (!hq2) continue;
+         if (hq2->getSensor() != 0) continue;
+         int dq2 = hq2->getDisk(), wq2 = hq2->getWedge();
+         if (dq2 < 1 || dq2 > 3 || wq2 < 1 || wq2 > 36) continue;
+         int mq2 = 1 + (wq2 - 1) % 12;
+         int cq2 = (int)(hq2->getMeanPhiStrip() + 0.5);
+         if (cq2 < 0 || cq2 > 127) continue;
+         int mP2 = 1 + (mq2 - 1 + 11) % 12;
+         int mN2 = 1 + (mq2 - 1 +  1) % 12;
+         int yy2[4];
+         yy2[0] = fwoAnyI(dq2, mP2,   0,   1);
+         yy2[1] = fwoAnyI(dq2, mP2, 126, 127);
+         yy2[2] = fwoAnyI(dq2, mN2,   0,   1);
+         yy2[3] = fwoAnyI(dq2, mN2, 126, 127);
+         int par2  = (mq2 % 2) ? 0 : 1;
+         int flip2 = ((par2 == 1) ? 1 : 0) ^ ((dq2 == 2) ? 1 : 0);
+         int dist  = (cq2 <= 11) ? cq2 : ((cq2 >= 116) ? 127 - cq2 : -1);
+         int end2  = (cq2 <= 11) ? 0 : 1;
+         // inner s0 end pairs with the neighbour the OUTER s124-127 end pairs with
+         int pred2 = (end2 == 0) ? (flip2 ? 0 : 2) : (flip2 ? 3 : 1);
+         int mirr2 = (end2 == 0) ? (flip2 ? 2 : 0) : (flip2 ? 1 : 3);
+         if (dist >= 0 && dist < 12) {
+            if (yy2[pred2]) gFwoProfI[dist][0]++;
+            if (yy2[mirr2]) gFwoProfI[dist][1]++;
+         }
+         if (cq2 <= 1 || cq2 >= 126) {
+            gFwoEdgeI[dq2 - 1][par2][end2]++;
+            for (int ir2 = 0; ir2 < 4; ir2++)
+               if (yy2[ir2]) gFwoCoinI[dq2 - 1][par2][end2][ir2]++;
          }
       }
 
@@ -368,6 +428,36 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
                 gFwoCtrlN[ix][iy]);
       }
    }
+   printf("\nINNER EDGE COINCIDENCES -- does the inner sensor overlap too?\n");
+   printf("Nominal geometry says NO: the inner is 128 pitches = exactly 30 deg.\n");
+   printf("A pitch larger than nominal would make it overlap (x1.006 -> 0.76 strips);\n");
+   printf("a wider 1 deg gap would not touch it. Edge window s0-1 and s126-127.\n");
+   long sumPI = 0, sumMI = 0, sumAI = 0, nEdgeI = 0;
+   for (int iv2 = 0; iv2 < 3; iv2++)
+      for (int iw2 = 0; iw2 < 2; iw2++)
+         for (int ix3 = 0; ix3 < 2; ix3++) {
+            int fl3 = ((iw2 == 1) ? 1 : 0) ^ ((iv2 == 1) ? 1 : 0);
+            int pr3 = (ix3 == 0) ? (fl3 ? 0 : 2) : (fl3 ? 3 : 1);
+            int mr3 = (ix3 == 0) ? (fl3 ? 2 : 0) : (fl3 ? 1 : 3);
+            sumPI += gFwoCoinI[iv2][iw2][ix3][pr3];
+            sumMI += gFwoCoinI[iv2][iw2][ix3][mr3];
+            for (int iy3 = 0; iy3 < 4; iy3++)
+               if (iy3 != pr3 && iy3 != mr3) sumAI += gFwoCoinI[iv2][iw2][ix3][iy3];
+            nEdgeI += gFwoEdgeI[iv2][iw2][ix3];
+         }
+   printf("   inner edge hits %ld\n", nEdgeI);
+   printf("   predicted cells P = %ld\n", sumPI);
+   printf("   mirrored  cells M = %ld\n", sumMI);
+   printf("   neither (accidental, 2 cells) = %ld, i.e. %.1f per cell\n", sumAI, 0.5 * sumAI);
+   printf("\n   inner coincidences vs distance from the wedge edge:\n");
+   printf("   dist :");
+   for (int iz3 = 0; iz3 < 12; iz3++) printf(" %6d", iz3);
+   printf("\n   pred :");
+   for (int ia3 = 0; ia3 < 12; ia3++) printf(" %6ld", gFwoProfI[ia3][0]);
+   printf("\n   mirr :");
+   for (int ib3 = 0; ib3 < 12; ib3++) printf(" %6ld", gFwoProfI[ib3][1]);
+   printf("\n");
+
    printf("\nAPV vs phiStrip, the DB-map check. The channel-map note says outer\n"
           "APV5/6/7/8 carry phi 0-31/32-63/64-95/96-127 and inner APV1/2/3/4 the same\n"
           "ranges. If the data disagrees, the DB map is not the note's indexing and\n"

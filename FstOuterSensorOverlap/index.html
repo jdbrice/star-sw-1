@@ -30,8 +30,9 @@ and all 36 wedges agree.</b></p>
   <li><a href="#method">2. What is measured, and why nothing can bias it</a></li>
   <li><a href="#result">3. Result</a></li>
   <li><a href="#width">4. The overlap width, measured</a></li>
-  <li><a href="#pairing">5. Strip-to-strip pairing, and a 2-3 mrad residual</a></li>
-  <li><a href="#conclusion">6. Conclusion, and what this does not settle</a></li>
+  <li><a href="#pairing">5. Strip-to-strip pairing: a coherent one-strip offset</a></li>
+  <li><a href="#inner">6. The inner sensors overlap too &mdash; it is the pitch, not the gap</a></li>
+  <li><a href="#conclusion">7. Conclusion, and what this does not settle</a></li>
 </ul>
 
 <HR>
@@ -238,11 +239,22 @@ sits one strip off the nominal prediction: <tt>stripPhi</tt> gives partner sum =
 centroid near 3.8&ndash;4.0. That is a <b>0.5&ndash;0.75 strip (2&ndash;3 mrad) wedge-to-wedge
 relative offset from nominal</b>.</p>
 
-<p>This runs on nominal geometry with no survey and no alignment, and 2&ndash;3 mrad is exactly
-the size of FstWedgeAligner's 36 measured per-wedge corrections, so it is most likely just
-those showing up. It does not touch the conclusion, which is a 30&deg;-scale question. It does
-suggest something useful: <b>this method measures wedge-to-wedge relative &phi; alignment to
-well under a strip pitch, without tracking</b>.</p>
+<p><b>This cannot be wedge alignment.</b> A boundary offset is a difference
+&delta;<sub>m</sub>&nbsp;&minus;&nbsp;&delta;<sub>m+1</sub> of per-wedge rotations, and around a
+disk those sum to zero: any set of rigid wedge rotations cancels exactly out of an average over
+all boundaries, which is what this number is. A coherent shift of every boundary has to come
+from a parameter common to all of them &mdash; the gap, or the pitch. Both reproduce it, because
+both move the same combination:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>geometry</TH><TH>j+k</TH><TH>outer overlap</TH></TR>
+<TR><TD>nominal (gap 1.000&deg;, pitch 30/128)</TD><TD>3.27</TD><TD>4.27 strips</TD></TR>
+<TR><TD>(a) gap 1.172&deg;, pitch nominal</TD><TD>4.00</TD><TD>5.00 strips</TD></TR>
+<TR><TD>(b) pitch &times;1.006, gap nominal</TD><TD>4.00</TD><TD>5.00 strips</TD></TR>
+</TABLE>
+
+<p>j+k = 127 + (gap&minus;30)/pitch, so the outer alone cannot separate the two. The inner
+sensors can, and do &mdash; next section.</p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR><TD><a href="plots/fwo_fine.png"><img src="plots/fwo_fine.png" height=200></a></TD></TR>
@@ -252,23 +264,97 @@ well under a strip pitch, without tracking</b>.</p>
 </TABLE>
 
 <HR>
+<a name="inner"></a>
+<H1>6. The inner sensors overlap too &mdash; it is the pitch, not the gap</H1>
+
+<p>The inner sensor is 128 strips with <b>no gap</b>, so on nominal geometry it spans exactly
+30&deg; and <b>cannot overlap its neighbours at all</b>. A wider gap would leave it that way; a
+pitch larger than 30/128 makes it spill past 30&deg; and overlap. So running the same
+coincidence on inner hits separates the two hypotheses outright.</p>
+
+<p>It overlaps. Same 120&thinsp;000 events, inner edge window s0&ndash;1 and s126&ndash;127:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>inner edge hits</TH><TH>predicted cells P</TH><TH>mirrored cells M</TH><TH>accidental, per cell</TH></TR>
+<TR><TD>38949</TD><TD BGCOLOR="#ffe0a0"><b>9732</b></TD><TD>278</TD><TD>331</TD></TR>
+</TABLE>
+
+<p>M sits <i>below</i> the accidental level, so the signal is specific to the adjacent boundary,
+as a geometric overlap must be. It is narrow &mdash; concentrated at the first strip, against a
+flat mirrored floor of ~135 per bin:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>strip from edge</TH><TH>0</TH><TH>1</TH><TH>2</TH><TH>3</TH><TH>4</TH><TH>5</TH><TH>6</TH><TH>7</TH></TR>
+<TR><TD>predicted cell</TD><TD>5638</TD><TD>4094</TD><TD>2508</TD><TD>1489</TD><TD>864</TD><TD>682</TD><TD>488</TD><TD>363</TD></TR>
+<TR><TD>mirrored cell</TD><TD>139</TD><TD>139</TD><TD>137</TD><TD>141</TD><TD>146</TD><TD>129</TD><TD>115</TD><TD>135</TD></TR>
+</TABLE>
+
+<p>25.0% of inner edge hits have a partner, against 49.3% for the outer where the strips are
+fully inside the band &mdash; so the inner overlap is <b>about one strip</b>, where the outer is
+<b>about 5.2</b>. The two widths then over-determine the geometry, and agree:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>from</TH><TH>measured width</TH><TH>implied pitch</TH><TH>128 strips span</TH></TR>
+<TR><TD>outer (has the 1&deg; gap)</TD><TD>5.2 strips</TD><TD>0.23616&deg; (+0.76%)</TD><TD>30.228&deg;</TD></TR>
+<TR><TD>inner (no gap)</TD><TD>1.0 strip</TD><TD>0.23622&deg; (+0.79%)</TD><TD>30.236&deg;</TD></TR>
+</TABLE>
+
+<p>Two independent measurements giving the same pitch to 0.03%. And their difference is the gap
+in units of pitch: measured <b>5.2 &minus; 1.0 = 4.2</b> against <b>1.0&deg;/pitch = 4.27</b>
+nominal, so <b>the 1&deg; gap is confirmed</b> and the excess is entirely in the pitch.</p>
+
+<p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
+<b>So <tt>kFstStripPitchPhi = TMath::Pi()*30.0/180.0/128</tt> is about 0.8% small.</b> The 128
+strips span ~30.23&deg;, not 30.00&deg;. That is most likely by design &mdash; silicon slightly
+oversized so adjacent wedges tile with no dead &phi;, the same intent as the outer's 0.5&deg;
+overhang &mdash; but our constant assumes exactly 30&deg;.
+<br><br>
+<b>This matters for alignment.</b> A program that treats the &phi; pitch as fixed and fits only
+shift and rotation cannot absorb a pitch error: it appears as a residual that grows linearly
+with distance from the wedge centre, up to ~0.12&deg; at the wedge edges, and a rotation fit
+will partly absorb it into a spurious per-wedge rotation.
+<br><br>
+<b>Caveat.</b> Coincidence <i>yield</i> is non-linear, so unlike the pairing centroid of section 5
+it does not cancel per-wedge rotations: a &plusmn;0.17&deg; rotation pattern could fake part of an
+apparent overlap. Against that, the outer edge is sharp &mdash; 0.79, 0.18, 0.02 of plateau at
+distances 4, 5, 6 &mdash; where a mixture of boundaries at 4.5 and 6.0 strips would smear it.
+Per-boundary widths would settle it and need the larger sample.</p>
+
+<HR>
 <a name="conclusion"></a>
-<H1>6. Conclusion, and what this does not settle</H1>
+<H1>7. Conclusion, and what this does not settle</H1>
 
 <ul>
   <li><b>The strip-phi sense used in reconstruction is the installed one.</b> P/M = 27361/547,
-      with M at the accidental level and all 36 wedges agreeing individually. The phi flip
-      applied between the channel-map index and <tt>stripPhi</tt> is correct.</li>
-  <li><b>The channel map is not wrong; it is under-determined.</b> The
-      <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/survey/FST_Cosmic_ChannelMap.pdf">cosmic channel map</a>
-      is a bench sheet marked "Outer Sector Face Down" / "Inner Sector Face Up". Its left-right
-      direction only becomes a STAR &phi; direction once you know which way the module faces
-      when installed, and that is the bit this measurement supplies. Its APV&rarr;phi assignment
-      is confirmed by the data, and its inner/outer opposition is not in dispute.</li>
+      with M at the accidental level and all 36 wedges agreeing individually.</li>
+  <li><b>The channel map and <tt>stripPhi</tt> agree &mdash; there is no flip between them.</b>
+      The <a href="https://www.star.bnl.gov/protected/spin/akio/fcs/survey/FST_Cosmic_ChannelMap.pdf">cosmic channel map</a>
+      is a bench sheet marked "Inner Sector Face Up" / "Outer Sector Face Down", i.e. it describes
+      the one physical orientation in which the inner silicon faces the viewer. Seen from the IR
+      that is a <b>back</b> wedge, and for back wedges the sheet and the drawing match directly:
+      inner right-to-left = counter-clockwise, outer left-to-right = clockwise. A front wedge is
+      the same sensor turned over, so both senses reverse &mdash; which is exactly what
+      <tt>stripPhi</tt>'s <tt>sgn = kFstzFilp &times; kFstzDirct</tt> does. The per-wedge
+      alternation <i>is</i> the orientation factor the sheet needs, not a correction applied on
+      top of it. The sheet's APV&rarr;phi assignment is confirmed by the data, and its
+      inner/outer opposition is not in dispute.</li>
+  <li><b>What the measurement adds</b> is the one thing a bench sheet cannot carry: which way each
+      module faces once installed. The observable is (channel map) &otimes; (installed
+      orientation), and the sheet supplies only the first factor.</li>
+  <li><b>The strip pitch is ~0.8% larger than 30/128</b>, the 1&deg; gap is nominal, and an
+      alignment fit that holds the pitch fixed cannot absorb the difference (section 6).</li>
   <li><b>The alternating mounting is confirmed</b> directly: same-numbered edges meet.</li>
   <li><b>The 0.5&deg; overhang and 4 overlapping strips per wedge are confirmed</b> by the
       measured coincidence width.</li>
 </ul>
+
+<p style="background-color:#ffffcc; padding:6px; border:1px solid #99a;">
+<b>What the coincidence fixes is a product.</b> It measures the adjacency of strip <i>indices</i>
+between wedges, so it constrains (strip sense) &otimes; (wedge-index ordering): reverse both and
+the pattern is identical. The wedge ordering is pinned separately and by tracking &mdash;
+FstWedgeAligner's 36 per-wedge corrections are 1&ndash;3 mrad, where a reversed strip direction
+or a reversed wedge numbering would be hundreds, since half a wedge is ~300 mrad. This page adds
+the tracking-free confirmation of the other factor.</p>
 
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
 <b>This settles &phi;, not z.</b> The two outer sensors of a coincident pair differ by only
