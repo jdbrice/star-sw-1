@@ -77,6 +77,13 @@ int   gFwoOccI[4608];      // inner-sensor occupancy, same indexing
 long  gFwoCoinI[3][2][2][4];  // inner edge coincidences [disk][parity][end][y]
 long  gFwoEdgeI[3][2][2];
 long  gFwoProfI[12][2];       // inner: strip from edge, [dist][0=pred 1=mirror]
+long  gFwoProfR[4][12][2];    // outer, split by rStrip 4-7: [r][dist][pred/mirror].
+                              // A radial displacement of the strip fan scales the
+                              // apparent pitch by (1-d/R), so the overlap width would
+                              // shrink with r (5.51 -> 5.11 strips across rStrip 4-7
+                              // for d = -0.176 cm); a pitch error gives the same width
+                              // in all four rows. This separates them without needing
+                              // the inner sensor at all.
 int   gFwoOcc[4608];   // [disk-1][m-1][strip] flattened: (d*12 + m)*128 + s
 long  gFwoCoin[3][2][2][4];   // edge hits : [disk-1][parity of m][my edge 0=s0-3 1=s124-127][y]
 long  gFwoCtrl[3][2][4];   // control     : strips 60-67, same bookkeeping
@@ -144,7 +151,7 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    TH2F *hBack  = new TH2F("hBack",  "back wedges (orientation -1);outer phiStrip;neighbour edge hit", 128, 0, 128, 4, 0, 4);
 
    // Inner vs outer in the same wedge. THIS COMES OUT FLAT, and it has to:
-   // the inner sensor covers r 5.0-13.625 and the outer 13.625-28.0, so one
+   // the inner sensor covers r 5.0-16.5 (rStrip 0-3) and the outer 16.5-28.0 (rStrip 4-7), so one
    // track crosses a wedge at ONE radius and gives an inner hit OR an outer
    // hit, never both. Same-wedge inner+outer pairs are therefore different
    // particles and carry no phi relation. Kept because the flatness is worth
@@ -152,7 +159,7 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    // 11.5% in the diff window, i.e. nothing.
    //   To actually test the inner-vs-outer sense you need two DISKS: for a
    // vertex-pointing track r scales with z (r3/r1 = 178.781/151.75 = 1.178), so
-   // a track with r1 in 11.57-13.625 is INNER on disk 1 and OUTER on disk 3 at
+   // a track with r1 in 14.01-16.5 is INNER on disk 1 and OUTER on disk 3 at
    // the same phi. Pair those (and expect sum = const for the 1-3 pair, which
    // share sgn, but difference = const whenever disk 2 is involved, since
    // kFstzFilp inverts it). Narrow band, so it needs much more data.
@@ -207,6 +214,7 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
       }
    }
    for (int io2 = 0; io2 < 12; io2++) { gFwoProfI[io2][0] = 0; gFwoProfI[io2][1] = 0; }
+   for (int ip3 = 0; ip3 < 4; ip3++) for (int iq3 = 0; iq3 < 12; iq3++) { gFwoProfR[ip3][iq3][0] = 0; gFwoProfR[ip3][iq3][1] = 0; }
 
    long nEvSeen = 0, nEvWithFst = 0, nHitTot = 0, nHitOuter = 0, nRawTot = 0, nIOPair = 0;
    long nStop = (nEvents > 0 && nEvents < nAvail) ? nEvents : nAvail;
@@ -289,6 +297,18 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
          yy[3] = fwoAny(dq, mNext, 124, 127);
 
          int par = (mq % 2) ? 0 : 1;           // 0 = odd m, 1 = even m
+         {  // r-binned width, outer only
+            int rsq = (int)(hq->getMeanRStrip() + 0.5) - 4;
+            int dq3 = (cq <= 11) ? cq : ((cq >= 116) ? 127 - cq : -1);
+            int en3 = (cq <= 11) ? 0 : 1;
+            int fl3 = ((par == 1) ? 1 : 0) ^ ((dq == 2) ? 1 : 0);
+            int pr3 = (en3 == 0) ? (fl3 ? 2 : 0) : (fl3 ? 1 : 3);
+            int mr3 = (en3 == 0) ? (fl3 ? 0 : 2) : (fl3 ? 3 : 1);
+            if (rsq >= 0 && rsq < 4 && dq3 >= 0 && dq3 < 12) {
+               if (yy[pr3]) gFwoProfR[rsq][dq3][0]++;
+               if (yy[mr3]) gFwoProfR[rsq][dq3][1]++;
+            }
+         }
          int isEdge = (cq <= 3 || cq >= 124);
          int myEnd  = (cq <= 3) ? 0 : 1;        // 0 = strips 0-3, 1 = strips 124-127
          int isCtrl = (cq >= 60 && cq <= 67);
@@ -428,6 +448,22 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
                 gFwoCtrlN[ix][iy]);
       }
    }
+   printf("\nOUTER WIDTH BY rStrip -- radial shift or pitch?\n");
+   printf("A strip fan converging d off the beam axis scales the apparent pitch by\n");
+   printf("(1-d/R), so the width would fall with r: 5.51, 5.34, 5.21, 5.11 strips for\n");
+   printf("d = -0.176 cm. A pitch error gives 5.25 in all four rows.\n");
+   printf("   rStrip   <r>  :");
+   for (int ir4 = 0; ir4 < 10; ir4++) printf(" %6d", ir4);
+   printf("\n");
+   double rmid[4] = {17.94, 20.81, 23.69, 26.56};
+   for (int is4 = 0; is4 < 4; is4++) {
+      printf("     %d    %5.2f  :", is4 + 4, rmid[is4]);
+      for (int it4 = 0; it4 < 10; it4++) printf(" %6ld", gFwoProfR[is4][it4][0]);
+      printf("\n              mirr :");
+      for (int iu4 = 0; iu4 < 10; iu4++) printf(" %6ld", gFwoProfR[is4][iu4][1]);
+      printf("\n");
+   }
+
    printf("\nINNER EDGE COINCIDENCES -- does the inner sensor overlap too?\n");
    printf("Nominal geometry says NO: the inner is 128 pitches = exactly 30 deg.\n");
    printf("A pitch larger than nominal would make it overlap (x1.006 -> 0.76 strips);\n");
@@ -474,8 +510,8 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    }
 
    printf("\nINNER vs OUTER in the same wedge, one of each, %ld pairs.\n", nIOPair);
-   printf("EXPECTED FLAT, and not a mapping failure: inner covers r 5.0-13.625 and\n"
-          "outer 13.625-28.0, so a track gives one or the other, never both, and\n"
+   printf("EXPECTED FLAT, and not a mapping failure: inner covers r 5.0-16.5 and\n"
+          "outer 16.5-28.0, so a track gives one or the other, never both, and\n"
           "these pairs are different particles. See the comment at the booking.\n");
    if (nIOPair > 0) {
       printf("   sum  : mean %7.2f  rms %6.2f  peak at %3.0f with %.0f pairs\n",
