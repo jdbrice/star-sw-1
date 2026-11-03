@@ -182,23 +182,160 @@ rescale, so it is in whatever the caller used.
     <TD>Wedge on half. Identity in every lane we carry; this is the table a
         wedge-level alignment would be written to.</TD></TR>
 
-<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Sensor local &lt;-&gt; global</B> &nbsp; cm</TD></TR>
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>The survey delta, and nominal global
+    &lt;-&gt; surveyed global</B> &nbsp; cm &nbsp; RENAMED 2026-10-30: these are
+    NOT local &lt;-&gt; global, which is what the old names
+    (<TT>getHMatrixSensorOnGlobal</TT>, <TT>sensorLocalToGlobal</TT>,
+    <TT>globalToSensorLocal</TT>) said. For local &lt;-&gt; global use
+    <TT>sensorPlacement</TT> below.</TD></TR>
 
-<TR><TD><TT>sensorLocalToGlobal</TT> (static)</TD>
-    <TD>wedge(1-36), sensor(0-2), sensor-local xyz[3][cm]</TD><TD>bool; global xyz[3][cm]</TD>
-    <TD>Composes the loaded survey matrices,
+<TR><TD><TT>getSurveyDeltaSensorOnGlobal</TT> (static)</TD>
+    <TD>wedge(1-36), sensor(0-2)</TD><TD>const TGeoHMatrix* [cm]; 0 if out of
+        range or no geometry</TD>
+    <TD>The composed MISALIGNMENT for one sensor, in the global frame:
         <TT>fstOnTpc * hssOnFst[half] * fstWedgeOnHss[wedge] * fstSensorOnWedge</TT>,
-        all four in cm. <TT>tpcOnGlobal</TT> is NOT in the product: AGML misaligns
-        FSTM in CAVE with <TT>Geometry/fst/*</TT> only, so including it moved the
-        hit 2.4/1.7/2.0 mm (plus 0.8 mm from the TPC's -0.48 mrad over the 165 cm
-        z lever arm) out of the frame of the GenFit plane. Run 22 totals are
-        (+0.0713, -0.3010, 0) cm for half 0 and (+0.2263, -0.3330, 0) cm for half 1.
-        False if the index is out of range (wedge 1-36, sensor 0-2) or the geometry
-        has not been loaded.</TD></TR>
+        all four in cm. Not a placement &mdash; it carries no wedge azimuth, no
+        disk z and no mounting flip, and comes out as identity rotation plus a
+        few mm, the SAME for every wedge of a half: (+0.0713, -0.3010, 0) cm for
+        half 0 and (+0.2263, -0.3330, 0) cm for half 1 in Run 22.
+        <TT>tpcOnGlobal</TT> is NOT in the product: AGML misaligns FSTM in CAVE
+        with <TT>Geometry/fst/*</TT> only, so including it moved the hit
+        2.4/1.7/2.0 mm (plus 0.8 mm from the TPC's -0.48 mrad over the 165 cm z
+        lever arm) out of the frame of the GenFit plane. Called
+        <TT>getHMatrixSensorOnGlobal</TT> until 2026-10-30, a name inherited from
+        StIstDb/StSstDbMaker, where the survey tables ARE full placements; read
+        literally it put all 108 FST GenFit planes at (0.07, -0.30, 0) cm.</TD></TR>
 
-<TR><TD><TT>globalToSensorLocal</TT> (static)</TD>
-    <TD>wedge(1-36), sensor(0-2), global xyz[3][cm]</TD><TD>bool; sensor-local xyz[3][cm]</TD>
-    <TD>The inverse of the above.</TD></TR>
+<TR><TD><TT>sensorNominalToSurveyed</TT> (static)</TD>
+    <TD>wedge(1-36), sensor(0-2), NOMINAL GLOBAL xyz[3][cm]</TD>
+    <TD>bool; surveyed global xyz[3][cm]</TD>
+    <TD>Applies the delta above to a point that is ALREADY global at its nominal
+        position &mdash; the step StFstHitMaker takes when
+        <TT>SetApplySurvey</TT> is on. Feed it a sensor-local point and it
+        silently returns a wrong answer, which is the trap the old name
+        (<TT>sensorLocalToGlobal</TT>) set. False if the index is out of range
+        (wedge 1-36, sensor 0-2) or the geometry has not been loaded.</TD></TR>
+
+<TR><TD><TT>surveyedToSensorNominal</TT> (static)</TD>
+    <TD>wedge(1-36), sensor(0-2), surveyed global xyz[3][cm]</TD>
+    <TD>bool; nominal global xyz[3][cm]</TD>
+    <TD>The inverse of the above. Was <TT>globalToSensorLocal</TT>.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>The flat sensor index</B> &nbsp; dimensionless &nbsp;
+    <TT>index(0-107) = (wedge-1)*3 + sensor</TT>, the same packing as
+    <TT>sensorSurveyId</TT> without its +1000 tag</TD></TR>
+
+<TR><TD><TT>sensorIndex</TT> (static)</TD>
+    <TD>wedge(1-36), sensor(0-2)</TD><TD>int index(0-107); -1 if out of range</TD>
+    <TD>Packs a sensor into one number. It is also
+        <TT>StMuFstHit::mHardwarePosition(1-108) - 1</TT> and the forward
+        tracker's GenFit plane index, so all three are now one definition.
+        Replaces <TT>FwdHit::fstGlobalSensorIndex(disk(0-2), wedge(0-11),
+        sensor(0-2))</TT>, which used a 0-based disk and a PER-DISK wedge while
+        StMuFstHit and StFstDb both use disk(1-3) and the global wedge(1-36).</TD></TR>
+
+<TR><TD><TT>decodeSensorIndex</TT> (static)</TD>
+    <TD>index(0-107)</TD><TD>bool; wedge(1-36), sensor(0-2) by reference</TD>
+    <TD>The inverse. False if index is outside 0-107, leaving the outputs
+        untouched.</TD></TR>
+
+<TR><TD><TT>sensorIndexWedge</TT> (static)</TD>
+    <TD>index(0-107)</TD><TD>int wedge(1-36); 0 if out of range</TD>
+    <TD>Just the wedge, for a one-line caller such as a log message.</TD></TR>
+
+<TR><TD><TT>sensorIndexSensor</TT> (static)</TD>
+    <TD>index(0-107)</TD><TD>int sensor(0-2); -1 if out of range</TD>
+    <TD>Just the sensor, same purpose.</TD></TR>
+
+<TR><TD><TT>getSurveyDeltaSensorOnGlobal</TT> (static, overload)</TD>
+    <TD>index(0-107)</TD><TD>const TGeoHMatrix* [cm]; 0 if out of range or no geometry</TD>
+    <TD>The flat-index form of
+        <TT>getSurveyDeltaSensorOnGlobal(wedge(1-36), sensor(0-2))</TT>, so a
+        caller holding a plane index does not unpack it first. Null means
+        StFstDbMaker has not run.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Reading a placement matrix</B> &nbsp; cm for the
+    origin, unit vectors for the axes &nbsp; <TT>GetRotationMatrix()</TT> is
+    ROW-major, so a node's local axes in global coordinates are its COLUMNS</TD></TR>
+
+<TR><TD><TT>matrixOrigin</TT> (static)</TD>
+    <TD>const TGeoHMatrix&amp; (cm)</TD><TD>TVector3 [cm], by value</TD>
+    <TD>The translation, as <TT>GetTranslation()[0,1,2]</TT>.</TD></TR>
+
+<TR><TD><TT>matrixLocalX</TT> (static)</TD>
+    <TD>const TGeoHMatrix&amp;</TD><TD>TVector3, unit, by value</TD>
+    <TD>The node's local x axis in global coordinates: COLUMN 0, elements
+        <TT>[0],[3],[6]</TT>. Reading row 0 instead gives the transpose, i.e.
+        the inverse rotation, which mirrors the frame &mdash; and is invisible on
+        a node at phi = 0, which is why it survived in
+        <TT>FwdGeomUtils</TT>.</TD></TR>
+
+<TR><TD><TT>matrixLocalY</TT> (static)</TD>
+    <TD>const TGeoHMatrix&amp;</TD><TD>TVector3, unit, by value</TD>
+    <TD>Local y axis in global: COLUMN 1, elements <TT>[1],[4],[7]</TT>.
+        With <TT>matrixOrigin</TT> and <TT>matrixLocalX</TT> this is a GenFit
+        <TT>DetPlane(o, u, v)</TT>. Deliberately NOT renormalised to a
+        counterclockwise basis: the front/back wedge flip is what the rotation
+        encodes.</TD></TR>
+
+<TR><TD><TT>matrixLocalZ</TT> (static)</TD>
+    <TD>const TGeoHMatrix&amp;</TD><TD>TVector3, unit, by value</TD>
+    <TD>Local z axis in global: COLUMN 2, elements <TT>[2],[5],[8]</TT>, i.e. the
+        sensor normal.</TD></TR>
+
+<TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Where a sensor IS &mdash; the placement
+    matrix</B> &nbsp; cm, degrees &nbsp; NOTE
+    <TT>getSurveyDeltaSensorOnGlobal</TT> above is the survey DELTA, not a
+    placement: identity rotation and a few mm, the same for every wedge of a
+    half. Use these when you need the sensor's position.</TD></TR>
+
+<TR><TD><TT>wedgeAzimuth</TT> (static)</TD>
+    <TD>wedge (1-36)</TD><TD>double [deg], 0 out of range</TD>
+    <TD><TT>75 - 30*iwedgem</TT> with <TT>iwedgem = (wedge-1) mod 12</TT>, so the
+        12 wedges of a disk sit at 75, 45, 15, &minus;15 ... &minus;255 deg.
+        This is FstmGeoSM.xml's <TT>wedge_zrot</TT> verbatim; not reduced to
+        [0,360), because a <TT>TGeoRotation</TT> does not care and the XML's own
+        reduction is commented out.</TD></TR>
+
+<TR><TD><TT>sensorPlacement</TT> (static)</TD>
+    <TD>disk (1-3), wedge (1-36), sensor (0-2); optional applySurvey (bool)</TD>
+    <TD>TGeoHMatrix [cm], by value; identity if any index is out of range</TD>
+    <TD>Local &mdash;&gt; global for the sensor, as AGML places FTUS in FSTM:
+        <TT>Rz(wedgeAzimuth) * Rx(flip)</TT> at <TT>z = sensorZ</TT>, with
+        <TT>flip = 180 deg</TT> when <TT>wedgeOrientation &lt; 0</TT>. With the
+        survey on, the delta LEFT-multiplies. The origin lands ON THE BEAM AXIS,
+        because FTUS is a tube segment placed there and its local origin is on
+        the axis, not at the sensor centroid &mdash; so local r equals global r.
+        Correct for a GenFit <TT>DetPlane</TT>, whose origin only has to lie in
+        the plane. All three sensors of a wedge share the rotation; the two outer
+        ones differ only in the shape's phi extent. Measured against the
+        simulation's own AGML local coordinates: z to 0.25 um, and the only x,y
+        residual is a rigid 0.3503 cm = <TT>|fstOnTpc|</TT>, the one survey row
+        the XML does not apply. Omit applySurvey to get
+        <TT>applySurvey()</TT>.</TD></TR>
+
+<TR><TD><TT>sensorPlacementByIndex</TT> (static)</TD>
+    <TD>index (0-107); optional applySurvey (bool)</TD>
+    <TD>TGeoHMatrix [cm], by value; identity if the index is out of range</TD>
+    <TD>The same, by the flat sensor index, which is the order the GenFit plane
+        list uses. A separate NAME rather than an overload on purpose:
+        <TT>(int, bool)</TT> beside <TT>(int, int, int, bool)</TT> would let
+        <TT>sensorPlacement(disk, wedge)</TT> compile, with wedge silently
+        converted to the survey flag.</TD></TR>
+
+<TR><TD><TT>setApplySurvey</TT> (static)</TD>
+    <TD>bool</TD><TD>void</TD>
+    <TD>Turns the survey on for everything that asks. Set by
+        <TT>StFstHitMaker::SetApplySurvey()</TT>; default false, matching that
+        maker. One owner on purpose: if the hit keeps its nominal position while
+        the fit plane carries the survey, the fit is self-consistent at the wrong
+        geometry and the residual goes FLAT instead of responding, which
+        alignment cannot converge through.</TD></TR>
+
+<TR><TD><TT>applySurvey</TT> (static)</TD>
+    <TD>&mdash;</TD><TD>bool, default false</TD>
+    <TD>What <TT>sensorPlacement</TT> uses when no flag is passed. Pass one
+        explicitly only to compare the two on purpose.</TD></TR>
 </TABLE>
 
 <P><FONT SIZE="-1">Also private: <TT>moduleFromSector(sector(0-11)) -> module(1-12)</TT>,
@@ -388,17 +525,17 @@ built from <TT>kFstphiStart/kFstphiStop</TT>.</FONT></P>
     <TD>filename</TD><TD>bool</TD>
     <TD>Load the three strip maps.</TD></TR>
 
-<TR><TD><TT>reverseHardwareMap</TT><BR><FONT SIZE="-1">(two overloads)</FONT></TD>
-    <TD>plane(0-3), quad(0-3), row(0-4), strip, orientation (in/out)<BR>
-        or just row(0-4), strip</TD>
-    <TD>bool; rob(1-16), feb, vmm, ch(0-63), orientation<BR>or feb, vmm, ch</TD>
+<TR><TD><TT>reverseHardwareMap</TT></TD>
+    <TD>plane(0-3), quad(0-3), row(0-4), strip, orientation (in/out)</TD>
+    <TD>bool; rob(1-16), feb, vmm, ch(0-63), orientation</TD>
     <TD>The inverse of <TT>hardwareMap()</TT>: which electronics channel reads a
         given strip. Needed to build raw hits outside the DAQ path, e.g. in the
         slow simulator. <TT>rob = quad + plane*4 + 1</TT>; feb, vmm and ch are as
         the fttHardwareMap DB table numbers them. (row,strip) alone is AMBIGUOUS,
         both an H and a V channel exist there, so pre-set <TT>orientation</TT> to
         pick one, or leave it <TT>kFttUnknownOrientation</TT> to take whichever
-        comes first. The short overload has no rob and cannot disambiguate.</TD></TR>
+        comes first. There is deliberately no overload without rob: it could
+        not disambiguate.</TD></TR>
 
 <TR><TD COLSPAN=4 BGCOLOR="#eeeeff"><B>Per-run VMM time anchors</B>
     &nbsp; Calibrations/ftt/fttDataWindowsB</TD></TR>

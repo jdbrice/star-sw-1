@@ -1103,22 +1103,6 @@ bool StFttDb::reverseHardwareMap( int &rob, int &feb, int &vmm, int &ch, int pla
     }
     return false;
 }
-//used to reversve the map, from the hardware to electronic map
-// plane, quad, row and strip can be calculated from the simulation maker
-// the key issue if to figure out which feb, row, and strip is for the selected channel
-bool StFttDb::reverseHardwareMap( int &feb, int &vmm, int &ch, int row, int strip ) const{
-    // No rob/orientation available here to disambiguate which of the (row,strip)
-    // channels (H vs V, or DiagonalH vs DiagonalV) is wanted -- returns the first
-    // one on record. Prefer the 9-arg overload when orientation matters.
-    uint16_t val = packVal( row, strip );
-    if ( rMap.count( val ) && !rMap.at( val ).empty() ){
-        uint16_t key = rMap.at( val ).front();
-        unpackKey( key, feb, vmm, ch );//get the feb, vmm and channel information
-        return true;
-    }
-    return false;
-}
-
 UChar_t StFttDb::plane( StFttRawHit * hit ){
     if ( hit->plane() < nPlane )
         return hit->plane();

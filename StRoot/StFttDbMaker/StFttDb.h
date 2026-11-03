@@ -357,8 +357,14 @@ public:
                       int rowB, int stripB, UChar_t orientB,
                       double &crossX, double &crossY, double tolerance = 0.0 ) const;
 
+    // The inverse of hardwareMap(): which channel reads a given strip. Note that
+    // (row,strip) is AMBIGUOUS on its own -- the same pair exists once per
+    // orientation in the real map (H and V, or DiagonalH and DiagonalV on rows
+    // 3,4) -- so rob is needed to resolve it, and orientation is in/out: pre-set
+    // it to pick a specific one, or leave it kFttUnknownOrientation to take
+    // whichever comes first. A caller that gets this wrong puts charge on the
+    // wrong strip, which is why there is no overload that drops rob.
     bool reverseHardwareMap(int &rob, int &feb, int &vmm, int &ch, int plane, int quad, int row, int strip, UChar_t &orientation) const;
-    bool reverseHardwareMap( int &feb, int &vmm, int &ch, int row, int strip ) const;
 
     enum TimeCutMode {
       CalibratedBunchCrossingMode = 0,
