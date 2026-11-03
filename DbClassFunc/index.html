@@ -500,9 +500,12 @@ built from <TT>kFstphiStart/kFstphiStop</TT>.</FONT></P>
 <TR><TD><TT>stripEdges</TT></TD>
     <TD>row(0-4), strip, orientation</TD>
     <TD>bool; center, leftEdge, rightEdge, length [mm]</TD>
-    <TD>Everything <TT>hardwareMap()</TT> puts on a raw hit, in one call. Edges
-        are diagonals only; XY strips keep -1. Lets a maker that builds raw hits
-        outside the DAQ path fill the same fields the same way.</TD></TR>
+    <TD>Everything <TT>hardwareMap()</TT> puts on a raw hit, in one call. The
+        edges are PAD bounds, half a dead gap outside the copper, so neighbouring
+        pads tile: measured for the diagonal rows, centre &plusmn;
+        <TT>stripPitch</TT>/2 for XY, which is the same quantity. Lets a maker
+        that builds raw hits outside the DAQ path fill the same fields the same
+        way.</TD></TR>
 
 <TR><TD><TT>stripFromLocal</TT></TD>
     <TD>row(0-4), orientation, precisionCoord [mm]</TD>

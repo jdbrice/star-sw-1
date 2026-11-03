@@ -877,8 +877,19 @@ bool StFttDb::stripEdges( int row, int strip, UChar_t orientation,
     center = -1; leftEdge = -1; rightEdge = -1; length = -1;
 
     if (orientation == kFttHorizontal || orientation == kFttVertical){
-        if ( scMapXY.count( strip ) > 0 )
+        if ( scMapXY.count( strip ) > 0 ) {
             center = scMapXY.at(strip);
+            // Pad bounds, by the same rule the diagonal rows use below: the copper
+            // is stripWidth across and the dead gap to the neighbour is gapPitch,
+            // so the boundary sits half a gap outside the copper, which is exactly
+            // stripPitch/2 from the centre (1.35 + 0.25 = 1.6). Checked against the
+            // tables rather than assumed -- all 152 diagonal strips in
+            // Row4_edge.txt have copper width 2.700 and left/right = centre -+ 1.6
+            // with no exception, and the 167 H/V centres in Row1.txt are a uniform
+            // 3.200 apart from 15.95 to 547.15, so the identical rule applies here.
+            leftEdge  = center - stripPitch/2.;
+            rightEdge = center + stripPitch/2.;
+        }
         else {
             LOG_ERROR << "Cannot find StripCenter for " << strip << endm;
         }

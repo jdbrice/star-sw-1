@@ -329,8 +329,12 @@ public:
     bool stripCenter( int row, int strip, UChar_t orientation, double &center ) const;
 
     // Everything hardwareMap() puts on a raw hit about where its strip is, in
-    // one call: centre, the two edges (diagonals only -- XY strips have no edge
-    // table and keep -1, as they always did) and the length. Quadrant-local mm.
+    // one call: centre, the two edges and the length, quadrant-local mm, for
+    // every orientation. The edges are the PAD bounds -- half a dead gap
+    // outside the copper, so neighbouring pads tile without overlap. The
+    // diagonal rows have a measured edge table; the XY rows do not, and take
+    // centre -+ stripPitch/2, which is the same quantity (the two agree exactly
+    // on all 152 diagonal strips). -1 means the strip is not in the map.
     //
     // hardwareMap() itself now goes through this, so a maker that builds raw
     // hits outside the DAQ path -- StFttSlowSimMaker does -- can fill the same
