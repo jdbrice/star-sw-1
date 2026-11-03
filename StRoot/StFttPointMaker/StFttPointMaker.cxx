@@ -163,9 +163,19 @@ void StFttPointMaker::MakeGlobalPoints() {
         // dx is a local shift
         float dx = 0, dy = 0, dz = 0;
         // sx is only {1,-1} -> reflected or normal
-        float sx = 0, sy = 0, sz = 0;
+        float sx = 1, sy = 1, sz = 1;
         mFttDb->getGloablOffset( p->plane(), p->quadrant(), dx, sx, dy, sy, dz, sz );
-        global.set( (x + dx) * sx, (y + dy) * sy, (z + dz) * sz );
+
+        // UNITS and ORDER. getGloablOffset() hands back dx,dy in MILLIMETRES (they
+        // are added to a quadrant-local x,y, which is mm everywhere in the FTT
+        // chain) and dz in CENTIMETRES (it is added to a STAR z) -- see the block
+        // over the declaration in StFttDb.h. StFttPoint::xyz() is cm, so x,y need
+        // the /10 and z does not. The reflection applies to the LOCAL coordinate
+        // only: dx,dy are already expressed in the reflected (global) frame, so
+        // reflecting the sum flips the shift too and lands the quadrant 2*|d| away
+        // -- up to 21.5 cm, since the shifts are 3.7 to 113.5 mm. Same expression
+        // as StFttClusterPointMaker, which is the version checked against data.
+        global.set( ((x*sx)+dx)/10.0, ((y*sy)+dy)/10.0, z+dz );
         p->setXYZ( global );
     }
 }

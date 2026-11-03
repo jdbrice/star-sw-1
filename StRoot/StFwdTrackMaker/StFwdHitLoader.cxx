@@ -153,10 +153,25 @@ int StFwdHitLoader::loadFttPointsFromStEvent( FwdDataSource::McTrackMap_t &mcTra
             float ycm = point->xyz().y();
             float zcm = point->xyz().z();
 
-            hitCov3(0, 0) = (double)point->cov()[0][0];
-            hitCov3(0, 1) = (double)point->cov()[0][1];
-            hitCov3(1, 0) = (double)point->cov()[1][0];
-            hitCov3(1, 1) = (double)point->cov()[1][1];
+            // StFttPoint::mCov is an EMPTY vector<vector<float>> until somebody
+            // calls setCov(). StFttClusterPointMaker does; StFttPointMaker (the
+            // bfc "FttPoint" option) never has, so indexing it unguarded is a
+            // segfault, not a garbage read -- confirmed. Fall back to the fixed
+            // sigXY above when the matrix was never filled.
+            const std::vector<std::vector<float>> cov = point->cov();
+            if ( cov.size() >= 2 && cov[0].size() >= 2 && cov[1].size() >= 2 ){
+                hitCov3(0, 0) = (double)cov[0][0];
+                hitCov3(0, 1) = (double)cov[0][1];
+                hitCov3(1, 0) = (double)cov[1][0];
+                hitCov3(1, 1) = (double)cov[1][1];
+            } else {
+                hitCov3(0, 0) = sigXY * sigXY;
+                hitCov3(0, 1) = 0;
+                hitCov3(1, 0) = 0;
+                hitCov3(1, 1) = sigXY * sigXY;
+                LOG_WARN << "FTT point carries no covariance, using sigXY = "
+                         << sigXY << " cm. Which point maker filled StEvent?" << endm;
+            }
 
             if ( kLogLevel >= kLogVerbose ){
 	      LOG_INFO << "Loaded FTT point with local x: " << xcm << " y: " << ycm << " z: " << zcm << ", disk = " << ((int)point->plane()) << endm;
