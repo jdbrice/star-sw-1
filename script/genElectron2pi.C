@@ -11,8 +11,17 @@
 // Usage:
 //   root4star -b -q 'script/genElectron2pi.C(4000, 1, 1)'   // 1 e-/event
 //   root4star -b -q 'script/genElectron2pi.C(4000, 1, 8)'   // 8 e-/event
-
-void genElectron2pi(int nevents = 4000, int seed = 1, int numPerEvent = 1) {
+//
+// GEOMETRY: same arguments and the same reason as script/genElectron45.C -- the
+// old hardcoded y2024 uses FSTM config FSTMv1 -> FstmGeo.xml, which has ZERO
+// <Misalign> tags and no halfid logic, so every sample generated before
+// 2026-10-24 sat on IDEAL FST. Only the M variants carry the survey, and
+// dev2022sm is what the Run-22 fGeom reco caches are built from. The "misalign"
+// bfc option is what makes AgPosition read the tables at all, and sdt picks
+// which tables. See genElectron45.C's header for the full variant map.
+void genElectron2pi(int nevents = 4000, int seed = 1, int numPerEvent = 1,
+                    const char* tag = "dev2022sm", const char* sdt = "20211112.000004",
+                    int misalign = 1) {
     gROOT->LoadMacro("StRoot/StFwdTrackMaker/macro/sim/gen.C");
 
     nameParticle = "e-";
@@ -24,17 +33,23 @@ void genElectron2pi(int nevents = 4000, int seed = 1, int numPerEvent = 1) {
     vtxX = 0.0; vtxY = 0.0; vtxZ = 0.0;
     vtxSigmaX = 0.0001; vtxSigmaY = 0.0001; vtxSigmaZ = 0.0001;
 
-    fzdFilename = Form("ele2pi_np%d.vz0.run%d.fzd", numPerEvent, seed);
-    primaryName = Form("ele2pi_np%d.vz0.run%d.root", numPerEvent, seed);
+    // Name carries the geometry tag: an ideal-FST sample and a misaligned one
+    // under one filename is the worst outcome. Renames the old ele2pi_np*.vz0.*
+    // (which were y2024, i.e. ideal FST).
+    fzdFilename = Form("ele2pi_np%d.%s.vz0.run%d.fzd", numPerEvent, tag, seed);
+    primaryName = Form("ele2pi_np%d.%s.vz0.run%d.root", numPerEvent, tag, seed);
 
-    printf("genElectron2pi: nevents=%d seed=%d numPerEvent=%d -> phi=[0,2pi], file=%s\n",
-           nevents, seed, numPerEvent, fzdFilename.Data());
+    printf("genElectron2pi: nevents=%d seed=%d numPerEvent=%d -> phi=[0,2pi], file=%s\n"
+           "genElectron2pi: tag=%s sdt=%s misalign=%d\n",
+           nevents, seed, numPerEvent, fzdFilename.Data(), tag, sdt, misalign);
 
     // ---- inlined gen(nevents, seed), minus the macro-path-breaking line ----
     gSystem->Load("libStarRoot.so");
     gROOT->LoadMacro("bfc.C");
     {
-        TString simple = "sdt20211016 y2024 geant gstar usexgeom agml ";
+        TString simple = Form("sdt%s %s geant gstar usexgeom agml %s",
+                              sdt, tag, misalign ? "misalign " : "");
+        printf("genElectron2pi: bfc chain = [%s]\n", simple.Data());
         bfc(0, simple);
     }
 
@@ -58,7 +73,7 @@ void genElectron2pi(int nevents = 4000, int seed = 1, int numPerEvent = 1) {
     _primary->SetSigma(vtxSigmaX, vtxSigmaY, vtxSigmaZ);
     _primary->SetVertex(vtxX, vtxY, vtxZ);
 
-    geometry("y2024");   // gen.C helper, DETP GEOM ... field=-5.0: fz header records the reversed field
+    geometry(tag);   // gen.C helper, DETP GEOM ... field=-5.0: fz header records the reversed field
     command("gkine -4 0");
     command(TString::Format("gfile o %s", fzdFilename.Data()));
 
