@@ -52,8 +52,26 @@ Int_t StFstRawHitMaker::Init()
 {
     ToWhiteConst("fstRawHitAndCluster", mFstCollectionPtr);
 
+    // Production route for the threshold. BFC chain-string options are boolean
+    // presence flags -- StBFChain special-cases each one as
+    // "if (GetOption(x)) mk->SetAttr(x, value)" and there is no generic way for
+    // an option to carry a number -- so the value comes through an attribute:
+    //
+    //     chain->SetAttr("fstMaxRawHits", 1000, "fst_raw_hit");
+    //
+    // from a steering macro today, and from a named chain option later by
+    // having StBFChain set this same attribute. IAttr() returns 0 when the
+    // attribute is unset, and 0 is our "no cut" value, so an absent attribute
+    // can never switch the gate on by accident. An explicit setMaxRawHits()
+    // wins, which is why this only fills in when nothing was set in code.
+    if (mMaxRawHits <= 0 && IAttr("fstMaxRawHits") > 0) {
+        mMaxRawHits = IAttr("fstMaxRawHits");
+        LOG_INFO << "StFstRawHitMaker: occupancy gate threshold " << mMaxRawHits
+                 << " taken from the chain attribute fstMaxRawHits" << endm;
+    }
+
     // The gate's makers are NOT resolved here. setMaxRawHits() can legitimately
-    // arrive after Init() -- from a BFC .call attribute or a steering macro --
+    // arrive after Init() -- from an attribute, a .call or a steering macro --
     // and resolving too early would silently leave the gate controlling
     // nothing. Done lazily on the first event that needs it instead.
 
