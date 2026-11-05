@@ -73,20 +73,20 @@ Also note that alignment "for real" should start with
     fGeom.<tag>.misalign<N>.sdt<date.time>.root, so iterations never overwrite each
     other -- then symlink the one you want to fGeom.root. Takes about 30 seconds.
 
-Two things we learned this week that will save you time:
+Are you doing your FST alignments with FTT hits added? Since FTT is >1cm off, it may be
+pulling your tracks if it is used without StFttDb fixes and misalign geommetry table.
+And I may still need a couple more iterations over 1st FTT alignment I showed yesterday.
+So I suggest you drop FTT hits in tracking until those are settled, unless of course
+you are already not using FTT hits. I hope once we take out those large offsets, and
+then can include FTT in tracking, then your alignment code can find all finer offsets
+and rotations.
 
-  - StFttDb now takes the sTGC per-quadrant offsets from the survey tables rather than
-    its hardcoded numbers, so an alignment iteration moves the FTT hits as well as the
-    planes. It is on by default; setUseDbGeometry(false) restores the old behaviour.
-    On 90 jobs / 1.17M events this took the FST->sTGC dy residual from +1.30 cm to
-    +0.35 cm.
-
-  - From the second iteration on, do NOT regenerate the misalign table from the
-    residuals. Once the tables are being applied, the residual you measure is already
-    relative to them, so the update is new = previous + delta. There is a helper:
+From the second iteration on, do NOT regenerate the misalign table from the
+residuals. Once the tables are being applied, the residual you measure is already
+relative to them, so the update is new = previous + delta. There is a helper:
         script/stgcTableAddDelta.py
-    script/stgcQuadOffsets.C now refuses to write absolute tables unless you tell it
-    this is iteration 1, precisely so this cannot be got wrong silently.
+script/stgcQuadOffsets.C now refuses to write absolute tables unless you tell it
+this is iteration 1, precisely so this cannot be got wrong silently.
 
 I'm hoping to start making PRs to the new Gitea repo so that we have a unified code
 base asap, and now that the transition is done we can start soon. But for now, I don't
