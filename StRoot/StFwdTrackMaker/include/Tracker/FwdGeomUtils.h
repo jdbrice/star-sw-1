@@ -313,7 +313,8 @@ class FwdGeomUtils {
         // R from kFstrStart, which is what it used to do.
         TVector3 getFstSensorOrigin (int index, TVector3 &u, TVector3 &v,
                                      double *phi1 = 0, double *phi2 = 0,
-                                     double *rmin = 0, double *rmax = 0) {
+                                     double *rmin = 0, double *rmax = 0,
+                                     int *flip = 0) {
             buildFstSensorMap();
             if ( index < 0 || index >= kFstNumSensors || !_fstSensorOK[index] ){
                 std::cerr << "Failed to get FST sensor origin for index " << index << std::endl;
@@ -329,6 +330,14 @@ class FwdGeomUtils {
             // hardcoded constants.
             u.SetXYZ( r[0], r[3], r[6] );
             v.SetXYZ( r[1], r[4], r[7] );
+            // The front/back mounting of THIS wedge, read from the placement
+            // itself rather than from a configuration flag. AGML implements the
+            // flip as a 180 deg rotation about the wedge's local x axis, which
+            // sends local z -> -z, so r[8] -- the local z axis's global z
+            // component -- is +1 for a front wedge and -1 for a back one.
+            // Measured to be exactly +-1.000 on both the as-installed and the
+            // pre-wedgeflip caches, on all 108 sensors.
+            if (flip) *flip = ( r[8] < 0 ) ? -1 : +1;
             if (phi1) *phi1 = _fstSensorPhi1[index];
             if (phi2) *phi2 = _fstSensorPhi2[index];
             if (rmin) *rmin = _fstSensorRmin[index];

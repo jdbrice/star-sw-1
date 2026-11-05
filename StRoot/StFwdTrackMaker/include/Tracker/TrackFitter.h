@@ -894,14 +894,49 @@ class TrackFitter {
      */
     void createAllFstPlanes( FwdGeomUtils &fwdGeoUtils )
     {
+        // Does the geometry we just loaded actually have the mounting that
+        // StFstDb is configured for? Nothing used to check, and the two are
+        // read from different places: the per-wedge flip is applied physically
+        // by the FTUS node matrix out of fGeom.root, while StFstDb::fstmConfig()
+        // is a flag. Pair an as-installed flag with a pre-wedgeflip cache and
+        // the planar decode mirrors local phi that the geometry did not mirror
+        // -- silently, and wrong by up to half a wedge. That is exactly what
+        // was live between 2026-10-25 and 2026-10-29.
+        //
+        // The invariant, verified on all 108 sensors of both caches:
+        //     sign(rzz of the sensor's placement) == wedgeOrientation(disk, wedge)
+        // Measured: fGeom.root with config 2 gives 0/108 mismatches, the
+        // pre-wedgeflip cache with config 2 gives 108/108, and that same cache
+        // with config 1 gives 0/108. It is all-or-nothing, so it cannot
+        // half-fire on a numerical accident.
+        int nFlipChecked = 0, nFlipBad = 0, firstBadWedge = -1, firstBadDisk = -1;
+
         // create FWD GeomUtils to get the plane locations
         for (int globalSensorIndex = 0; globalSensorIndex < kFstNumSensors; globalSensorIndex++)
         {
-            TVector3 u(1, 0, 0); 
+            TVector3 u(1, 0, 0);
             TVector3 v(0, 1, 0);
             double sphi1 = 0, sphi2 = 0, srmin = 0, srmax = 0;
+            int    sflip = 0;
             TVector3 o = fwdGeoUtils.getFstSensorOrigin(globalSensorIndex, u, v,
-                                                        &sphi1, &sphi2, &srmin, &srmax);
+                                                        &sphi1, &sphi2, &srmin, &srmax, &sflip);
+
+            // index is disk*36 + wedgeInDisk*3 + sensor (FwdGeomUtils::walkFstSensors);
+            // wedgeOrientation takes the global wedge 1-36 and mods by 12 itself.
+            if ( sflip != 0 ) {
+                const int iDisk      = globalSensorIndex / (kFstNumWedgePerDisk * kFstNumSensorsPerWedge);
+                const int iWedge     = ( globalSensorIndex % (kFstNumWedgePerDisk * kFstNumSensorsPerWedge) )
+                                       / kFstNumSensorsPerWedge;
+                const int globalWedge = iDisk * kFstNumWedgePerDisk + iWedge + 1;
+                const int expect      = StFstDb::wedgeOrientation( iDisk + 1, globalWedge );
+                if ( expect != 0 ) {
+                    nFlipChecked++;
+                    if ( expect != sflip ) {
+                        nFlipBad++;
+                        if ( firstBadWedge < 0 ) { firstBadDisk = iDisk + 1; firstBadWedge = iWedge + 1; }
+                    }
+                }
+            }
             mFstSensorPhi1.push_back(sphi1);
             mFstSensorPhi2.push_back(sphi2);
             mFstSensorRmin.push_back(srmin);
@@ -914,6 +949,20 @@ class TrackFitter {
             mFstSensorPlanes.push_back(
                 genfit::SharedPlanePtr(
                     new genfit::DetPlane(o, u, v)));
+        }
+
+        if ( nFlipBad > 0 ) {
+            LOG_ERROR << "FST geometry and StFstDb disagree about the wedge mounting: "
+                      << nFlipBad << " of " << nFlipChecked << " sensors, first at disk "
+                      << firstBadDisk << " wedge " << firstBadWedge
+                      << ". StFstDb::fstmConfig() is " << StFstDb::fstmConfig()
+                      << ", but the loaded geometry has the other mounting phase. "
+                      << "The planar decode will mirror local phi that the geometry did "
+                      << "not mirror, which is wrong by up to half a wedge. Either load "
+                      << "the matching fGeom cache or set the matching fstmConfig." << endm;
+        } else if ( nFlipChecked > 0 ) {
+            LOG_INFO << "FST wedge mounting: geometry agrees with StFstDb::fstmConfig() = "
+                     << StFstDb::fstmConfig() << " on all " << nFlipChecked << " sensors" << endm;
         }
     }
 
