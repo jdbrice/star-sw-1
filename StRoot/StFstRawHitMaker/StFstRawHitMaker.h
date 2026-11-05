@@ -37,6 +37,7 @@ public:
    Int_t Init();
    Int_t InitRun(Int_t runNumber);
    Int_t Make();
+   Int_t Finish();
    void Clear( Option_t *opts = "" );
 
    void setIsCalibrationMode( bool isCaliMode = false )  { mIsCaliMode = isCaliMode; }
@@ -49,6 +50,24 @@ public:
    void setDataType(int nDataType = 0)                   { mDataType = nDataType; };
    void setDoEmbedding(Bool_t doIt)                      { mDoEmbedding = doIt; }
    UChar_t getDataType() {return mDataType;} // 0 - All data; 1 - non-ZS data; 2 - ZS data; 3 - ZS first data
+
+   /// Occupancy gate for high-multiplicity AuAu. Above maxRawHits raw hits this
+   /// maker drops its own collection and switches OFF, for that event only, the
+   /// FST cluster/hit makers, the whole FTT chain, forward tracking and the FCS
+   /// track match. The event is NOT aborted: FCS and everything else still run
+   /// and the event is still written, just with no forward hits or tracks.
+   ///
+   /// n <= 0 (the default -1) means NO cut. Zero is deliberately not the "off"
+   /// value -- it is a legitimate-looking threshold, and a mis-set 0 would
+   /// silently kill FST for a whole production.
+   ///
+   /// The count is the real raw-hit count, tested after each DAQ element, so
+   /// the unpacking stops as soon as the threshold is crossed and no more than
+   /// one APV's worth of hits is ever built beyond it.
+   void setMaxRawHits(int n = -1)                        { mMaxRawHits = n; }
+   int  getMaxRawHits() const                            { return mMaxRawHits; }
+   /// true if the current event was gated (for the makers downstream and QA)
+   Bool_t isOccupancyGated() const                       { return mGated; }
 
 protected:
    Bool_t mIsCaliMode;
@@ -90,7 +109,18 @@ private:
    StFstEvtCollection* mFstEvtCollection;
 
    Int_t mDataType; ///<  0=all, 1=adc only, 2=zs only
-   
+
+   // ---- occupancy gate ----------------------------------------------------
+   enum { kNGateMakers = 8 };
+   Int_t    mMaxRawHits;              ///< <=0 means no cut
+   Bool_t   mGated;                   ///< was THIS event gated
+   Bool_t   mGateResolved;            ///< makers looked up yet
+   StMaker *mGateMaker[kNGateMakers]; ///< resolved once in Init(), never owned
+   Int_t    mNGateMaker;
+   Long64_t mNEventsSeen, mNEventsGated;
+   void     resolveGateMakers();              ///< Init(): find them, say what is missing
+   void     setGateMakersActive(Bool_t on);   ///< flip the whole controlled set
+
    ClassDef(StFstRawHitMaker, 1);
 };
 

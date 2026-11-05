@@ -31,8 +31,11 @@ StFstRawHitMaker::StFstRawHitMaker( const char *name ): StRTSBaseMaker( "fst", n
     mGainVec(kFstNumElecIds, 0),
     mMappingVec(kFstNumElecIds, 0),
     mConfigVec(kFstNumApvs, 1),
-    mDataType(0)
+    mDataType(0),
+    mMaxRawHits(-1), mGated(kFALSE), mGateResolved(kFALSE), mNGateMaker(0),
+    mNEventsSeen(0), mNEventsGated(0)
 {
+    for (int ig = 0; ig < kNGateMakers; ig++) mGateMaker[ig] = 0;
 }
 
 StFstRawHitMaker::~StFstRawHitMaker()
@@ -49,7 +52,75 @@ Int_t StFstRawHitMaker::Init()
 {
     ToWhiteConst("fstRawHitAndCluster", mFstCollectionPtr);
 
+    // The gate's makers are NOT resolved here. setMaxRawHits() can legitimately
+    // arrive after Init() -- from a BFC .call attribute or a steering macro --
+    // and resolving too early would silently leave the gate controlling
+    // nothing. Done lazily on the first event that needs it instead.
+
     return kStOk;
+}
+
+//____________________________________________________________________________
+/**
+ * Find the makers the occupancy gate switches off. Done once, here, rather than
+ * by name on every event: a GetMaker() that silently returns null would mean the
+ * gate quietly does nothing while the log still says it is enabled, i.e. we
+ * would believe we were saving CPU that we were not. So anything missing is
+ * reported, loudly, at Init.
+ *
+ * Resolved by CLASS where the class is unique, because the BFC maker NAMES come
+ * from the option table and are easier to get wrong; the FTT chain is the one
+ * exception, taken by name since switching the parent StChain off covers
+ * FttDat/FttHitCalib/FttClu/FttPoint/FttQA in a single call.
+ */
+void StFstRawHitMaker::resolveGateMakers()
+{
+    mNGateMaker = 0;
+    StMaker *top = GetChain();
+    if (!top) {
+        LOG_ERROR << "StFstRawHitMaker: occupancy gate is ON but there is no chain to "
+                  << "resolve makers from -- the gate will NOT switch anything off" << endm;
+        return;
+    }
+
+    const char *byClass[] = { "StFstClusterMaker", "StFstHitMaker",
+                              "StFwdTrackMaker",   "StFcsTrackMatchMaker" };
+    for (int ic = 0; ic < 4; ic++) {
+        StMaker *mk = top->GetMakerInheritsFrom(byClass[ic]);
+        if (mk) { if (mNGateMaker < kNGateMakers) mGateMaker[mNGateMaker++] = mk; }
+        else      LOG_INFO  << "StFstRawHitMaker: occupancy gate -- no " << byClass[ic]
+                            << " in this chain, nothing to switch off for it" << endm;
+    }
+
+    StMaker *ftt = top->GetMaker("fttChain");
+    if (ftt) { if (mNGateMaker < kNGateMakers) mGateMaker[mNGateMaker++] = ftt; }
+    else {
+        // No parent chain: fall back to the individual FTT makers so an FTT
+        // chain built some other way is still covered.
+        const char *fttClass[] = { "StFttRawHitMaker", "StFttHitCalibMaker",
+                                   "StFttClusterMaker", "StFttPointMaker" };
+        int nf = 0;
+        for (int jf = 0; jf < 4; jf++) {
+            StMaker *mk = top->GetMakerInheritsFrom(fttClass[jf]);
+            if (mk && mNGateMaker < kNGateMakers) { mGateMaker[mNGateMaker++] = mk; nf++; }
+        }
+        LOG_INFO << "StFstRawHitMaker: occupancy gate -- no 'fttChain', took "
+                 << nf << " FTT makers individually" << endm;
+    }
+
+    LOG_INFO << "StFstRawHitMaker: OCCUPANCY GATE ENABLED, maxRawHits = " << mMaxRawHits
+             << ", controlling " << mNGateMaker << " makers:";
+    for (int il = 0; il < mNGateMaker; il++)
+        LOG_INFO << " " << mGateMaker[il]->GetName()
+                 << "(" << mGateMaker[il]->ClassName() << ")";
+    LOG_INFO << endm;
+}
+
+//____________________________________________________________________________
+void StFstRawHitMaker::setGateMakersActive(Bool_t on)
+{
+    for (int ia = 0; ia < mNGateMaker; ia++)
+        if (mGateMaker[ia]) mGateMaker[ia]->SetActive(on);
 }
 
 
@@ -187,9 +258,38 @@ Int_t StFstRawHitMaker::InitRun(Int_t runnumber)
  * (3) raw hit decision and ADC-to-dE/dx translation, then written to corresponding collection in physics mode;
  *     While in offline calibrarion mode, ADC information was directly saved without any raw hit processing.
  */
+Int_t StFstRawHitMaker::Finish()
+{
+    if (mMaxRawHits > 0) {
+        LOG_INFO << "StFstRawHitMaker: occupancy gate (maxRawHits " << mMaxRawHits
+                 << ") dropped " << mNEventsGated << " of " << mNEventsSeen
+                 << " events from the forward chain";
+        if (mNEventsSeen > 0)
+            LOG_INFO << " (" << (100.0 * mNEventsGated) / mNEventsSeen << "%)";
+        LOG_INFO << endm;
+    }
+    // Chain to the base: StMaker::Finish() runs FinishRun() and the timing
+    // summary, so returning kStOk here instead would quietly skip both.
+    return StRTSBaseMaker::Finish();
+}
+
+//____________________________________________________________________________
 Int_t StFstRawHitMaker::Make()
 {
     Int_t ierr = kStOk;
+
+    // Occupancy gate: start EVERY event from a known state. Without this the
+    // first central event would switch the forward chain off for the rest of
+    // the job, because SetActive() is sticky.
+    mNEventsSeen++;
+    mGated = kFALSE;
+    if (mMaxRawHits > 0) {
+        if (!mGateResolved) { resolveGateMakers(); mGateResolved = kTRUE; }
+        setGateMakersActive(kTRUE);
+    }
+    Long64_t nGateRows = 0;   // DAQ rows seen, including after gating: an
+                              // occupancy proxy for the record, since once we
+                              // stop building hits the true count is unknown
 
     //access raw ADC containers from simu data
     TObjectSet* fstSimuDataSet = (TObjectSet*)GetDataSet("fstRawAdcSimu");
@@ -241,6 +341,12 @@ Int_t StFstRawHitMaker::Make()
         }
 
         if (!rts_tbl) break;
+
+        // Counting rows is free -- it is fBank->ncontent, no row is touched.
+        nGateRows += rts_tbl->GetNRows();
+        // Already over threshold: keep walking the DAQ (the iterator cannot be
+        // rewound, and the elements must be consumed) but build nothing.
+        if (mGated) continue;
 
         apv_meta_t *meta = (apv_meta_t *)rts_tbl->Meta();
 
@@ -381,15 +487,44 @@ Int_t StFstRawHitMaker::Make()
 
 	nIdTruth_Fst += FillRawHitCollectionFromAPVData(dataFlag, ntimebin, counterAdcPerRgroupPerEvent, sumAdcPerRgroupPerEvent, apvElecId, signalUnCorrected, signalCorrected, seedFlag, idTruth);
 
+        // Test the REAL raw-hit count, not a row count: hits are built per DAQ
+        // element just above, so this is exact and needs no rows-to-hits
+        // calibration. Crossing the threshold here stops the build immediately,
+        // so we never hold more than one APV's worth of hits beyond it.
+        if (mMaxRawHits > 0 && !mGated &&
+            (Int_t)mFstCollectionPtr->getNumRawHits() > mMaxRawHits) {
+            mGated = kTRUE;
+            for (int icl = 0; icl < kFstNumWedges; icl++)
+                mFstCollectionPtr->getRawHitCollection(icl)->Clear("");
+        }
+
     }//end while
     LOG_INFO << " Total number of FST Raw Hits - Step I = " << mFstCollectionPtr->getNumRawHits() << " w/ idTruth = " << nIdTruth_Fst << endm;
 
     // In case of pure simulation mode when neither real data hits from DAQ
     // records is available nor embedding is requested fill the output container
     // with simulated hits
-    if(!mDoEmbedding && !nRawAdcFromData) nIdTruth_Fst += FillRawHitCollectionFromSimData();
+    // NOTE the !mGated: a gated event never incremented nRawAdcFromData, so
+    // without it this would mistake a dropped AuAu event for "no DAQ data" and
+    // fill the collection from the simulated hits instead.
+    if(!mDoEmbedding && !nRawAdcFromData && !mGated) nIdTruth_Fst += FillRawHitCollectionFromSimData();
 
     LOG_INFO << " Total number of FST Raw Hits - Step II = " << mFstCollectionPtr->getNumRawHits() << " w/ idTruth = " << nIdTruth_Fst << endm;
+
+    // ---- occupancy gate: act on the decision --------------------------------
+    // The event is NOT aborted. We return kStOk so FCS, the TPC and everything
+    // else still run and the event is still written -- it simply carries no
+    // forward hits and no forward tracks.
+    if (mGated) {
+        mNEventsGated++;
+        setGateMakersActive(kFALSE);
+        LOG_INFO << "FST OCCUPANCY GATE: event dropped from the forward chain, "
+                 << "more than " << mMaxRawHits << " FST raw hits ("
+                 << nGateRows << " DAQ rows). Switched OFF for this event:";
+        for (int ig2 = 0; ig2 < mNGateMaker; ig2++)
+            LOG_INFO << " " << mGateMaker[ig2]->GetName();
+        LOG_INFO << ". FCS and the rest of the chain are unaffected." << endm;
+    }
 
     // Fill Fst raw hits we got so far into StEvent if the chain option is called
     if(IAttr("fstEvtRawHit")) {//True for storing FST Raw hits
