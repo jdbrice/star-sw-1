@@ -1,7 +1,7 @@
 // inspectChargeSharing.C -- summarize fttChargeSharing.root (produced by
 // runFttChargeSharing.C / StFttChargeSharingMaker) so we can decide on a
 // charge-sharing model (see status_ftt_sim_maker.txt item 10) before
-// touching StFttSimHitMaker's flat 1:8:1 model.
+// touching StFttSlowSimMaker's flat 1:8:1 model.
 void inspectChargeSharing(const char* file = "fttChargeSharing.root") {
     TFile* f = TFile::Open(file);
     if (!f || f->IsZombie()) { printf("cannot open %s\n", file); return; }

@@ -1,25 +1,25 @@
-// simFttSimHitTest.C
+// simFttSlowSimTest.C
 //
-// Test driver for StFttSimHitMaker (see proposal_ftt_sim_maker.txt, option 6,
+// Test driver for StFttSlowSimMaker (see proposal_ftt_sim_maker.txt, option 6,
 // and status_FttSimHitMaker.txt). Reads a particle-gun .fzd (produced by
 // runSimFlat.C), reconstructs FTT through the REAL StFttClusterMaker /
-// StFttClusterPointMaker chain (mUseGeantData=false) fed by StFttSimHitMaker
+// StFttClusterPointMaker chain (mUseGeantData=false) fed by StFttSlowSimMaker
 // instead of the GEANT-truth blur (MakeGeantPoints), then compares the
 // resulting StFttPoint global positions directly against GEANT truth
 // (St_g2t_fts_hit) event by event.
 //
 // Usage:
-//   root4star -b -q 'script/simFttSimHitTest.C("ele.pt1.5.vz0.run1.fzd", 5)'
+//   root4star -b -q 'script/simFttSlowSimTest.C("ele.pt1.5.vz0.run1.fzd", 5)'
 
 #include <map>
 #include <utility>
 
-class StFttSimHitMaker;
+class StFttSlowSimMaker;
 class StFttClusterMaker;
 class StFttClusterPointMaker;
 class StFttDbMaker;
 
-void simFttSimHitTest(const char* inFile = "ele.pt1.5.vz0.run1.fzd", int nevents = 5, int debug = 0) {
+void simFttSlowSimTest(const char* inFile = "ele.pt1.5.vz0.run1.fzd", int nevents = 5, int debug = 0) {
 
     TString _geom = ""; // use the fGeom.root cache
     TString _chain = Form("fzin %s sdt20211016 MakeEvent StEvent McEvent bigbig", _geom.Data());
@@ -33,21 +33,21 @@ void simFttSimHitTest(const char* inFile = "ele.pt1.5.vz0.run1.fzd", int nevents
 
     // ------------------------------------------------------------------
     // Wire in the FTT chain manually (same makers/order as
-    // fwd_afterburner_db.C's real-data chain), with StFttSimHitMaker in
+    // fwd_afterburner_db.C's real-data chain), with StFttSlowSimMaker in
     // place of StFttRawHitMaker/StFttHitCalibMaker:
-    //   StFttDbMaker -> StFttSimHitMaker -> StFttClusterMaker -> StFttClusterPointMaker
+    //   StFttDbMaker -> StFttSlowSimMaker -> StFttClusterMaker -> StFttClusterPointMaker
     // ------------------------------------------------------------------
     gSystem->Load("libStFttDbMaker.so");
-    gSystem->Load("libStFttSimHitMaker.so");
+    gSystem->Load("libStFttSimMaker.so");
     gSystem->Load("libStFttClusterMaker.so");
     gSystem->Load("libStFttClusterPointMaker.so");
 
     StFttDbMaker* fttDbMk = new StFttDbMaker();
     chain->AddMaker(fttDbMk);
 
-    StFttSimHitMaker* fttSimHit = new StFttSimHitMaker();
-    fttSimHit->SetDebug(debug);
-    chain->AddMaker(fttSimHit);
+    StFttSlowSimMaker* fttSlowSim = new StFttSlowSimMaker();
+    fttSlowSim->SetDebug(debug);
+    chain->AddMaker(fttSlowSim);
 
     StFttClusterMaker* fttClu = new StFttClusterMaker();
     fttClu->SetDebug(debug);
@@ -86,7 +86,7 @@ void simFttSimHitTest(const char* inFile = "ele.pt1.5.vz0.run1.fzd", int nevents
              << " nPoints=" << fttColl->points().size() << endl;
 
         // Build truth map: (plane_id, quadrant_id, orientation) -> (x,y,z) cm,
-        // same volume_id decoding as StFttSimHitMaker / MakeGeantPoints
+        // same volume_id decoding as StFttSlowSimMaker / MakeGeantPoints
         std::map<std::pair<int,int>, int> track_vol_count;
         for (int k = 0; k < g2t->GetNRows(); k++) {
             g2t_fts_hit_st* git = (g2t_fts_hit_st*)g2t->At(k);
@@ -95,7 +95,12 @@ void simFttSimHitTest(const char* inFile = "ele.pt1.5.vz0.run1.fzd", int nevents
             int volume_id = git->volume_id;
             if (++track_vol_count[std::make_pair(track_id, volume_id)] > 1) continue;
             int plane_id = (volume_id - 1) / 100;
-            int quadrant_id = ((volume_id - (100 * plane_id)) / 10) - 1;
+            // volume_id = 100*station + 10*pentagon + layer (layer 1 or 2), and
+            // AGML's pentagon order (A,D,C,B) is not StFttDb's quadrant order
+            // (A,B,C,D) -- same decoding as StFttSlowSimMaker::Make()
+            const int kAgmlToDbQuadrant[4] = {0, 3, 2, 1};
+            int agmlQuad = (volume_id / 10) % 10;
+            int quadrant_id = (agmlQuad >= 0 && agmlQuad < 4) ? kAgmlToDbQuadrant[agmlQuad] : -1;
             int orientation = (volume_id % 2 == 0) ? 1 /*kFttVertical*/ : 0 /*kFttHorizontal*/;
             printf("  TRUTH track=%d plane=%d quad=%d orient=%d  global=(%7.3f,%7.3f,%7.3f) cm\n",
                    track_id, plane_id, quadrant_id, orientation, git->x[0], git->x[1], git->x[2]);

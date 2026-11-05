@@ -1,10 +1,10 @@
 // simFttResidualTest.C
 //
-// Full-chain test: FST fast-sim + FTT via StFttSimHitMaker (real StFttDb
+// Full-chain test: FST fast-sim + FTT via StFttSlowSimMaker (real StFttDb
 // transform, not the GEANT-truth blur) + GenFit StFwdTrackMaker + StFwdResidualMaker,
 // modeled on ~/fcstrk11/star-sw-fwd/script/sim.C but with the "fttSim" BFC tag
 // (StFttFastSimMaker, disconnected geometry) replaced by the real chain:
-//   StFttDbMaker -> StFttSimHitMaker -> StFttClusterMaker -> StFttClusterPointMaker
+//   StFttDbMaker -> StFttSlowSimMaker -> StFttClusterMaker -> StFttClusterPointMaker
 // inserted immediately before "fwdTrack" so GenFit sees real StFttPoints
 // built through the actual StFttDb transform, the same way real data does.
 //
@@ -24,7 +24,7 @@ void simFttResidualTest(const char* inFile = "ele45.vz0.run1.fzd", int nevents =
     cout << "Using the Geometry cache: fGeom.root (empty _geom tag + cwd fGeom.root)" << endl;
 
     gSystem->Load("libStFttDbMaker.so");
-    gSystem->Load("libStFttSimHitMaker.so");
+    gSystem->Load("libStFttSimMaker.so");
     gSystem->Load("libStFttClusterMaker.so");
     gSystem->Load("libStFttClusterPointMaker.so");
     gSystem->Load("libStFwdResidualMaker.so");
@@ -36,9 +36,9 @@ void simFttResidualTest(const char* inFile = "ele45.vz0.run1.fzd", int nevents =
     StFttDbMaker* fttDbMk = new StFttDbMaker();
     chain->AddBefore("fwdTrack", fttDbMk);
 
-    StFttSimHitMaker* fttSimHit = new StFttSimHitMaker();
-    fttSimHit->SetDebug(debug);
-    chain->AddBefore("fwdTrack", fttSimHit);
+    StFttSlowSimMaker* fttSlowSim = new StFttSlowSimMaker();
+    fttSlowSim->SetDebug(debug);
+    chain->AddBefore("fwdTrack", fttSlowSim);
 
     StFttClusterMaker* fttClu = new StFttClusterMaker();
     fttClu->SetDebug(debug);

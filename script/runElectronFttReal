@@ -1,6 +1,6 @@
 #!/bin/csh
 # Electron-gun particle-gun simulation through the REAL FTT reconstruction chain:
-# GEANT generation (genElectron2pi.C) + StFttSimHitMaker -> StFttClusterMaker ->
+# GEANT generation (genElectron2pi.C) + StFttSlowSimMaker -> StFttClusterMaker ->
 # StFttClusterPointMaker(mUseGeantData=false) -> fwdTrack (simFttResidualTest.C).
 # Called by condor jobs inside the singularity container.
 #
