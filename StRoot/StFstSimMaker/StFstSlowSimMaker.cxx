@@ -35,7 +35,7 @@ StFstSlowSimMaker::StFstSlowSimMaker(const char *name)
      mFstDb(0), mFstCollectionPtr(0), fAdc(0), mRndGen(0),
      mDefaultTimeBin(4), mCurrentTimeBinNum(kFstNumTimeBins),
      mHitEff(1.0), mAdcPerGev(0.), mStripSource(kStripFromConsts),
-     mNHitsSeen(0), mNHitsUsed(0), mNHitsBadGeo(0)
+     mNHitsSeen(0), mNHitsUsed(0), mNHitsBadGeo(0), mNModuleMismatch(0), mNSensorMismatch(0)
 {
    mMappingGeomVec.resize(kFstNumElecIds, -1);
 
@@ -258,7 +258,10 @@ Int_t StFstSlowSimMaker::Make()
 
       Int_t wedge = -1, sensor = -1, rStrip = -1, phiStrip = -1;
 
-      if (!getStripsFromConsts(hit->x[0], hit->x[1], hit->x[2], disk,
+      const Int_t moduleIn = mFstDb->getModuleFromG2TVolumeId(volume_id);
+      const Int_t sensorIn = mFstDb->getSensorFromG2TVolumeId(volume_id);
+
+      if (!getStripsFromConsts(hit->x[0], hit->x[1], hit->x[2], disk, moduleIn, sensorIn,
                                wedge, sensor, rStrip, phiStrip)) {
          nBadGeo++;
          continue;
@@ -284,6 +287,19 @@ Int_t StFstSlowSimMaker::Make()
             << " g2t hits -> " << mFstCollectionPtr->getNumRawHits()
             << " raw hits (" << nBadGeo << " outside active area)" << endm;
 
+   // Zero in an ideal geometry. A non-zero count means a hit sits on the far
+   // side of an IDEAL sector boundary from the module it actually crossed,
+   // which is exactly what a misalignment table does -- and exactly the case
+   // where taking the module from phi instead of volume_id would be wrong.
+   if (mNSensorMismatch > 0)
+      LOG_INFO << "StFstSlowSimMaker::Make() - sensor from volume_id disagreed with the "
+               << "phi guess for " << mNSensorMismatch << " hits (volume_id wins)" << endm;
+
+   if (mNModuleMismatch > 0)
+      LOG_INFO << "StFstSlowSimMaker::Make() - module from volume_id disagreed with "
+               << "module from phi for " << mNModuleMismatch << " of " << mNHitsSeen
+               << " hits so far (volume_id wins; expect 0 for an ideal geometry)" << endm;
+
    return kStOk;
 }
 
@@ -299,8 +315,10 @@ Int_t StFstSlowSimMaker::Make()
  * disagree by one full kFstStripGapPhi. Having to say that is exactly the
  * duplication argument for doing the strip lookup from TGeo instead.
  */
+//____________________________________________________________________________
 Bool_t StFstSlowSimMaker::getStripsFromConsts(Double_t x, Double_t y, Double_t z,
-                                              Int_t disk, Int_t &wedge, Int_t &sensor,
+                                              Int_t disk, Int_t moduleIn, Int_t sensorIn,
+                                              Int_t &wedge, Int_t &sensor,
                                               Int_t &rStrip, Int_t &phiStrip) const
 {
    const Double_t r = TMath::Sqrt(x * x + y * y);
@@ -323,9 +341,19 @@ Bool_t StFstSlowSimMaker::getStripsFromConsts(Double_t x, Double_t y, Double_t z
    if (sec < 0)  sec = 0;
    if (sec > 11) sec = 11;
 
-   const Int_t moduleIdx = mSectorToModule[sec];
+   // The module comes from the GEANT volume_id when we have it: that is the
+   // module the particle physically crossed. Deriving it from phi instead
+   // assumes the IDEAL phi boundaries, so once a misalignment table shifts a
+   // module, a hit near a sector edge would be attributed to the neighbouring
+   // module -- which sits at a different z and is a different physical object.
+   // The phi-derived value is still computed, as a cross-check.
+   const Int_t moduleFromPhi = mSectorToModule[sec];
+   const Int_t moduleIdx     = (moduleIn >= 1 && moduleIn <= 12) ? moduleIn : moduleFromPhi;
 
    if (moduleIdx < 1 || moduleIdx > 12) return kFALSE;
+
+   if (moduleIn >= 1 && moduleIn <= 12 && moduleFromPhi != moduleIn)
+      mNModuleMismatch++;   // expected to be 0 in an ideal geometry
 
    wedge = moduleIdx + (disk - 1) * 12;
 
@@ -371,8 +399,15 @@ Bool_t StFstSlowSimMaker::getStripsFromConsts(Double_t x, Double_t y, Double_t z
 
       Int_t guess = (Int_t) TMath::Floor(f0 + 0.5);
 
-      // sensor 1 <- phiStrip 0-63, sensor 2 <- phiStrip 64-127 (from fstMapping)
-      sensor = (guess < kFstNumPhiSegPerWedge / 2) ? 1 : 2;
+      // sensor 1 <- phiStrip 0-63, sensor 2 <- phiStrip 64-127 (from fstMapping).
+      // Prefer the volume_id digit: the guess is made without the gap term and
+      // so is ambiguous for strips right at the inter-sensor gap, which is the
+      // one place it matters.
+      const Int_t sensorFromGuess = (guess < kFstNumPhiSegPerWedge / 2) ? 1 : 2;
+      sensor = (sensorIn == 1 || sensorIn == 2) ? sensorIn : sensorFromGuess;
+
+      if ((sensorIn == 1 || sensorIn == 2) && sensorIn != sensorFromGuess)
+         mNSensorMismatch++;
 
       const Double_t gapTerm = (sensor == 1)
                              ? -sgn * 0.5 * kFstStripGapPhi

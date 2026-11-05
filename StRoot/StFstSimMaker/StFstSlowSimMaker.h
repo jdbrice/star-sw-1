@@ -110,12 +110,18 @@ protected:
    StripSource  mStripSource;
 
    Long64_t  mNHitsSeen, mNHitsUsed, mNHitsBadGeo;
+   mutable Long64_t mNModuleMismatch;  //!< volume_id module != phi-derived module; 0 in an ideal geometry
+   mutable Long64_t mNSensorMismatch;  //!< volume_id sensor != phi-guessed sensor; 0 in an ideal geometry
 
 private:
 
    /// global (x,y,z) of a GEANT hit -> (wedge 1-36, sensor 0-2, rStrip 0-7,
    /// phiStrip 0-127). Returns false if the hit is outside the active area.
-   Bool_t getStripsFromConsts(Double_t x, Double_t y, Double_t z, Int_t disk,
+   // GEANT volume_id -> reco module / sensor now lives in StFstDb
+   // (getModuleFromG2TVolumeId, getSensorFromG2TVolumeId, getWedgeFromG2TVolumeId),
+   // so simulation and reconstruction share one decode and cannot drift.
+
+   Bool_t getStripsFromConsts(Double_t x, Double_t y, Double_t z, Int_t disk, Int_t moduleIn, Int_t sensorIn,
                               Int_t &wedge, Int_t &sensor,
                               Int_t &rStrip, Int_t &phiStrip) const;
 
