@@ -73,3 +73,35 @@ mem_log2.txt
 prod_mudst.txt
 picolist_flat.lis
 picolist_gamma.lis
+
+# Local per-run FTT time calibrations. StFttDbMaker prefers
+# ./fttDataWindow/fttDataWindow.<run>.txt over the database, so anything run
+# from a tree that has one silently ignores Calibrations/ftt/fttDataWindowsB.
+# Keep it out of the repository: the calibrations that matter live in
+# StRoot/StFttDbMaker/macro/FttDataWindows/data and in the database.
+/fttDataWindow/
+
+# ROOT's generated dictionaries for STL instantiations used in interpreted
+# macros. ACLiC/CINT drops these in the CWD and regenerates them on demand.
+AutoDict_*.cxx
+AutoDict_*.h
+
+# Python bytecode from the helper scripts in script/
+__pycache__/
+
+# Per-job input sublists for the FST overlap condor run. Regenerate with:
+#   split -l 30 -d -a 3 --additional-suffix=.lis run24_mudst.txt \
+#         condor/fwo_lists_<tag>/fwo_
+# The submit file names them by absolute path, so they must exist at submit
+# time, but they are a mechanical split of run24_mudst.txt and not content.
+/condor/fwo_lists_*/
+
+# Scratch at the top level: plots written straight into the tree by interpreted
+# macros, geometry-cache builds and their logs, and compiler leftovers.
+/*.png
+/fGeom.*.root
+/fGeom.*.log
+/a.out
+
+# Editor/indexer backups
+*~preindexrows
