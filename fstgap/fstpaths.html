@@ -30,6 +30,7 @@ month came from assuming a single source of truth. Marked
    read by Xihe's plane build       read by Xihe's decode       ...and then CANCELLED  [!]
                                                                 (applied on the way in,
                                                                  undone on the way out)
+                                                                see section 2b
 
   (d) FstRasterizer, StFwdHitLoader.h -- a FOURTH description, used only on the
       loader's GEANT path: r snapped to a 3.0 cm grid (NOT the real strip radii)
@@ -78,6 +79,134 @@ month came from assuming a single source of truth. Marked
               mLocalPosition[3] = sensor-local CARTESIAN since 9e70bfd0a9,
                                   (r, phi, z_disk) before it            [!] see below
               mXYZ                         global, correct after PR25
+</pre>
+
+<HR>
+<H2>2b. The survey: what it contains, and why it has no effect</H2>
+
+<p>This is the same in real data and in MC -- there is only one StFstHitMaker and
+only one code path. It is not that the survey is "used for data but not for MC";
+it is switched off for both, by construction.</p>
+
+<H3>Why it cancels</H3>
+<pre>
+  StFstHitMaker.cxx, one hit, R = the DB matrix for this sensor:
+
+    L170-173   g[] = ideal global position, built from StFstConsts.h (b) alone
+                     g = ( r cos(phi), r sin(phi), z_disk )
+    L176       MasterToLocal( g -> l )        l = R^-1 g
+    L177       setLocalPosition( l )                          --> mLocalPosition
+    ...
+    L199       LocalToMaster( l -> global )   global = R l = R R^-1 g = g
+    L237       setPosition( global )                          --> mXYZ
+
+  Same R, inverse operations, nothing in between. The global position of every FST
+  hit is therefore a pure function of StFstConsts.h. No number in the database can
+  move a hit. The survey is used only as a storage codec: it decides what value
+  lands in mLocalPosition, and is then exactly undone.
+
+  This is true before and after PR25. PR25 deleted a 3-line overwrite that sat just
+  after L199 and replaced global[] with cos/sin of l -- a separate bug (l is
+  cartesian since 9e70bfd0a9), not the cancellation.
+</pre>
+
+<H3>What is actually in the tables</H3>
+<pre>
+  $STAR/StarDb/Geometry/fst/  -- one timestamp only (20211110), so identical for
+  every run of every year:
+
+    fstOnTpc.C            1 row,    "Identity Matrix"
+    hssOnFst.C            2 rows,   the ONLY non-trivial table:
+                            Id=1 FST Left  Half   t = ( 0.07126, -0.30102, 0 )
+                            Id=2 FST Right Half   t = ( 0.22626, -0.33302, 0 )
+    fstWedgeOnHss.C      36 rows,   all "Identity Matrix"
+    fstSensorOnWedge.C  108 rows,   all "Identity Matrix"
+
+  StFstDb::setGeoHMatrices builds, per sensor,
+    R = TpcOnGlobal * fstOnTpc * hssOnFst * wedgeOnHss * sensorOnWedge
+  so today R = TpcOnGlobal * (one translation), the SAME for all 108 sensors.
+
+  [!] Only ONE of the four tables is read per element. StFstDb.cxx sets
+
+        L64-66   mGeoHMatrixHssOnFst      <- tables[1], row 0     ) both set ONCE,
+        L68-70   mGeoHMatrixWedgeOnHss    <- tables[2], row 0     ) before the loop
+        L71-95   mGeoHMatrixSensorOnWedge <- tables[3], per row   ( the loop increments
+
+      so the 2 half-shell rows collapse to "FST Left Half" for all 36 wedges, and the
+      36 per-wedge rows collapse to row 0. Only fstSensorOnWedge (108) is genuinely
+      per element. Harmless while the transform cancels -- but it means a per-wedge
+      alignment CANNOT BE EXPRESSED today even if the table were filled. See section 5.
+</pre>
+
+<H3>What M is, per event source</H3>
+<pre>
+  global = M_ideal * [ survey * alignment ] * local
+           \_ (b)/AGML _/  \_ the DB chain _/
+
+  The DB tables are pure DELTAS, hierarchically decomposed. The ideal placement is
+  not in them at all -- it is in StFstConsts.h. So:
+
+    MC          delta = identity      -> M = M_ideal, which is where GEANT actually
+                                         put the silicon. Applying a survey here
+                                         would INTRODUCE a misalignment that is not
+                                         in the events.
+    real data   delta = survey (today ~3 mm, one common translation) * alignment
+
+  Do NOT branch on MC-vs-data in the code -- that is the setApplyFstGapFix trap one
+  level up, a thing someone has to remember. Let the TIMESTAMP select the DB entry:
+  MC runs on a simulation timestamp whose geometry tables are identity, so M =
+  M_ideal falls out with no flag. Same code both ways.
+
+  (This holds only while MC is generated at ideal positions. To SIMULATE
+  misalignment, displace it at generation and reconstruct with the survey -- that
+  exercises the machinery instead of bypassing it.)
+</pre>
+
+<H3>Consequences</H3>
+<pre>
+  - There is no per-wedge or per-sensor alignment in the FST database at all, only
+    100+ identity matrices. Even with the cancellation removed, the survey would
+    shift every FST hit by one common ~3 mm translation and nothing else.
+  - "sensor local" is a misnomer. With the tables identity, R is nearly the identity,
+    so mLocalPosition is the GLOBAL cartesian position, not a coordinate on the
+    sensor. It has no sensor origin and no strip-aligned axes.
+  - Since PR25 nothing downstream reads mLocalPosition: the loader takes xyz(),
+    the planar fitter rebuilds from meanRStrip/meanPhiStrip.
+</pre>
+
+<H3>What the code would have to look like instead</H3>
+<pre>
+  The round trip has to use two DIFFERENT matrices -- ideal in, aligned out:
+
+      l      = R_ideal^-1  * g            (MasterToLocal with the IDEAL placement)
+      global = R_survey    * l            (LocalToMaster with the SURVEY placement)
+
+  which is the standard STAR pattern and gives global = R_survey R_ideal^-1 g,
+  i.e. the alignment DELTA is what moves the hit.
+
+  An in-plane correction (Xihe's dU, dV, gamma) could equally be applied to l
+  between the two calls instead of being folded into R_survey -- but ONE or the
+  other, never both, and the frame l lives in has to be the frame the constants
+  were solved in.
+
+  Sharper still: the ideal->local
+  step is redundant, because StFstHitMaker already has the strip indices. Building
+  the position directly in a real sensor frame and applying LocalToMaster(survey)
+  once is the same answer with the ideal model where it belongs (b), not hidden in
+  an inverted matrix.
+
+  Prerequisites, none of them done:
+    1. StFstDb has no ideal matrix list -- only mgRotList, which is the survey one.
+       It would have to build R_ideal from (b)/AGML, or the local position would
+       have to be built from strip geometry.
+    2. A sensor frame has to be DEFINED (origin, U along strips, V across) and the
+       alignment constants solved in the same frame. This is exactly insertion
+       point (B) in section 5, and it is why (B) is described as dead code today.
+    3. Fix the hssOnFst row-0 bug above.
+    4. Fill the tables with something. Until then the change moves every hit by the
+       same ~3 mm and improves nothing -- it is plumbing for future alignment, not
+       a fix.
+    5. It changes real-data hit positions, so it needs a validation pass.
 </pre>
 
 <HR>
@@ -174,24 +303,153 @@ month came from assuming a single source of truth. Marked
 </pre>
 
 <HR>
-<H2>5. Where an alignment constant could go</H2>
+<H2>5. Where the survey and the alignment should be applied</H2>
+
+<p>Section 2b showed the survey is currently cancelled and the tables are empty.
+Xihe is separately solving per-wedge (dU, dV, gamma) from the fwdAlign tree and
+plans to store them in StarDb. Both are the same problem: a run-dependent
+geometry correction that has to reach the hit position. This section is about
+where it should be applied, not what its value is.</p>
+
+<H3>The constraint that decides it: not at production time</H3>
 <pre>
-  Xihe solves per-wedge (dU, dV, gamma) from the fwdAlign tree, and plans to store
-  them in StarDb. Two possible insertion points, and they must not both be used:
+  Alignment constants are re-derived; the whole point is to iterate. So they must
+  NOT be baked into the MuDst -- otherwise every improvement needs a reproduction,
+  and every existing file carries a frozen, unmarked vintage. (That is exactly the
+  setApplyFstGapFix trap, one level up: see fstgap/index.html.)
+
+  They therefore have to be applied in the AFTERBURNER.
+
+  But StFstHitMaker -- the only place FST geometry is applied today -- runs at
+  production and NOT in the afterburner (setFstHitSource(MUDST) reads finished
+  hits). Two ways out:
+
+    (i)  give StFstHitMaker a mode that re-reads MuDst hits and rewrites them
+    (ii) ignore the stored position and rebuild it in StFwdHitLoader
+
+  (ii) works today, with no format change, because MuDst already carries the
+  full input to the transform at full precision:
+
+      StMuFstHit:  mHardwarePosition   UInt_t    -> disk, wedge, sensor
+                   mMeanRStrip         Float_t
+                   mMeanPhiStrip       Float_t
+
+  and the loader already reads both strip fields for planar mode
+  (StFwdHitLoader.cxx:468-469, 584). (i) buys nothing (ii) does not, and adds a
+  maker. So: (ii).
+
+  Note the strips are Float_t in StFstHit AND StMuFstHit -- the int truncation is
+  only the local variable at StFstHitMaker.cxx:104, so fixing that needs no schema
+  change either.
+</pre>
+
+<H3>Then the transform must live outside every maker that uses it</H3>
+<pre>
+  Today the strip -> position map is written out independently in five places
+  (StFstHitMaker, TrackFitter.h x2, StFstFastSimMaker, StFstSlowSimMaker) plus the
+  loader's legacy compensation. They already disagree -- that is what the 1 deg gap
+  sign IS. Adding a sixth copy in the loader would make it worse.
+
+  One function, in StRoot/StEvent/ next to StFstConsts.h, which all of them already
+  include (header-only, so no new link dependency across four libraries):
+
+     namespace StFstGeometry {
+       // forward: strips -> IDEAL sensor-local cartesian
+       void stripToLocal(int disk, int wedge, int sensor,
+                         float meanRStrip, float meanPhiStrip, double local[3]);
+
+       // inverse: ideal sensor-local -> strips   (the two sim makers need this)
+       bool localToStrip(int disk, int wedge, int sensor, const double local[3],
+                         float &amp;meanRStrip, float &amp;meanPhiStrip);
+     }
+
+     global = M * local        with M SUPPLIED BY THE CALLER
+
+  Three deliberate properties:
+
+    1. The alignment is an ARGUMENT, not a lookup. This is what lets the afterburner
+       apply a NEWER M than production used -- the whole requirement above. If the
+       function fetched StFstDb itself, the constants would be baked in again.
+    2. BOTH DIRECTIONS in one place. The sim makers invert the map; everyone else
+       applies it. Today those are independent derivations, which is precisely how
+       the gap sign came to disagree.
+    3. The gap helpers (fstOuterSensorSide / fstOuterGapPhiOffset, fstgap/index.html)
+       become an implementation detail of stripToLocal, not a separate agreement.
+
+  TrackFitter gets simpler, not merely consistent: if stripToLocal returns cartesian
+  in a real sensor frame, then measU, measV ARE local[0], local[1]. The planar
+  fitter stops reimplementing the transform and calls it.
+
+  This does NOT cost an independent check. The five copies were never a check on
+  each other -- they were just five chances to be wrong, and they were. What found
+  the gap sign was code vs AGML (script/checkFstWedgeGeom.C, all 108 sensors against
+  each FTUS node's own shape and transform in fGeom.root), plus StFstHitMaker
+  contradicting itself (the two outer spans overlapping by 0.77 deg at identical
+  radii). Both survive centralisation untouched, and get cheaper: ONE function to
+  validate against (a), instead of five copies to keep in agreement. What that test
+  cannot do is unchanged either -- (a) and (b) are not independent in origin
+  (section 1), so it catches transcription and sign errors in the code, not a wrong
+  detector model.
+
+    caller                what it does now                with the function
+    ------------------    ---------------------------    ------------------------
+    StFstHitMaker         builds global polar, then      stripToLocal, then
+                          MasterToLocal (2b)             LocalToMaster(survey)
+    StFwdHitLoader        reads stored xyz()             stripToLocal + M(align)
+      space-point mode                                   -- vintage stops mattering
+    TrackFitter planar    own dphi/measU/measV code      measU,measV = stripToLocal
+    StFstFastSimMaker     own 1536-fold grid             localToStrip
+    StFstSlowSimMaker     own inverted expression        localToStrip
+</pre>
+
+<H3>Which M, and where the alignment sits in it</H3>
+<pre>
+  With the transform shared, the old (A)/(B) question becomes only "what is M":
 
   (A) at the GENFIT plane                          (B) at the survey matrices
-      FwdGeomUtils / TrackFitter                       StFstDb -> StFstHitMaker L199
-      offset O_surface and U,V                         i.e. REMOVE the L212 overwrite
+      FwdGeomUtils / TrackFitter                       StFstDb, ideal in / survey
+      offset O_surface and U,V                         out (section 2b)
         + works today, position derives                 + lands in the hit itself, so
           from the plane so it just works                 every consumer benefits
         + no change to (a) or (b)                       + this is the mechanism STAR
         - benefits ONLY the planar fitter                 already intends
         - pico, space-point mode and every              - path is currently dead code
           other consumer stay unaligned                 - needs the DB filled+trusted
+                                                        - needs a real sensor frame
+                                                          defined first (section 2b)
+
+  (B) is the right destination and is what the shared function is shaped for. (A)
+  is what exists and works. They must not both be used.
+
+  If (B): Xihe's constants already have a natural home. fstWedgeOnHss is 36 rows,
+  one per wedge, currently all identity -- exactly the right granularity, and an
+  in-plane translation plus a gamma rotation about z is fully representable in
+  Survey_st. But per the [!] in section 2b, StFstDb reads that table's row 0 only,
+  so a per-wedge alignment cannot be expressed until that is fixed. It is a few
+  lines, and it is a PREREQUISITE for (B), not a detail.
+
+  Equivalently, alignment can be applied to l between the two calls rather than
+  folded into M -- but ONE or the other, never both, and the frame l lives in has
+  to be the frame the constants were solved in.
 
   dU, dV, gamma are IN-PLANE. dW and tilts cannot be represented while the plane z
   is flattened to the disk z (section 4), which matches Xihe's own "no dW/tilt until
   in-plane closes".
+</pre>
+
+<H3>What this costs</H3>
+<pre>
+  - The afterburner's FST position diverges from mXYZ in MuDst and pico, which keep
+    whatever production wrote. Other consumers stay unaligned unless (B) also lands.
+  - z has to move into the function too. It is three hardcoded per-disk constants in
+    StFstHitMaker (151.750 / 165.248 / 178.781), flat per disk -- and that constant
+    is the hook for the front/back stagger question in section 6.
+  - A sensor frame has to be DEFINED (origin, U along strips, V across), and the
+    alignment constants solved in it. Today "sensor local" is not one (section 2b).
+  - The row-0 bug (section 2b) has to be fixed before M is non-trivial: today only
+    fstSensorOnWedge is read per element, so there is no per-wedge level at all.
+  - Reproducing existing behaviour exactly, site by site, should be a separate and
+    provable first step -- as with the gap: centralise first, change second.
 </pre>
 
 <HR>
@@ -204,12 +462,21 @@ month came from assuming a single source of truth. Marked
                                    hit and LocalToMaster when reading it back, using the
                                    SAME matrix. The round trip is the identity, so the
                                    StFstDb survey tables are loaded every run and cancel
-                                   out. This is true both before and after the 3-line fix
-                                   below -- deleting the overwrite does NOT switch the
-                                   survey on. (An earlier version of this page said it
-                                   did; that was wrong, and it is why the alignment was
-                                   briefly listed as a candidate explanation for the
-                                   12-fold wedge steps. It is not.)
+                                   out, in real data and MC alike. This is true both
+                                   before and after the 3-line fix below -- deleting the
+                                   overwrite does NOT switch the survey on. (An earlier
+                                   version of this page said it did; that was wrong, and
+                                   it is why the alignment was briefly listed as a
+                                   candidate explanation for the 12-fold wedge steps. It
+                                   is not.) Full write-up in section 2b, including what
+                                   the tables contain (almost nothing: 3 of 4 are pure
+                                   identity) and what the code would have to look like
+                                   instead (ideal matrix in, survey matrix out).
+  [!] no per-wedge survey level    StFstDb reads hssOnFst and fstWedgeOnHss row 0 only,
+                                   for all 36 wedges; only fstSensorOnWedge is read per
+                                   element. A per-wedge alignment cannot be expressed
+                                   until this is fixed -- a prerequisite for insertion
+                                   point (B). Sections 2b and 5.
   [+] global position was broken   FIXED (PR25). Commit 9e70bfd0a9 changed what
                                    setLocalPosition() stores to sensor-local CARTESIAN,
                                    but the consumer ~25 lines later still read it as

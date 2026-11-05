@@ -281,7 +281,38 @@ is already one of them:</p>
 <tr><td>MC (StFstFastSimMaker)</td><td>no &mdash; never applies a gap term at all</td><td>OFF</td></tr>
 </table>
 
-<H3>Do not decide it by hand &mdash; three options</H3>
+<H3>Do not decide it by hand &mdash; four options</H3>
+
+<p><b>0. Stop reading the stored position.</b> The trap exists only because
+space-point mode consumes a <i>stored</i> hit position, which necessarily encodes
+whatever convention was in force when it was written. Planar mode was never
+affected precisely because it rebuilds the measurement from strip indices. So do
+the same in space-point mode: ignore <tt>xyz()</tt>/<tt>localPosition</tt> and
+rebuild from <tt>meanRStrip</tt>/<tt>meanPhiStrip</tt> at load time.</p>
+
+<p>This is possible today with no format change. MuDst already carries everything
+the transform needs, at full precision:</p>
+<pre>
+  StMuFstHit:  mHardwarePosition   UInt_t    -> disk, wedge, sensor
+               mMeanRStrip         Float_t
+               mMeanPhiStrip       Float_t
+</pre>
+<p>and <tt>StFwdHitLoader</tt> already reads both strip fields for planar mode
+(<tt>StFwdHitLoader.cxx:468-469, 584</tt>). Then the file's vintage stops
+mattering: old productions, fixed productions and MC all give the same answer,
+because nothing written into the file is reused. The flag is deleted rather than
+automated, and no reprocessing is needed &mdash; which is what options 1-3 are
+each, in their own way, working around.</p>
+
+<p>It requires the shared transform function described below, and it has real
+costs:</p>
+<ul>
+  <li>The afterburner's FST position then differs from the <tt>mXYZ</tt> in MuDst
+      and pico, which keep whatever production wrote. Other consumers stay
+      unfixed, and the two numbers disagree by 1&nbsp;deg on outer hits.
+  <li>z and the alignment matrix have to be supplied at load time &mdash; see
+      <a href="fstpaths.html">fstpaths.html</a> section 5.
+</ul>
 
 <p><b>1. Make the flag unnecessary.</b> Fix the convention once (below), reprocess,
 and delete the flag. Nothing to set, nothing to detect. The cost is reprocessing
@@ -313,9 +344,18 @@ Cost: 2.03 band hits/event on run 23081008, so ~50 events settles it &mdash; and
 can be a one-time pre-pass over the file's <tt>FstHit</tt> branch, measured per
 file, so no events are spent and run conditions do not matter.</p>
 
-<p>These are not exclusive: 1 is the destination, 3 covers the transition and
-every already-written file, 2 is worth doing if we expect this class of change
-again.</p>
+<p>These are not exclusive. 0 and 1 are both destinations, and they are the real
+choice: 0 makes the position a function of the strips at load time, 1 makes it a
+function of the strips at production time. 3 covers the transition and every
+already-written file if 1 is chosen; 2 is worth doing if we expect this class of
+change again. Choosing 0 makes 2 and 3 unnecessary, since there is no longer a
+vintage to detect.</p>
+
+<p>0 also generalises: the same argument applies to the survey and to Xihe's
+alignment constants, which likewise must not be frozen into the MuDst at
+production time. That is the subject of
+<a href="fstpaths.html">fstpaths.html</a> section 5, and it is the reason to
+prefer 0 over 1 rather than treating the gap as a one-off.</p>
 
 <H3>Underneath all of it: one source of truth for the gap</H3>
 
@@ -383,6 +423,15 @@ re-derive.</p>
     follow.</li>
 </ul>
 
+<p>Collapsing five copies onto one does not give up an independent check. The five
+were never a check on each other &mdash; they were five chances to be wrong, and
+they were. What found this bug was code against <b>AGML</b>
+(<a href="code/checkFstWedgeGeom.C">checkFstWedgeGeom.C</a>, all 108 sensors), and
+<tt>StFstHitMaker</tt> contradicting itself (the two outer spans overlapping by
+0.77&nbsp;deg at identical radii). Both survive centralisation, and get cheaper:
+one function to validate against AGML rather than five copies to keep in
+agreement.</p>
+
 <p>Both written out as diffs, assuming PR23-25 have landed:
 <a href="proposed_change.txt">proposed_change.txt</a>.</p>
 
@@ -391,18 +440,17 @@ re-derive.</p>
 avoid the vintage ambiguity, but only for as long as nobody fixes it. It is an
 obvious two-sign error once written down, so someone eventually will, and at
 that point every analysis carrying a hard-coded ON silently acquires the error
-it was correcting. Auto-detection removes the reason to leave it broken, so the
-recommendation is: fix <tt>StFstHitMaker.cxx:159,163</tt> for future
-productions, and make the load-time correction self-configuring rather than a
-flag anyone has to remember. A version marker on the hit would be cleaner still,
-but needs a schema change, and detection works on every file that already
-exists.</p>
+it was correcting. So it should be fixed: <tt>StFstHitMaker.cxx:159,163</tt> for
+future productions, and the load-time behaviour made self-configuring rather than
+a flag anyone has to remember.</p>
 
-<p>Three workable options then &mdash; detect per file, mark a bit, or leave
-StFstHitMaker alone and always correct &mdash; with different trade-offs
-between robustness, code churn and how badly it fails if someone forgets.
-Worth agreeing on before this becomes an interface anyone depends on, rather
-than deciding it here.</p>
+<p>Recommendation, if one is wanted: <b>0, with 1</b>. Fix
+<tt>StFstHitMaker</tt> so new productions are right, and rebuild the position at
+load time so the afterburner does not care either way. 3 is the fallback if 0 is
+judged too invasive, and 2 is worth its few lines regardless. The trade-offs
+differ in robustness, code churn and how badly each fails when someone forgets
+&mdash; worth agreeing on before this becomes an interface anyone depends on,
+rather than deciding it here.</p>
 
 <HR>
 <H2>Code</H2>
