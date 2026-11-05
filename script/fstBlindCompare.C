@@ -16,15 +16,19 @@
 // and reports which lands closer to the blind projection.
 //
 // CINT: fixed arrays, unique loop-variable names, no local std::map.
+// trackTypeSel: -1 all, else only that StFwdTrack type -- 0 Global (FTT only,
+// the FST is extrapolated, projection ~cm), 2 Primary / 4 BLCVtx (FTT + the TPC
+// vertex, so the FST is INTERPOLATED and the projection is far tighter; still
+// FST-blind under fstNoAdd because the vertex is the TPC's).
 void fstBlindCompare(const char *fin = "fwd_blind_diag.root",
-                     const char *cache = "fGeom.root")
+                     const char *cache = "fGeom.root", int trackTypeSel = -1)
 {
    TFile *f = TFile::Open(fin);
    if (!f) { printf("fstBlindCompare: cannot open %s\n", fin); return; }
    TTree *t = (TTree *) f->Get("fstBlind");
    if (!t) { printf("fstBlindCompare: no fstBlind tree in %s\n", fin); return; }
 
-   Int_t   disk, planeIdx;
+   Int_t   disk, planeIdx, trackType = -1, nSeed = 0;
    Float_t locR, locPhi, hitX, hitY, hitZ, projX, projY, projZ;
    t->SetBranchAddress("disk", &disk);       t->SetBranchAddress("planeIdx", &planeIdx);
    t->SetBranchAddress("locR", &locR);       t->SetBranchAddress("locPhi", &locPhi);
@@ -32,7 +36,10 @@ void fstBlindCompare(const char *fin = "fwd_blind_diag.root",
    t->SetBranchAddress("hitZ", &hitZ);
    t->SetBranchAddress("projX", &projX);     t->SetBranchAddress("projY", &projY);
    t->SetBranchAddress("projZ", &projZ);
-   printf("fstBlindCompare: %lld candidate rows\n", t->GetEntries());
+   if (t->GetBranch("trackType")) t->SetBranchAddress("trackType", &trackType);
+   if (t->GetBranch("nSeed"))     t->SetBranchAddress("nSeed", &nSeed);
+   printf("fstBlindCompare: %lld candidate rows, trackTypeSel = %d\n",
+          t->GetEntries(), trackTypeSel);
 
    // the geometry side, same walk as script/checkStripMap.C
    TGeoManager *gm = TGeoManager::Import(cache);
@@ -78,6 +85,7 @@ void fstBlindCompare(const char *fin = "fwd_blind_diag.root",
 
    for (Long64_t ie = 0; ie < t->GetEntries(); ie++) {
       t->GetEntry(ie);
+      if (trackTypeSel >= 0 && trackType != trackTypeSel) continue;
       if (planeIdx < 0 || planeIdx >= 108 || !ok[planeIdx]) continue;
       int sensor = planeIdx % 3;
       // recover the strip indices the loader put into _localPosition
