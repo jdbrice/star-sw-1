@@ -54,7 +54,8 @@ numbers wedges 0&ndash;11, so its wedge 0 is this page's wedge 1.</p>
   <li>12 wedges per disk, 3 disks. Wedge pitch 30&deg;. Strip pitch
       30/128 = 0.234375&deg;.</li>
   <li>The <b>inner</b> sensor is 128 strips = exactly 30&deg;. It abuts its neighbours:
-      <b>no overlap</b>, and it takes no part in this measurement.</li>
+      <b>no overlap</b> &mdash; nominally. The measurement finds it overlapping by about one
+      strip anyway, which is one of the two numbers section 6 rests on.</li>
   <li>The <b>outer</b> pair is 64+64 strips at the same pitch = 30&deg; of silicon
       <i>plus</i> the 1&deg; dead gap on the wedge centreline &rarr;
       <b>31&deg; of silhouette for a 30&deg; pitch</b>. AGML carries exactly this: the two
@@ -294,25 +295,52 @@ fully inside the band &mdash; so the inner overlap is <b>about one strip</b>, wh
 <b>about 5.2</b>. The two widths then over-determine the geometry, and agree:</p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
-<TR BGCOLOR="#c0c0f0"><TH>from</TH><TH>measured width</TH><TH>implied pitch</TH><TH>128 strips span</TH></TR>
+<TR BGCOLOR="#c0c0f0"><TH>from</TH><TH>measured width</TH><TH>implied pitch <i>if pure pitch</i></TH><TH>128 strips span</TH></TR>
 <TR><TD>outer (has the 1&deg; gap)</TD><TD>5.2 strips</TD><TD>0.23616&deg; (+0.76%)</TD><TD>30.228&deg;</TD></TR>
 <TR><TD>inner (no gap)</TD><TD>1.0 strip</TD><TD>0.23622&deg; (+0.79%)</TD><TD>30.236&deg;</TD></TR>
 </TABLE>
 
-<p>Two independent measurements giving the same pitch to 0.03%. And their difference is the gap
-in units of pitch: measured <b>5.2 &minus; 1.0 = 4.2</b> against <b>1.0&deg;/pitch = 4.27</b>
-nominal, so <b>the 1&deg; gap is confirmed</b> and the excess is entirely in the pitch.</p>
+<p>Two independent measurements, agreeing to 0.03% if the whole excess is pitch. And their
+difference is the gap in units of pitch: measured <b>5.2 &minus; 1.0 = 4.2</b> against
+<b>1.0&deg;/pitch = 4.27</b> nominal, so <b>the 1&deg; gap is confirmed</b> &mdash; the gap is
+the innocent one, and the excess is in the strips.</p>
+
+<p>But <i>pitch</i> is not the only geometry that widens the overlap. If the strip fan converges
+a distance <i>d</i> off the beam axis instead of on it, the apparent pitch scales by
+(1&nbsp;&minus;&nbsp;<i>d</i>/R), which widens the overlap too &mdash; and the two are separable,
+because a pitch error gives the <b>same</b> width at every radius while a radial shift makes the
+width <b>fall with r</b>. Splitting the same coincidences by r-strip:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>rStrip</TH><TH>4</TH><TH>5</TH><TH>6</TH><TH>7</TH><TH>slope</TH></TR>
+<TR><TD>&lang;r&rang; (cm)</TD><TD>17.94</TD><TD>20.81</TD><TD>23.69</TD><TD>26.56</TD><TD>&nbsp;</TD></TR>
+<TR><TD><b>measured width</b></TD><TD><b>5.26</b></TD><TD><b>5.22</b></TD><TD><b>5.14</b></TD><TD><b>5.10</b></TD><TD><b>&minus;0.17</b></TD></TR>
+<TR><TD>pure pitch predicts</TD><TD>5.25</TD><TD>5.25</TD><TD>5.25</TD><TD>5.25</TD><TD>0.00</TD></TR>
+<TR><TD>pure radial shift <i>d</i> = &minus;0.176 cm predicts</TD><TD>5.51</TD><TD>5.34</TD><TD>5.21</TD><TD>5.11</TD><TD>&minus;0.40</TD></TR>
+</TABLE>
+
+<p>The measured slope is <b>&minus;0.17</b>, between the two hypotheses and much closer to flat,
+so it is a <b>mixture</b>: a pitch error of about <b>+0.46%</b> with a radial shift of about
+<b>&minus;0.7&nbsp;mm</b> on top. A second, independent handle agrees and is the sharper of the
+two &mdash; the inner and outer widths are measured at different mean radii (12.81 and
+23.10&nbsp;cm), and their ratio is <b>1.04&nbsp;&plusmn;&nbsp;0.30</b> where a pure radial shift
+predicts 1.80 and pure pitch 1.00. Both tests therefore say <b>pitch-dominant</b>, with room for
+a sub-millimetre radial component.</p>
 
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
-<b>So <tt>kFstStripPitchPhi = TMath::Pi()*30.0/180.0/128</tt> is about 0.8% small.</b> The 128
-strips span ~30.23&deg;, not 30.00&deg;. That is most likely by design &mdash; silicon slightly
-oversized so adjacent wedges tile with no dead &phi;, the same intent as the outer's 0.5&deg;
-overhang &mdash; but our constant assumes exactly 30&deg;.
+<b>So <tt>kFstStripPitchPhi = TMath::Pi()*30.0/180.0/128</tt> is too small, by about
+0.46%</b> once the radial-shift part is taken out &mdash; the 128 strips span ~30.14&deg;, not
+30.00&deg;. That is most likely by design &mdash; silicon slightly oversized so adjacent wedges
+tile with no dead &phi;, the same intent as the outer's 0.5&deg; overhang &mdash; but our
+constant assumes exactly 30&deg;. The remaining ~0.7&nbsp;mm is a different kind of error: not
+the pitch but <i>where the fan converges</i>, which no strip-pitch constant can express.
 <br><br>
 <b>This matters for alignment.</b> A program that treats the &phi; pitch as fixed and fits only
 shift and rotation cannot absorb a pitch error: it appears as a residual that grows linearly
-with distance from the wedge centre, up to ~0.12&deg; at the wedge edges, and a rotation fit
-will partly absorb it into a spurious per-wedge rotation.
+with distance from the wedge centre, up to ~0.07&deg; at the wedge edges, and a rotation fit
+will partly absorb it into a spurious per-wedge rotation. The radial-shift term is worse for a
+rotation fit, not better &mdash; it is r-dependent, so no single per-wedge rotation absorbs it
+at all radii.
 <br><br>
 <b>Caveat.</b> Coincidence <i>yield</i> is non-linear, so unlike the pairing centroid of section 5
 it does not cancel per-wedge rotations: a &plusmn;0.17&deg; rotation pattern could fake part of an
@@ -341,7 +369,8 @@ Per-boundary widths would settle it and need the larger sample.</p>
   <li><b>What the measurement adds</b> is the one thing a bench sheet cannot carry: which way each
       module faces once installed. The observable is (channel map) &otimes; (installed
       orientation), and the sheet supplies only the first factor.</li>
-  <li><b>The strip pitch is ~0.8% larger than 30/128</b>, the 1&deg; gap is nominal, and an
+  <li><b>The strip pitch is ~0.46% larger than 30/128, plus a ~0.7&nbsp;mm radial shift of the
+      strip fan</b>, the 1&deg; gap is nominal, and an
       alignment fit that holds the pitch fixed cannot absorb the difference (section 6).</li>
   <li><b>The alternating mounting is confirmed</b> directly: same-numbered edges meet.</li>
   <li><b>The 0.5&deg; overhang and 4 overlapping strips per wedge are confirmed</b> by the
@@ -362,11 +391,12 @@ the tracking-free confirmation of the other factor.</p>
 front/back question does not follow from this measurement on its own &mdash; only through
 the rigid-body argument that turning a wedge over reverses both senses.
 <br><br>
-The <b>inner</b> sensors are also untouched: they span exactly 30&deg; and have no overlap,
-and a track crosses a wedge at one radius, so same-wedge inner/outer pairs are different
-particles and carry no phi relation (measured: flat). The way in is <b>two disks</b> &mdash; for
-a vertex-pointing track r scales with z (r3/r1 = 178.781/151.75 = 1.178), so a track with
-r1 in 11.57&ndash;13.625&nbsp;cm is inner on disk 1 and outer on disk 3 at the same &phi;.
+The <b>inner-to-outer strip sense</b> is also untouched. Not because the inner sensor stays out
+of it &mdash; section 6 measures its overlap &mdash; but because a track crosses a wedge at one
+radius, so same-wedge inner/outer pairs are different particles and carry no phi relation
+(measured: flat). The way in is <b>two disks</b> &mdash; for a vertex-pointing track r scales
+with z (r3/r1 = 178.781/151.75 = 1.178), so a track with
+r1 in 14.01&ndash;16.5&nbsp;cm is inner on disk 1 and outer on disk 3 at the same &phi;.
 Expect sum = const for the 1&ndash;3 pair and difference = const whenever disk 2 is involved,
 since <tt>kFstzFilp</tt> inverts it. Narrow band, so it needs much more data.</p>
 
