@@ -2164,7 +2164,9 @@ class ForwardTrackMaker {
             if ( mFstNoAdd ) {
                 Seed_t wide = findFstHitsNearProjectedState( hitmap.at(disk), msp,
                                                              kFstBlindDphi, kFstBlindDr );
-                fillFstBlindRecord( disk, msp.getPos(), wide );
+                fillFstBlindRecord( disk, msp.getPos(), wide,
+                                    (int)gtr.mTrackType, (int)gtr.mSeed.size(),
+                                    gtr.mMomentum.Perp() );
             }
         } catch (genfit::Exception &e) {
             LOG_WARN << "Unable to get projections: " << e.what() << endm;
@@ -2786,6 +2788,8 @@ class ForwardTrackMaker {
     float bFstLocR = 0, bFstLocP = 0;
     float bFstHitX = 0, bFstHitY = 0, bFstHitZ = 0;
     float bFstPrjX = 0, bFstPrjY = 0, bFstPrjZ = 0;
+    int   bFstType = -1, bFstNSeed = 0;
+    float bFstPt = 0;
     bool mFttDiagMix  = false;
     TFile *mBlindDiagFile = nullptr;
     TH1F  *hBlindDxAll_V[4]     = {nullptr,nullptr,nullptr,nullptr};
@@ -2968,12 +2972,27 @@ class ForwardTrackMaker {
         mFstBlindTree->Branch("projX",    &bFstPrjX,  "projX/F");      // blind track state
         mFstBlindTree->Branch("projY",    &bFstPrjY,  "projY/F");
         mFstBlindTree->Branch("projZ",    &bFstPrjZ,  "projZ/F");
+        // the track the projection came from. Needed because refitTrack() runs
+        // once per type, so the SAME physical track is recorded up to five times
+        // with different constraints -- and they are not equally useful here:
+        //   0 Global  FTT only: the FST is EXTRAPOLATED back from z=280-365, so
+        //             the projection is centimetres (the FTT along-strip
+        //             coordinate is still a placeholder).
+        //   2 Primary / 4 BLCVtx  FTT + the TPC vertex: the FST at z=151-179 is
+        //             then INTERPOLATED between z~0 and the sTGC, which is a far
+        //             tighter constraint. With fstNoAdd these stay FST-blind --
+        //             the vertex comes from the TPC, not from silicon.
+        mFstBlindTree->Branch("trackType", &bFstType, "trackType/I");
+        mFstBlindTree->Branch("nSeed",     &bFstNSeed,"nSeed/I");
+        mFstBlindTree->Branch("pt",        &bFstPt,   "pt/F");
         LOG_INFO << "FST blind record: filling tree 'fstBlind' in fwd_blind_diag.root" << endm;
     }
 
-    void fillFstBlindRecord( int disk, const TVector3 &proj, const Seed_t &candidates ) {
+    void fillFstBlindRecord( int disk, const TVector3 &proj, const Seed_t &candidates,
+                             int trackType, int nSeed, double pt ) {
         initFstBlindTree();
         if (!mFstBlindTree) return;
+        bFstType = trackType; bFstNSeed = nSeed; bFstPt = pt;
         for ( auto h : candidates ) {
             FwdHit *fh = dynamic_cast<FwdHit*>( h );
             if ( !fh ) continue;
