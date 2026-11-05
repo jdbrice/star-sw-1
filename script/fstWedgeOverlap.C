@@ -544,6 +544,71 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    hIO->Write(); hIOs->Write(); hIOd->Write(); hAPV->Write();
    for (int i3 = 0; i3 < 3; i3++) hDisk[i3]->Write();
    hFine->Write(); hPS->Write(); hRS->Write(); hNH->Write();
+
+   // ---- the counters, as histograms, so hadd can sum them ----
+   // Everything above this point is a TH2F and merges for free. The coincidence
+   // counters are plain C arrays that only ever reached stdout, so a condor run
+   // merged with hadd would keep the occupancy plots and silently lose the
+   // numbers the run is FOR. Flatten them into TH1D, one bin per element, in
+   // exactly the loop order written here -- script/fwoRead.C unflattens with the
+   // same order and must be changed with this.
+   TH1D *cProfR = new TH1D("cProfR", "gFwoProfR[r 0-3][dist 0-11][pred,mirr]", 96, 0, 96);
+   int kbR = 0;
+   for (int cw1 = 0; cw1 < 4; cw1++)
+      for (int cw2 = 0; cw2 < 12; cw2++)
+         for (int cw3 = 0; cw3 < 2; cw3++) cProfR->SetBinContent(++kbR, (double) gFwoProfR[cw1][cw2][cw3]);
+
+   TH1D *cProfI = new TH1D("cProfI", "gFwoProfI[dist 0-11][pred,mirr]", 24, 0, 24);
+   int kbI = 0;
+   for (int cw4 = 0; cw4 < 12; cw4++)
+      for (int cw5 = 0; cw5 < 2; cw5++) cProfI->SetBinContent(++kbI, (double) gFwoProfI[cw4][cw5]);
+
+   TH1D *cCoin  = new TH1D("cCoin",  "gFwoCoin[disk][par][end][y]",  48, 0, 48);
+   TH1D *cCoinI = new TH1D("cCoinI", "gFwoCoinI[disk][par][end][y]", 48, 0, 48);
+   int kbC = 0;
+   for (int cw6 = 0; cw6 < 3; cw6++)
+      for (int cw7 = 0; cw7 < 2; cw7++)
+         for (int cw8 = 0; cw8 < 2; cw8++)
+            for (int cw9 = 0; cw9 < 4; cw9++) {
+               ++kbC;
+               cCoin ->SetBinContent(kbC, (double) gFwoCoin [cw6][cw7][cw8][cw9]);
+               cCoinI->SetBinContent(kbC, (double) gFwoCoinI[cw6][cw7][cw8][cw9]);
+            }
+
+   TH1D *cEdge  = new TH1D("cEdge",  "gFwoEdge[disk][par][end]",  12, 0, 12);
+   TH1D *cEdgeI = new TH1D("cEdgeI", "gFwoEdgeI[disk][par][end]", 12, 0, 12);
+   int kbE = 0;
+   for (int cx1 = 0; cx1 < 3; cx1++)
+      for (int cx2 = 0; cx2 < 2; cx2++)
+         for (int cx3 = 0; cx3 < 2; cx3++) {
+            ++kbE;
+            cEdge ->SetBinContent(kbE, (double) gFwoEdge [cx1][cx2][cx3]);
+            cEdgeI->SetBinContent(kbE, (double) gFwoEdgeI[cx1][cx2][cx3]);
+         }
+
+   TH1D *cCtrl  = new TH1D("cCtrl",  "gFwoCtrl[disk][par][y]", 24, 0, 24);
+   int kbT = 0;
+   for (int cx4 = 0; cx4 < 3; cx4++)
+      for (int cx5 = 0; cx5 < 2; cx5++)
+         for (int cx6 = 0; cx6 < 4; cx6++) cCtrl->SetBinContent(++kbT, (double) gFwoCtrl[cx4][cx5][cx6]);
+
+   TH1D *cCtrlN = new TH1D("cCtrlN", "gFwoCtrlN[disk][par]", 6, 0, 6);
+   int kbN = 0;
+   for (int cx7 = 0; cx7 < 3; cx7++)
+      for (int cx8 = 0; cx8 < 2; cx8++) cCtrlN->SetBinContent(++kbN, (double) gFwoCtrlN[cx7][cx8]);
+
+   // Event/hit totals, so a merged file still knows how much data it came from.
+   TH1D *cTot = new TH1D("cTot", "0 nEvSeen 1 nEvWithFst 2 nHitTot 3 nHitOuter 4 nRawTot 5 nIOPair", 6, 0, 6);
+   cTot->SetBinContent(1, (double) nEvSeen);
+   cTot->SetBinContent(2, (double) nEvWithFst);
+   cTot->SetBinContent(3, (double) nHitTot);
+   cTot->SetBinContent(4, (double) nHitOuter);
+   cTot->SetBinContent(5, (double) nRawTot);
+   cTot->SetBinContent(6, (double) nIOPair);
+
+   cProfR->Write(); cProfI->Write(); cCoin->Write(); cCoinI->Write();
+   cEdge->Write();  cEdgeI->Write(); cCtrl->Write(); cCtrlN->Write(); cTot->Write();
+
    fout->Close();
    printf("\nwrote %s\n", outFile);
 }

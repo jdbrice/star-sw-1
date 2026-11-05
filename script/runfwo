@@ -1,0 +1,44 @@
+#!/bin/csh
+# Per-job condor wrapper for script/fstWedgeOverlap.C -- the FST outer-sensor
+# overlap measurement.
+#
+# The job is unusually light: the measurement reads FST hits straight out of the
+# MuDst and uses only strip indices, so it touches NO database, NO fGeom.root and
+# no geometry setting of any kind. That is deliberate (see the header of
+# fstWedgeOverlap.C) -- it is what makes the result independent of the very
+# geometry conventions it is used to test. So the job needs the library dir and
+# StRoot and nothing else, and the MuDsts are read over NFS rather than copied.
+#
+# Usage: runfwo LISTFILE OUTDIR TAG
+#   LISTFILE  absolute path to a sublist. Its name MUST contain ".lis", ".files"
+#             or ".MuDst.root", or StMuChainMaker refuses to build a chain.
+#   OUTDIR    where fwo_<TAG>.root is copied back to
+#   TAG       job tag, used in the output filename
+
+set nonomatch
+
+set listfile=$1
+set outdir=$2
+set tag=$3
+set dir=$cwd
+
+echo dir=$dir listfile=$listfile outdir=$outdir tag=$tag
+
+cd $SCRATCH
+
+ln -s $dir/.$STAR_HOST_SYS
+ln -s $dir/StRoot
+/bin/cp $dir/script/fstWedgeOverlap.C .
+/bin/cp $listfile .
+
+set base=$listfile:t
+
+pwd
+ls -la
+
+# nFiles well above the sublist length so the whole sublist is taken; nEvents -1 = all
+root4star -l -b -q 'fstWedgeOverlap.C("'$base'",100,-1,"fwo_'$tag'.root")'
+
+ls -l fwo_$tag.root
+/bin/cp fwo_$tag.root $outdir/
+echo done
