@@ -61,6 +61,21 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
                                    << "\" -- partial, finish the other two ***\n";
 
     const char *tables[3] = { "stgcOnTpc", "stationOnStgc", "pentOnStation" };
+
+    // Does the table carry an element index? stgcOnTpc does not (one row,
+    // elementID 0); stationOnStgc and pentOnStation do, and their element lists
+    // live in Geometry_ftt.StationIDs (1-4) and PentIDs (1-16).
+    //
+    // This MATTERS and is easy to get wrong. In Geometry_fst the Nodes row holds
+    // an elementID RANGE ("1-36"), so StDbSql::readTableInfo fills the table's
+    // element list for you. Geometry_ftt uses the other supported style --
+    // elementID='None' plus indexName -- which populates only the element NAME.
+    // The list is then left null, and StDbTable::StreamAccessor quietly fills it
+    // with 0..n-1. Those do not match the *IDs tables, so the rows would be
+    // stored one off: elementID 0 invisible to every read, 1..3 served as
+    // Station 1..3, Station 4 missing. We hold INSERT but not DELETE, so that
+    // could not be cleaned up afterwards. Pass the list explicitly instead.
+    const int indexed[3] = { 0, 1, 1 };
     TString stamp[3];     // per-table file stamp
     TString storeTime, what;
 
@@ -177,8 +192,20 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
         Survey_st *rows = tableSet->GetTable();
         const int nrows  = tableSet->GetNRows();
 
+        // The element id of row i is that row's own Id. Every file in ftt/ numbers
+        // its rows 1..N in the order AGML's <Misalign row="N"/> expects, which is
+        // exactly how StationIDs and PentIDs are numbered, so Id == elementID and
+        // the stored rows can be checked against the file by eye.
+        int elems[128];
+        for ( int ie = 0; ie < nrows && ie < 128; ie++ ) elems[ie] = (int) rows[ie].Id;
+
         std::cout << "\n  " << tables[it] << ": " << nrows << " row(s) from "
                   << gSystem->BaseName( fn.Data() ) << "\n";
+        if ( indexed[it] )
+            std::cout << "    indexed: elementID taken from each row's Id, "
+                      << elems[0] << ".." << elems[nrows-1] << "\n";
+        else
+            std::cout << "    not indexed: elementID 0\n";
         for ( int i = 0; i < nrows; i++ ) {
             printf("    Id=%3d  t=(%9.5f,%9.5f,%9.5f)  r00,r11,r22=(%6.3f,%6.3f,%6.3f)\n",
                    rows[i].Id, rows[i].t0, rows[i].t1, rows[i].t2,
@@ -192,7 +219,10 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
             StDbConfigNode *node = mgr->initConfig("Geometry_ftt");
             StDbTable      *table = node->addDbTable( tables[it] );
             mgr->setStoreTime( storeTime.Data() );
-            table->SetTable( (char*)rows, nrows );
+            // stgcOnTpc keeps the no-idList form: it stored elementID 0 on
+            // 2026-11-06 and must stay consistent with that row.
+            if ( indexed[it] ) table->SetTable( (char*)rows, nrows, elems );
+            else               table->SetTable( (char*)rows, nrows );
             // storeDbTable returns false when the write is refused -- e.g.
             // "INSERT command denied to user ...". Without this check the macro
             // printed "stored ..." and "Done with database upload" after a write
