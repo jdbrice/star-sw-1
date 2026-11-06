@@ -40,6 +40,76 @@
 // the easy mistake here: storing pentOnStation alone leaves the other two at
 // whatever was there before.
 
+// Is this slot already in the DB, and does it match the file?
+//
+//   0  nothing stored at this beginTime     -> safe to store
+//   1  complete and identical to the file   -> skip, nothing to do
+//   2  complete but the content DIFFERS     -> refuse; we cannot overwrite
+//   3  PARTIAL, n rows where N are expected -> refuse loudly, needs a DBA
+//  -1  could not ask                        -> refuse, never store blind
+//
+// Asked with a direct SQL query, deliberately NOT through St_db_Maker. St_db_Maker
+// caches per timestamp and served the PRE-write state once already (the data-window
+// push, 2026-10-16); a cached "nothing there" would turn this guard into exactly the
+// blind insert it exists to prevent.
+//
+// State 3 is the one that matters. We hold INSERT but not DELETE on Geometry_ftt,
+// while StDbSql rolls a partially failed multi-row write back with a DELETE -- so a
+// 16-row write that dies at row 7 leaves orphans only the DBAs can remove, and a
+// retry would then be a partial insert on top of a partial insert.
+//
+// Host is the write master from conf/dbLoadBalancerLocalConfig_BNL.xml.
+// NOTE the plain double array rather than Survey_st*: CINT parses this signature
+// when the macro is loaded, which is before the function body has done
+// gSystem->Load("libStDb_Tables.so"), so a Survey_st argument here is "Unknown type
+// ... handled as int" and the call then fails to resolve at all.
+int fttGeoSlotState( const char *table, const char *beginTime,
+                     double *want, int nrows )
+{
+    TSQLServer *sdb = TSQLServer::Connect( "mysql://robinson.star.bnl.gov:3306/Geometry_ftt",
+                                           gSystem->Getenv("USER"), "" );
+    if ( !sdb ) { std::cout << "    cannot reach the DB to check\n"; return -1; }
+
+    TString q = Form( "select elementID,Id,r00,r01,r02,r10,r11,r12,r20,r21,r22,t0,t1,t2"
+                      " from %s where beginTime='%s' and flavor='ofl' and deactive=0"
+                      " order by elementID", table, beginTime );
+    TSQLResult *res = sdb->Query( q.Data() );
+    if ( !res ) { delete sdb; std::cout << "    query failed\n"; return -1; }
+
+    const int ngot = res->GetRowCount();
+    int state = 0;
+
+    if ( ngot == 0 ) {
+        state = 0;
+    } else if ( ngot != nrows ) {
+        std::cout << "    *** " << ngot << " row(s) present where " << nrows
+                  << " are expected ***\n";
+        state = 3;
+    } else {
+        int ndiff = 0;
+        for ( int jr = 0; jr < nrows; jr++ ) {
+            TSQLRow *rw = res->Next();
+            if ( !rw ) { ndiff++; break; }
+            for ( int jf = 0; jf < 14; jf++ ) {
+                const double got = atof( rw->GetField(jf) );
+                const double exp = want[ jr * 14 + jf ];
+                if ( fabs( got - exp ) > 1e-9 ) {
+                    if ( ndiff < 5 )
+                        printf("    DIFF row %d field %d: db=%.10f file=%.10f\n",
+                               jr, jf, got, exp);
+                    ndiff++;
+                }
+            }
+            delete rw;
+        }
+        state = ndiff ? 2 : 1;
+    }
+
+    delete res;
+    delete sdb;
+    return state;
+}
+
 // Returns false if anything failed, so "all" stops instead of reporting success
 // it did not get.
 bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onlyTable = "" )
@@ -212,6 +282,41 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
                    rows[i].r00, rows[i].r11, rows[i].r22 );
         }
 
+        // Flatten the file's rows into the 14 columns the check reads back, in the
+        // order the query selects them: elementID, Id, r00..r22, t0..t2.
+        double want[16 * 14];
+        for ( int jw = 0; jw < nrows && jw < 16; jw++ ) {
+            double *w = &want[jw * 14];
+            w[0]  = indexed[it] ? (double) rows[jw].Id : 0.0;
+            w[1]  = (double) rows[jw].Id;
+            w[2]  = rows[jw].r00; w[3]  = rows[jw].r01; w[4]  = rows[jw].r02;
+            w[5]  = rows[jw].r10; w[6]  = rows[jw].r11; w[7]  = rows[jw].r12;
+            w[8]  = rows[jw].r20; w[9]  = rows[jw].r21; w[10] = rows[jw].r22;
+            w[11] = rows[jw].t0;  w[12] = rows[jw].t1;  w[13] = rows[jw].t2;
+        }
+        const int state = fttGeoSlotState( tables[it], storeTime.Data(), want, nrows );
+        if ( state == 1 ) {
+            std::cout << "    ALREADY IN THE DB and identical -- nothing to do\n";
+            gROOT->ProcessLine( Form( ".U %s", fn.Data() ) );
+            continue;
+        }
+        if ( state != 0 ) {
+            std::cout << "\n*** REFUSING to store " << tables[it] << " at " << storeTime
+                      << " ***\n";
+            if ( state == 2 )
+                std::cout << "    an entry is already there and its content DIFFERS.\n"
+                          << "    We hold INSERT but not DELETE, so it cannot be replaced:\n"
+                          << "    give the new numbers a later beginTime, or ask the DBAs.\n";
+            else if ( state == 3 )
+                std::cout << "    the entry is PARTIAL. A previous write stopped half way\n"
+                          << "    and could not roll itself back. Do not retry -- ask the\n"
+                          << "    DBAs to remove the orphan rows first.\n";
+            else
+                std::cout << "    could not read the current state, so storing would be blind.\n";
+            gROOT->ProcessLine( Form( ".U %s", fn.Data() ) );
+            return false;
+        }
+
         if ( writedb ) {
             gSystem->Setenv("DB_ACCESS_MODE","write");
             std::cout << "    DB_ACCESS_MODE=" << gSystem->Getenv("DB_ACCESS_MODE") << "\n";
@@ -243,6 +348,7 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
     }
 
     if ( writedb ) std::cout << "\nDone with database upload.\n";
-    else           std::cout << "\nDry run only -- pass \"writedb\" to store.\n";
+    else           std::cout << "\nDry run only -- pass \"writedb\" to store.\n"
+                             << "(the \"already there?\" check above ran for real)\n";
     return true;
 }
