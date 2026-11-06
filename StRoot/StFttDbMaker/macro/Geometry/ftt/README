@@ -43,9 +43,41 @@ Verify before pushing, end to end through StFttDb, nothing inlined:
     root4star -l -b -q 'script/fttSurveySlotCheck.C(20211012)'   # PASS, 48/48 exact
     root4star -l -b -q 'script/fttSurveySlotCheck.C(20220322)'   # real data, unchanged
 
-BLOCKED on the DB side (re-checked 2026-10-22): Geometry_ftt holds only
-fttFobToHV / fttFobToStation / fttHardwareMap, and Geometry_stgc does not exist,
-so none of these three tables can be stored yet. Dmitry has to create
-stgcOnTpc, stationOnStgc and pentOnStation in Geometry_ftt first. The push macro
-is still to be written; StRoot/StFstDbMaker/macro/fstGeometry_db.C is the
-template, tag -> (file stamp, beginTime, description) one row per slot.
+DB side, 2026-11-06: UNBLOCKED. Dmitry created stgcOnTpc, stationOnStgc and
+pentOnStation in Geometry_ftt on 2026-11-05, with StationIDs (4) and PentIDs
+(16) for the two indexed ones. All 29 columns of stgcOnTpc are identical to the
+proven Geometry_fst.fstOnTpc; the Nodes rows carry structName=Survey and
+indexName Station/Pent, which is the elementID=None style Geometry_tpc and
+Geometry_svt use, so the element list comes from the *IDs tables rather than a
+1-N range as in Geometry_fst. akio has SELECT,INSERT on Geometry_ftt -- INSERT
+only, so a wrong row cannot be deleted by us, only superseded by a later
+beginTime or deactivated by the DBAs. One cosmetic difference: schema.type for
+Id is "long" here and "int" in all seven other Geometry databases. Harmless --
+the 4 padding bytes after "int Id" make the offsets and the 184-byte struct
+size identical either way, and the stored row reads back Id=1.
+
+The push macro is fttGeometry_db.C in the parent directory.
+
+First slot PUSHED 2026-11-06, one row, as the round-trip test Dmitry asked for:
+
+    root4star -l -b -q '.../fttGeometry_db.C("run22ideal","writedb","stgcOnTpc")'
+
+Deliberately the identity slot, so the push is a no-op by construction: the
+table was empty, and identity adds no misalignment. Verified four ways -- the
+row on the master (all 20 Survey members exact, comment=0x49 'I', which is what
+the STAR one-byte memcpy convention stores), 1 row on all eight read servers,
+a read back through St_db_Maker/StDbBroker/StDbLib giving Id=1 and identity,
+and the beginTime boundary (nothing at 2021-10-09, the row at 2021-10-11 and at
+2025-03-15). The other two tables correctly answer "has No data for query".
+
+This now matters to production in a way it did not before: PR #20 has landed,
+so DEV's xgeometry.so (relinked 2026-11-06) carries 34 Geometry/ftt <Misalign>
+paths and every AGML build queries these three tables. PR #23 has NOT landed --
+DEV's StFttDbMaker has no loadGeometry at all -- so AGML is the only consumer
+today. Pushing anything NON-identity changes production geometry.
+
+Still to do: stationOnStgc and pentOnStation at run22ideal, then the remaining
+ten tags. Push all three tables of a tag together -- StFttDb::loadGeometry()
+chains them, so a partial tag leaves the geometry inconsistent at that stamp.
+Reading a stored row back needs StUtilities and StDbBroker loaded before
+St_db_Maker, or root4star dies on an undefined StMessageManager::Instance.
