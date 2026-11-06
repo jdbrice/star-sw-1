@@ -76,8 +76,38 @@ paths and every AGML build queries these three tables. PR #23 has NOT landed --
 DEV's StFttDbMaker has no loadGeometry at all -- so AGML is the only consumer
 today. Pushing anything NON-identity changes production geometry.
 
-Still to do: stationOnStgc and pentOnStation at run22ideal, then the remaining
-ten tags. Push all three tables of a tag together -- StFttDb::loadGeometry()
-chains them, so a partial tag leaves the geometry inconsistent at that stamp.
-Reading a stored row back needs StUtilities and StDbBroker loaded before
-St_db_Maker, or root4star dies on an undefined StMessageManager::Instance.
+run22ideal COMPLETE 2026-11-06: stationOnStgc (4 rows) and pentOnStation (16)
+followed, at Dmitry's request, to prove the INDEXED path before mass upload.
+All three tables read back through St_db_Maker: 1 / 4 / 16 rows, every row
+identity, Ids in order, and the same counts on all eight read servers. Nothing
+before 2021-10-10 (checked at 2021-10-09), the full set at 2021-10-11 and at
+2025-03-15.
+
+The indexed path needed a FIX first, and it is the trap in this directory.
+Geometry_ftt uses elementID='None' + indexName, so the element list comes from
+StationIDs (1-4) and PentIDs (1-16); Geometry_fst instead puts a range ("1-36")
+in its Nodes row, and the range is the ONLY form StDbSql::readTableInfo turns
+into a table element list. With indexName it sets just the element NAME, leaves
+the list null, and both StDbTable::StreamAccessor overloads then quietly fill a
+null list with 0..n-1. Stored that way elementID 0 is invisible to every read
+(selectElements asks for In(1,2,3,4)) and Station 4 goes missing. fttGeometry_db.C
+now passes the element ids explicitly, taken from each row's own Id -- every file
+here numbers its rows 1..N in <Misalign row="N"/> order, so Id == elementID and a
+stored row can be checked against its file by eye. The dry run prints them.
+
+Do NOT "simplify" that back to a bare SetTable(rows,nrows). stgcOnTpc is the one
+table that keeps the bare form: it is not indexed, it stored elementID 0, and it
+must stay consistent with that row.
+
+Two more things worth keeping in mind for the remaining ten tags. We hold INSERT
+but NOT DELETE on Geometry_ftt, and StDbSql's own rollback on a partial write is
+a DELETE -- so a 16-row write that fails halfway cannot be cleaned up by us, only
+by the DBAs. And reading a stored row back needs StUtilities and StDbBroker
+loaded before St_db_Maker, or root4star dies on an undefined
+StMessageManager::Instance.
+
+Still to do: the remaining ten tags, held until Dmitry says go. Push all three
+tables of a tag together -- StFttDb::loadGeometry() chains them, so a partial tag
+leaves the geometry inconsistent at that stamp. Everything from run22iter1 on
+carries real numbers, so those pushes are NOT no-ops: DEV's AGML reads these
+tables now.
