@@ -512,8 +512,12 @@ Int_t StFstRawHitMaker::Make()
         if (mMaxRawHits > 0 && !mGated &&
             (Int_t)mFstCollectionPtr->getNumRawHits() > mMaxRawHits) {
             mGated = kTRUE;
-            for (int icl = 0; icl < kFstNumWedges; icl++)
-                mFstCollectionPtr->getRawHitCollection(icl)->Clear("");
+            // This maker's own Clear() is exactly the loop over the wedges,
+            // with a null guard on top, so call it instead of repeating it.
+            // NOTE it is StFstRawHitMaker::Clear, not StFstCollection's --
+            // StFstCollection has no Clear() of its own and would inherit
+            // TObject::Clear(), which leaves the wedge collections untouched.
+            Clear("");
         }
 
     }//end while
