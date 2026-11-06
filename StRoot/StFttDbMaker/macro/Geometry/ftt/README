@@ -115,7 +115,11 @@ table-slots "already identical", zero diffs) and resolving correctly through
 St_db_Maker in all four run years: 2022-03-22 and 2023-05-01 give iter3,
 2024-02-10 and 2025-03-15 give run24iter1.
 
-THE -11 SURVEY SLOT WAS MISSING and was added afterwards as tag `run22survey`.
+THE -11 SURVEY SLOT WAS MISSING and was added afterwards as tag `run22survey`,
+pushed 2026-11-06. Final state: 12 slots per table, 12 / 48 / 192 = 252 rows,
+all 36 table-slots verified identical to these files, replicated to all eight
+read servers, and sdt20211012 now serves the survey (pent row 1 = 0.809, 3.634)
+where it served identity before. Nothing at 10-15 or later moved.
 The three 20211011.000000.C files had always been here, but no tag mapped to
 them, so `all` could not push them and did not: sdt20211012 was served the
 2021-10-10 identity instead of the survey, silently, which is the whole 48.49 mm.
