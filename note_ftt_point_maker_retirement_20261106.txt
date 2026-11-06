@@ -1,0 +1,95 @@
+StFttPointMaker: two live bugs, and the retirement that supersedes them
+=======================================================================
+2026-11-06
+
+Deliberately NOT fixed. StFttPointMaker is to be replaced by
+StFttClusterPointMaker, so a patch to it is throwaway. Written down so the
+bugs are not rediscovered, and so the decision is visible if the retirement
+stalls and someone has to reconsider.
+
+
+The two bugs, both live on star/main today
+------------------------------------------
+
+1. rob 0 is never read.  StFttPointMaker.cxx, MakeLocalPoints():
+
+       for ( size_t iRob = 1; iRob < StFttDb::nRob; iRob ++ ){
+
+   The fill above it is 0-based (rob(StFttCluster*) is 0-based, unlike
+   rob(StFttRawHit*)), so clusters[0] is never consumed and NO points are
+   made for rob 0 = quadrant A of plane 0.  Not sparse -- absent.  The bfc
+   "ftt" chain includes FttPoint, so this is missing from every production
+   MuDst.  Fixed in fcstrk11 on 2026-07-27; never upstreamed.
+
+2. global points mix mm and cm, and reflect the wrong thing.
+   MakeGlobalPoints():
+
+       global.set( (x + dx) * sx, (y + dy) * sy, (z + dz) * sz );
+
+   getGloablOffset() returns dx,dy in MILLIMETRES and dz in CENTIMETRES,
+   while StFttPoint::xyz() is cm.  And the reflection belongs to the LOCAL
+   coordinate only: dx,dy are already in the reflected frame, so reflecting
+   the sum flips the offset too and displaces the quadrant by 2*|d|, up to
+   21.5 cm.  sx,sy,sz are also initialised to 0 rather than 1.  The correct
+   expression is the one StFttClusterPointMaker uses:
+
+       global.set( ((x*sx)+dx)/10.0, ((y*sy)+dy)/10.0, z+dz );
+
+   The tracker reads point->xyz() straight out of StEvent, so this is live in
+   the BFC path, partly masked because that path also supplies no covariance
+   and falls back to a fixed sigXY.
+
+   The fix exists on branch fwd-fttpoint-units (fcstrk13), one commit, never
+   opened as a PR.
+
+
+Why it is being retired rather than fixed
+-----------------------------------------
+
+StFttPointMaker combines every H cluster with every V cluster in a rob --
+makePoint(cluH,cluV) with mode defaulting to 0, "No pad sepearation", i.e. no
+ghost rejection at all, N_H * N_V points.  It sets no covariance anywhere, it
+drops single-strip clusters (nStrips()<2), and it ignores the diagonal strip
+groups entirely (its row loops are hardcoded < 3).
+
+StFttClusterPointMaker makes one point per cluster: no ghosts by
+construction, N_H + N_V instead of N_H * N_V, a full 2x2 covariance (sigma
+across the strip, L/sqrt(12) along it), diagonals handled in a rotated frame,
+the off-axis coordinate from the fired strip's own centre, and the point on
+the gas foil it was measured on.
+
+That is the right representation ONLY in planar mode.  A space-point tracker
+genuinely wants the 2D H x V combination, and star/main is still
+kUseSpacePoints = true.
+
+
+What has to happen first, in order
+----------------------------------
+
+  1. PR #22            StFttClusterPointMaker needs D_StripGroupEdge and
+                       getGloablOffset_ClusterPoint, neither on main, both
+                       in #22.  #22 also gates #23, #24, #26 and the
+                       StFttDb-owns-tracker-geometry PR.
+  2. upstream the      new maker only, not wired into BFC.  Ask Daniel first:
+     maker             MakeGeantPoints() is a GEANT slow-sim living inside a
+                       reco maker and should probably move to
+                       StFttSlowSimMaker.  Credit: Sam (original), jdb
+                       (import), Daniel (GEANT path + fixes).
+  3. planar mode       kUseSpacePoints = false.  NOT a one-line change: on
+                       main nothing sets _genfit_plane_index for FTT hits
+                       (StFwdHitLoader sets it for FST only) and it defaults
+                       to 0, so every FTT hit would take mFttPlanes[0] --
+                       station 1, quadrant A, up to 52 cm wrong in z, and
+                       silently, because a PlanarMeasurement keeps only the
+                       in-plane components.  It needs the FTT plane work:
+                       16 chamber planes instead of 32 gas-layer ones, and
+                       the index actually set.  That work belongs with the
+                       StFttDb-owns-tracker-geometry PR, not here, because
+                       it should be sourced from StFttDb rather than from
+                       the FwdGeomUtils copy we intend to delete.
+  4. BFC swap          replace FttPoint with the cluster point maker and
+                       retire StFttPointMaker.  Only correct after 3.
+
+Only at step 4 does this file go away.  If steps 1-4 slip past the next
+production pass, fix bug 1 at least -- it is one character and a whole
+quadrant of plane 0.
