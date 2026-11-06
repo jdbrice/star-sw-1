@@ -154,6 +154,10 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
         stamp[0]="20211010.000000"; stamp[1]="20211010.000000"; stamp[2]="20211010.000000";
         storeTime = "2021-10-10 00:00:00";
         what = "Run 22 ideal: identity, no shift, no rotation";
+    } else if ( t == "run22survey" ) {
+        stamp[0]="20211011.000000"; stamp[1]="20211011.000000"; stamp[2]="20211011.000000";
+        storeTime = "2021-10-11 00:00:00";
+        what = "Run 22 SURVEY: the built detector, no alignment folded in";
     } else if ( t == "run22iter1" ) {
         stamp[0]="20211015.000001"; stamp[1]="20211015.000001"; stamp[2]="20211015.000001";
         storeTime = "2021-10-15 00:00:01";
@@ -198,6 +202,7 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
         std::cout << "fttGeometry_db: unknown tag \"" << tag << "\"\n"
                   << "  known tags:\n"
                   << "    run22ideal   2021-10-10 00:00:00   identity\n"
+                  << "    run22survey  2021-10-11 00:00:00   survey, no alignment\n"
                   << "    run22iter1   2021-10-15 00:00:01   per-quadrant x/y\n"
                   << "    run22iter2   2021-10-15 00:00:02   + per-quadrant z\n"
                   << "    run22iter3   2021-10-15 00:00:03   + deltas  (BEST for Run 22)\n"
@@ -219,11 +224,12 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
     }
 
     if ( t == "all" ) {
-        const char *every[11] = { "run22ideal","run22iter1","run22iter2","run22iter3",
+        const char *every[12] = { "run22ideal","run22survey",
+                                  "run22iter1","run22iter2","run22iter3",
                                   "run23ideal","run23est",
                                   "run24ideal","run24est","run24iter1",
                                   "run25ideal","run25est" };
-        for ( int i = 0; i < 11; i++ ) {
+        for ( int i = 0; i < 12; i++ ) {
             if ( !fttGeometry_db( every[i], opt, onlyTable ) ) {
                 std::cout << "\n*** STOPPING at tag \"" << every[i]
                           << "\" -- nothing further was attempted ***\n";

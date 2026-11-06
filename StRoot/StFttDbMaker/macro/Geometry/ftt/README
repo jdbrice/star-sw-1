@@ -106,8 +106,27 @@ by the DBAs. And reading a stored row back needs StUtilities and StDbBroker
 loaded before St_db_Maker, or root4star dies on an undefined
 StMessageManager::Instance.
 
-Still to do: the remaining ten tags, held until Dmitry says go. Push all three
-tables of a tag together -- StFttDb::loadGeometry() chains them, so a partial tag
-leaves the geometry inconsistent at that stamp. Everything from run22iter1 on
-carries real numbers, so those pushes are NOT no-ops: DEV's AGML reads these
-tables now.
+The other ten tags went in 2026-11-06 with `all`, after the macro learned to
+refuse a blind insert: it now asks what is at a beginTime first and skips an
+identical slot, refuses a differing or PARTIAL one, and refuses if it cannot
+read. `all` is therefore idempotent and is the way to push. 231 rows in total,
+every slot complete, verified field by field against these files (33 of 33
+table-slots "already identical", zero diffs) and resolving correctly through
+St_db_Maker in all four run years: 2022-03-22 and 2023-05-01 give iter3,
+2024-02-10 and 2025-03-15 give run24iter1.
+
+THE -11 SURVEY SLOT WAS MISSING and was added afterwards as tag `run22survey`.
+The three 20211011.000000.C files had always been here, but no tag mapped to
+them, so `all` could not push them and did not: sdt20211012 was served the
+2021-10-10 identity instead of the survey, silently, which is the whole 48.49 mm.
+If another slot is ever added as files only, it is invisible to this macro --
+the tag list is the only index of what exists.
+
+Those two README figures are checkable against the files, which is a cheap way
+to confirm the right slot went in: max |t0| over the -11 pentOnStation rows is
+4.849 cm = 48.49 mm (row 16) and max |t2| is 0.291 cm = 2.91 mm (row 11).
+
+Push all three tables of a tag together -- StFttDb::loadGeometry() chains them,
+so a partial tag leaves the geometry inconsistent at that stamp. And everything
+from run22survey on carries real numbers, so those pushes are NOT no-ops: DEV's
+AGML reads these tables now.
