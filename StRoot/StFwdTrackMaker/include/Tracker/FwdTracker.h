@@ -402,10 +402,17 @@ class ForwardTrackMaker {
         mEventStats.reset();
         mTotalHitsRemoved = 0;
         // GFRaveVertexFactory::findVertices allocates each GFRaveVertex with
-        // new and hands ownership to us, so clear() alone leaked one vertex
-        // per found vertex per event. Safe to delete here: cleanup() runs at
-        // the START of doEvent, so these are the PREVIOUS event's vertices and
+        // new and hands ownership to us, so clear() alone leaks one vertex per
+        // found vertex per event. Safe to delete here: cleanup() runs at the
+        // START of doEvent, so these are the PREVIOUS event's vertices and
         // doSecondaryTrackFitting is long done with them.
+        //
+        // CORRECTION to cdc6dbd142's commit message, which called this a
+        // pre-existing leak in the design: star-bnl/main HAS this delete and
+        // always did. It was lost on THIS branch somewhere along the way, so
+        // the line below restores upstream parity rather than adding anything.
+        // Worth remembering that a merge here has dropped an upstream line
+        // once already.
         for ( size_t iv = 0; iv < mFwdVertices.size(); iv++ ) delete mFwdVertices[iv];
         mFwdVertices.clear();
         mFwdVerticesAsHits.clear();

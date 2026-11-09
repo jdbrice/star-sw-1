@@ -9,9 +9,10 @@ Covers two different jobs:
                     Simulation .. Check the reco log.
 
 They use DIFFERENT geometry lanes and the lanes are not interchangeable:
-afterburner Run-22 is dev2022sm + sdt20211112.000004, Run-24 is y2024 +
-sdt20240622, simulation is y2022c + sdt20211112.000004 and ideal. Nothing warns
-you if you cross them except the one wedge-mounting error quoted later.
+   afterburner Run-22 is dev2022sm + sdt20211112.000004, 
+   Run-24 is y2024 +sdt20240622
+   simulation is y2022c + sdt20211112.000004 and ideal. 
+Nothing warns you if you cross them except the one wedge-mounting error quoted later.
 
 *** Setup
 
@@ -52,56 +53,6 @@ The second must be 12. StarDb is the one data directory the build genuinely
 needs: St_db_Maker searches ./StarDb before $STAR/StarDb, and without it a job
 falls back to hardcoded geometry and looks like "the tables do nothing".
 
-Do NOT use "ls fttDataWindow | wc -l" -- that was the old test, from when the
-43 per-run files were the only source of the FTT data windows. They are in the
-database now; see "What comes from the database now" below.
-
-*** What comes from the database now
-
-Things that used to be hardcoded in the makers, or read from local text files,
-are in the STAR offline DB. The local StarDb directory still matters -- it is
-what the sdt lanes below read -- but these are no longer file-driven:
-
-  Calibrations_ftt.fttDataWindowsB   per-VMM FTT time windows and anchors.
-                                     58 runs pushed 2026-10-16 (44 Run-22, 2
-                                     Au+Au 2023, 12 zero-field 2024) and
-                                     verified run by run. A run without its own
-                                     stamped entry gets StFttDb's built-in
-                                     [-65,100], NOT a neighbouring run's --
-                                     anchors are reset at every run start, so
-                                     inheriting them would be wrong.
-                                     fttDataWindow/fttDataWindow.<run>.txt is
-                                     still read if present and OVERRIDES the DB,
-                                     with a LOG_WARN. For calibration only.
-
-  Geometry_ftt                       sTGC survey and alignment: stgcOnTpc (1
-                                     row), stationOnStgc (4), pentOnStation
-                                     (16). Twelve slots, 252 rows, pushed and
-                                     verified 2026-11-06. Run-22 slots sit at
-                                     20211010 (ideal), 20211011 (survey),
-                                     20211015 (baseline + first alignment).
-                                     Full description, including why ideal and
-                                     survey differ by up to 48 mm, is in
-                                     StRoot/StFttDbMaker/macro/Geometry/ftt/README
-                                     -- read that rather than re-deriving it.
-
-  Geometry_fst                       FST survey. The local copies under
-                                     StarDb/Geometry/fst are the lanes the sdt
-                                     selects; see the fGeom section below.
-
-Two things to know before touching any of it:
-
-  - We have INSERT but not UPDATE or DELETE on Geometry_ftt, and StDbSql's own
-    rollback is DELETE-based. A wrong row can only be superseded or asked away.
-    The push macro refuses to insert blind for that reason.
-  - PR #20 has landed, so DEV's AGML already queries the Geometry_ftt tables.
-    Any non-identity push changes production geometry.
-
-  - A local StarDb/Geometry/stgc directory exists in this tree. Once the
-    stgc -> ftt namespace rename lands (PR #23) it will shadow the DB, because
-    St_db_Maker takes the latest timestamp at or before the sdt regardless of
-    which directory it came from. Watch for it then.
-
 *** Compile
 
 cons +StarVMC |& tee cons.geom.log
@@ -124,7 +75,7 @@ priority (StBFChain puts $PWD/StarDb fourth in the list). A local file only
 wins if its timestamp is later than every other entry for that table, the ones
 in $STAR included. See StRoot/StFstDbMaker/macro/README.
 
-run22 -- this is the one fGeom.root points at
+** run22 -- this is the one fGeom.root points at
 
 root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000004",1)' |& tee build_geom.run22.log
 ls -la fGeom.dev2022sm.misalign1.sdt20211112.000004.root
@@ -140,7 +91,7 @@ Older notes name sdt20211015.000003 here. That lane sits BEFORE every local
 table, so it builds DB-only ideal geometry -- a different cache, not an older
 spelling of this one. Use it only if ideal geometry is what you want.
 
-run24
+** run24
 
 root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,"iter2")' |& tee build_geom.run24.log
 ls -la fGeom.y2024.misalign1.sdt20240622.iter2.root
@@ -163,7 +114,7 @@ gives iteration 1.
 For now, I do not symlink the run24 cache to fGeom.root. Pass it as runab's
 11th argument instead, so a run22 run cannot silently pick it up.
 
-SIMULATION uses a third lane -- y2022c, ideal. Do not reuse either of these two
+** SIMULATION uses a third lane -- y2022c, ideal. Do not reuse either of these two
 caches for MC; see the simulation section below.
 
 Note StRoot/StFwdTrackMaker/macro/build_geom.C is a DIFFERENT, much older macro
@@ -300,17 +251,49 @@ each vertex's id, z and track count. If tracks were dropped before RAVE
 
 *** Known broken: forward vertex finding (2026-11-09)
 
-RAVE returns ZERO vertices for essentially every event. Measured on 10 Lambda
-events and on single- and four-muon guns on the lane above: 0 vertices from
-1, 2, 3, 4 and 5 converged global tracks, including four muons thrown from a
-common (0,0,0). It is not the track selection -- the tracks reach RAVE intact,
-and with TrackFitter:raveVerbosity raised RAVE says so itself:
+RAVE returns ZERO vertices for essentially every event, on MC and on real data
+alike.
+
+REAL DATA is the important measurement: 10 events of
+st_fwd_23081001_raw_0000002.MuDst.root through the ordinary afterburner gave
+2 to 15 CONVERGED global tracks per event and 0 RAVE vertices in all ten. So
+this is not a simulation artifact and not a statistics problem -- 14 converged
+forward tracks in one event produce no vertex.
+
+MC says the same: 10 Lambda events, and single- and four-muon guns, give 0
+vertices from 1, 2, 3, 4 and 5 converged tracks, including four muons thrown
+from a common (0,0,0).
+
+What has been ruled out:
+
+  not the track selection   the tracks reach RAVE intact. The log line says how
+                            many were dropped as null or unconverged before the
+                            hand-over, and in MC that is zero. (In real data a
+                            few per event have a null mTrack -- up to 9 of 23 --
+                            which is worth understanding separately, but the
+                            remaining 14 converged ones still give no vertex.)
+  not the method            "kalman", "avr" and "mvf" all give 0 on the same
+                            tracks.
+  not the beam constraint   TrackFitter:fwdVertexBeamConstraint changes nothing,
+                            except that a 1-track event can then make a
+                            meaningless 1-track "vertex".
+  not our flags             TrackFitter:fstNoAdd and fttNoAdd are both false by
+                            default and announce themselves in the log when on;
+                            neither was set. findFwdVertices was called in every
+                            event. (Note sim.C's comment on setFttHitSource(1)
+                            used to read IGNORE -- the enum is
+                            {GEANT=0, STEVENT, MUDST, IGNORE}, so 1 is STEVENT
+                            and the FTT hits were always being loaded.)
+  not something we broke    findFwdVertices, the default-constructed factory and
+                            useBeamConstraint=false are BYTE-IDENTICAL to
+                            star-bnl/main. Last upstream touch was Daniel's
+                            #731, 2025-09-11. Whatever is wrong is wrong
+                            upstream too, so it is very unlikely this has ever
+                            produced a forward vertex in a production.
+
+With TrackFitter:raveVerbosity raised, RAVE says it itself:
 
     [rave::VertexFactory] produced 0 vertices from 5 tracks.
-
-It is not the method either: "kalman", "avr" and "mvf" all give 0 on the same
-tracks. It is not the beam constraint: TrackFitter:fwdVertexBeamConstraint
-changes nothing except that a 1-track event can then make a 1-track "vertex".
 
 Consequence: doSecondaryTrackFitting never runs, no
 kForwardVertexConstrained tracks are ever made, and StFwdTrack::vertexIndex()

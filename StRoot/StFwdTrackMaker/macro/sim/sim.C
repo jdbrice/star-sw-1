@@ -190,7 +190,11 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
             fwdTrack->setRelChi2Change( 1e-6 );
             
             // fwdTrack->setFttHitSource( 0 /*StFwdHitLoader::GEANT*/ );
-            fwdTrack->setFttHitSource( 1 /*StFwdHitLoader::IGNORE*/ );
+            // 1 is STEVENT, not IGNORE -- the enum is
+            // {GEANT=0, STEVENT, MUDST, IGNORE}. The FTT points come from
+            // StEvent, where fttClusterPointMaker above put them from the
+            // GEANT hits. The old comment read IGNORE and was simply wrong.
+            fwdTrack->setFttHitSource( 1 /*StFwdHitLoader::STEVENT*/ );
             fwdTrack->setFstHitSource( 0 /*StFwdHitLoader::GEANT*/ );
 
             // DisableTrackFitting();
