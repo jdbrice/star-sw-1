@@ -38,6 +38,7 @@
 #include "GenFit/FitStatus.h"
 #include "GenFit/GFRaveVertexFactory.h"
 #include "GenFit/GFRaveTrackParameters.h"
+#include "GenFit/MeasuredStateOnPlane.h"
 
 #include "StFwdTrackMaker/FwdTrackerConfig.h"
 #include "StFwdTrackMaker/Common.h"
@@ -566,21 +567,60 @@ class ForwardTrackMaker {
         // silently -- so a chain that hands over nothing but failed fits gets
         // zero vertices back and no explanation at all. Count both so the log
         // says which of the two is happening.
+        //
+        // A converged fit is NOT enough. RAVE wraps every number it is given in
+        // CheckedFloat, which throws on anything non-finite, and one bad track
+        // aborts the WHOLE fit -- all the good tracks with it:
+        //   [rave::VertexFactory] when trying to fit:
+        //   rave/CheckedFloat.h: The assigned floating point number cannot be used.
+        // At RAVE verbosity 0 that message does not appear and findVertices
+        // simply returns an empty list. So screen the 6D state and covariance
+        // here, drop the offenders, and say which component was bad.
         vector<genfit::Track*> tracks;
-        int nNoTrack = 0, nNotConverged = 0;
+        int nNoTrack = 0, nNotConverged = 0, nNonFinite = 0;
+        TString firstBad;
         for ( auto gtr : globalTracks ){
             if ( !gtr.mTrack ){ nNoTrack++; continue; }
             genfit::FitStatus *fs = 0;
             try { fs = gtr.mTrack->getFitStatus(); } catch (...) { fs = 0; }
             if ( !fs || !fs->isFitConverged() ){ nNotConverged++; continue; }
+
+            TString bad;
+            try {
+                genfit::MeasuredStateOnPlane st = gtr.mTrack->getFittedState();
+                TVector3 pos, mom;
+                TMatrixDSym cov( 6 );
+                st.getPosMomCov( pos, mom, cov );
+                for ( int ic = 0; ic < 3 && bad.Length() == 0; ic++ ){
+                    if ( !TMath::Finite( pos[ic] ) ) bad = TString::Format( "pos[%d]", ic );
+                    if ( !TMath::Finite( mom[ic] ) ) bad = TString::Format( "mom[%d]", ic );
+                }
+                for ( int ir = 0; ir < 6 && bad.Length() == 0; ir++ )
+                    for ( int jc = 0; jc < 6 && bad.Length() == 0; jc++ )
+                        if ( !TMath::Finite( cov(ir,jc) ) )
+                            bad = TString::Format( "cov(%d,%d)", ir, jc );
+            } catch ( genfit::Exception &e ) {
+                bad = "getFittedState threw";
+            } catch ( ... ) {
+                bad = "getFittedState threw (unknown)";
+            }
+            if ( bad.Length() ){
+                nNonFinite++;
+                if ( firstBad.Length() == 0 ) firstBad = bad;
+                continue;
+            }
+
             tracks.push_back( gtr.mTrack.get() );
             LOG_DEBUG << "Adding track with track obj: " << gtr.mTrack.get() << endm;
         }
         LOG_DEBUG << "FwdTracker::findFwdVertices with " << tracks.size() << " tracks" << endm;
-        if ( nNoTrack || nNotConverged ){
+        if ( nNoTrack || nNotConverged || nNonFinite ){
             LOG_INFO << "FwdVertexFinding: dropped " << nNoTrack << " null + "
-                     << nNotConverged << " unconverged of " << globalTracks.size()
-                     << " global tracks before RAVE" << endm;
+                     << nNotConverged << " unconverged + " << nNonFinite
+                     << " non-finite of " << globalTracks.size()
+                     << " global tracks before RAVE"
+                     << ( nNonFinite ? TString::Format(" (first bad: %s)", firstBad.Data()).Data() : "" )
+                     << endm;
         }
 
         //  we are not using this because secondary vertices should not neccessarily be at the beamline

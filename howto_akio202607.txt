@@ -295,6 +295,51 @@ With TrackFitter:raveVerbosity raised, RAVE says it itself:
 
     [rave::VertexFactory] produced 0 vertices from 5 tracks.
 
+Where it fails is INSIDE RAVE, not in what we hand over (2026-11-09):
+
+  - The field is right. genfit::GFRaveMagneticField::inTesla, called directly
+    against a known ConstField, returns exactly 0.1 x the kGauss value. The
+    units are correct and that suspect is dead.
+  - What we hand over is finite. Every track's 6D position, momentum and 6x6
+    covariance was screened for non-finite entries before the hand-over: zero
+    offenders in 10 real-data events, so the NaN is not ours.
+  - RAVE still trips its own guard. With a method that reports, it says
+        [rave::VertexFactory] when trying to fit:
+        rave/CheckedFloat.h: The assigned floating point number cannot be used.
+    CheckedFloat throws on any non-finite number, and ONE bad track aborts the
+    whole fit, taking the good tracks with it. At verbosity 0 none of this
+    appears -- findVertices just returns an empty list.
+  - Driving rave::VertexFactory DIRECTLY, with synthetic tracks and no GenFit
+    and no STAR code at all, the "default" and "kalman" methods return 0
+    vertices even for an easy CENTRAL two-track pair from the origin; "avr"
+    returns one, but places it at z=348 cm for two tracks that start at the
+    origin. "mvf-smoothing:1" prints the internals:
+        [TwoTrackMinimumDistance] comparing track with itself!
+        [TwoTrackMinimumDistance] Computation HelixHelix::CAIR failed.
+        [rave::VertexFactory] when trying to fit: BasicSingleVertexState::invalid
+    HelixHelix::CAIR is RAVE's helix-helix closest approach, which is exactly
+    the step that goes ill-conditioned for near-parallel tracks.
+
+So the next move is one of:
+
+  1. Read the GenFit and RAVE sources. cvmfs ships headers and compiled
+     libraries only, but both are public and the commit is pinned --
+     genfit-b496504a, rave-2020-08-11. GFRaveConverter and VertexFactory are
+     the two files worth reading, since the failure is now known to be in code
+     we cannot see here.
+  2. Ask Daniel whether forward vertex finding has EVER produced a vertex.
+     Given the code is identical to main, the honest prior is no.
+  3. Stop using RAVE for this. Forward tracks are near-parallel, which is the
+     worst case for a general helix-helix vertexer but an easy case for a
+     purpose-built fit: minimise the weighted sum of squared distances to a
+     common point along z, seeded from the pairwise DCA. That is a small amount
+     of code and avoids the whole conversion layer. For a Lambda study this may
+     simply be the right answer rather than a workaround.
+
+One thing seen only in real data and NOT the cause: up to 8 or 9 of 23 global
+tracks per event carry a null mTrack and are dropped before RAVE. Worth
+understanding separately -- the remaining converged ones are plenty.
+
 Consequence: doSecondaryTrackFitting never runs, no
 kForwardVertexConstrained tracks are ever made, and StFwdTrack::vertexIndex()
 is always 0. Any Lambda or secondary-vertex study has to fix this first.
