@@ -278,6 +278,76 @@ elsewhere and the DB tables are exonerated.
 
 (column 1 = DB geometry OFF, column 2 = DB geometry ON)
 
+RESULT -- the DB geometry is EXONERATED:
+
+  track type  |     DB geometry OFF    |      DB geometry ON    | ratio
+              |       N    chi2  nSeed |       N    chi2  nSeed |   chi2  nSeed
+  ------------+------------------------+------------------------+--------------
+  Global      |     744  27.029  3.601 |     744  27.301  3.578 |   1.01   0.99
+  Beamline    |     744 163.287  6.341 |     744 142.756  6.403 |   0.87   1.01
+  Primary     |     744 148.118  6.116 |     744 163.010  6.165 |   1.10   1.01
+  FwdVtx      |       9   2.031  4.333 |       6   0.596  4.333 |   0.29   1.00
+  BLCVtx      |     744 256.071  8.254 |     744 214.358  8.371 |   0.84   1.01
+  FCSConstr   |     486 107.532  8.181 |     486 120.772  8.422 |   1.12   1.03
+
+Both hits-on arms sit near 150. Turning the DB geometry off does NOT bring
+Primary chi2 back towards 16.7 -- it gives 148 instead of 163. The effect of
+the DB tables is at most 12% and MIXED IN SIGN: Beamline (0.87) and BLCVtx
+(0.84) are BETTER with the DB tables, Primary (1.10) and FCS-constrained (1.12)
+slightly worse.
+
+So #23 is not the cause of the regression and must not be held up for it. The
+row Id=5 anomaly in 5d is still real and still worth fixing, but it is not what
+is inflating chi2 by ten.
+
+
+5e. What is still unexplained, and how to find it
+-------------------------------------------------
+
+Between 2026-10-01 and today, with the SAME hits-off baseline (4.33 -> 4.44)
+and the SAME measurement model (both planar), the cost of adding an FTT hit to
+a track went from 7.5 to 83.3 units of chi2. Neither the measurement model
+(5a, chi2-neutral) nor the DB geometry (5d, <=12%) explains it.
+
+Candidates, in the order I would test them:
+
+  1. THE FTT MEASUREMENT SIGMA. This is the strongest candidate because chi2
+     scales as 1/sigma^2, so a factor ~3 reduction in sigma gives exactly the
+     factor ~10 observed. Since 10-01 the cluster sigma has been changed --
+     there are branches `ftt-cluster-sigma` ("floor the cluster sigma at the
+     single-strip resolution") and `ftt-cluster-maxstrip-held` in fcstrk13, and
+     the 10-01 note records cov[0][0] = clu->sigma()^2 with the unmeasured
+     direction maxStripLength^2/12 and NO alignment term. If the floor moved
+     down, every FTT hit got "more precise" on paper while the real
+     track-to-hit scatter did not improve, and chi2 must rise by the square.
+     TEST: print the FTT measurement covariance for a few hits today and
+     compare against the 0.924 mm floor the 10-01 note quotes.
+
+  2. The 17.55 mm strip-offset fix (10-24). It moved FTT hit positions by
+     17.55 mm and was confirmed on data to 0.44 mm over 25 coordinates, so it
+     should have IMPROVED things. But it is the largest single change to FTT
+     hit positions in the window and deserves an explicit on/off.
+
+  3. The FTT data windows pushed 10-16, which changed production's time cut
+     from [-65,100] to one bunch crossing. My runs use fttTimeCutMode=0, i.e.
+     the DB windows; the 10-01 campaign predates them. Suspicious detail: the
+     number of ADDED hits went UP (1.90 per track against 1.650), which is not
+     what a tighter time window should do. Worth understanding on its own.
+
+  4. A bisect of fcstrk11 between the 10-01 campaign commit and today, using
+     this 60-event A/B as the probe. It is cheap now -- 4 minutes per arm --
+     and it is the method that cannot miss.
+
+Until this is understood, the planar-mode-default PR has no physics case to
+quote, and that is the honest position. Note carefully that it is NOT an
+argument against planar mode: 5a shows the measurement model is chi2-neutral.
+Whatever this is, it afflicts space-point mode equally, which means it is a
+pre-existing problem in how FTT hits are weighted, not a planar-mode problem.
+
+Caveat on all of 5a-5e: these runs use the macro defaults, so
+applyFstGapFix=false where production uses GEOFIX 1,0,0. Identical in every
+arm, so the ratios hold, but the absolute numbers are not production-configured.
+
 
 6. Also done today, unrelated to this
 -------------------------------------
