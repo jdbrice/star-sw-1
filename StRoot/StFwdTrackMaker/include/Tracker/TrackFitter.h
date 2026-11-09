@@ -29,6 +29,7 @@
 #include "StFwdTrackMaker/include/Tracker/TrackFitter.h"
 #include "StFwdTrackMaker/include/Tracker/STARField.h"
 #include "StFwdTrackMaker/include/Tracker/FwdGeomUtils.h"
+#include "StFttDbMaker/StFttDb.h"
 
 #include "StarGenerator/UTIL/StarRandom.h"
 #include "FitterUtils.h"
@@ -985,11 +986,40 @@ class TrackFitter {
         // hit onto the station-1 plane, up to 52 cm away in z.  Harmless while
         // kUseSpacePoints was true (FTT went down the spacepoint path), which is
         // why it survived: it only became live when planar mode was adopted.
+        //
+        // The origin now comes from StFttDb, which owns it: chamberCentre(row)
+        // with row = 4*station + pent, the same index as the survey row and as
+        // FwdHit::_genfit_plane_index. Taking it from the DB-driven geometry
+        // means a plane follows an alignment iteration instead of being pinned
+        // to whatever fGeom.root was built from.
+        //
+        // The TGeo value is still read and COMPARED, because the two have to be
+        // the same chamber: the hit position comes from StFttDb and the plane
+        // used to come from TGeo, and a silent disagreement between them is
+        // invisible in planar mode -- a PlanarMeasurement keeps only the
+        // in-plane components, so a z offset just moves the hit.
+        int nFttPlaneMismatch = 0;
+        double worstFttPlaneDz = 0.0;
         for (int globalPlaneIndex = 0; globalPlaneIndex < 16; globalPlaneIndex++)
         {
             TVector3 u(1, 0, 0); 
             TVector3 v(0, 1, 0);
             TVector3 o = fwdGeoUtils.getFttChamber(globalPlaneIndex, u, v);
+
+            TVector3 oDb;
+            if ( mFttDb && mFttDb->chamberCentre( globalPlaneIndex, oDb ) ){
+                const double dz = oDb.Z() - o.Z();
+                if ( fabs(dz) > fabs(worstFttPlaneDz) ) worstFttPlaneDz = dz;
+                // 1 mm: the compiled geometry and StgmGeo1.xml already disagree
+                // by up to 9 mm in z (note_stgc_geometry_20260925.txt), so this
+                // is tight enough to catch a wrong index or a unit slip and
+                // loose enough not to fire on that known difference in x/y.
+                if ( fabs(dz) > 0.1 ) nFttPlaneMismatch++;
+                o = oDb;
+            } else if ( globalPlaneIndex == 0 ) {
+                LOG_WARN << "FTT chamber planes: no StFttDb, falling back to the "
+                         << "TGeo cache for the plane origins" << endm;
+            }
             if (kVerbose > 1) { 
                 LOG_INFO << "Adding FTT Plane " << globalPlaneIndex << " at " << o.X() << ", " << o.Y() << ", " << o.Z() << endm;
                 LOG_INFO << "\tPlane " << globalPlaneIndex << " U = " << u.X() << ", " << u.Y() << ", " << u.Z() << endm;
@@ -1012,6 +1042,19 @@ class TrackFitter {
                      << " " << mFttPlanes[12]->getO().Z() << endm;
         } else {
             LOG_ERROR << "FTT chamber planes: expected 16, built " << mFttPlanes.size() << endm;
+        }
+        if ( mFttDb ){
+            if ( nFttPlaneMismatch ){
+                LOG_ERROR << "FTT chamber planes: StFttDb and the TGeo cache disagree on "
+                          << nFttPlaneMismatch << " of 16 chamber z, worst "
+                          << worstFttPlaneDz << " cm. The hits come from StFttDb, so a "
+                          << "plane built from the other one silently displaces every FTT "
+                          << "hit in planar mode. Check that fGeom.root and the DB lane "
+                          << "are the same geometry." << endm;
+            } else {
+                LOG_INFO << "FTT chamber planes: StFttDb agrees with the TGeo cache on all "
+                         << "16 chamber z, worst " << worstFttPlaneDz << " cm" << endm;
+            }
         }
     }
     
@@ -1154,6 +1197,11 @@ class TrackFitter {
         return converged;
     }
 
+    /// The chain's StFttDb, set by StFwdTrackMaker before setup() runs. It owns
+    /// the FTT chamber geometry; without it the plane build falls back to the
+    /// TGeo cache and says so.
+    void setFttDb( StFttDb *db ) { mFttDb = db; }
+
     genfit::SharedPlanePtr getPlaneFor( FwdHit * fh ){
         
         // sTGC
@@ -1196,6 +1244,7 @@ class TrackFitter {
     TString mGeoCache; // the name of the geometry cache file
 
     // Main GenFit fitter instance
+    StFttDb *mFttDb = nullptr;   ///< owner of the FTT chamber geometry; not owned here
     std::unique_ptr<genfit::AbsKalmanFitter> mFitter = nullptr;
     // Warm-start fitter: simple KalmanFitter (no reference-track blow-up)
     // used after normal fit to refine with tight FST phi sigma

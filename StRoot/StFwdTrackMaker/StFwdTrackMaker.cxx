@@ -171,6 +171,10 @@ class ForwardTracker : public ForwardTrackMaker {
             delete mTrackFitter;
         }
         mTrackFitter = new TrackFitter(mConfig, geoCache);
+        // Before setup(): setup() builds the FTT chamber planes and takes their
+        // origins from StFttDb. setFttDb() on the tracker has already run by
+        // here (StFwdTrackMaker::InitRun), so mFttDb is available.
+        mTrackFitter->setFttDb( mFttDb );
         mTrackFitter->setup();
 
         ForwardTrackMaker::initialize( geoCache, genHistograms );

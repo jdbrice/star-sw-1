@@ -15,6 +15,7 @@
 #include "StEvent/StEnumerations.h"
 #include <stdint.h>
 #include "TGeoMatrix.h"
+#include "TVector3.h"
 #include <map>
 #include <vector>
 
@@ -185,6 +186,19 @@ public:
     static int  pentToQuad( int pent );     // and back
     static int  surveyRow( int station, int quad );            // -> 0..15, or -1
     static bool surveyRowToStationQuad( int row, int &station, int &quad );
+
+    /// Centre of one sTGC CHAMBER in global cm, from the DB-driven geometry.
+    ///
+    /// `row` is the survey row, 4*station + pent -- which is ALSO the chamber
+    /// number (AGML's STFM_<row+1>) and ALSO the genfit plane index the tracker
+    /// stores in FwdHit::_genfit_plane_index. Those three were separate pieces
+    /// of knowledge in three places; they are one index and this is its owner.
+    /// Use surveyRow(station, quad) to build it and surveyRowToStationQuad() to
+    /// take it apart.
+    ///
+    /// The chamber planes are axis-aligned (normal along z), so the tracker
+    /// needs only this origin and not a rotation. Returns false on a bad row.
+    bool chamberCentre( int row, TVector3 &o ) const;
 
     void setUseDbGeometry( bool v ) { mUseDbGeometry = v; }
     bool useDbGeometry() const      { return mUseDbGeometry; }

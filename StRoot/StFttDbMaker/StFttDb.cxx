@@ -1186,6 +1186,26 @@ int StFttDb::surveyRow( int station, int quad ) {
     return 4 * station + p;
 }
 
+// The chamber centre is exactly the origin getGloablOffset_ClusterPoint hands
+// out for that station/quadrant: mXShift/mYShift in MILLIMETRES and mZLoc in
+// centimetres, which is why x and y are divided by 10 here and z is not.
+// Those are the DB-driven values (AGML nominal + survey), so a plane built from
+// this moves with an alignment iteration instead of being pinned to whatever
+// fGeom.root happened to be built from.
+//
+// Deliberately no rotation: the pentagons are placed by rotation about z, but a
+// chamber plane's normal is along z either way, so the plane is the same plane.
+// The rotation matters for the in-plane strip direction, and that is
+// quadToGlobal()'s job, not this one.
+bool StFttDb::chamberCentre( int row, TVector3 &o ) const {
+    int station = -1, quad = -1;
+    if ( !surveyRowToStationQuad( row, station, quad ) ) return false;
+    o.SetXYZ( mXShift[quad][station] / 10.0,   // mm -> cm
+              mYShift[quad][station] / 10.0,   // mm -> cm
+              mZLoc  [quad][station] );        // already cm
+    return true;
+}
+
 bool StFttDb::surveyRowToStationQuad( int row, int &station, int &quad ) {
     if ( row < 0 || row >= 4 * (int)nPlane ) return false;
     station = row / 4;
