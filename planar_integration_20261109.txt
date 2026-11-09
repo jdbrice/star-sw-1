@@ -1,0 +1,167 @@
+Planar-mode integration test: what was built, what was found
+=============================================================
+2026-11-09, evening. Left for akio to read in the morning.
+
+Goal: re-make the planar-mode physics case on current geometry, because the
+last measurement (2026-10-01: Primary chi2 mean 4.332 -> 16.737, +286%)
+predates the 17.55 mm FTT strip-offset fix of 10-24 and the Geometry_ftt DB
+tables, both of which attack exactly the misalignment that inflated it.
+
+
+1. The integration branch
+-------------------------
+
+fcstrk13, branch `fwd-integration-20261109`, NOT a PR -- built to be measured
+and thrown away.
+
+  base      star/main at 0344a5caaf (includes #3, merged today)
+  merged    #39, #41 (FST stack), then #22, #23, #47, #49 (FTT stack)
+  result    30 files, +4248/-236 vs main
+  builds    StFstDbMaker, StFttDbMaker, StFwdTrackMaker, StFstHitMaker,
+            StFttClusterPointMaker -- all clean
+
+Five of six merged clean. #49 conflicted with the FST stack in the two files
+both touch, and it is a SEMANTIC conflict git cannot resolve, because each
+stack DELETES a different block of FwdGeomUtils and the merge needs both:
+
+    #39 removed the FST accessors (fstZ x2, getFstSensorOrigin), 51 lines
+    #49 removed getFttQuadrant along with the 32-gas-layer plane model
+
+Resolved by taking #49's file and replaying #39's deletion onto it. The merged
+FwdGeomUtils has neither the FST accessors nor getFttQuadrant, and does have
+getFttChamber/fttChamberIndexAt. fttZ stays (StFwdTrackMaker still uses it).
+Verified nothing references the deleted FST accessors.
+**This is the resolution the real merge of #49 will need.** Keep the branch
+until #49 lands.
+
+TrackFitter.h's conflict was only the two includes; it needs both.
+
+
+2. THE FINDING: upstream's planar measurement is wrong
+------------------------------------------------------
+
+This is the important result of the evening and it is a code finding, not a
+measurement.
+
+`createTrackPointFromPlanarMeasurement` on main (and therefore on every PR
+branch) builds the in-plane coordinate as
+
+    hitOnPlane[0] = fh->getX();
+    hitOnPlane[1] = fh->getY();
+
+A genfit PlanarMeasurement's coordinates are (u,v) measured FROM THE PLANE
+ORIGIN. Assigning global x,y is correct only for a plane whose origin lies on
+the beam axis, which describes none of ours -- the FTT chamber planes are
+centred near x = +-11 cm, y = 9 cm. So every FTT hit would be displaced by its
+chamber offset, SILENTLY, because a PlanarMeasurement keeps only the in-plane
+components and cannot notice the rest.
+
+It has never fired because the planar branch is unreachable while
+kUseSpacePoints is true. It would have fired the moment anyone flipped it, and
+it would have looked like bad alignment rather than a bug.
+
+fcstrk11 has the correct form and has had it since planar mode was adopted:
+
+    TVector3 diff = global - plane->getO();
+    hitOnPlane[0] = diff.Dot( plane->getU() );
+    hitOnPlane[1] = diff.Dot( plane->getV() );
+
+Ported to the integration branch, along with three smaller planar-mode fixes:
+
+  - kUseSpacePoints constexpr -> TrackFitter:useSpacePoints config key, so both
+    arms come from ONE build. A comparison across two binaries is not one.
+  - EPD hits forced to the space-point path: getPlaneFor() knows only FTT and
+    FST, so an EPD hit in planar mode gets a null plane and is dropped.
+  - two off-by-one bounds checks, "index > size()" where it must be ">=".
+    An index exactly equal to size() passed the guard and read one past the end
+    of mFttPlanes / mFstSensorPlanes. Only reachable in planar mode.
+
+Commits: be4ad24772 (the merge), d35ffa641b (the planar fixes).
+
+
+3. What the integration branch still CANNOT do, and why it is design work
+-------------------------------------------------------------------------
+
+It has no complete FST planar decode, and porting one is not possible.
+
+fcstrk11 derives the FST hit position from the sensor's own AGML shape phi
+limits -- mFstSensorPhi1/Phi2, mFstSensorRmin/Rmax -- and that machinery reads
+FwdGeomUtils::getFstSensorOrigin, which #39 deliberately DELETED. The two
+designs disagree at the root:
+
+    fcstrk11   strip -> phi from the AGML sensor shape (geometry-driven)
+    #39/#41    StFstDb owns the conventions; FST planes from
+               sensorPlacementByIndex(), measurement = ProlateSpacepointMeasurement
+
+The #39/#41 direction is the right one, so the FST strip->phi decode has to be
+REWRITTEN against StFstDb, not lifted. StFstDb::agmlLocalPhi() is already
+sitting on #41 with zero consumers -- added in anticipation -- and that is
+where it plugs in.
+
+Consequence: the planar-mode PR is NOT "one line plus some fixes". It needs
+that rewrite. Scope it deliberately.
+
+Meanwhile the integration branch's FST planar measurement uses the hit's
+stored global position projected onto its plane. Self-consistent and correct,
+just less precise than re-deriving the position from the strip.
+
+Note also: the 108-sensor mounting-consistency guard does NOT need porting.
+Once FST planes come from StFstDb alone there is one source of truth, so the
+flag-vs-cache hazard it guarded is structurally gone -- on #41 the invariant
+would compare wedgeOrientation() against a placement derived from
+wedgeOrientation(), i.e. a tautology.
+
+
+4. The measurement
+------------------
+
+Run in fcstrk11, not on the integration branch, and deliberately so: fcstrk11
+has the 17.55 mm fix, the DB geometry AND the complete planar decode, so its
+planar arm is the real thing. The integration branch's would be the degraded
+FST path above.
+
+  TrackFitter:useSpacePoints is now runtime in fcstrk11 too (da30a5f5c6),
+  default false (planar) so nothing in this tree changes.
+  fwd_afterburner_db.C gains UseSpacePoints: -1 default, 0 planar, 1 spacepoint.
+
+  Both arms, 60 events of
+  st_fwd_23081001_raw_0000002.MuDst.root, one build:
+      ab_mode_pl.log   planar
+      ab_mode_sp.log   space points
+
+  Compare with:
+      root4star -l -b -q 'script/planarAB.C("<sp>.picoDst.root","<pl>.picoDst.root")'
+
+  CAUTION, and it bit this run: both arms write the SAME picoDst name
+  (st_fwd_23081001_raw_0000002.picoDst.root, in cwd), so the second overwrites
+  the first. Move the first arm's output aside before running the second.
+
+  RESULTS: see section 5 if filled in, otherwise the run was still going at
+  hand-off and the logs above are on disk.
+
+The number to beat: Primary chi2 ratio 3.86 (4.332 -> 16.737) on pre-17.55 mm
+geometry. If the ratio is now near 1, the planar-default PR has its case. If it
+is still ~4, the decision reverts to the open choice from 10-01 -- inflate the
+FTT measurement sigma with an alignment term in quadrature (mirroring what FST
+already does, sigma_total = sqrt((pitch/sqrt12)^2 + delta_align^2)), or finish
+the alignment first. akio's recorded preference: understand before inflating,
+because a sigma fudge hides the misalignment it absorbs.
+
+
+5. Results
+----------
+
+(to be filled in when the two arms finish)
+
+
+6. Also done today, unrelated to this
+-------------------------------------
+
+  - #41's conflict fixed and pushed; it is mergeable again (b7396bda4b).
+  - #23 review fix for Jerome: a missing survey table is no longer silent, and
+    the success line no longer claims tables it did not use (ab1324fe8a),
+    merged up into #49.
+  - ftt_mm_cm.txt: the mm -> cm conversion estimate Jerome asked for.
+  - A trap worth remembering, hit again tonight: `nohup ... &` inside the Bash
+    tool TOGETHER WITH run_in_background kills the job. First arm truncated at
+    6 of 60 events, second never started. Use run_in_background alone.
