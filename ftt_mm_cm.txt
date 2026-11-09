@@ -1,0 +1,133 @@
+Converting all FTT code from mm to cm: what it would cost
+=========================================================
+2026-11-09
+
+Jerome asked, after approving PR #22 with "still feel uncomfortable with the
+mm/cm mix but c'est la vie", how much code change it would take to put all FTT
+code in cm. Counted rather than guessed; numbers below are from the merged
+state of main + the open forward PRs.
+
+
+The short answer
+----------------
+
+The part he objected to is cheap -- about a day, two files, no risk. The full
+conversion is not a cleanup, it is a DATA FORMAT MIGRATION across four
+persistent classes, and it should be done deliberately rather than alongside
+geometry PRs.
+
+Split it in three tiers, because the cost is wildly uneven.
+
+
+Tier 1 -- StFttDb internals and its API.  CHEAP: ~1 day, 2 files.
+-----------------------------------------------------------------
+
+All 62 "mm" mentions in the FTT makers live in StFttDbMaker, and so do all
+four unit conversions in the whole chain:
+
+    StFttDb.cxx:903-904   mXShift/mYShift = 10.0 * tx   (survey cm -> shift mm)
+    StFttDb.cxx:974-975   chamberCentre   = mXShift/10  (shift mm -> global cm)
+
+The mm data itself is literal tables:
+
+    X_shift_Quad[A-D], Y_shift_Quad[A-D]    4 x 4 each  =  32 literals
+    kStripCenterXY                                        167 literals
+    kStripCenterDiag                                      152 literals
+    YX_StripGroupEdge, D_StripGroupEdge                      4 literals
+                                                        ---------------
+                                                        ~355 literals
+
+Nobody edits 355 numbers by hand: divide once at load, in initStripGeometry(),
+and the tables stay as they are. So Tier 1 is really the two conversion sites,
+the accessor units (xShift/yShift mm, zLoc cm), getGloablOffset*'s mixed
+return, and the doc comments.
+
+Low risk, and VERIFIABLE: PR #49's chamber-plane check compares StFttDb's
+chamber centre against the TGeo cache and currently agrees to 9.2e-08 cm. A
+stray factor of ten anywhere in this tier fails that check immediately, by
+about 11 cm.
+
+
+Tier 2 -- the makers.  NEARLY FREE.
+-----------------------------------
+
+StFttClusterMaker, StFttPointMaker, StFttClusterPointMaker, StFttRawHitMaker,
+StFttHitCalibMaker and StFttSimMaker contain ZERO "mm" mentions between them.
+They do not know about units; they pass StFttDb's numbers through. The only
+edits are deleting conversions that exist because the units are mixed:
+
+    StFttClusterPointMaker   /10.0 on x,y and sigmaX/Y, /100.0 on sigmaXY
+                             (PR #47)
+    StFttPointMaker          /10.0 in the pending units fix
+                             (branch fwd-fttpoint-units, 1 commit)
+
+Those get simpler, not harder.
+
+
+Tier 3 -- PERSISTENT DATA.  This is the whole cost, and it is not code size.
+----------------------------------------------------------------------------
+
+    StFttPoint     ClassDef 4    x(), y(), d1(), d2()      local mm
+                                 sigmaX(), sigmaY()        mm
+                                 sigmaXY(), cov()          mm^2
+    StFttCluster   ClassDef 5    x                         quadrant-local mm
+                                 sigma                     mm
+    StFttRawHit    ClassDef 5    stripCenter()             mm
+                                 stripLength()             mm
+                                 stripLeftEdge()           mm
+                                 stripRightEdge()          mm
+    StMuFttPoint   ClassDef 3    mirrors StFttPoint
+
+Changing the UNITS of an existing persistent field is the nastiest kind of
+schema change: the bytes are bit-for-bit identical and only the meaning
+changes, so ROOT cannot possibly notice. It needs a ClassDef bump on each of
+the four plus a "#pragma read" rule scaling by 0.1, or every existing MuDst and
+picoDst silently reads ten times wrong.
+
+We have already been burnt by exactly this class of problem -- the fcstrk11
+picoDsts from 2026-07-09 to 10-30 that claim version 1 while holding a 5+3
+packed byte, where upstream's read rule corrupts them. A units change is the
+same failure mode with no packing difference to give it away.
+
+Consumers outside the FTT chain that would need auditing: StFwdHitLoader,
+StFwdTrackMaker, StMuFttUtil, StMuFttPoint -- plus every analysis macro that
+reads x()/y() expecting mm.
+
+Note also that PR #22, the one just approved, ADDS four of these mm fields
+(StFttRawHit's strip geometry). The mm decision is being compounded as we go,
+which is probably what Jerome is actually reacting to.
+
+
+Recommendation
+--------------
+
+1. Do Tier 1 now, as its own small PR. It is what he read and objected to: an
+   API that returns dx,dy in mm and dz in cm from one call. Making StFttDb
+   all-cm costs about a day, carries no schema risk, and the ten-fold
+   multiplication moves to the single place that writes into StFttPoint's
+   mm-valued fields.
+
+2. Do NOT do Tier 3 as a tidy-up. Schedule it with the retirement of
+   StFttPointMaker. StFttClusterPointMaker already writes cm in xyz(), so the
+   switch from one point maker to the other is the moment when FTT point units
+   change anyway -- one migration, one ClassDef bump per class, one read rule,
+   one round-trip test against an old file. Doing it then costs almost nothing
+   extra; doing it separately costs the whole migration twice.
+
+3. Until then, keep doing what the code already does: convert at the boundary
+   and say so at the declaration. Every new accessor added in #49
+   (chamberCentre) is cm, and the mixed-unit ones carry a comment naming the
+   units. That is not elegant, but it is honest and it is checkable.
+
+
+How to verify any of this, cheaply
+----------------------------------
+
+Run the forward chain and grep:
+
+    FTT chamber planes: StFttDb agrees with the TGeo cache on all 16
+      chamber z, worst 9.15527e-08 cm
+
+That line compares a DB-derived geometry against the built geometry. Any unit
+error in Tier 1 breaks it by centimetres. There is no equivalent guard for
+Tier 3 -- which is the point.
