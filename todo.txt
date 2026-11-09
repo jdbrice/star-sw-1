@@ -1,0 +1,293 @@
+TODO / open investigation threads
+==================================
+Last updated: 2026-07-14 night (#6 updated again with the BLC vertex
+fit success rate vs charge result -- real but modest ~1.7 sigma effect,
+north+ 85.6% vs north- 89.7%/baseline 89.5%; #6/#10 also carry the
+earlier same-day JPsi+dybg vz40 MC comparison and charge-misID
+findings; mETCut and MC-log-bloat bugs found+fixed along the way, not
+tracked here since they never were their own todo item -- see git log)
+
+Not a work plan, just a parking lot for loose threads. Resolved items
+are removed as they're closed out rather than kept as history -- git
+log / commit messages / prior todo.txt versions are the record of what
+was done and why, if that's ever needed.
+
+-----------------------------------------------------------------------
+1. High-multiplicity BLCVtx track degradation
+-----------------------------------------------------------------------
+Saw a hint of degraded tracks at high multiplicity in the 4- and
+8-electron/event MC samples when testing BLCVtx. Not characterized yet --
+need to pin down what "degraded" means here (convergence rate? pT
+resolution? DCA?) and whether it's specific to BLCVtx or a general
+high-occupancy effect (see #2).
+
+-----------------------------------------------------------------------
+2. sigma(q/pT) degradation at Ne/evt = 4, 8
+-----------------------------------------------------------------------
+Related to #1 but framed as a resolution question. Candidate causes to
+check:
+  - Occupancy: more hits per event -> more ambiguous hit-to-track
+    assignment during seeding.
+  - Search windows too wide: with more hits present, a window sized for
+    low-occupancy running may pick up the wrong hit more often.
+  - Compare seeding efficiency / fake rate vs Ne/evt to isolate seeding
+    from fitting.
+
+-----------------------------------------------------------------------
+3. More BLC tracks does not improve the BLC vertex -- why?
+-----------------------------------------------------------------------
+Never figured this out. Naively more tracks -> better z_vtx precision
+(smaller sigma_vtx from the weighted mean in doBLCVertexFitting()), but
+that's not what's observed. Worth checking:
+  - Is the weighting (w_i = nFitPoints) actually discriminating
+    good/bad tracks, or are bad tracks getting similar weight to good
+    ones and diluting the vertex?
+  - Is the 3-sigma outlier rejection loop in doBLCVertexFitting()
+    actually converging, or oscillating/stalling with more input tracks?
+  - Could be the same high-occupancy effect as #1/#2 feeding in bad
+    tracks that outnumber the good ones as Ne/evt grows.
+
+-----------------------------------------------------------------------
+4. FwdVtx losing tracks with warm start
+-----------------------------------------------------------------------
+Saw FwdVtx (RAVE forward vertex, trackType=3) lose tracks after the
+warm-start second pass (debug#24, tight FST r+phi sigma refit) was
+added. Not yet clear whether this is:
+  (a) genuine degradation (warm start actually breaking previously-good
+      tracks), or
+  (b) just losing bad tracks/vertices that shouldn't have been kept in
+      the first place (i.e. the warm start is doing its job and the
+      previous behavior was too permissive).
+Need a controlled before/after comparison (warm start on vs off) on the
+same sample, track-by-track, to tell these apart.
+
+PARTLY ANSWERED 2026-11-09. The comparison is now one switch:
+TrackFitter:warmFitFstTightSigma (UseWarmStart in fwd_afterburner_db.C,
+default true = unchanged). Run on 10 events of
+st_fwd_23081001_raw_0000002.MuDst.root, warm start ON vs OFF:
+
+    ON   0 RAVE vertices from 3..15 global tracks, all 10 events
+    OFF  0 RAVE vertices from 2..15 global tracks, all 10 events
+
+So the warm start is NOT what is suppressing FwdVtx today -- there are ZERO
+forward vertices either way. Whatever caused 57 -> 23 in June, something
+LATER took 23 -> 0, and that something is still unidentified. Question (a)
+vs (b) above cannot be settled on this sample any more, because the
+baseline it needs (warm start off, vertices present) no longer exists.
+
+Next step is a bisect, not more analysis. The observable is the
+"FwdVertexFinding: N RAVE vertices from M global tracks" line in
+FwdTracker::findFwdVertices -- note it was added 2026-11-09, so an older
+commit needs that 3-line patch applied before it can be read. Do NOT use
+the packed vertexIndex byte as the observable: the packing changed 6+2 ->
+5+3 across this range (StFwdTrack v3/v4/v5), so it does not mean the same
+thing at both ends of the bisect.
+
+-----------------------------------------------------------------------
+5. FCS cluster position resolution
+-----------------------------------------------------------------------
+Room for improvement, but this is a calorimeter reconstruction question,
+not a tracking issue -- separate workstream from the FwdTrackMaker/
+StFwdAlignmentMaker work. Worth a look whenever FCS-constrained fitting
+(kFCSConstrained) becomes the focus, since cluster position resolution
+directly sets the achievable match window / DCA precision there.
+Directly relevant to the pi0->2gamma mass check in picoDilepton.C/
+plotDilep.C (plt=6) -- pi0 mass resolution is a direct probe of
+cluster position + energy resolution.
+
+-----------------------------------------------------------------------
+6. Dilepton mixed-event mass-shape structure -- still unresolved
+-----------------------------------------------------------------------
+The real-data (202607) mixed-event-subtracted dilepton mass spectrum
+has a persistent, genuine (several-sigma, not noise) structure. Latest
+framing (after the 4-combo/3-zbin mixed-event restructuring): a
+positive excess specific to events where the north-side lepton is
+positively charged (both in the OS channel and, tellingly, in the
+same-charge LS "null test" channel), concentrated at low z-vertex
+([-50,30)). Root cause still unknown. Candidate explanations and where
+they stand as of 2026-07-14:
+  - FTT disk-2 south-half dead zone + field-bending crossover
+    (mechanism: charge-dependent bending redistributes which tracks'
+    FTT hits fall in the dead region) -- real-data diagnostic
+    (checkChargeAsym.C) found a genuine spatial (ECAL cluster Y-
+    position) asymmetry between north+ (mean Y~+11cm) and north-
+    (mean Y~-10cm) consistent with this, but track-quality metrics
+    (nFitPoints, chi2, dcaZ) were NOT asymmetric, and this diagnostic's
+    own Np:Nm ratio (~1:1.1) was far less skewed than the full chain's
+    (~1:5) -- most of the imbalance is downstream of basic track
+    matching. BLC vertex fit success rate vs north-track charge sign,
+    checked 2026-07-14 night (fixed a tautology bug first -- selecting
+    on trackType==4/BLCVtx pre-conditions on vertex success by
+    construction, always giving 100%; re-matched on trackType==0/Global
+    instead): all-event baseline 89.5%, north- 89.7% (matches baseline),
+    north+ 85.6% (~4pts low, ~1.7 sigma on 30 files). Real and in the
+    right direction, but too small alone to explain a ~5x count
+    imbalance -- needs the full 202607 dataset to sharpen the
+    significance, and likely needs to compound with the
+    ETOT/HTOT/Cone/SigmaMax cluster-quality cuts (not applied in this
+    quick diagnostic) to reach that scale -- those cuts are now the
+    leading untested suspect for the rest of the gap.
+  - StFwdResidualMaker quadrant x charge FTT-usage study: REAL RESULT
+    now in hand (2026-07-15, 1272/3846 afterburner jobs merged -- see
+    proposal_mixed.txt for full numbers, jpsi/ftt_quadrant_charge.html
+    for plots/table). North-side positive-charge tracks get an FTT hit
+    ~24-26% less often than negative (Global tracks: N-top -26.1%,
+    N-bottom -23.6%; South: -4.2%/+7.1%, much smaller). Effect is
+    UNIFORM across all 4 FTT disks and both x/y orientations -- this
+    argues against the original disk-2-specific dead-zone hypothesis;
+    looks like a broader north-side charge-dependent effect instead.
+    Same direction as the BLC-vertex-fit-rate finding, now at much
+    higher statistics. BLCVtx numbers show the same direction but have
+    an unphysical >1.0 fraction in N-bottom (likely double-counting
+    across the chained refit stages) -- not yet root-caused, don't
+    trust BLCVtx numbers quantitatively yet. 2D hit-position maps built
+    but inconclusive (no denominator for "track passed through but
+    missed") -- FIXED 2026-07-16: added h2Fst/FttProjXY histograms
+    (StFwdResidualMaker.h/.cxx), filled with the track's continuous
+    projected (x,y) at that disk instead of the strip-quantized hit
+    position, same gating. cons-built, confirmed to remove the banding
+    artifact (single-file before/after comparison).
+
+    The full 3846-job afterburner reproduction finished 2026-07-16
+    morning, but ALL 3846 files still have the OLD histograms (no
+    ProjXYByCharge) -- every job had already started (dlopen'd the old
+    .so) before the rebuild, even ones finishing many hours later (the
+    biggest files run 4+ hours). Confirmed via a 1-file resubmit test
+    (moved that file's picoDst+residual aside, resubmitted just it) that
+    a genuinely fresh condor job DOES pick up the new histograms
+    correctly -- so the fix itself is verified working, just not
+    reflected in the current 3846-file dataset. User's call (2026-07-16):
+    don't resubmit the batch for this now -- it's a supplementary
+    diagnostic, not the headline result (which is unaffected, since the
+    plane-usage/quadrant-charge logic itself never changed). Will
+    naturally pick up next time this production is rerun for other
+    reasons.
+
+    jpsi/ftt_quadrant_charge.html restructured 2026-07-16 into compact
+    tables (Global/BLCVtx columns, height=200 thumbnails, click for full
+    size): one for the full-statistics hit-position maps, one for the
+    single-file projection-based maps. Once the projection table has
+    full-batch statistics, it supersedes the hit-position table entirely
+    (same info, no banding artifact) -- drop the hit-position table then
+    rather than keeping both.
+  - Charge misidentification -- confirmed real and non-trivial via two
+    independent methods on pythia.JPsi.vz40 MC: (1) OS/LS leakage in
+    the dilepton mass spectrum (a pure e+e- sample should have zero
+    like-sign content; solving 2p(1-p)=LS/(LS+OS) gives single-track
+    misID p~15-19% for BLCVtx, ~15% for FCSTRK); (2) direct truth-
+    matched q/pT_reco-vs-true 2D histogram from picoMatch.C
+    (trkQPtRecovsTruBLCVtx/FCSTRK, charge-agnostic, full statistics):
+    BLCVtx ~25.0%, FCSTRK ~12.8% -- FCSTRK's ECAL-cluster-constrained
+    refit roughly halves the misID rate vs BLCVtx. Not yet shown to be
+    the *source* of the north+/north- asymmetry specifically (would
+    need the misID rate itself to be charge- or z-asymmetric, not just
+    present) -- worth checking next.
+  - Real physics / detector-acceptance artifact -- tested directly via
+    #10's JPsi+dybg realistic-vertex MC comparison: JPsi MC (pure
+    signal) shows NO north-charge asymmetry at all (all 12
+    zbin x combo panels look alike), ruling out a simple universal
+    charge-bending artifact that would act on any north-side track
+    regardless of context. dybg MC (background-rich) shows a partial,
+    not-quite-matching echo: a real excess in z=[-50,30) NpSm only, but
+    at low mass (~0-2 GeV) rather than the ~2 GeV region seen in real
+    data, and not mirrored in the same-charge NpSp channel the way real
+    data's effect appears in both OS and LS north+ channels. Result:
+    background/multiplicity-density-correlated, not purely data-only,
+    but not a clean reproduction either -- inconclusive.
+  - Miscalibration (pi0 mass check): both JPsi and dybg MC pi0 mass
+    plots look fine/consistent with the established peak -- no
+    indication of an energy-scale problem.
+Also found and fixed along the way: dybg's realistic-vertex MC filters
+on generator-level ET of ANY stable particle (including hadrons, which
+only deposit partial MIP energy in ECAL), but the analysis-level
+picoDilepton.C cluster ET cut (mETCut) was 0.4 GeV -- well below the
+real ~1-1.1 GeV trigger threshold and the JPsi filter's effective
+electron-ET cut. Raising it (0.4->1.0, then dialed back to 0.8 GeV)
+cut dybg's surviving OS/LS candidate yield by ~85% (4094->600 total),
+confirming most of that population was sub-trigger-threshold hadronic-
+MIP contamination that real data would never have seen. dybg needs
+substantially more statistics at the corrected cut before the z0/NpSm
+excess (or anything else in the 12-panel breakdown) can be trusted --
+another MC batch queued for 2026-07-14 evening.
+
+-----------------------------------------------------------------------
+8. FCS track-cluster matching cut needs a real tuning pass -- paused for Daniel discussion
+-----------------------------------------------------------------------
+picoDilepton.C's track-FCS matching (mDRCut=20cm/mRdphiCut=8cm) is
+loose and hand-tuned. Investigated switching to the reconstruction-level
+StFcsTrackMatchMaker match (t->ecalMatchIndex()) instead, but paused
+before implementing pending a bigger-picture discussion with Daniel.
+Key findings:
+  - doFCSConstrainedFitting() (FwdTracker.h ~L1121) refits each BLCVtx
+    track with its matched ECAL cluster as a real Kalman-fit hit (1.2cm
+    position sigma) to produce FCSTRK, but the matched cluster's
+    identity is NOT persisted anywhere retrievable -- only its effect
+    on the fitted trajectory survives.
+  - StFcsTrackMatchMaker (runs later in the chain) independently
+    re-matches every track type's post-fit ecalProjection() to the
+    nearest cluster within a fixed 6cm window. For FCSTRK this should be
+    near-tautological (the fit was anchored to that cluster), but isn't
+    guaranteed in busy events, and it's the ONLY source of queryable
+    cluster association at all for the other 5 track types -- not
+    obsolete, still essential.
+  - StFcsTrackMatchMaker's own cuts (6.0cm ecal/10.0cm hcal, energy
+    thresholds) are themselves hand-tuned, not a solved reference.
+    Hcal matching hasn't been studied at all yet.
+  - The right window is tracking/alignment-dependent and will need
+    periodic retuning as those improve -- MC can't validate it well.
+Recommended approach (mine, pending Daniel's input): use picoMatch.C
+(script-level, no recompile/reprocess, fast iteration) to run a loose
+window, tag real-J/psi-associated track-cluster pairs via the dilepton
+mass peak, derive a properly-tuned window from that residual
+distribution (e.g. 3-5 sigma), then promote the result into
+StFcsTrackMatchMaker's compiled defaults. Extending StFwdResidualMaker
+for FCS residuals is a reasonable longer-term consistency step but not
+the first move, given this needs to be low-friction to actually get
+redone each time alignment changes.
+
+-----------------------------------------------------------------------
+10. MC sample of J/psi & DYBG with realistic vertex distribution
+-----------------------------------------------------------------------
+runPythia.C's vz argument changed from vertex CENTER to vertex SIGMA
+(mean fixed at 0,0,0; sigmaX=sigmaY=0.1cm, sigmaZ=vz) -- vz40 means a
+realistic sigma_z=40cm spread. Both samples produced, pico-analyzed
+(BLCVtx and FCSTRK track types), and compared against real data
+202607 through the identical 4-combo/3-zbin mixed-event chain -- see
+#6 for the physics results (inconclusive on the north+/north-
+mechanism, but ruled out a simple universal charge-bending artifact
+and surfaced the mETCut/hadronic-MIP-contamination bug in dybg).
+Current sizes: pythia.JPsi.vz40 at 200/200 runs; pythia.dybg.vz40 at
+20000/20000 runs (10 missing/evicted runs caught via the new
+check_missing.pl and resubmitted) but only ~600 OS+LS candidates
+survive post-mETCut=0.8 -- more dybg statistics queued for 2026-07-14
+evening (target TBD, was ~1:7 candidates/run survival at the old cut).
+Also cleaned up MC production log volume along the way (dybg run1 log
+was 574 MB / 7.8M lines): genfit's errorOut wasn't redirected (every
+failed/looper RKTrackRep propagation dumped a multi-line exception to
+stderr, unconditionally -- the dominant contributor), two unconditional
+debug leftovers in FitterUtils.h/StFwdTrackMaker.cxx, an unguarded
+LOG_INFO dump in ObjExporter.h, and sim.C had
+StFcsFastSimulatorMaker's setDebug(1) hardcoded on (~500k lines/run of
+per-hit ECAL/HCAL/Pres prints). All fixed; not yet verified against an
+actual production run (tonight's dybg batch will be the first check).
+
+-----------------------------------------------------------------------
+Lower priority / already-noted elsewhere
+-----------------------------------------------------------------------
+- FST r-sigma retuning: per the FST Covariance Study conclusion
+  (debug/index.html), full-pitch r-sigma was kept as the working
+  baseline; retuning the seeding algorithm for the correct 2.875 cm
+  strip geometry (rather than the 3.0 cm raster) was flagged there as
+  future work and never done.
+- G11 (FstWedgeAligner, per-wedge FST phi correction): still on hold,
+  needs to be reconciled with how the full alignment program handles
+  the same correction before it's worth porting to akio-fwdtrack-2026.
+- StFttClusterPointMaker.cxx: during the pre-PR audit, found that
+  akio202607's debug branch tags dy-clusters with kFttDiagonalV while
+  retrieving them from the kFttDiagonalH bucket (internally
+  inconsistent there) -- concluded this was an accidental typo and
+  akio-fwdtrack-2026's kFttDiagonalH tagging (consistent retrieval +
+  tag) is correct, but never independently re-derived which label is
+  physically right from first principles. Worth a second look if
+  diagonal-strip residuals ever look asymmetric between the two
+  orientations.

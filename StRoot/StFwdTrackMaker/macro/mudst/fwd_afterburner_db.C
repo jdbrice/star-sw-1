@@ -46,6 +46,13 @@ bool runFwdResidual = true;  // FST/FTT alignment residuals (StFwdResidualMaker)
 // to turn it on for a specific production campaign without a source edit.
 bool runFwdAlignment = false;
 
+// Warm-start second-pass fit with tight FST r+phi sigma (debug#24). Set false
+// to run the A/B that todo.txt item 4 asks for: FwdVtx (trackType=3) entries
+// fell 57 -> 23 when this was added and it was never established whether that
+// dropped bad vertices or broke good tracks.
+//   gROOT->LoadMacro(".../fwd_afterburner_db.C"); UseWarmStart = false; fwd_afterburner_db(...)
+bool UseWarmStart = true;
+
 // Memory Baseline
 // bool runDb = false;
 // bool runFttChain = true;
@@ -272,6 +279,10 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 			fwdTrack->setSeedFindingWithFst();
 		}
 		fwdTrack->setTrackRefit( true );
+		if ( !UseWarmStart ){
+			cout << "fwd_afterburner_db: warm-start refit OFF (A/B diagnostic)" << endl;
+			fwdTrack->setConfigKeyValue( "TrackFitter:warmFitFstTightSigma", 0 );
+		}
 
 		// Fitter Options
 		fwdTrack->setFitDebugLvl( 0 );

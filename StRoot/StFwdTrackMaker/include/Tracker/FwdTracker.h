@@ -810,7 +810,13 @@ class ForwardTrackMaker {
         // tight FST r+phi sigma (pitch/sqrt12 for both).  warmFitFstTightSigma modifies
         // mFitTrack in-place; refreshFromTrack() picks up the updated momentum, charge,
         // covariance, and chi2 for all track types.
-        if ( gtrGlobalRefit.mIsFitConvergedFully ){
+        // Switchable so the warm start can be A/B'd: todo.txt item 4 has asked
+        // since June for "a controlled before/after comparison (warm start on
+        // vs off) on the same sample", because FwdVtx entries dropped 57 -> 23
+        // when this was added and nobody established whether that was losing
+        // bad vertices or breaking good tracks. Default true = unchanged.
+        if ( gtrGlobalRefit.mIsFitConvergedFully &&
+             mConfig.get<bool>( "TrackFitter:warmFitFstTightSigma", true ) ){
             bool warmOk = mTrackFitter->warmFitFstTightSigma( gtrGlobal.mSeed );
             if ( warmOk )
                 gtrGlobalRefit.refreshFromTrack(); // BBB: propagate tight-sigma state

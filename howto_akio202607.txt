@@ -284,12 +284,28 @@ What has been ruled out:
                             used to read IGNORE -- the enum is
                             {GEANT=0, STEVENT, MUDST, IGNORE}, so 1 is STEVENT
                             and the FTT hits were always being loaded.)
-  not something we broke    findFwdVertices, the default-constructed factory and
+  not the warm start        TrackFitter:warmFitFstTightSigma off vs on, same 10
+                            real-data events: 0 vertices either way.
+  not findFwdVertices       that function, the default-constructed factory and
                             useBeamConstraint=false are BYTE-IDENTICAL to
-                            star-bnl/main. Last upstream touch was Daniel's
-                            #731, 2025-09-11. Whatever is wrong is wrong
-                            upstream too, so it is very unlikely this has ever
-                            produced a forward vertex in a production.
+                            star-bnl/main (last upstream touch Daniel's #731,
+                            2025-09-11). That does NOT clear our branch: we
+                            change the fitter, the field adapter and material
+                            effects, all of which change the track STATES RAVE
+                            is handed. The identical-code argument was
+                            overstated when first written here.
+
+IT USED TO WORK. THIS IS A REGRESSION, not a feature that never existed.
+debug/index.html records FwdVtx (trackType=3) entries going 57 -> 23 when the
+warm start was added in June, and todo.txt item 4 was opened to investigate
+that drop -- 57 and 23 are both non-zero. Today it is 0 on the same kind of
+sample, and the A/B above shows the warm start is not the cause, so something
+between July and November took 23 -> 0. A student's earlier Lambda analysis
+with a mass peak built from forward vertices is independent confirmation.
+
+That makes this a BISECT, not an analysis problem. todo.txt item 4 has the
+observable to use and the trap to avoid: do NOT bisect on the packed
+vertexIndex byte, which changed meaning (6+2 -> 5+3) across the range.
 
 With TrackFitter:raveVerbosity raised, RAVE says it itself:
 
