@@ -151,7 +151,66 @@ because a sigma fudge hides the misalignment it absorbs.
 5. Results
 ----------
 
-(to be filled in when the two arms finish)
+5a. PLANAR vs SPACE POINTS -- measured, and it is chi2-neutral
+--------------------------------------------------------------
+
+60 events of st_fwd_23081001_raw_0000002.MuDst.root, ONE build, only
+TrackFitter:useSpacePoints differing. script/planarAB.C on the two picoDsts:
+
+  track type  |           space points |                 planar | ratio
+              |       N    chi2  nSeed |       N    chi2  nSeed |   chi2  nSeed
+  ------------+------------------------+------------------------+--------------
+  Global      |     744  27.783  3.609 |     744  26.771  3.585 |   0.96   0.99
+  Beamline    |     744 140.826  6.401 |     744 132.943  6.364 |   0.94   0.99
+  Primary     |     744 152.427  6.132 |     744 152.582  6.106 |   1.00   1.00
+  FwdVtx      |       6   0.596  4.333 |       6   0.596  4.333 |   1.00   1.00
+  BLCVtx      |     744 223.179  8.371 |     744 217.721  8.327 |   0.98   0.99
+  FCSConstr   |     500 131.267  8.390 |     491 140.827  8.387 |   1.07   1.00
+
+Identical track counts, nSeed flat to 1%, chi2 ratios 0.94 to 1.07. Switching
+the MEASUREMENT MODEL costs essentially nothing in chi2. Global and Beamline
+are marginally BETTER planar; FCS-constrained is 7% worse and loses 9 of 500
+tracks.
+
+5b. CORRECTION -- this is NOT the comparison the x3.9 came from
+---------------------------------------------------------------
+
+I set this run up against the wrong baseline and nearly reported 5a as "the
+planar case is made". It is not the same measurement.
+
+The 2026-10-01 campaign's two arms "differ only in NOADD"
+(project note: pico_fttadd_20260930 vs control pico_iter2_20260930). That is
+fttNoAdd=1 versus fttNoAdd=0 -- FTT hits FOUND BUT NOT ADDED to the track,
+versus added. So chi2 4.332 -> 16.737 is the cost of PUTTING FTT HITS ON THE
+TRACK, not the cost of representing them as planar rather than space points.
+
+Both arms of 5a have fttNoAdd at its default (false), so both pay that cost
+already, which is exactly why the ratio is ~1.
+
+Two things follow:
+
+  - 5a is still a real and useful result: the planar measurement model is
+    chi2-neutral, so flipping kUseSpacePoints does not by itself cost chi2.
+  - The x3.9 question is UNANSWERED by 5a and is the one that needs
+    re-measuring on current geometry. That is the fttNoAdd 1-vs-0 run, section
+    5c.
+
+Also do NOT compare the absolute chi2 above to the 10-01 numbers. Primary here
+is ~152 against 10-01's 16.737; StPicoFwdTrack::chi2() is raw chi2 and it is
+not established that the 10-01 figures were the same quantity rather than
+chi2/ndf. The RATIO within one run is what is comparable.
+
+5c. FTT hits off vs on (the x3.9 re-measurement)
+------------------------------------------------
+
+Launched: 60 events, planar both arms, fttNoAdd=1 then fttNoAdd=0.
+  ab_noadd1.log / ab_noadd1.picoDst.root   hits found, NOT added
+  ab_noadd0.log / ab_noadd0.picoDst.root   hits added
+Compare with script/planarAB.C (arg 1 = the NOADD arm as "space points"
+column, arg 2 = the hits-on arm; the column headings lie but the ratio is
+right).
+
+(result to be filled in)
 
 
 6. Also done today, unrelated to this

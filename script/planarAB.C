@@ -35,7 +35,7 @@ void planarAB( const char *fSp, const char *fPl )
         if ( !t ) { printf("planarAB: no PicoDst tree in %s\n", fn[iarm]); return; }
 
         TClonesArray *arr = 0;
-        t->SetBranchAddress( "FwdTrack", &arr );
+        t->SetBranchAddress( "FwdTracks", &arr );   // "FwdTracks", plural
         Long64_t nev = t->GetEntries();
         printf("%s : %lld events\n", fn[iarm], nev);
         for ( Long64_t iev = 0; iev < nev; iev++ ) {
@@ -44,7 +44,7 @@ void planarAB( const char *fSp, const char *fPl )
             for ( int itr = 0; itr < arr->GetEntriesFast(); itr++ ) {
                 StPicoFwdTrack *tr = (StPicoFwdTrack*) arr->At( itr );
                 if ( !tr ) continue;
-                int ty = tr->vtxIndexRaw() & 0x07;
+                int ty = (int) tr->trackType();   // vtxIndexRaw() is not CINT-callable
                 if ( ty < 0 || ty > 5 ) continue;
                 sumChi2[iarm][ty] += tr->chi2();
                 sumSeed[iarm][ty] += tr->numberOfSeedPoints();
