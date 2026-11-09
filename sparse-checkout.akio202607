@@ -50,10 +50,13 @@
 # falls back to hardcoded geometry and looks like "the tables do nothing".
 /StDb/
 /StarDb/
-# Per-run FTT time anchors. StFttDbMaker::loadDataWindows() reads
-# fttDataWindow/fttDataWindow.<run>.txt relative to the working directory and
-# uses it INSTEAD of the DB entry. Without it, jobs fall back to the global
-# window with no warning.
+# FTT data-window diagnostics (png/, root/). The per-run time anchors
+# themselves now come from Calibrations_ftt.fttDataWindowsB -- 58 runs pushed
+# 2026-10-16 -- so this directory is NOT needed to get the right windows.
+# StFttDbMaker::loadDataWindows() still reads
+# fttDataWindow/fttDataWindow.<run>.txt if it is present and then uses it
+# INSTEAD of the DB, with a LOG_WARN saying so; that is for calibration work,
+# and a stray file left here silently overrides the database.
 /fttDataWindow/
 # runab (the per-file job script) and the analysis macros.
 /script/

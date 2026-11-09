@@ -1,8 +1,27 @@
-How to check out, compile and run the afterburner from branch akio202607
+How to check out, compile and run branch akio202607
+Last updated 2026-11-09.
+
+Covers two different jobs:
+
+  the AFTERBURNER   real data, MuDst in -> picoDst + residuals out.
+                    Setup .. Run Afterburner .. Check the afterburner output.
+  SIMULATION        generate a sample and run forward tracking on it.
+                    Simulation .. Check the reco log.
+
+They use DIFFERENT geometry lanes and the lanes are not interchangeable:
+afterburner Run-22 is dev2022sm + sdt20211112.000004, Run-24 is y2024 +
+sdt20240622, simulation is y2022c + sdt20211112.000004 and ideal. Nothing warns
+you if you cross them except the one wedge-mounting error quoted later.
 
 *** Setup
 
-singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif csh
+singularity exec -e -B /direct -B /star -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif csh
+
+No -B /afs. /afs is gone -- inside the container it is an empty directory, and
+binding it achieves nothing. Everything that used to live under
+/afs/rhic.bnl.gov/star is at /star/nfs4/AFS/star, which $STAR already points
+at, so nothing is missing. If a macro fails on a path under /afs, the macro is
+stale, not the environment.
 stardev
 setenv TESTDIR <your dir>
 mkdir -p $TESTDIR
@@ -23,10 +42,65 @@ git log --oneline -1
 Do NOT run "git sparse-checkout init"
 
 cat .git/info/sparse-checkout
-ls fttDataWindow | wc -l
+ls StarDb/Geometry/fst | wc -l
 
-The first must show the /StRoot/StFcs* ... patterns, not "/*" and "!/*/".
-The second must be 43.
+The first must show the /StRoot/StFcs* ... patterns, not "/*" and "!/*/" --
+those two mean sparseCheckout was initialised rather than copied, and you have
+the whole tree.
+
+The second must be 12. StarDb is the one data directory the build genuinely
+needs: St_db_Maker searches ./StarDb before $STAR/StarDb, and without it a job
+falls back to hardcoded geometry and looks like "the tables do nothing".
+
+Do NOT use "ls fttDataWindow | wc -l" -- that was the old test, from when the
+43 per-run files were the only source of the FTT data windows. They are in the
+database now; see "What comes from the database now" below.
+
+*** What comes from the database now
+
+Things that used to be hardcoded in the makers, or read from local text files,
+are in the STAR offline DB. The local StarDb directory still matters -- it is
+what the sdt lanes below read -- but these are no longer file-driven:
+
+  Calibrations_ftt.fttDataWindowsB   per-VMM FTT time windows and anchors.
+                                     58 runs pushed 2026-10-16 (44 Run-22, 2
+                                     Au+Au 2023, 12 zero-field 2024) and
+                                     verified run by run. A run without its own
+                                     stamped entry gets StFttDb's built-in
+                                     [-65,100], NOT a neighbouring run's --
+                                     anchors are reset at every run start, so
+                                     inheriting them would be wrong.
+                                     fttDataWindow/fttDataWindow.<run>.txt is
+                                     still read if present and OVERRIDES the DB,
+                                     with a LOG_WARN. For calibration only.
+
+  Geometry_ftt                       sTGC survey and alignment: stgcOnTpc (1
+                                     row), stationOnStgc (4), pentOnStation
+                                     (16). Twelve slots, 252 rows, pushed and
+                                     verified 2026-11-06. Run-22 slots sit at
+                                     20211010 (ideal), 20211011 (survey),
+                                     20211015 (baseline + first alignment).
+                                     Full description, including why ideal and
+                                     survey differ by up to 48 mm, is in
+                                     StRoot/StFttDbMaker/macro/Geometry/ftt/README
+                                     -- read that rather than re-deriving it.
+
+  Geometry_fst                       FST survey. The local copies under
+                                     StarDb/Geometry/fst are the lanes the sdt
+                                     selects; see the fGeom section below.
+
+Two things to know before touching any of it:
+
+  - We have INSERT but not UPDATE or DELETE on Geometry_ftt, and StDbSql's own
+    rollback is DELETE-based. A wrong row can only be superseded or asked away.
+    The push macro refuses to insert blind for that reason.
+  - PR #20 has landed, so DEV's AGML already queries the Geometry_ftt tables.
+    Any non-identity push changes production geometry.
+
+  - A local StarDb/Geometry/stgc directory exists in this tree. Once the
+    stgc -> ftt namespace rename lands (PR #23) it will shadow the DB, because
+    St_db_Maker takes the latest timestamp at or before the sdt regardless of
+    which directory it came from. Watch for it then.
 
 *** Compile
 
@@ -50,17 +124,33 @@ priority (StBFChain puts $PWD/StarDb fourth in the list). A local file only
 wins if its timestamp is later than every other entry for that table, the ones
 in $STAR included. See StRoot/StFstDbMaker/macro/README.
 
-run22 (with iteration 2 misalign table)
+run22 -- this is the one fGeom.root points at
 
-root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211015.000003",1)' |& tee build_geom.run22.log
-ls -la fGeom.dev2022sm.misalign1.sdt20211015.000003.root
+root4star -l -b -q 'build_geom_misalign.C("dev2022sm","20211112.000004",1)' |& tee build_geom.run22.log
+ls -la fGeom.dev2022sm.misalign1.sdt20211112.000004.root
 rm -f fGeom.root
-ln -s fGeom.dev2022sm.misalign1.sdt20211015.000003.root fGeom.root
+ln -s fGeom.dev2022sm.misalign1.sdt20211112.000004.root fGeom.root
 
-run24 (with iteration 1 misalign table)
+The sdt has to be LATER than the local StarDb tables or they are not read at
+all. StarDb/Geometry/fst holds slots at 20211110/11/12, all .000001, so
+20211112.000004 takes the 20211112 lane, and anything earlier excludes the
+local tables entirely. That is the whole reason for the trailing .000004.
 
-root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,"iter1")' |& tee build_geom.run24.log
-ls -la fGeom.y2024.misalign1.sdt20240622.iter1.root
+Older notes name sdt20211015.000003 here. That lane sits BEFORE every local
+table, so it builds DB-only ideal geometry -- a different cache, not an older
+spelling of this one. Use it only if ideal geometry is what you want.
+
+run24
+
+root4star -l -b -q 'build_geom_misalign.C("y2024","20240622",1,"iter2")' |& tee build_geom.run24.log
+ls -la fGeom.y2024.misalign1.sdt20240622.iter2.root
+
+iter2 is the newest Run-24 cache on disk (2026-10-24) and the one to use unless
+you are reproducing an older campaign. The earlier ones are still there under
+pre-convention names -- fGeom.y2024.iter1.sdt20240622.root and
+fGeom.y2024.seeded.sdt20240622.root -- and runab's own header comment still
+names fGeom.y2024.sdt20240622.root, older again. The LABEL is the only record
+of which iteration a cache holds, so trust the label, never the sdt.
 
 Expect ~380 kB and a "=== build_geom_misalign done ===" block naming geomtag,
 sdt, misalign and how many FCS volumes were replaced with air (15).
@@ -72,6 +162,9 @@ gives iteration 1.
 
 For now, I do not symlink the run24 cache to fGeom.root. Pass it as runab's
 11th argument instead, so a run22 run cannot silently pick it up.
+
+SIMULATION uses a third lane -- y2022c, ideal. Do not reuse either of these two
+caches for MC; see the simulation section below.
 
 Note StRoot/StFwdTrackMaker/macro/build_geom.C is a DIFFERENT, much older macro
 that reproduces neither cache (sdt20211016, no misalign, no arguments). Do not
@@ -91,7 +184,7 @@ setenv SCRATCH $TESTDIR/scratch
       |& tee runab.log
 
 For run24 use
-      0  1  1,0,0  2  -1,3  2,0,0  200  fGeom.y2024.misalign1.sdt20240622.iter1.root
+      0  1  1,0,0  2  -1,3  2,0,0  200  fGeom.y2024.misalign1.sdt20240622.iter2.root
 for the last line, to specify the run24 fGeom file.
 
 Arguments, in order:
@@ -110,7 +203,7 @@ Arguments, in order:
 $SCRATCH must exist and should be EMPTY -- runab symlinks .$STAR_HOST_SYS and
 StRoot into it and copies the 180 MB MuDst there.
 
-*** Check
+*** Check the afterburner output
 
 ls -la out/ out/residual/ out/blinddiag/
 
@@ -122,7 +215,14 @@ copy-back got nothing.
 cat $SCRATCH/fwd_key.log
 
 Must show StFttDb reading the DB tables and the per-run FTT anchors.
-"falling back" there means StarDb or fttDataWindow was not picked up.
+"falling back" there means StarDb was not picked up, or this run has no
+fttDataWindowsB entry stamped for it -- only 58 runs are calibrated -- and
+StFttDb::getTimeCut went to its built-in [-65,100].
+
+A line reading "LOADING DATA WINDOWS FROM LOCAL FILE" is the opposite problem:
+a leftover fttDataWindow/fttDataWindow.<run>.txt in the working directory is
+overriding the database. That override exists for calibration work only --
+remove or rename the file to use the DB.
 
 *** Simulation: generate a sample and run forward tracking on it
 
