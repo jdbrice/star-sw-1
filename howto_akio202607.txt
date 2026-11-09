@@ -249,20 +249,16 @@ One line per event: how many RAVE vertices, from how many global tracks, and
 each vertex's id, z and track count. If tracks were dropped before RAVE
 (null or unconverged fits) a second line says how many.
 
-*** Known broken: forward vertex finding (2026-11-09)
+*** Forward vertex finding: rare, and single-track (2026-11-09)
 
-RAVE returns ZERO vertices for essentially every event, on MC and on real data
-alike.
+Forward vertices come out at about 0.03 per event, which is what they did in
+June, so nothing has regressed. But every one seen carries a SINGLE track,
+which is not a vertex, and no multi-track vertex has been formed at all.
 
-REAL DATA is the important measurement: 10 events of
-st_fwd_23081001_raw_0000002.MuDst.root through the ordinary afterburner gave
-2 to 15 CONVERGED global tracks per event and 0 RAVE vertices in all ten. So
-this is not a simulation artifact and not a statistics problem -- 14 converged
-forward tracks in one event produce no vertex.
-
-MC says the same: 10 Lambda events, and single- and four-muon guns, give 0
-vertices from 1, 2, 3, 4 and 5 converged tracks, including four muons thrown
-from a common (0,0,0).
+Measured: ~33 events of st_fwd_23081001_raw_0000002.MuDst.root through the
+ordinary afterburner, 304 converged global tracks offered to RAVE across them,
+events carrying 8 to 15 each -> 1 vertex, nTrk=1. MC agrees: 10 Lambda events
+and a four-muon gun gave none, a single-muon gun gave 1 in 10 events, nTrk=1.
 
 What has been ruled out:
 
@@ -295,17 +291,37 @@ What has been ruled out:
                             is handed. The identical-code argument was
                             overstated when first written here.
 
-IT USED TO WORK. THIS IS A REGRESSION, not a feature that never existed.
-debug/index.html records FwdVtx (trackType=3) entries going 57 -> 23 when the
-warm start was added in June, and todo.txt item 4 was opened to investigate
-that drop -- 57 and 23 are both non-zero. Today it is 0 on the same kind of
-sample, and the A/B above shows the warm start is not the cause, so something
-between July and November took 23 -> 0. A student's earlier Lambda analysis
-with a mass peak built from forward vertices is independent confirmation.
+NOT A REGRESSION, AND COUNT YOUR EVENTS BEFORE SAYING OTHERWISE.
 
-That makes this a BISECT, not an analysis problem. todo.txt item 4 has the
-observable to use and the trap to avoid: do NOT bisect on the packed
-vertexIndex byte, which changed meaning (6+2 -> 5+3) across the range.
+The June baseline in debug/index.html is 23 FwdVtx entries in 1000 EVENTS of a
+single-electron gun -- 0.023 vertices per EVENT. Forward vertices have always
+been rare. Ten events therefore expect 0.2 of them, so a zero in ten events is
+not evidence of anything, and an earlier version of this section drew exactly
+that unfounded conclusion.
+
+With real statistics the rate matches June:
+
+    real data, ~33 events, 304 global tracks offered  ->  1 vertex
+    0.03 per event, against 0.023 per event in June 2026
+
+So nothing has broken since June. The warm-start A/B in todo.txt item 4 has
+the same sample-size problem and settles nothing either; rerun it at 1000
+events on the same single-particle gun the June number used.
+
+WHAT IS ACTUALLY WRONG is not the rate, it is the vertices themselves:
+
+    every forward vertex seen so far has nTrk = 1
+
+A single-track "vertex" is not a vertex. Across ~33 real-data events, 304
+converged global tracks offered to RAVE, and events carrying 8 to 15 of them,
+not one MULTI-track vertex was formed. That observation does not depend on the
+per-event rate, and it is the thing that blocks a Lambda study: Lambda -> p pi
+needs a two-track vertex.
+
+Curiosity worth chasing: the vertex id came back as 2 every single time -- in
+MC, in the beam-constraint test, and in real data. An id that never varies is
+consistent with getId() not being a per-event index at all (see the vertex
+index section below).
 
 With TrackFitter:raveVerbosity raised, RAVE says it itself:
 

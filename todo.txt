@@ -61,7 +61,12 @@ added. Not yet clear whether this is:
 Need a controlled before/after comparison (warm start on vs off) on the
 same sample, track-by-track, to tell these apart.
 
-PARTLY ANSWERED 2026-11-09. The comparison is now one switch:
+ATTEMPTED 2026-11-09, AND THE ATTEMPT WAS TOO SMALL TO COUNT. The June
+numbers are 57 and 23 entries in 1000 EVENTS of a single-electron gun --
+0.023 vertices per event. Any comparison run on ten events expects 0.2 of
+them, so it cannot distinguish the two hypotheses, or indeed any hypothesis.
+Rerun at 1000 events on the SAME single-particle gun before reading anything
+into it. What follows is recorded only so the switch and the trap are known. The comparison is now one switch:
 TrackFitter:warmFitFstTightSigma (UseWarmStart in fwd_afterburner_db.C,
 default true = unchanged). Run on 10 events of
 st_fwd_23081001_raw_0000002.MuDst.root, warm start ON vs OFF:
@@ -69,13 +74,12 @@ st_fwd_23081001_raw_0000002.MuDst.root, warm start ON vs OFF:
     ON   0 RAVE vertices from 3..15 global tracks, all 10 events
     OFF  0 RAVE vertices from 2..15 global tracks, all 10 events
 
-So the warm start is NOT what is suppressing FwdVtx today -- there are ZERO
-forward vertices either way. Whatever caused 57 -> 23 in June, something
-LATER took 23 -> 0, and that something is still unidentified. Question (a)
-vs (b) above cannot be settled on this sample any more, because the
-baseline it needs (warm start off, vertices present) no longer exists.
+Both arms give zero, which at 0.023/event is the expected outcome for ten
+events whether the warm start matters or not. NO CONCLUSION. In particular
+there is no evidence of a 23 -> 0 regression: a single-muon gun over 10
+events gave 1 vertex, i.e. 0.1/event, at or above the June rate.
 
-Next step is a bisect, not more analysis. The observable is the
+The observable for a proper run is the
 "FwdVertexFinding: N RAVE vertices from M global tracks" line in
 FwdTracker::findFwdVertices -- note it was added 2026-11-09, so an older
 commit needs that 3-line patch applied before it can be read. Do NOT use
