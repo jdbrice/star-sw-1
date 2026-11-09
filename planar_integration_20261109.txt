@@ -210,7 +210,73 @@ Compare with script/planarAB.C (arg 1 = the NOADD arm as "space points"
 column, arg 2 = the hits-on arm; the column headings lie but the ratio is
 right).
 
-(result to be filled in)
+RESULT -- and it is the opposite of what we hoped:
+
+  track type  |        FTT hits OFF    |         FTT hits ON    | ratio
+              |       N    chi2  nSeed |       N    chi2  nSeed |   chi2  nSeed
+  ------------+------------------------+------------------------+--------------
+  Global      |     744   0.096  3.078 |     744  27.301  3.578 | 285.32   1.16
+  Beamline    |     744   3.203  4.294 |     744 142.756  6.403 |  44.57   1.49
+  Primary     |     744   4.438  4.262 |     744 163.010  6.165 |  36.73   1.45
+  FwdVtx      |       6   0.186  4.000 |       6   0.596  4.333 |   3.21   1.08
+  BLCVtx      |     744   4.313  5.360 |     744 214.358  8.371 |  49.70   1.56
+  FCSConstr   |     660  21.888  6.361 |     500 120.772  8.422 |   5.52   1.32
+
+The CONTROL ARM VALIDATES THE COMPARISON: hits-off Primary chi2 4.438 against
+10-01's 4.332, and nSeed 4.262 against 4.268. Same quantity, same baseline, so
+the absolute numbers ARE comparable to 10-01 after all (my earlier caution in
+5b was unnecessary for the control).
+
+But the hits-on arm is 163.0 where 10-01 had 16.737. The penalty for adding FTT
+hits went from x3.86 to x36.7 -- ten times WORSE, not better. Per added hit:
+(163.010-4.438)/1.903 = 83.3 units of chi2, against 10-01's
+(16.737-4.332)/1.650 = 7.5. Eleven times worse per hit.
+
+5d. The suspect, and it is ours
+-------------------------------
+
+The DB geometry is now ON by default (#23), and it disagrees with the hardcoded
+survey by 5 to 17 mm -- 2 to 5 strip pitches at the 3.2 mm pitch. From the run
+log against the statics, quad A dx by station:
+
+    DB          3.56   -9.09    0.13    0.02   mm
+    hardcoded   8.09    8.34    6.62    7.54   mm
+    difference -4.5   -17.4    -6.5    -7.5    mm
+
+Quad A station 2 is both a sign flip and an outlier in dy too (85.5 where its
+neighbours are 95.6-96.2). Traced to pentOnStation row Id=5:
+
+    beginTime              Id     t0        t1
+    2021-10-15 00:00:03     1   2.0985    4.6054
+    2021-10-15 00:00:03     5   0.8340    3.5330   <--
+    2021-10-15 00:00:03     9   1.7559    4.6028
+    2021-10-15 00:00:03    13   1.7449    4.5370
+
+Row 5 holds EXACTLY (hardcoded survey - AGML placeholder): X_shift_QuadA[1] =
+8.34 mm -> 0.834 cm, and (94.33 - 59)/10 = 3.533 cm. Its three siblings carry
+about +1 cm more in t1, which is the alignment term. Row 5 is also identical
+across all three slots (:01, :02, :03) while 1, 9, 13 were refined between
+them.
+
+So quad A station 2 never received the alignment the other three stations did.
+Whether that is a genuine zero or a dropped row is akio's and Daniel's call,
+but it displaces that pentagon by ~1 cm = 3 strip pitches. Remember we have
+INSERT but no UPDATE/DELETE on Geometry_ftt, so a fix means a new slot.
+
+One row cannot explain a 10x global inflation on its own, though: quad B is
+~5-10 mm off and quad C ~5-10 mm too, consistently. Either the whole alignment
+is being applied with the wrong sign/sense, or it is right and something else
+is wrong.
+
+THE DECISIVE TEST was launched: same 60 events, hits ON, useDbGeometry=false
+(hardcoded origins) -> ab_nodbgeo.log / ab_nodbgeo.picoDst.root. If Primary
+chi2 drops back towards 16, the DB geometry is the culprit and #23 MUST NOT
+merge with useDbGeometry defaulting true. If it stays near 163, the problem is
+elsewhere and the DB tables are exonerated.
+
+    root4star -l -b -q 'script/planarAB.C("ab_nodbgeo.picoDst.root","ab_noadd0.picoDst.root")'
+
+(column 1 = DB geometry OFF, column 2 = DB geometry ON)
 
 
 6. Also done today, unrelated to this
