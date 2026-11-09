@@ -53,6 +53,10 @@ bool runFwdAlignment = false;
 //   gROOT->LoadMacro(".../fwd_afterburner_db.C"); UseWarmStart = false; fwd_afterburner_db(...)
 bool UseWarmStart = true;
 
+// Measurement mode for the A/B. -1 = leave the TrackFitter default (planar in
+// this tree), 0 = planar, 1 = space points. Both arms then come from one build.
+int UseSpacePoints = -1;
+
 // Memory Baseline
 // bool runDb = false;
 // bool runFttChain = true;
@@ -279,6 +283,11 @@ void fwd_afterburner_db(const Char_t * fileList = "root://xrdstar.rcf.bnl.gov:10
 			fwdTrack->setSeedFindingWithFst();
 		}
 		fwdTrack->setTrackRefit( true );
+		if ( UseSpacePoints >= 0 ){
+			cout << "fwd_afterburner_db: measurement mode = "
+			     << ( UseSpacePoints ? "SPACE POINTS" : "PLANAR" ) << endl;
+			fwdTrack->setConfigKeyValue( "TrackFitter:useSpacePoints", UseSpacePoints );
+		}
 		if ( !UseWarmStart ){
 			cout << "fwd_afterburner_db: warm-start refit OFF (A/B diagnostic)" << endl;
 			fwdTrack->setConfigKeyValue( "TrackFitter:warmFitFstTightSigma", 0 );

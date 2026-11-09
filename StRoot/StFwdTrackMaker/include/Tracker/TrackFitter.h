@@ -49,7 +49,12 @@ class TrackFitter {
     TVector3 getCurrentSeedPosition() const { return mCurrentSeedPosition; }
 
     // this is used rarely for debugging purposes, especially to check/compare plane misalignment
-    static constexpr bool kUseSpacePoints = false; // use spacepoints instead of planar measurements
+    // Was "static constexpr bool kUseSpacePoints = false". Made runtime so the
+    // space-point and planar arms can be compared from ONE build, which is the
+    // only way the A/B is honest. Default stays PLANAR here (false), which is
+    // what this tree has run since 2026-09-24.
+    //   fwdTrack->setConfigKeyValue("TrackFitter:useSpacePoints", 1);  // back to spacepoints
+    bool mUseSpacePoints = false;
     static constexpr int kVerbose = 0; // was 1 -- unconditional per-track-fit LOG_INFO spam, dominant source of MC log bloat (~4M lines/run in QCD bg sample)
 
     void clear(){
@@ -87,6 +92,11 @@ class TrackFitter {
         TGeoManager * gMan = nullptr;
 
         // Setup the Geometry used by GENFIT
+        mUseSpacePoints = mConfig.get<bool>( "TrackFitter:useSpacePoints", false );
+        LOG_INFO << "TrackFitter measurement mode: "
+                 << ( mUseSpacePoints ? "SPACE POINTS" : "PLANAR" )
+                 << " (TrackFitter:useSpacePoints)" << endm;
+
         LOG_INFO << "StFwdTrackMaker is loading the geometry cache: " << mConfig.get<string>("Geometry", mGeoCache.Data()).c_str() << endm;
         TGeoManager::Import(mConfig.get<string>("Geometry", mGeoCache.Data()).c_str());
         gMan = gGeoManager;
@@ -684,7 +694,7 @@ class TrackFitter {
         if ( fh->isPV() ){
             tp->setSortingParameter(0);
         }
-        // These below are only used if kUseSpacePoints is true
+        // These below are only used if mUseSpacePoints is true
         if ( fh->isFtt() ){
             tp->setSortingParameter(4 + idxFtt);
             idxFtt++;
@@ -801,11 +811,11 @@ class TrackFitter {
             // EPD/FCS-pres hits (kFcsPresId) have no plane in getPlaneFor(), which
             // handles only FST and FTT. addEpdHits() appends them to the SHARED seed
             // for every track type (FwdTracker.h:636, no guard), so under
-            // kUseSpacePoints=false they were silently dropped from Global and
+            // mUseSpacePoints=false they were silently dropped from Global and
             // Primary too -- measured ~2.1 per event. Treat them like the PV: keep
             // them as spacepoints whatever the flag says, so the flag means
             // "FST/FTT planar vs spacepoint" and nothing else.
-            if ( kUseSpacePoints || fh->isPV() || fh->isEpd() ) {
+            if ( mUseSpacePoints || fh->isPV() || fh->isEpd() ) {
                 LOG_DEBUG << "Treating " << hitType << " hit as a spacepoint" << endm;
                 auto tp = createTrackSpacepointFromMeasurement( mFitTrack, fh, hitId );
                 if (tp == nullptr) {
@@ -984,7 +994,7 @@ class TrackFitter {
         // took mFttPlanes[0] -- station 1, quadrant A.  A PlanarMeasurement
         // keeps only the in-plane components, so that silently moved every FTT
         // hit onto the station-1 plane, up to 52 cm away in z.  Harmless while
-        // kUseSpacePoints was true (FTT went down the spacepoint path), which is
+        // mUseSpacePoints was true (FTT went down the spacepoint path), which is
         // why it survived: it only became live when planar mode was adopted.
         //
         // The origin now comes from StFttDb, which owns it: chamberCentre(row)
