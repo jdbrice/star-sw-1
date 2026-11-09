@@ -14,6 +14,9 @@ bool RunMuDstMaker = true;
 bool UseCachedGeom = true;
 bool UseConstBz = false;
 bool UseZeroB = false;
+bool UseFwdVertexBeamConstraint = false; // diagnostic, see where it is used below
+int     RaveVerbosity = 0;   // RAVE's own verbosity; 0 says nothing, even on failure
+TString RaveMethod    = "";  // "" = GenFit default; try "avr", "kalman", "mvf"
 
 TString _fttChain = "fttSim";
 TString _fcsChain = "fcsSim fcsWFF fcsCluster";
@@ -28,6 +31,22 @@ TString _geom = "y2024 agml usexgeom";
 // Run-22 post-strip-frame-fix is sdt20211112.000004; the old default here was
 // sdt20211016, which is the unaligned lane.
 TString _sdt = "sdt20211016";
+
+// The geometry cache GenFit builds its planes from. This MUST have been built
+// for the same geometry tag and the same DB lane as _sdt above, and as the
+// generator used -- there is nothing in the file that says which, so the name
+// is the only record. build_geom_misalign.C names them
+// fGeom.<geomtag>.misalign<N>.sdt<sdt>[.<label>].root for exactly that reason.
+//
+// "fGeom.root" is a symlink in the top of the checkout that usually points at
+// the Run-22 cache, so leaving this at the default while reconstructing a
+// Run-24 sample silently tracks with the wrong geometry. Set it explicitly:
+//
+//   gROOT->LoadMacro("StRoot/StFwdTrackMaker/macro/sim/sim.C");
+//   _sdt = "sdt20240622";
+//   _geomCache = "fGeom.y2024.misalign0.sdt20240622.root";
+//   sim("fwd_lambda_gun.fzd", 10);
+TString _geomCache = "fGeom.root";
 
 void DisableTrackFitting() {
     // Disable track fitting
@@ -56,6 +75,9 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
     // report all of the parameters passed in
     cout << "inFile = " << inFile << endl;
     cout << "# of Events = " << n << endl;
+    cout << "DB lane     = " << _sdt << endl;
+    cout << "geom cache  = " << (UseCachedGeom ? _geomCache : TString("(none, AGML: ") + _geom + ")") << endl;
+    cout << "  ^ both must match the geometry the sample was GENERATED with." << endl;
 
     // to use the geom cache (skip agml build which is faster)
     // set the _geom string to "" and make sure the cache file ("fGeom.root") is present
@@ -148,8 +170,13 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
 
         if ( fwdTrack ){
             if ( _geom == "" ){
-                cout << "Using the Geometry cache: fGeom.root" << endl;
-                fwdTrack->setGeoCache( "fGeom.root" );
+                if ( gSystem->AccessPathName( _geomCache ) ){
+                    cout << "sim.C: FATAL -- geometry cache [" << _geomCache
+                         << "] does not exist. Build it with build_geom_misalign.C" << endl;
+                    return;
+                }
+                cout << "Using the Geometry cache: " << _geomCache << endl;
+                fwdTrack->setGeoCache( _geomCache );
             }
 
             fwdTrack->setOutputFilename( TString::Format( "%s.output.root", inFile ).Data() );
@@ -170,6 +197,22 @@ void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw
             // DoOnlyGlobalTrackFitting();
             // fwdTrack->setTrackFittingOff();
             fwdTrack->setConfigKeyValue( "TrackFitter:refit", true );
+
+            // Diagnostic only: regularise the RAVE vertex fit with the
+            // beamspot. Forward tracks are within ~10 deg of the beam, so the
+            // unconstrained fit is badly conditioned along z. Turning this on
+            // biases a SECONDARY vertex towards the beamline, so it is not a
+            // setting for a Lambda study -- it is how you find out whether
+            // conditioning is why RAVE returns nothing.
+            if ( RaveVerbosity > 0 )
+                fwdTrack->setConfigKeyValue( "TrackFitter:raveVerbosity", RaveVerbosity );
+            if ( RaveMethod != "" )
+                fwdTrack->setConfigKeyValue( "TrackFitter:raveMethod", RaveMethod.Data() );
+
+            if ( UseFwdVertexBeamConstraint ){
+                cout << "sim.C: RAVE beam constraint ON (diagnostic)" << endl;
+                fwdTrack->setConfigKeyValue( "TrackFitter:fwdVertexBeamConstraint", 1 );
+            }
             
             if ( UseZeroB ){
                 cout << "Setting B = 0" << endl;

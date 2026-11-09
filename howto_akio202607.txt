@@ -123,3 +123,134 @@ cat $SCRATCH/fwd_key.log
 
 Must show StFttDb reading the DB tables and the per-run FTT anchors.
 "falling back" there means StarDb or fttDataWindow was not picked up.
+
+*** Simulation: generate a sample and run forward tracking on it
+
+Everything below runs from the TOP of the checkout. That is not cosmetic:
+LD_LIBRARY_PATH contains the RELATIVE entry .$STAR_HOST_SYS/lib, so from any
+other directory you silently link against $STAR's libraries instead of yours.
+
+Generation and reconstruction must agree on the geometry, and nothing checks
+it for you except the one error quoted at the end of this section. Agreement
+means all three of:
+
+    the AGML tag          y2022c
+    the DB lane (sdt)     sdt20211112.000004
+    the fGeom cache       built from that tag and that lane
+
+Use y2022c, not y2024. y2022c is the tag PR28 wired to FSTMv2m, i.e.
+fstmconfig=2, the as-installed FST wedge mounting, which is what
+StFstDb::fstmConfig() returns. Do NOT use dev2022sm for generation: it is the
+SIMPLIFIED geometry and produces no FST g2t hits at all, so the sample has
+nothing to track (0 FST hits in every event, and it looks like a tracking bug).
+
+Build the matching cache once. misalign 0, because AGML applies no
+misalignment in simulation, so an ideal cache is what matches GEANT:
+
+  root4star -l -b -q 'build_geom_misalign.C("y2022c","20211112.000004",0)'
+  ls -la fGeom.y2022c.misalign0.sdt20211112.000004.root
+
+Generate. Lambda into the forward acceptance, GEANT doing the decay:
+
+  root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/sim/lambda.C(10,20261109,"gun","sdt20211112.000004","y2022c")'
+
+  -> fwd_lambda_gun.fzd, and one line per event giving the Lambda pt, eta, p
+     and the mean decay length beta*gamma*c*tau it implies. At the default
+     pt 0.3-1.5 and eta 2.5-4.0 that is ~96 cm on average, against an FST at
+     z = 150-180 cm, so most Lambdas decay BEFORE the first disk. Mode "ps"
+     instead of "gun" puts both daughters at the primary vertex with zero
+     decay length -- a control, not a Lambda sample. See the header of
+     lambda.C.
+
+Or a single-particle gun, same lane (gen.C holds the lane in genGeomTag and
+genSdt now, defaulting to the pair above):
+
+  root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/sim/single_particle_gun.C(10,541512,"mu-",1,1.0,1.01,2.5,4.0)'
+
+Reconstruct. sim.C keeps the lane and the cache in file-scope globals, so they
+have to be set BETWEEN loading the macro and calling it -- LoadMacro does not
+execute. sim_lambda.C does exactly that and nothing else:
+
+  root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/sim/sim_lambda.C(10,"fwd_lambda_gun.fzd","sdt20211112.000004","fGeom.y2022c.misalign0.sdt20211112.000004.root")'
+
+*** Check the reco log, in this order
+
+  grep "disagree about the wedge" reco.log
+
+Must print NOTHING. If it fires, the fGeom cache and StFstDb::fstmConfig()
+disagree about the FST wedge mounting phase and the planar decode mirrors a
+local phi the geometry did not -- wrong by up to half a wedge. The y2024
+caches trip this today; y2022c does not.
+
+  grep "geom cache" reco.log
+
+Must name the cache you meant. Left at the default it is the fGeom.root
+symlink, which points at a Run-22 cache.
+
+  grep "Fwd Tracking Found" reco.log
+
+Seeds per event, and the seed efficiency against McTracks with >2 FST hits.
+Zero FST hits in every event means the generation geometry, not the tracker.
+
+  grep "FwdVertexFinding" reco.log
+
+One line per event: how many RAVE vertices, from how many global tracks, and
+each vertex's id, z and track count. If tracks were dropped before RAVE
+(null or unconverged fits) a second line says how many.
+
+*** Known broken: forward vertex finding (2026-11-09)
+
+RAVE returns ZERO vertices for essentially every event. Measured on 10 Lambda
+events and on single- and four-muon guns on the lane above: 0 vertices from
+1, 2, 3, 4 and 5 converged global tracks, including four muons thrown from a
+common (0,0,0). It is not the track selection -- the tracks reach RAVE intact,
+and with TrackFitter:raveVerbosity raised RAVE says so itself:
+
+    [rave::VertexFactory] produced 0 vertices from 5 tracks.
+
+It is not the method either: "kalman", "avr" and "mvf" all give 0 on the same
+tracks. It is not the beam constraint: TrackFitter:fwdVertexBeamConstraint
+changes nothing except that a 1-track event can then make a 1-track "vertex".
+
+Consequence: doSecondaryTrackFitting never runs, no
+kForwardVertexConstrained tracks are ever made, and StFwdTrack::vertexIndex()
+is always 0. Any Lambda or secondary-vertex study has to fix this first.
+
+The knobs for the next person, all config keys on StFwdTrackMaker:
+
+  TrackFitter:raveVerbosity         int, 0 default. At 0 RAVE says NOTHING,
+                                    including nothing about why it rejected
+                                    every track. Raise it first.
+  TrackFitter:raveMethod            "" default (GenFit's own); "avr",
+                                    "kalman", "mvf" are the ones tried.
+  TrackFitter:fwdVertexBeamConstraint  false default. Diagnostic only: it
+                                    biases a secondary vertex onto the
+                                    beamline, which is what you are measuring.
+
+From sim.C these are the globals RaveVerbosity, RaveMethod and
+UseFwdVertexBeamConstraint.
+
+Next suspect, not yet checked: the perigee parameters RAVE is handed. A
+forward track sits within ~10 degrees of the beam, so its perigee relative to
+the beamline is nearly degenerate and its covariance along z is huge; the
+"blown-up state pT=0.0022" warnings and the "TDecompChol::Decompose() : matrix
+not positive definite" error in the same logs point the same way.
+
+*** The vertex index is 5 bits, and truncates silently
+
+StFwdTrack::setVtxIndexAndTrackType packs 5 bits of vertex index and 3 of
+track type into one byte, and pack5and3 does A &= 0x1F. So anything above 31
+wraps with no warning. StPicoFwdTrack holds the same packed byte.
+
+What is stored is GenfitTrackResult::mVertexIndex, and for a forward-vertex
+track that is vtx->getId() -- the id of the rave::Vertex, NOT an index into
+the event's vertex list and NOT guaranteed 0-based. The one vertex this dry
+run ever produced came back with id=2 in an event holding a single vertex,
+which is already enough to show the two are not the same thing.
+
+So "are 5 bits enough" cannot be answered from the number of vertices per
+event. It depends on what getId() counts, and that has to be established on a
+sample where vertex finding actually works. Until then, do not widen the
+field: if getId() turns out to be a running counter the fix is to store the
+INDEX (the position in mFwdVertices, which is bounded by the track count),
+not to spend more bits on an id that carries no meaning downstream.

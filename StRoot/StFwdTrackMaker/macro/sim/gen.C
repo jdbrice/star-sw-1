@@ -38,6 +38,24 @@ float vtxSigmaZ = 0.0001;
 TString fzdFilename = "sim.fzd";
 TString primaryName = "sim.root";
 
+// Geometry tag and DB lane for the GENERATOR. These were hardcoded as
+// "y2024" + "sdt20211016" in two places each; they are globals now so a caller
+// can put generation and reconstruction on the same lane, which is the only
+// way the two agree.
+//
+// The default is y2022c, not y2024, on purpose: y2022c is the tag PR28 wired to
+// FSTMv2m, i.e. fstmconfig=2, the as-installed FST wedge mounting, which is
+// what StFstDb::fstmConfig() returns. Generating on y2024 and reconstructing
+// with a y2024 cache trips StFwdTrackMaker's mounting-consistency check --
+// "FST geometry and StFstDb disagree about the wedge mounting" -- because the
+// y2024 AGML is still on the other phase. Do not change this back without
+// checking that error is absent from the reco log.
+//
+// dev2022sm is NOT an option here: it is the SIMPLIFIED geometry and produces
+// no FST g2t hits at all, so a sample generated on it has nothing to track.
+TString genGeomTag = "y2022c";
+TString genSdt     = "sdt20211112.000004";
+
 // ----------------------------------------------------------------------------
 void geometry( TString tag, Bool_t agml=true )
 {
@@ -83,11 +101,20 @@ void gen( Int_t nevents=1000, Int_t rngSeed=12352342 )
 
   cout << "Generating: " << nevents << " events with seed: " << rngSeed << endl;
   gSystem->Load( "libStarRoot.so" );
-  gROOT->SetMacroPath(".:/star-sw/StRoot/macros/:./StRoot/macros:./StRoot/macros/graphics:./StRoot/macros/analysis:./StRoot/macros/test:./StRoot/macros/examples:./StRoot/macros/html:./StRoot/macros/qa:./StRoot/macros/calib:./StRoot/macros/mudst:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/graphics:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/analysis:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/test:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/examples:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/html:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/qa:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/calib:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/mudst:/afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/macros:/afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/tutorials");
+  // The macro path used to be a hardcoded list ending in a dozen
+  // /afs/rhic.bnl.gov/... directories. /afs is gone -- inside the container it
+  // is an empty bind mount -- and because SetMacroPath REPLACES the path
+  // rather than extending it, this threw away the working $STAR entry too.
+  // Every gun built on gen.C therefore died at the first line that matters:
+  //   Error in <TRint::ProcessLine>: macro bfc.C not found in path ...
+  //   Error: Function bfc(0,simple) is not defined in current scope gen.C
+  // Build it from $STAR instead, and keep whatever was already there.
+  gROOT->SetMacroPath( Form(".:./StRoot/macros:%s/StRoot/macros:%s",
+                            gSystem->Getenv("STAR"), gROOT->GetMacroPath()) );
 
   gROOT->ProcessLine(".L bfc.C");
   {
-    TString simple = "sdt20211016 y2024 geant gstar usexgeom agml ";
+    TString simple = genSdt + " " + genGeomTag + " geant gstar usexgeom agml ";
     bfc(0, simple );
   }
 
@@ -127,7 +154,7 @@ void gen( Int_t nevents=1000, Int_t rngSeed=12352342 )
   //
   // Setup geometry and set starsim to use agusread for input
   //
-  geometry("y2024");   // DETP GEOM ... field=: fz header records the field (reversed full, as in 2022+ data)
+  geometry(genGeomTag);   // DETP GEOM ... field=: fz header records the field (reversed full, as in 2022+ data)
   command("gkine -4 0");
   command( TString::Format("gfile o %s", fzdFilename.Data()) );
 

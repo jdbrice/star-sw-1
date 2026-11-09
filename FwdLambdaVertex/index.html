@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Forward Lambda MC and GenFit/RAVE vertex finding</title>
+<style>
+body { font-family: sans-serif; max-width: 980px; margin: 20px; line-height: 1.45; }
+pre  { background: #f4f4f4; padding: 8px; overflow-x: auto; font-size: 90%; }
+code { background: #f4f4f4; padding: 1px 3px; }
+table { border-collapse: collapse; margin: 10px 0; }
+th, td { border: 1px solid #999; padding: 4px 9px; text-align: left; }
+th { background: #eee; }
+.bad  { background: #ffdddd; }
+.good { background: #ddeedd; }
+h2 { border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-top: 28px; }
+</style>
+</head>
+<body>
+
+<h1>Forward Lambda MC and GenFit/RAVE vertex finding</h1>
+<p>akio202607, 2026-11-09. A 10-event dry run of the whole path a Lambda &rarr;
+p&pi;<sup>&minus;</sup> vertex study has to take: generate into the forward
+acceptance, run forward tracking, count the RAVE vertices.</p>
+
+<h2>Headline</h2>
+<p class="bad"><b>Forward vertex finding returns zero vertices, for every event.</b>
+Not a Lambda problem &mdash; four muons thrown from a common (0,0,0) give zero
+vertices too. <code>doSecondaryTrackFitting</code> therefore never runs, no
+<code>kForwardVertexConstrained</code> track is ever made, and
+<code>StFwdTrack::vertexIndex()</code> is always 0. This has to be fixed before
+a Lambda study can begin.</p>
+
+<h2>The 10 Lambda events</h2>
+<p>One Lambda per event, flat in p<sub>T</sub> 0.3&ndash;1.5 GeV/c and
+&eta; 2.5&ndash;4.0, handed to GEANT3 which transports and decays it. Mean
+Lambda momentum 13.6 GeV/c, so a mean decay length
+&beta;&gamma;c&tau; = 96 cm against an FST at z = 150&ndash;180 cm: most decay
+before the first disk, which is what a displaced-vertex study wants.</p>
+
+<table>
+<tr><th>event</th><th>&Lambda; p (GeV/c)</th><th>&lt;L&gt; (cm)</th><th>seeds</th><th>global tracks</th><th>RAVE vertices</th></tr>
+<tr><td>0</td><td>36.3</td><td>257</td><td>0</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>1</td><td>3.9</td><td>28</td><td>1</td><td>1</td><td class="bad">0</td></tr>
+<tr><td>2</td><td>5.1</td><td>36</td><td>0</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>3</td><td>13.5</td><td>95</td><td>0</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>4</td><td>9.8</td><td>69</td><td>0</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>5</td><td>8.9</td><td>63</td><td>0</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>6</td><td>13.6</td><td>96</td><td>2</td><td>2</td><td class="bad">0</td></tr>
+<tr><td>7</td><td>14.2</td><td>100</td><td>2</td><td>2</td><td class="bad">0</td></tr>
+<tr><td>8</td><td>13.8</td><td>98</td><td>0</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>9</td><td>16.6</td><td>117</td><td>2</td><td>2</td><td class="bad">0</td></tr>
+</table>
+
+<p>Seed finding itself is fine: where the daughters reach the FST, efficiency
+against McTracks with &gt;2 FST hits is 1.0, and the three events with the full
+p&ndash;&pi; pair give exactly 2 seeds and 2 global tracks.</p>
+
+<h2>Where it fails</h2>
+<p>Not in the hand-over. The tracks passed to RAVE are all non-null and all have
+converged fits, and with RAVE's own verbosity raised it says so itself:</p>
+<pre>StFwdTrackMaker:INFO  - FwdVertexFinding: RAVE method left at GenFit's default, verbosity 3
+[rave::VertexFactory] produced 0 vertices from 5 tracks.
+StFwdTrackMaker:INFO  - FwdVertexFinding: 0 RAVE vertices from 5 global tracks</pre>
+
+<p>What was ruled out, all on the same tracks:</p>
+<table>
+<tr><th>tried</th><th>result</th></tr>
+<tr><td>Track multiplicity 1, 2, 3, 4, 5</td><td class="bad">0 vertices, except rare 1-track "vertices"</td></tr>
+<tr><td>Four muons from a common (0,0,0)</td><td class="bad">0 vertices</td></tr>
+<tr><td>RAVE method <code>kalman</code>, <code>avr</code>, <code>mvf</code></td><td class="bad">0 vertices, all three</td></tr>
+<tr><td>Beamspot constraint on</td><td class="bad">no change (a 1-track event can then make a 1-track vertex)</td></tr>
+<tr><td>Null / unconverged tracks reaching RAVE</td><td class="good">none &mdash; not the cause</td></tr>
+</table>
+
+<p><b>Next suspect, not yet checked:</b> the perigee parameters RAVE is handed. A
+forward track lies within ~10&deg; of the beam, so its perigee relative to the
+beamline is nearly degenerate and its covariance along z is enormous. The same
+logs carry <code>addFttHits: skipping blown-up state pT=0.0022</code> and
+<code>TDecompChol::Decompose() : matrix not positive definite</code>, which point
+the same way.</p>
+
+<h2>The vertex index is 5 bits, and the question is not about counting</h2>
+<p><code>StFwdTrack::setVtxIndexAndTrackType</code> packs 5 bits of vertex index
+and 3 of track type into one byte, and <code>pack5and3</code> does
+<code>A &amp;= 0x1F</code> &mdash; anything above 31 wraps with no warning.
+<code>StPicoFwdTrack</code> carries the same packed byte.</p>
+<p>What gets stored is <code>vtx-&gt;getId()</code>, the id of the
+<code>rave::Vertex</code>. That is <b>not</b> an index into the event's vertex
+list and not guaranteed 0-based: the single vertex this dry run ever produced
+came back as <code>id=2</code> in an event that held exactly one vertex.</p>
+<p>So "are 5 bits enough" does not follow from the number of vertices per event.
+It depends on what <code>getId()</code> counts, and that can only be established
+on a sample where vertex finding works. If it turns out to be a running counter,
+the fix is to store the <i>index</i> &mdash; the position in
+<code>mFwdVertices</code>, bounded by the track count &mdash; not to spend more
+bits on an id that carries no meaning downstream.</p>
+
+<h2>Three traps on the way in, now fixed</h2>
+<ul>
+<li><b><code>gen.C</code> did not run at all.</b> Its macro path was a hardcoded
+list ending in a dozen <code>/afs/rhic.bnl.gov/...</code> directories, and
+<code>SetMacroPath</code> <i>replaces</i> the path, so the working
+<code>$STAR</code> entry went with it. Every gun built on it died at
+<code>macro bfc.C not found in path</code>. Built from <code>$STAR</code> now.</li>
+<li><b>Geometry has to match on three things at once</b> &mdash; AGML tag, DB
+lane (<code>sdt</code>), and the <code>fGeom</code> cache &mdash; and only one of
+them is ever checked. Use <code>y2022c</code> + <code>sdt20211112.000004</code>:
+<code>y2022c</code> is the tag wired to <code>FSTMv2m</code>, i.e. the
+as-installed FST wedge mounting that <code>StFstDb::fstmConfig()</code> returns.
+A y2024 cache trips the consistency check:
+<pre>ERROR - FST geometry and StFstDb disagree about the wedge mounting: 108 of 108
+sensors ... The planar decode will mirror local phi that the geometry did not</pre>
+and <code>dev2022sm</code> is the <i>simplified</i> geometry, which yields no FST
+g2t hits at all &mdash; 0 hits in every event, looking exactly like a tracking
+bug.</li>
+<li><b>The vertex count was invisible.</b> Every vertex log line sat behind
+<code>verbose</code>, and the count behind <code>kProfile</code> &mdash; both
+compile-time <code>false</code>, so the number could not be seen without editing
+and rebuilding, and <code>StFwdFitQAMaker</code>'s
+<code>mNumFwdVertices</code> histogram was always empty. One INFO line per event
+now, always.</li>
+</ul>
+
+<h2>Running it</h2>
+<p>From the <b>top</b> of the checkout &mdash; <code>LD_LIBRARY_PATH</code> holds
+the relative <code>.$STAR_HOST_SYS/lib</code>, so anywhere else links against
+<code>$STAR</code> instead of your build.</p>
+<pre># once: the cache that matches the generator (misalign 0 -- AGML applies none in sim)
+root4star -l -b -q 'build_geom_misalign.C("y2022c","20211112.000004",0)'
+
+# generate 10 Lambda into the forward acceptance, GEANT does the decay
+root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/sim/lambda.C(10,20261109,"gun","sdt20211112.000004","y2022c")'
+
+# reconstruct
+root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/sim/sim_lambda.C(10,"fwd_lambda_gun.fzd","sdt20211112.000004","fGeom.y2022c.misalign0.sdt20211112.000004.root")'
+
+# then, in this order
+grep "disagree about the wedge" reco.log   # must print nothing
+grep "geom cache"              reco.log   # must name the cache you meant
+grep "Fwd Tracking Found"      reco.log   # seeds and seed efficiency
+grep "FwdVertexFinding"        reco.log   # vertices, and what was dropped</pre>
+
+<p><code>lambda.C</code> has a second mode, <code>"ps"</code>, which decays the
+Lambda in the macro and pushes both daughters as primaries &mdash; zero decay
+length, by construction. It is a control for what RAVE does with a pair that
+really comes from one point, not a Lambda sample.</p>
+
+<p>The full recipe, the log checks and the open RAVE knobs
+(<code>TrackFitter:raveVerbosity</code>,
+<code>TrackFitter:raveMethod</code>,
+<code>TrackFitter:fwdVertexBeamConstraint</code>) are in
+<code>howto_akio202607.txt</code>.</p>
+
+</body>
+</html>

@@ -85,6 +85,12 @@ class ForwardTrackMaker {
         // noop
     }
 
+    ~ForwardTrackMaker() {
+        // raveFactory() news this on first use; one per job, but own it properly.
+        delete mGFRVertexFactory;
+        mGFRVertexFactory = 0;
+    }
+
     const std::vector<GenfitTrackResult> &getTrackResults() const { return mTrackResults; }
     std::vector<GenfitTrackResult> &getTrackResults() { return mTrackResults; }
     const std::vector<Seed_t> &getTrackSeeds() const { return mTrackSeeds; }
@@ -395,6 +401,12 @@ class ForwardTrackMaker {
         mTrackResults.clear();
         mEventStats.reset();
         mTotalHitsRemoved = 0;
+        // GFRaveVertexFactory::findVertices allocates each GFRaveVertex with
+        // new and hands ownership to us, so clear() alone leaked one vertex
+        // per found vertex per event. Safe to delete here: cleanup() runs at
+        // the START of doEvent, so these are the PREVIOUS event's vertices and
+        // doSecondaryTrackFitting is long done with them.
+        for ( size_t iv = 0; iv < mFwdVertices.size(); iv++ ) delete mFwdVertices[iv];
         mFwdVertices.clear();
         mFwdVerticesAsHits.clear();
         /************** Cleanup **************************/
@@ -512,20 +524,69 @@ class ForwardTrackMaker {
     } // FindTrackSeeds
 
 
-    std::vector< genfit::GFRaveVertex * > findFwdVertices( const vector<GenfitTrackResult> &globalTracks ){
-        
-        // The RAVE factory needs the (bare) track pointers for vertex finding
-        vector<genfit::Track*> tracks;
-        for ( auto gtr : globalTracks ){
-            if ( gtr.mTrack ){
-                tracks.push_back( gtr.mTrack.get() );
-                LOG_DEBUG << "Adding track with track obj: " << gtr.mTrack.get() << endm;
+    /**
+     * @brief The RAVE vertex factory, built on first use.
+     *
+     * Verbosity cannot be changed after construction, so the factory is made
+     * here rather than as a member, and the level comes from the config. At 0
+     * (the default) RAVE says nothing at all -- including nothing about why it
+     * dropped every track it was given -- so raise it before concluding
+     * anything from an empty vertex list.
+     */
+    genfit::GFRaveVertexFactory *raveFactory(){
+        if ( !mGFRVertexFactory ){
+            const int raveVerbosity = mConfig.get<int>( "TrackFitter:raveVerbosity", 0 );
+            mGFRVertexFactory = new genfit::GFRaveVertexFactory( raveVerbosity );
+            const std::string raveMethod = mConfig.get<std::string>( "TrackFitter:raveMethod", "" );
+            if ( !raveMethod.empty() ){
+                LOG_INFO << "FwdVertexFinding: RAVE method set to [" << raveMethod
+                         << "], verbosity " << raveVerbosity << endm;
+                mGFRVertexFactory->setMethod( raveMethod );
+            } else {
+                LOG_INFO << "FwdVertexFinding: RAVE method left at GenFit's default"
+                         << ", verbosity " << raveVerbosity << endm;
             }
         }
+        return mGFRVertexFactory;
+    }
+
+    std::vector< genfit::GFRaveVertex * > findFwdVertices( const vector<GenfitTrackResult> &globalTracks ){
+        
+        // The RAVE factory needs the (bare) track pointers for vertex finding.
+        //
+        // Only CONVERGED tracks are worth passing. GFRaveConverter drops a
+        // track whose fit did not converge, and at RAVE verbosity 0 it does so
+        // silently -- so a chain that hands over nothing but failed fits gets
+        // zero vertices back and no explanation at all. Count both so the log
+        // says which of the two is happening.
+        vector<genfit::Track*> tracks;
+        int nNoTrack = 0, nNotConverged = 0;
+        for ( auto gtr : globalTracks ){
+            if ( !gtr.mTrack ){ nNoTrack++; continue; }
+            genfit::FitStatus *fs = 0;
+            try { fs = gtr.mTrack->getFitStatus(); } catch (...) { fs = 0; }
+            if ( !fs || !fs->isFitConverged() ){ nNotConverged++; continue; }
+            tracks.push_back( gtr.mTrack.get() );
+            LOG_DEBUG << "Adding track with track obj: " << gtr.mTrack.get() << endm;
+        }
         LOG_DEBUG << "FwdTracker::findFwdVertices with " << tracks.size() << " tracks" << endm;
+        if ( nNoTrack || nNotConverged ){
+            LOG_INFO << "FwdVertexFinding: dropped " << nNoTrack << " null + "
+                     << nNotConverged << " unconverged of " << globalTracks.size()
+                     << " global tracks before RAVE" << endm;
+        }
 
         //  we are not using this because secondary vertices should not neccessarily be at the beamline
-        bool useBeamConstraint = false;
+        //
+        // Now a config key instead of a hardcoded false, because it is the
+        // first thing to try when RAVE returns no vertices: forward tracks sit
+        // within ~10 degrees of the beam, so an unconstrained vertex fit is
+        // very poorly conditioned along z, and the beamspot regularises it.
+        // Default stays false -- a SECONDARY vertex genuinely need not be on
+        // the beamline, so switching this on biases exactly what a Lambda
+        // study is looking for. Use it as a diagnostic, not as a setting.
+        //   fwdTrack->setConfigKeyValue("TrackFitter:fwdVertexBeamConstraint", true);
+        bool useBeamConstraint = mConfig.get<bool>( "TrackFitter:fwdVertexBeamConstraint", false );
         if ( useBeamConstraint ){
             // TODO: load "official" beamline constraint parameters
             TMatrixDSym bscm(3);
@@ -533,11 +594,34 @@ class ForwardTrackMaker {
             bscm(0, 0) = bssXY*bssXY;
             bscm(1, 1) = bssXY*bssXY;
             bscm(2, 2) = 50.5 * 50.5;
-            mGFRVertexFactory.setBeamspot( TVector3( 0, 0, 0 ), bscm );
+            raveFactory()->setBeamspot( TVector3( 0, 0, 0 ), bscm );
         }
 
-        mGFRVertexFactory.findVertices( &mFwdVertices, tracks, useBeamConstraint );
+        raveFactory()->findVertices( &mFwdVertices, tracks, useBeamConstraint );
         LOG_DEBUG << "mFwdVertices.size() = " << mFwdVertices.size() << endm;
+
+        // One INFO line per event, always. Everything else about the RAVE
+        // vertices is behind `verbose`, which is a compile-time 0, so without
+        // this line the vertex count cannot be seen at all without editing and
+        // rebuilding -- and it is the first number any vertex study needs.
+        //
+        // getId() is the id of the rave::Vertex this was built from, NOT an
+        // index into mFwdVertices, and it is what ends up in
+        // StFwdTrack::vertexIndex() through GenfitTrackResult::mVertexIndex.
+        // That field holds 5 bits, so print the id and watch it: see the
+        // vertex-index note in StFwdTrack.h.
+        TString vtxSummary;
+        for ( size_t iv = 0; iv < mFwdVertices.size() && iv < 8; iv++ ){
+            genfit::GFRaveVertex *v = mFwdVertices[iv];
+            vtxSummary += TString::Format( " [id=%d z=%.2f nTrk=%u]",
+                                           v->getId(), v->getPos().Z(),
+                                           (unsigned)v->getNTracks() );
+        }
+        if ( mFwdVertices.size() > 8 ) vtxSummary += " ...";
+        LOG_INFO << "FwdVertexFinding: " << mFwdVertices.size()
+                 << " RAVE vertices from " << tracks.size() << " global tracks"
+                 << vtxSummary << endm;
+
         if (verbose){
             for ( auto vert : mFwdVertices ){
                 LOG_DEBUG << TString::Format( "GFRaveVertex vertex @(%f, %f, %f)\n\n", vert->getPos().X(), vert->getPos().Y(), vert->getPos().Z() ) << endm;
@@ -1482,7 +1566,10 @@ class ForwardTrackMaker {
         if (do_fwd_vertex_finding){
             LOG_DEBUG << "\tPerforming FWD Vertex Finding" << endm;
             auto fwdVertices = findFwdVertices( globalTracks );
-            if (kProfile) mEventStats.mNumFwdVertices = fwdVertices.size();
+            // Store the count unconditionally: it is one int, and behind
+            // kProfile (a compile-time false) it was never filled, so
+            // StFwdFitQAMaker's mNumFwdVertices histogram was always empty.
+            mEventStats.mNumFwdVertices = fwdVertices.size();
         } else {
             LOG_WARN << "Event configuration is skipping FWD vertex finding" << endm;
             LOG_WARN << "Secondary track fitting will also be skipped" << endm;
@@ -3038,7 +3125,13 @@ class ForwardTrackMaker {
     TVector3 mBLCVtxPos;
     int      mBLCVtxNTracks = 0;
     vector<FwdHit> mFwdVerticesAsHits;
-    genfit::GFRaveVertexFactory mGFRVertexFactory;
+    // Built lazily by raveFactory(), not constructed with the tracker, because
+    // RAVE's verbosity is a CONSTRUCTOR argument and is the only way to find
+    // out why findVertices returned nothing. Config keys:
+    //   TrackFitter:raveVerbosity  int, 0 (default) .. 3+
+    //   TrackFitter:raveMethod     string, e.g. "avr", "kalman", "mvf";
+    //                              empty (default) leaves GenFit's own choice
+    genfit::GFRaveVertexFactory *mGFRVertexFactory = 0;
 
     std::shared_ptr<FwdDataSource> mDataSource;
 
