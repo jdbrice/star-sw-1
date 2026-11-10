@@ -15,10 +15,16 @@ int gEdge[4][4][2];                                    // peak search or fit ran
 // the results, because a residual only means something against the window it was
 // found in. The FIT window stays peak+-1.2 either way.
 double gSearchHalf = 2.9;
-// NOTE: disk1/quadA has ZERO V-strip entries in the data -- only one orientation is
-// populated there, which is the online-QA-vs-offline-map H/V swap suspected since
-// 2026-07-21. Cells with no usable fit are EXCLUDED from the averages rather than
-// counted as zero, which would drag the station term.
+// NOTE: disk1/quadA has ZERO V-strip entries in Run 22 data -- feb 2,4,6 are
+// hardware dead there, confirmed against our own raw hits by checkDisk1QuadA.C, and
+// whether those febs are really the VERTICAL ones is the online-QA-vs-offline-map H/V
+// swap question open since 2026-07-21. In Run 24 that half-chamber is alive and
+// disk1/quadB has lost its H instead, so the dead region moves with the run and
+// cannot be a fixed mapping error. Cells with no usable fit are EXCLUDED from the
+// averages rather than counted as zero, which would drag the station term.
+// A dead orientation holds only ITS OWN coordinate -- see the note in the delta
+// branch for the 0.86 cm of quad A station 2 dy alignment the old per-cell gate
+// discarded through four iterations.
 TH1F* soSum(TFile* f, const char* base, const char* q, int disk){
   return (TH1F*)f->Get(Form("%s_disk%d_quad%s", base, disk, q));
 }
@@ -158,31 +164,53 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1
     // is not believable is left UNCHANGED, which is the safe direction: the previous
     // value stays and the next iteration can revisit it.
     const double kMinSig = 5.0;
+    // EVERY hold is PER COORDINATE, never per cell. The three ways a coordinate can
+    // fail are independent of the other coordinate:
+    //   no fit   -- that orientation has no hits at all in this quadrant. disk1/quadA
+    //               had zero V-strip hits for the whole of Run 22 (feb 2,4,6 hardware
+    //               dead, confirmed in our own raw hits by script/checkDisk1QuadA.C),
+    //               so dx is unmeasurable there -- but its dy had 1.4 MILLION entries,
+    //               as healthy as any other cell. Holding the CELL on that threw the
+    //               good dy away at every iteration from .000001 to .000004, and left
+    //               row Id=5 at the bare geometry term while its three siblings were
+    //               aligned. The deficit shows up in the residual itself: iter2 dy
+    //               -0.866 cm and iter3 dy +0.893 against the +1.755 every other quad
+    //               A cell gave, two campaigns agreeing to 40 um on 0.86 cm of
+    //               unapplied alignment. A dead orientation costs that coordinate; it
+    //               must not cost the other one.
+    //   at edge  -- the peak or the fitted mean sits on a window limit, so the number
+    //               is a boundary and not a measurement. Widen the 4th argument and
+    //               rerun; a zero delta leaves the value alone meanwhile.
+    //   weak     -- below the significance floor. quad C has 150+ sigma dy fits and
+    //               weak dx ones; dropping the cell would throw away a good dy to
+    //               avoid a bad dx.
+    // A held coordinate gets delta 0, i.e. left unchanged, which is always the safe
+    // direction. Only when BOTH are held is the non-parseable form printed, so
+    // stgcTableAddDelta.py sees no line rather than a pair of zeros.
     for(int dd=0; dd<4; dd++) for(int qq=0; qq<4; qq++){
-      if(!gOK[dd][qq][0] || !gOK[dd][qq][1]){
-        printf(">>> DELTA %d %s     (incomplete, leave unchanged)\n", dd, qn[qq]);
+      const char* whyx = 0; const char* whyy = 0;
+      if(!gOK[dd][qq][0])                     whyx = "no V hits";
+      else if(gEdge[dd][qq][0])               whyx = "at window edge";
+      else if(gSig[dd][qq][0] < kMinSig)      whyx = "weak fit";
+      if(!gOK[dd][qq][1])                     whyy = "no H hits";
+      else if(gEdge[dd][qq][1])               whyy = "at window edge";
+      else if(gSig[dd][qq][1] < kMinSig)      whyy = "weak fit";
+      if(whyx && whyy){
+        printf(">>> DELTA %d %s     (dx %s, dy %s -- leave unchanged)\n",
+               dd, qn[qq], whyx, whyy);
         continue;
       }
-      // A cell sitting on the search/fit boundary gets NO parseable DELTA line at all,
-      // the same shape as the incomplete branch above, so stgcTableAddDelta.py cannot
-      // consume a boundary value by accident. Widen the window in soFit() and rerun --
-      // unlike a low-sigma cell, this is not a weak measurement, it is a broken one.
-      if(gEdge[dd][qq][0] || gEdge[dd][qq][1]){
-        printf(">>> DELTA %d %s     (at window edge, leave unchanged -- rerun with a larger\n"
-               ">>>                    4th argument than %.1f)\n", dd, qn[qq], gSearchHalf);
-        continue;
-      }
-      // Per-coordinate, not per-cell: quad C has excellent dy fits (150+ sigma) and weak
-      // dx ones, and dropping the whole cell would throw away a good dy correction to
-      // avoid a bad dx one. A failing coordinate gets a zero delta, i.e. left unchanged.
-      bool okx = gSig[dd][qq][0] >= kMinSig, oky = gSig[dd][qq][1] >= kMinSig;
-      double dx = okx ? -gMu[dd][qq][0] : 0.0;
-      double dy = oky ? -gMu[dd][qq][1] : 0.0;
+      double dx = whyx ? 0.0 : -gMu[dd][qq][0];
+      double dy = whyy ? 0.0 : -gMu[dd][qq][1];
       printf(">>> DELTA %d %s  %+9.5f  %+9.5f%s\n", dd, qn[qq], dx, dy,
-             (okx&&oky) ? "" :
-             Form("   <- %s held (dx %.1f, dy %.1f sigma)",
-                  !okx ? (!oky ? "dx and dy" : "dx") : "dy",
+             (!whyx && !whyy) ? "" :
+             Form("   <- %s held (%s; dx %.1f, dy %.1f sigma)",
+                  whyx ? "dx" : "dy", whyx ? whyx : whyy,
                   gSig[dd][qq][0], gSig[dd][qq][1]));
+      if( (whyx && 0 == strcmp(whyx,"at window edge")) ||
+          (whyy && 0 == strcmp(whyy,"at window edge")) )
+        printf(">>>              ^ rerun with a 4th argument larger than %.1f before\n"
+               ">>>                believing the HELD coordinate at all.\n", gSearchHalf);
     }
     printf("\n>>> Apply with script/stgcTableAddDelta.py (previous table + these deltas).\n");
     return;
@@ -232,12 +260,21 @@ void stgcQuadOffsets(const char* file, const char* outdir = 0, int iteration = 1
     double geo0 = dbx[k][d]-phx[k];        // placeholder -> StFttDb
     double geo1 = dby[k][d]-phy[k];
     double cor0 = 0, cor1 = 0;             // measured alignment correction
-    bool haveCor = (gOK[d][q][0] && gOK[d][q][1]);
-    if(haveCor){ cor0=-(gMu[d][q][0]-gx); cor1=-(gMu[d][q][1]-gy); }
+    // Per coordinate, as in the delta branch above: a dead orientation costs that
+    // coordinate only. The original form here was (gOK[x] && gOK[y]), which is how
+    // row Id=5 (station 2, quad A) ended up carrying the geometry term alone even
+    // though its dy was measured at 9.2 sigma -- see the long note in the delta
+    // branch. The comment now names exactly which half is missing.
+    bool haveX = gOK[d][q][0], haveY = gOK[d][q][1];
+    if(haveX) cor0 = -(gMu[d][q][0]-gx);
+    if(haveY) cor1 = -(gMu[d][q][1]-gy);
     double t0 = geo0+cor0, t1 = geo1+cor1;
     sprintf(c,"Station=%d(Disk=%d),Pent=%d(Quad=%s) geo(%+.3f,%+.3f)%s", d+1,d,k+1,k2qs[k],
-            geo0, geo1, haveCor ? Form(" + align(%+.3f,%+.3f)",cor0,cor1)
-                                : " ; NO V HITS - geometry term only");
+            geo0, geo1,
+            (haveX&&haveY) ? Form(" + align(%+.3f,%+.3f)",cor0,cor1) :
+            (haveY)        ? Form(" + align(dy %+.3f only, NO V HITS for dx)",cor1) :
+            (haveX)        ? Form(" + align(dx %+.3f only, NO H HITS for dy)",cor0) :
+                             " ; NO HITS EITHER ORIENTATION - geometry term only");
     writeRow(fp, 4*d+k+1, t0, t1, c);
   }
   closeTable(fp); fclose(fp); printf(">>> wrote %s\n",path);
