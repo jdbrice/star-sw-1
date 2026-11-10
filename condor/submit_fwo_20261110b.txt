@@ -1,0 +1,346 @@
+# FST SENSOR OVERLAP, large sample -- THE PAIR-CENTROID CAMPAIGN.
+#
+# SUPERSEDES submit_fwo_20261110.txt, which is probably still running. That one
+# was submitted for cProfIR alone; this one has cProfIR AND everything added
+# since, so there is no reason to keep both. condor_rm the earlier cluster to
+# free the slots if you want them.
+#
+# Same 1433 files, same 48x30 splitting, same sublists as 2026-11-05 (reused on
+# purpose so every campaign is directly comparable). Only the code differs.
+#
+# WHAT IS NEW AND WHY
+#
+#  hPairR4..7, hPairIR0..3 -- THE POINT OF THIS RUN. The pair map split by
+#    rStrip. Fold both wedge ends to a distance from the edge and histogram
+#    mine against the partner's; pairs at the same physical angle lie on
+#    s = d_me + d_nb = const, so W = <s> + 1 straight from the ridge. On
+#    200k events the outer ridge is five flat cells at s = 4 and gives
+#    W = 5.14 (all d) / 5.37 (dropping the edge strip), against 5.20-5.35 from
+#    the yield profile -- two estimators with nothing in common agreeing.
+#    Split by rStrip this measures W(r) directly, which is what the whole
+#    pitch-vs-radial-shift decomposition rests on, and it needs no plateau, no
+#    background convention and no decision about strip 0.
+#
+#  hPair, hPairI, hFineI -- the same summed over r, and the inner twin of the
+#    strip-to-strip map.
+#
+#  hClPhi/hClPhiI/hClQ/hClQI -- cluster phi size and charge against distance
+#    from the edge. The per-strip occupancy says strip 0 has MORE hits than the
+#    bulk (outer +12%, inner +4%) while its coincidence fraction is half the
+#    plateau, which points at edge-truncated clusters: reconstructed on the
+#    last strip, true position outside the silicon, no partner possible. If
+#    that is right these hits are narrower and lower in charge than bulk ones.
+#    If they look identical, the idea is wrong and cluster shape gives no
+#    handle -- which is the answer either way.
+#
+# 12 slots a side in every pair map, not 4: with W ~ 5.3 my strip 0 pairs with
+# the neighbour's strip ~4, and a 0-3 window loses that cell and samples the
+# ridge asymmetrically.
+#
+# The job needs no DB and no fGeom.root -- MuDst strip indices only, which is
+# what makes the measurement independent of the conventions it tests.
+# script/runfwo copies fstWedgeOverlap.C from the submit-time directory, so the
+# current macro is picked up with no change to the wrapper.
+#
+# TIMING: the 11-05 campaign ran 12:46 to 23:15, about 11 hours for all 48.
+#
+# Before submitting:
+#   mkdir -p /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log
+#
+# Merge and read with:
+#   hadd -f /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/fwo_merged.root /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/fwo_0*.root
+#   root -l -b -q 'script/fwoPairRead.C("/gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/fwo_merged.root")'
+
+Executable   = /bin/env
+Universe     = vanilla
+notification = never
+getenv       = True
+Initialdir   = /star/u/akio/fcstrk11/star-sw-fwd
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_000.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 000"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_000.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_000.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_000.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_001.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 001"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_001.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_001.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_001.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_002.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 002"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_002.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_002.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_002.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_003.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 003"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_003.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_003.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_003.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_004.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 004"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_004.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_004.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_004.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_005.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 005"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_005.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_005.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_005.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_006.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 006"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_006.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_006.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_006.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_007.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 007"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_007.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_007.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_007.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_008.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 008"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_008.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_008.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_008.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_009.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 009"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_009.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_009.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_009.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_010.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 010"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_010.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_010.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_010.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_011.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 011"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_011.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_011.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_011.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_012.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 012"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_012.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_012.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_012.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_013.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 013"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_013.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_013.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_013.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_014.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 014"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_014.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_014.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_014.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_015.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 015"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_015.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_015.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_015.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_016.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 016"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_016.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_016.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_016.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_017.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 017"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_017.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_017.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_017.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_018.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 018"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_018.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_018.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_018.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_019.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 019"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_019.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_019.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_019.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_020.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 020"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_020.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_020.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_020.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_021.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 021"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_021.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_021.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_021.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_022.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 022"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_022.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_022.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_022.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_023.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 023"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_023.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_023.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_023.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_024.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 024"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_024.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_024.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_024.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_025.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 025"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_025.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_025.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_025.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_026.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 026"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_026.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_026.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_026.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_027.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 027"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_027.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_027.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_027.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_028.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 028"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_028.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_028.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_028.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_029.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 029"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_029.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_029.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_029.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_030.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 030"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_030.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_030.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_030.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_031.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 031"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_031.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_031.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_031.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_032.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 032"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_032.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_032.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_032.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_033.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 033"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_033.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_033.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_033.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_034.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 034"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_034.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_034.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_034.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_035.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 035"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_035.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_035.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_035.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_036.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 036"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_036.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_036.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_036.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_037.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 037"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_037.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_037.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_037.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_038.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 038"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_038.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_038.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_038.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_039.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 039"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_039.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_039.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_039.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_040.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 040"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_040.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_040.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_040.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_041.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 041"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_041.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_041.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_041.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_042.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 042"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_042.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_042.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_042.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_043.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 043"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_043.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_043.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_043.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_044.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 044"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_044.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_044.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_044.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_045.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 045"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_045.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_045.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_045.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_046.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 046"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_046.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_046.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_046.log
+Queue
+
+Arguments = "singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif /star/u/akio/fcstrk11/star-sw-fwd/script/runfwo /star/u/akio/fcstrk11/star-sw-fwd/condor/fwo_lists_20261105/fwo_047.lis /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b 047"
+Log    = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_047.log
+Output = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_047.log
+Error  = /gpfs01/star/pwg_tasks/FwdCalib/akio/fwo_20261110b/log/fwo_047.log
+Queue

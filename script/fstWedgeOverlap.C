@@ -236,6 +236,24 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    TH2F *hClPhiI = new TH2F("hClPhiI", "INNER cluster phi size vs distance from edge;distance from the wedge edge;nRawHitsPhi", 12, -0.5, 11.5, 8, 0.5, 8.5);
    TH2F *hClQ    = new TH2F("hClQ",    "OUTER cluster charge vs distance from edge;distance from the wedge edge;charge", 12, -0.5, 11.5, 100, 0, 4000);
    TH2F *hClQI   = new TH2F("hClQI",   "INNER cluster charge vs distance from edge;distance from the wedge edge;charge", 12, -0.5, 11.5, 100, 0, 4000);
+   // The pair map SPLIT BY rStrip -- the measurement this whole campaign is
+   // for. The r dependence of the overlap width is what separates a pitch
+   // error (same width at every radius) from a strip fan converging off the
+   // beam axis (width falling as 1/r), and until now that split has come from
+   // the yield profile, whose equivalent width needs a plateau, a background
+   // convention and a decision about strip 0. The pair centroid needs none of
+   // them: W = <s> + 1 straight from the ridge position.
+   //   Outer rStrip 4-7, inner rStrip 0-3, same 12 slots a side.
+   TH2F *hPairR[4];
+   TH2F *hPairIR[4];
+   for (int ib = 0; ib < 4; ib++) {
+      hPairR[ib]  = new TH2F(Form("hPairR%d", ib + 4),
+                             Form("OUTER pair map, rStrip %d;my distance from the wedge edge;partner distance", ib + 4),
+                             12, -0.5, 11.5, 12, -0.5, 11.5);
+      hPairIR[ib] = new TH2F(Form("hPairIR%d", ib),
+                             Form("INNER pair map, rStrip %d;my distance from the wedge edge;partner distance", ib),
+                             12, -0.5, 11.5, 12, -0.5, 11.5);
+   }
 
    // diagnostics that must be checked before believing any of it
    TH2F *hPS = new TH2F("hPhiStripPerSensor", "phiStrip by sensor;meanPhiStrip;sensor", 132, -2, 130, 4, -1, 3);
@@ -307,12 +325,14 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
          hPS->Fill(fp, sp);
          hRS->Fill(hp->getMeanRStrip(), sp);
          hAPV->Fill(fp, hp->getApv());
-         {   // cluster shape against distance from the wedge edge, both ends folded
-            int cc = (int)(fp + 0.5);
-            int dd = (cc <= 11) ? cc : ((cc >= 116) ? 127 - cc : -1);
-            if (dd >= 0) {
-               if (sp == 0) { hClPhiI->Fill(dd, hp->getNRawHitsPhi()); hClQI->Fill(dd, hp->getCharge()); }
-               else         { hClPhi ->Fill(dd, hp->getNRawHitsPhi()); hClQ ->Fill(dd, hp->getCharge()); }
+         {   // cluster shape against distance from the wedge edge, both ends folded.
+             // Names are unique across the whole macro on purpose: CINT shares
+             // one scope here and a reused name is a hard error, not a shadow.
+            int ccFold = (int)(fp + 0.5);
+            int ddFold = (ccFold <= 11) ? ccFold : ((ccFold >= 116) ? 127 - ccFold : -1);
+            if (ddFold >= 0) {
+               if (sp == 0) { hClPhiI->Fill(ddFold, hp->getNRawHitsPhi()); hClQI->Fill(ddFold, hp->getCharge()); }
+               else         { hClPhi ->Fill(ddFold, hp->getNRawHitsPhi()); hClQ ->Fill(ddFold, hp->getCharge()); }
             }
          }
          if (sp == 0 && dp >= 1 && dp <= 3 && wp >= 1 && wp <= 36) {
@@ -399,10 +419,13 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
             int dMe = (cq <= 11) ? cq : ((cq >= 116) ? 127 - cq : -1);
             if (dMe >= 0) {
                int nbrP = (cq <= 11) ? mPrev : mNext;
+               int rsP = (int)(hq->getMeanRStrip() + 0.5) - 4;   // outer: 4-7 -> 0-3
                for (int dNb = 0; dNb < 12; dNb++) {
                   int nstrip = (cq <= 11) ? dNb : (127 - dNb);
-                  if (gFwoOcc[((dq - 1) * 12 + (nbrP - 1)) * 128 + nstrip])
+                  if (gFwoOcc[((dq - 1) * 12 + (nbrP - 1)) * 128 + nstrip]) {
                      hPair->Fill(dMe, dNb);
+                     if (rsP >= 0 && rsP < 4) hPairR[rsP]->Fill(dMe, dNb);
+                  }
                }
             }
          }
@@ -465,10 +488,13 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
             int dMeI = (cq2 <= 11) ? cq2 : ((cq2 >= 116) ? 127 - cq2 : -1);
             if (dMeI >= 0) {
                int nbrPI = (cq2 <= 11) ? mP2 : mN2;
+               int rsPI = (int)(hq2->getMeanRStrip() + 0.5);     // inner: 0-3 already
                for (int dNbI = 0; dNbI < 12; dNbI++) {
                   int nstripI = (cq2 <= 11) ? dNbI : (127 - dNbI);
-                  if (gFwoOccI[((dq2 - 1) * 12 + (nbrPI - 1)) * 128 + nstripI])
+                  if (gFwoOccI[((dq2 - 1) * 12 + (nbrPI - 1)) * 128 + nstripI]) {
                      hPairI->Fill(dMeI, dNbI);
+                     if (rsPI >= 0 && rsPI < 4) hPairIR[rsPI]->Fill(dMeI, dNbI);
+                  }
                }
             }
          }
@@ -673,7 +699,8 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    hAll->Write(); hOdd->Write(); hEven->Write(); hFront->Write(); hBack->Write();
    hIO->Write(); hIOs->Write(); hIOd->Write(); hAPV->Write();
    for (int i3 = 0; i3 < 3; i3++) hDisk[i3]->Write();
-   hFine->Write(); hFineI->Write(); hPair->Write(); hPairI->Write(); hClPhi->Write(); hClPhiI->Write(); hClQ->Write(); hClQI->Write(); hPS->Write(); hRS->Write(); hNH->Write();
+   hFine->Write(); hFineI->Write(); hPair->Write(); hPairI->Write(); hClPhi->Write(); hClPhiI->Write(); hClQ->Write(); hClQI->Write();
+   for (int iw = 0; iw < 4; iw++) { hPairR[iw]->Write(); hPairIR[iw]->Write(); } hPS->Write(); hRS->Write(); hNH->Write();
 
    // ---- the counters, as histograms, so hadd can sum them ----
    // Everything above this point is a TH2F and merges for free. The coincidence
