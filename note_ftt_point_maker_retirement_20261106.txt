@@ -2,10 +2,81 @@ StFttPointMaker: two live bugs, and the retirement that supersedes them
 =======================================================================
 2026-11-06
 
-Deliberately NOT fixed. StFttPointMaker is to be replaced by
-StFttClusterPointMaker, so a patch to it is throwaway. Written down so the
-bugs are not rediscovered, and so the decision is visible if the retirement
-stalls and someone has to reconsider.
+DECISION CHANGED 2026-11-10 -- these ARE to be fixed, in a small PR of their
+own. The original call below was that a patch is throwaway because
+StFttClusterPointMaker replaces this maker. That still holds in the long run,
+but the retirement is gated on three steps that have not happened, and every
+production pass in the meantime writes MuDsts with a missing quadrant and
+10x-wrong global x,y. A one-character fix and a three-line fix are worth
+making now rather than waiting on step 4.
+
+  (original note, kept because the reasoning is still the reason the
+   retirement is the real answer:)
+  Deliberately NOT fixed. StFttPointMaker is to be replaced by
+  StFttClusterPointMaker, so a patch to it is throwaway. Written down so the
+  bugs are not rediscovered, and so the decision is visible if the retirement
+  stalls and someone has to reconsider.
+
+
+STATE OF THE FIX, 2026-11-10
+----------------------------
+
+Branch fwd-fttpoint-units, commit 882d6e246b, local to fcstrk13 only:
+
+    NOT pushed to any remote
+    45 commits behind star/main
+    1 file, +12/-2, StFttPointMaker.cxx
+
+It carries bug 2 ONLY. Checked today:
+
+    star/main            iRob = 1    bug 1 LIVE
+    fwd-fttpoint-units   iRob = 1    bug 1 NOT fixed on the branch
+    fcstrk11 working     iRob = 0    fixed 2026-07-27, never upstreamed
+
+So the PR as it stands would leave a whole quadrant of plane 0 missing. Carry
+the rob-0 fix across from fcstrk11 before opening it.
+
+TO DO, in order:
+  1. rebase fwd-fttpoint-units onto main (45 behind)
+  2. add the rob-0 fix from fcstrk11
+  3. cons +StFttPointMaker, and +StFwdTrackMaker after it (it consumes the
+     points, and a header-level change there shows up only at dlopen)
+  4. open the PR
+
+
+TANGLED WITH THE mm -> cm WORK, and the order matters
+-----------------------------------------------------
+
+The bug-2 fix works by ADDING a /10.0 to dx,dy, because getGloablOffset()
+returns them in mm while StFttPoint::xyz() is cm. Tier 1 of ftt_mm_cm.txt
+makes StFttDb return cm throughout -- at which point that /10.0 becomes
+WRONG and has to come back out. The two patches touch the same three lines
+and silently cancel if both land without the other being re-read.
+
+    Do this PR FIRST, alone. It is a bug fix against what main does today and
+    is correct against today's mm-returning StFttDb.
+
+    Then Tier 1 removes the /10.0 as part of its own diff, where it belongs
+    and where a reviewer sees both halves of the unit change together.
+
+    Doing Tier 1 first instead would mean this fix must be rewritten before
+    it is opened, and the measured evidence in its commit message (102373
+    points, x in -740..720 for a +-70 cm detector) would no longer describe
+    the code it is attached to.
+
+Also note getGloablOffset itself is due a rename (todo_getGloablOffset_rename.txt),
+and it touches StFttPointMaker.cxx too. Three patches now queue on the same
+function, and the order is NOT cheapest-first:
+
+    1. THIS FIX.      Ungated, and it is live corruption -- every production
+                      MuDst written meanwhile is missing a quadrant of plane 0
+                      and carries global x,y ten times too large.
+    2. the rename.    Gated on #47 and #49 merging, and purely cosmetic. It
+                      must not hold up a bug fix.
+    3. mm -> cm Tier 1, which removes the /10.0 this fix adds.
+
+Urgency before tidiness. A cosmetic rename that is blocked on two open PRs
+should never gate a correctness fix that is blocked on nothing.
 
 
 The two bugs, both live on star/main today
