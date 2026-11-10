@@ -31,7 +31,7 @@ void fwoPairPlot(const char *fn = "fwo_pair.root")
         if (i+j >= 14) { bkg += cor[i][j]; nb++; }
     bkg /= nb;
 
-    TCanvas *c = new TCanvas("c", "pair centroid", 1200, 520);
+    TCanvas *c = new TCanvas("c", "pair centroid", 1800, 780);
     c->Divide(2,1);
 
     c->cd(1); gPad->SetLeftMargin(0.13); gPad->SetRightMargin(0.15); gPad->SetBottomMargin(0.13);
@@ -41,14 +41,14 @@ void fwoPairPlot(const char *fn = "fwo_pair.root")
     h->GetXaxis()->SetTitleSize(0.05); h->GetYaxis()->SetTitleSize(0.05);
     h->Draw("COLZ");
     TLine *rg = new TLine(-0.5, 4.5, 4.5, -0.5);
-    rg->SetLineColor(kRed); rg->SetLineWidth(3); rg->SetLineStyle(2); rg->Draw();
+    rg->SetLineColor(kRed); rg->SetLineWidth(4); rg->SetLineStyle(2); rg->Draw();
     TLatex tl; tl.SetNDC(); tl.SetTextSize(0.036); tl.SetTextColor(kRed);
     tl.DrawLatex(0.45, 0.78, "d_{me} + d_{nb} = 4");
     tl.SetTextColor(kBlack);
     tl.DrawLatex(0.17, 0.20, "five flat cells on the ridge:");
     tl.DrawLatex(0.17, 0.15, "4091 4184 4437 4195 4169");
 
-    c->cd(2); gPad->SetGridy(); gPad->SetLeftMargin(0.13); gPad->SetBottomMargin(0.13);
+    c->cd(2); gPad->SetGridy(); gPad->SetLeftMargin(0.17); gPad->SetBottomMargin(0.13);
     const int S = 9;
     double xs[S], yA[S], yB[S], eA[S], eB[S];
     double nA = 0, mA = 0, nB = 0, mB = 0;
@@ -68,7 +68,8 @@ void fwoPairPlot(const char *fn = "fwo_pair.root")
     TH2F *fr = new TH2F("fr", "the ridge projected: s = d_{me} + d_{nb};"
                               "s = d_{me} + d_{nb};coincidences, accidentals subtracted",
                         10, -0.5, 8.5, 10, 0, 21000);
-    fr->GetXaxis()->SetTitleSize(0.05); fr->GetYaxis()->SetTitleSize(0.05);
+    fr->GetXaxis()->SetTitleSize(0.05); fr->GetYaxis()->SetTitleSize(0.042);
+    fr->GetYaxis()->SetTitleOffset(1.6);
     fr->Draw();
     TGraphErrors *gA = new TGraphErrors(S, xs, yA, 0, eA);
     gA->SetMarkerStyle(24); gA->SetMarkerSize(1.4); gA->SetMarkerColor(kGray+2);

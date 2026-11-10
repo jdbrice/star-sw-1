@@ -79,7 +79,7 @@ void fstOverlapRdep()
     const double epsPure = 0.0077;                  // pitch alone explains 5.25
     const double dPure   = -0.176;                  // shift alone, cm
 
-    TCanvas *c = new TCanvas("c", "FST overlap width vs radius", 1200, 1560);
+    TCanvas *c = new TCanvas("c", "FST overlap width vs radius", 1800, 2340);
     c->Divide(2, 3);
 
     // ================= LEFT: outer, measured ==============================
@@ -94,17 +94,17 @@ void fstOverlapRdep()
 
     TF1 *fPitch = new TF1("fPitch", "[0]", 16.5, 28.0);
     fPitch->SetParameter(0, gapStr + 128 * epsPure);
-    fPitch->SetLineColor(kBlue); fPitch->SetLineStyle(2); fPitch->SetLineWidth(3);
+    fPitch->SetLineColor(kBlue); fPitch->SetLineStyle(2); fPitch->SetLineWidth(4);
     fPitch->Draw("same");
 
     TF1 *fShift = new TF1("fShift", "[0] - 128*[1]/x", 16.5, 28.0);
     fShift->SetParameters(gapStr, dPure);
-    fShift->SetLineColor(kGreen + 2); fShift->SetLineStyle(3); fShift->SetLineWidth(3);
+    fShift->SetLineColor(kGreen + 2); fShift->SetLineStyle(1); fShift->SetLineWidth(4);
     fShift->Draw("same");
 
     TF1 *fFit = new TF1("fFit", "[0] + [1]/x", 16.5, 28.0);
     fFit->SetParameters(A, B);
-    fFit->SetLineColor(kRed); fFit->SetLineWidth(3);
+    fFit->SetLineColor(kRed); fFit->SetLineWidth(4);
     fFit->Draw("same");
 
     TGraphErrors *g = new TGraphErrors(nR, r, w, er, ew);

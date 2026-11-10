@@ -142,7 +142,10 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     // ---- the plot --------------------------------------------------------
     // CINT shares one scope for the whole macro, so "c" collides with the
     // loop variable used for the occupancy above. Unique names throughout.
-    TCanvas *cvRd = new TCanvas("cvRd", "W(r) from the pair centroid", 1200, 520);
+    // 1800x780 rather than 1200x520: the png is rasterised at the canvas size,
+    // so this is the only knob that changes its resolution. Text and marker
+    // sizes are relative to the pad, so nothing else needs rescaling.
+    TCanvas *cvRd = new TCanvas("cvRd", "W(r) from the pair centroid", 1800, 780);
     cvRd->Divide(2, 1);
     // LEFT: the raw evidence -- the s = d_me + d_nb spectrum at each radius,
     // strip 0 dropped, accidentals subtracted, each normalised to unit area so
@@ -190,17 +193,17 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
 
     TF1 *fp = new TF1("fp", "[0]", 16.5, 28.0);
     fp->SetParameter(0, (W[0] + W[1] + W[2] + W[3]) / 4.0);
-    fp->SetLineColor(kBlue); fp->SetLineStyle(2); fp->SetLineWidth(3); fp->Draw("same");
+    fp->SetLineColor(kBlue); fp->SetLineStyle(2); fp->SetLineWidth(4); fp->Draw("same");
 
     TF1 *fs = new TF1("fs", "[0] - 128*[1]/x", 16.5, 28.0);
     fs->SetParameters(gapS + 128 * ((A - gapS) / 128.0 + 0), -0.176);
     // pure shift normalised to pass through the innermost point
     fs->SetParameter(0, W[0] + 128 * (-0.176) / r[0]);
-    fs->SetLineColor(kGreen + 2); fs->SetLineStyle(3); fs->SetLineWidth(3); fs->Draw("same");
+    fs->SetLineColor(kGreen + 2); fs->SetLineStyle(1); fs->SetLineWidth(4); fs->Draw("same");
 
     TF1 *ff = new TF1("ff", "[0] + [1]/x", 16.5, 28.0);
     ff->SetParameters(A, B);
-    ff->SetLineColor(kRed); ff->SetLineWidth(3); ff->Draw("same");
+    ff->SetLineColor(kRed); ff->SetLineWidth(4); ff->Draw("same");
 
     TGraphErrors *g = new TGraphErrors(4, r, W, er, eW);
     g->SetMarkerStyle(20); g->SetMarkerSize(1.6); g->SetLineWidth(2); g->Draw("P same");
