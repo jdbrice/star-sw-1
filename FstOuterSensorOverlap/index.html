@@ -327,6 +327,61 @@ two &mdash; the inner and outer widths are measured at different mean radii (12.
 predicts 1.80 and pure pitch 1.00. Both tests therefore say <b>pitch-dominant</b>, with room for
 a sub-millimetre radial component.</p>
 
+<TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/fwo_rdep.png"><img src="plots/fwo_rdep.png" height=200></a></TD></TR>
+<TR><TD><font size="-1"><b>Left:</b> the four measured widths against the two
+single-hypothesis curves and a free two-parameter fit. Pure pitch is flat in <i>r</i>;
+a fan converging off-axis falls as 1/<i>r</i>; the data is between them and much closer to
+flat. <b>Right:</b> the same three hypotheses carried to the inner sensor, which has no
+1&deg; gap &mdash; see below. Bars are the residual scatter about the fit (0.017 strips,
+2&nbsp;dof), not a propagated statistical error.</font></TD></TR>
+</TABLE>
+
+<p>The two terms can also be read straight off the four points, with <b>neither hypothesis
+assumed</b>. The model is <tt>W(r) = G/p + 128&epsilon; &minus; 128<i>d</i>/r</tt> with
+<i>G</i> the dead gap (1&deg; outer), <i>p</i> the nominal pitch, &epsilon; the fractional
+pitch error and <i>d</i> the radial offset of the point the strip fan converges on. That is
+linear in 1/<i>r</i>, so a two-parameter fit needs no prior:</p>
+
+<p style="margin-left:2em"><tt>W(r) = 4.7586 + 9.1782/r</tt> &nbsp;&rarr;&nbsp;
+pitch <b>+0.384%</b> (128 strips span <b>30.115&deg;</b>), &nbsp;
+<i>d</i> = <b>&minus;0.72&nbsp;mm</b></p>
+
+<p>So the 30.1&deg; span and the sub-millimetre radial offset are not an interpretation laid
+over the table &mdash; they are what the four numbers give on their own, and they agree with
+the mixture argument above to better than the quoted precision.</p>
+
+<p><b>The inner sensor is the sharper test of the two, not the weaker one</b>, which is worth
+saying because its overlap is only about one strip wide. Discriminating power is not absolute
+width: the inner has <b>no 1&deg; gap</b>, so <tt>G/p = 0</tt> and its width <i>is</i> the
+signal rather than a 4% ripple on a 4.27-strip pedestal. Carrying the same three hypotheses
+to the inner radii:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>rStrip</TH><TH>0</TH><TH>1</TH><TH>2</TH><TH>3</TH><TH>change</TH></TR>
+<TR><TD>&lang;r&rang; (cm)</TD><TD>6.44</TD><TD>9.31</TD><TD>12.19</TD><TD>15.06</TD><TD>&nbsp;</TD></TR>
+<TR><TD>pure pitch predicts</TD><TD>0.99</TD><TD>0.99</TD><TD>0.99</TD><TD>0.99</TD><TD>0.00</TD></TR>
+<TR><TD>the fit above predicts</TD><TD>1.92</TD><TD>1.48</TD><TD>1.24</TD><TD>1.10</TD><TD>&minus;0.82</TD></TR>
+<TR><TD>pure radial shift <i>d</i> = &minus;0.176 cm predicts</TD><TD>3.50</TD><TD>2.42</TD><TD>1.85</TD><TD>1.50</TD><TD>&minus;2.00</TD></TR>
+</TABLE>
+
+<p>A factor <b>3.5</b> between the hypotheses at rStrip&nbsp;0, where across the whole outer
+range they differ by 5%. The coincidence profile is now filled split by inner rStrip
+(<tt>gFwoProfIR</tt>), and the raw counts already lean the right way &mdash; the profile
+reaches markedly further from the wedge edge at small <i>r</i> than at large, with the
+mirrored (accidental) rows flat at the noise level throughout.</p>
+
+<p><b>What still has to be settled before an inner width is quoted.</b> The outer width is an
+<i>equivalent</i> width normalised to the profile's plateau (0.79, 0.18, 0.02 of plateau at
+distances 4, 5, 6). A one-to-two strip overlap has <b>no plateau</b>, so there is nothing to
+normalise to, and the partner-finding efficiency &mdash; 49.3% outer against 25.0% inner
+&mdash; cannot be recovered from the profile itself. The way through is a <i>shape</i>
+estimator rather than an area one, such as the mean distance of the coincidence profile,
+which is first-order independent of that efficiency because the efficiency multiplies every
+distance bin alike. Any residual constant bias then cancels in the <b>slope</b>, which is the
+quantity that separates the hypotheses (0.00 against &minus;2.00 strips across rStrip 0 to 3).
+That is the open item here; the statistics are not the obstacle.</p>
+
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
 <b>So <tt>kFstStripPitchPhi = TMath::Pi()*30.0/180.0/128</tt> is too small, by about
 0.46%</b> once the radial-shift part is taken out &mdash; the 128 strips span ~30.14&deg;, not
@@ -404,9 +459,14 @@ since <tt>kFstzFilp</tt> inverts it. Narrow band, so it needs much more data.</p
 <H2>Code and data</H2>
 <ul>
   <li><tt>script/fstWedgeOverlap.C</tt> &mdash; the measurement. Reads MuDst directly, books one
-      TH2F per wedge plus front/back and per-disk summaries. The input list name must contain
-      <tt>.lis</tt>, <tt>.files</tt> or <tt>.MuDst.root</tt>, or <tt>StMuChainMaker</tt> refuses it.</li>
+      TH2F per wedge plus front/back and per-disk summaries, and the coincidence profile split
+      by rStrip for the outer (<tt>gFwoProfR</tt>) and the inner (<tt>gFwoProfIR</tt>). The input
+      list name must contain <tt>.lis</tt>, <tt>.files</tt> or <tt>.MuDst.root</tt>, or
+      <tt>StMuChainMaker</tt> refuses it.</li>
   <li><tt>script/fstWedgeDrawing.C</tt> &mdash; the figure, drawn from <tt>stripPhi</tt>'s own formula.</li>
+  <li><tt>script/fstOverlapRdep.C</tt> &mdash; the radial-dependence figure and the free
+      <tt>W(r) = A + B/r</tt> fit. Self-contained: it carries the four measured widths, so the
+      numbers on the plot cannot drift away from the table above.</li>
   <li>Data: Run&nbsp;24 zero-field, <tt>/star/data110/reco/zeroFieldAlignment_2024/FieldOff/</tt>,
       120&thinsp;000 events of the 12.9&thinsp;M available in the 300-file chain. Output histograms
       are additive, so a larger sample can be run as condor jobs and merged with <tt>hadd</tt>.</li>
