@@ -77,6 +77,14 @@ int   gFwoOccI[4608];      // inner-sensor occupancy, same indexing
 long  gFwoCoinI[3][2][2][4];  // inner edge coincidences [disk][parity][end][y]
 long  gFwoEdgeI[3][2][2];
 long  gFwoProfI[12][2];       // inner: strip from edge, [dist][0=pred 1=mirror]
+long  gFwoProfIR[4][12][2];   // inner, split by rStrip 0-3: [r][dist][pred/mirror].
+                              // THE SHARPER OF THE TWO r TESTS. The inner has NO 1 deg
+                              // gap, so its width is 128*eps - 128*d/r with no 4.27-strip
+                              // pedestal: the three hypotheses give 0.99 (pure pitch),
+                              // 1.92 (the outer fit) and 3.50 (pure shift) strips at
+                              // rStrip 0, a factor 3.5 apart, where across the whole
+                              // outer range they differ by 5%. Small absolute width is
+                              // not the same as small discriminating power.
 long  gFwoProfR[4][12][2];    // outer, split by rStrip 4-7: [r][dist][pred/mirror].
                               // A radial displacement of the strip fan scales the
                               // apparent pitch by (1-d/R), so the overlap width would
@@ -214,6 +222,8 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
       }
    }
    for (int io2 = 0; io2 < 12; io2++) { gFwoProfI[io2][0] = 0; gFwoProfI[io2][1] = 0; }
+   for (int io5 = 0; io5 < 4; io5++)
+      for (int io6 = 0; io6 < 12; io6++) { gFwoProfIR[io5][io6][0] = 0; gFwoProfIR[io5][io6][1] = 0; }
    for (int ip3 = 0; ip3 < 4; ip3++) for (int iq3 = 0; iq3 < 12; iq3++) { gFwoProfR[ip3][iq3][0] = 0; gFwoProfR[ip3][iq3][1] = 0; }
 
    long nEvSeen = 0, nEvWithFst = 0, nHitTot = 0, nHitOuter = 0, nRawTot = 0, nIOPair = 0;
@@ -374,6 +384,13 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
          if (dist >= 0 && dist < 12) {
             if (yy2[pred2]) gFwoProfI[dist][0]++;
             if (yy2[mirr2]) gFwoProfI[dist][1]++;
+            // same quantity split by radius. rStrip runs 0-3 across the inner
+            // sensor (r 5.0-16.5 cm), so no offset here, unlike the outer's -4.
+            int rsi = (int)(hq2->getMeanRStrip() + 0.5);
+            if (rsi >= 0 && rsi < 4) {
+               if (yy2[pred2]) gFwoProfIR[rsi][dist][0]++;
+               if (yy2[mirr2]) gFwoProfIR[rsi][dist][1]++;
+            }
          }
          if (cq2 <= 1 || cq2 >= 126) {
             gFwoEdgeI[dq2 - 1][par2][end2]++;
@@ -493,6 +510,29 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    printf("\n   mirr :");
    for (int ib3 = 0; ib3 < 12; ib3++) printf(" %6ld", gFwoProfI[ib3][1]);
    printf("\n");
+
+   printf("\nINNER WIDTH BY rStrip -- the sharper separation of pitch from radial shift.\n");
+   printf("The inner has no 1 deg gap, so its width IS 128*eps - 128*d/r with no\n");
+   printf("4.27-strip pedestal. Predictions at rStrip 0,1,2,3 (<r> 6.44, 9.31, 12.19,\n");
+   printf("15.06 cm):  pure pitch (eps=+0.77%%)  0.99 0.99 0.99 0.99\n");
+   printf("            outer-fit mixture        1.92 1.48 1.24 1.10\n");
+   printf("            pure shift (d=-0.176cm)  3.50 2.42 1.85 1.50\n");
+   printf("A factor 3.5 apart at rStrip 0, against 5%% across the whole outer range --\n");
+   printf("so a coarse width here still separates them, PROVIDED the statistics hold\n");
+   printf("up after a 4-way split. Check the pred row sums before believing a slope.\n");
+   double rmidI[4] = {6.44, 9.31, 12.19, 15.06};
+   printf("   rStrip   <r>  :");
+   for (int ic3 = 0; ic3 < 10; ic3++) printf(" %6d", ic3);
+   printf("     sum\n");
+   for (int id3 = 0; id3 < 4; id3++) {
+      long rowSum = 0;
+      printf("     %d    %5.2f  :", id3, rmidI[id3]);
+      for (int ie3 = 0; ie3 < 10; ie3++) { printf(" %6ld", gFwoProfIR[id3][ie3][0]); rowSum += gFwoProfIR[id3][ie3][0]; }
+      printf("  %6ld\n", rowSum);
+      printf("              mirr :");
+      for (int if3 = 0; if3 < 10; if3++) printf(" %6ld", gFwoProfIR[id3][if3][1]);
+      printf("\n");
+   }
 
    printf("\nAPV vs phiStrip, the DB-map check. The channel-map note says outer\n"
           "APV5/6/7/8 carry phi 0-31/32-63/64-95/96-127 and inner APV1/2/3/4 the same\n"
