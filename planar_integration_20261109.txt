@@ -259,9 +259,72 @@ across all three slots (:01, :02, :03) while 1, 9, 13 were refined between
 them.
 
 So quad A station 2 never received the alignment the other three stations did.
-Whether that is a genuine zero or a dropped row is akio's and Daniel's call,
-but it displaces that pentagon by ~1 cm = 3 strip pitches. Remember we have
-INSERT but no UPDATE/DELETE on Geometry_ftt, so a fix means a new slot.
+RESOLVED 2026-11-10 -- it is neither a genuine zero nor a dropped row, and the
+reason was recorded at the time in the row's own comment:
+
+    "Station=2(Disk=1),Pent=1(Quad=A,x>0,y>0) geo(+0.834,+3.533)
+     ; NO V HITS - geometry term only"
+
+disk1/quadA has zero V-strip hits in Run 22: feb 2,4,6 are hardware dead there
+(online QA saw VMM 5-8,13-16,21-24 empty; script/checkDisk1QuadA.C confirmed it
+in our own raw hits). So dx really is unmeasurable in that chamber, and holding
+it is correct.
+
+What is NOT correct is that dy was held with it. The H strips are alive and
+abundant -- 1,383,343 entries in hBlindDyAll_H_disk1_quadA against 0.77M-2.17M
+in the other fifteen cells -- and script/stgcQuadOffsets.C gated the whole cell
+on having both fits:
+
+    bool haveCor = (gOK[d][q][0] && gOK[d][q][1]);        // iteration 1
+    if(!gOK[dd][qq][0] || !gOK[dd][qq][1]) continue;      // delta branch
+
+so a good dy was discarded at every iteration from .000001 to .000004. The size
+of what was lost, measured twice:
+
+    iter2  disk1 quadA dy = -0.866 cm  (3.9 sig; every other cell within 0.10)
+    iter3  disk1 quadA dy = +0.893 cm  (9.2 sig; every other quad A cell +1.755)
+
+Two campaigns on two different geometries agreeing to 40 um on 0.86 cm of
+unapplied y alignment. Applying it puts row 5 t1 at 2.640 against siblings
+2.850/2.848/2.782 -- 0.2 cm from the family instead of 1.07 cm off it. That
+consistency was not imposed; it falls out.
+
+FIXED in the script (9c1144a920): all three hold reasons -- no fit, window
+edge, weak fit -- are now per coordinate, a held coordinate gets delta 0, and
+only a both-held cell prints the non-parseable form. The delta branch already
+knew this principle for weak fits and had simply never had it extended to a
+missing orientation.
+
+NOT fixed in the DB. The number to apply is t1 += 0.862 on row Id=5 only
+(t0 stays -0.921: the dead plane means Run 22 has no dx measurement there at
+all). Geometry_ftt is INSERT-only, so that means a new slot .000005, and
+pentOnStation is a MATCHED PAIR with the fGeom misalign cache -- so it also
+means rebuilding fGeom.dev2022sm.misalign1.sdt20211112.000005.root. Whether to
+spend a slot on 8.6 mm in one of sixteen cells is akio's call.
+
+Run 24 is unaffected: that half-chamber is alive there (disk1 quadA dx 305,572
+entries, dy 523,476) and .000001 aligned row 5 in both coordinates. In Run 24
+it is disk1 quadB that has lost its H instead. The dead region therefore MOVES
+WITH THE RUN, which also rules out a fixed offline-map error as the cause --
+though whether the dead febs are really the vertical ones (the H/V swap
+question open since 2026-07-21) is still unanswered and does not change any of
+the above.
+
+How much of the x36.7 does this explain? A few percent at most. One cell in
+sixteen carrying 0.86 cm at a ~0.1 cm sigma is ~74 units of chi2 on the hits
+that land in it, so of order 4-5 units averaged over tracks against an excess
+of ~159. Real, worth fixing, not the cause.
+
+THE LEAD IT DOES OPEN, and it connects straight to the sigma hypothesis in 5e:
+in that chamber StFttClusterPointMaker still builds points from the H clusters
+alone, with x set to a maxStripCenter() PLACEHOLDER
+(StFttClusterPointMaker.cxx:216, measured by script/checkDisk1QuadAPoints.C).
+If the covariance of such a point does not inflate the placeholder coordinate
+to something like strip-length/sqrt(12), then every single-orientation point in
+the whole detector -- not just this chamber -- hands the fitter a fake precise
+coordinate. UNVERIFIED, but it is the same measurement 5e already asks for, so
+split the covariance printout by one-orientation vs two-orientation points and
+both questions are answered at once.
 
 One row cannot explain a 10x global inflation on its own, though: quad B is
 ~5-10 mm off and quad C ~5-10 mm too, consistently. Either the whole alignment
