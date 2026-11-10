@@ -217,6 +217,25 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    // with, on the assumption that illumination is uniform across the wedge.
    TH2F *hPair  = new TH2F("hPair",  "OUTER pair map;my distance from the wedge edge;partner distance", 12, -0.5, 11.5, 12, -0.5, 11.5);
    TH2F *hPairI = new TH2F("hPairI", "INNER pair map;my distance from the wedge edge;partner distance", 12, -0.5, 11.5, 12, -0.5, 11.5);
+   // EDGE-TRUNCATED CLUSTERS, the test of why strip 0 misbehaves.
+   //
+   // The per-strip occupancy says strip 0 has MORE hits than the bulk (outer
+   // +12%, inner +4%), not fewer, while its coincidence fraction is about half
+   // the plateau. The natural reading is that the excess is clusters whose
+   // charge is cut off by the silicon edge: the reconstructed meanPhiStrip
+   // piles up on the last strip while the true position is outside the sensor,
+   // so there is no partner to find.
+   //
+   // If that is right, hits at d=0 should be NARROWER in phi and LOWER in
+   // charge than the bulk, because part of the cluster is missing. If instead
+   // they look exactly like bulk clusters, the excess is something else and
+   // cluster shape gives no handle -- which matters, because with most FST
+   // hits single-strip there may be no cut with any separation to offer.
+   // These two plots answer that directly rather than by assertion.
+   TH2F *hClPhi  = new TH2F("hClPhi",  "OUTER cluster phi size vs distance from edge;distance from the wedge edge;nRawHitsPhi", 12, -0.5, 11.5, 8, 0.5, 8.5);
+   TH2F *hClPhiI = new TH2F("hClPhiI", "INNER cluster phi size vs distance from edge;distance from the wedge edge;nRawHitsPhi", 12, -0.5, 11.5, 8, 0.5, 8.5);
+   TH2F *hClQ    = new TH2F("hClQ",    "OUTER cluster charge vs distance from edge;distance from the wedge edge;charge", 12, -0.5, 11.5, 100, 0, 4000);
+   TH2F *hClQI   = new TH2F("hClQI",   "INNER cluster charge vs distance from edge;distance from the wedge edge;charge", 12, -0.5, 11.5, 100, 0, 4000);
 
    // diagnostics that must be checked before believing any of it
    TH2F *hPS = new TH2F("hPhiStripPerSensor", "phiStrip by sensor;meanPhiStrip;sensor", 132, -2, 130, 4, -1, 3);
@@ -288,6 +307,14 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
          hPS->Fill(fp, sp);
          hRS->Fill(hp->getMeanRStrip(), sp);
          hAPV->Fill(fp, hp->getApv());
+         {   // cluster shape against distance from the wedge edge, both ends folded
+            int cc = (int)(fp + 0.5);
+            int dd = (cc <= 11) ? cc : ((cc >= 116) ? 127 - cc : -1);
+            if (dd >= 0) {
+               if (sp == 0) { hClPhiI->Fill(dd, hp->getNRawHitsPhi()); hClQI->Fill(dd, hp->getCharge()); }
+               else         { hClPhi ->Fill(dd, hp->getNRawHitsPhi()); hClQ ->Fill(dd, hp->getCharge()); }
+            }
+         }
          if (sp == 0 && dp >= 1 && dp <= 3 && wp >= 1 && wp <= 36) {
             int mi = 1 + (wp - 1) % 12;
             int ci = (int)(fp + 0.5);
@@ -646,7 +673,7 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    hAll->Write(); hOdd->Write(); hEven->Write(); hFront->Write(); hBack->Write();
    hIO->Write(); hIOs->Write(); hIOd->Write(); hAPV->Write();
    for (int i3 = 0; i3 < 3; i3++) hDisk[i3]->Write();
-   hFine->Write(); hFineI->Write(); hPair->Write(); hPairI->Write(); hPS->Write(); hRS->Write(); hNH->Write();
+   hFine->Write(); hFineI->Write(); hPair->Write(); hPairI->Write(); hClPhi->Write(); hClPhiI->Write(); hClQ->Write(); hClQI->Write(); hPS->Write(); hRS->Write(); hNH->Write();
 
    // ---- the counters, as histograms, so hadd can sum them ----
    // Everything above this point is a TH2F and merges for free. The coincidence

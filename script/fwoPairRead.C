@@ -128,21 +128,41 @@ void fwoPairOne(TFile *f, const char *hname, const char *occName,
     for (int k = 0; k < 10; k++) printf(" %8.0f", sC[k]);
     printf("\n");
 
-    const char *tag[3] = { "raw, all cells      ",
-                           "raw, edge d>=1 only ",
-                           "eff-corrected, bkg  " };
-    double *arr[3] = { sA, sB, sC };
-    printf("\n   %-22s %8s %8s %8s\n", "", "<s>", "W=<s>+1", "entries");
-    for (int t = 0; t < 3; t++) {
-        double n = 0, m = 0;
-        for (int k = 0; k < 2 * kN; k++) { n += arr[t][k]; m += k * arr[t][k]; }
-        if (n <= 0) continue;
-        m /= n;
-        printf("   %-22s %8.3f %8.3f %8.0f\n", tag[t], m, m + 1, n);
+    // The centroid must be taken over the PEAK, with the floor subtracted and
+    // WITHOUT clipping. Averaging over the whole 0..22 window instead gives a
+    // number dominated by the accidental sea -- it came out 6.09 for the outer
+    // where the ridge is plainly at 4 -- and clipping negative cells at zero
+    // biases it upward on top of that. Restricting to s <= kSMax keeps the
+    // ridge and its shoulders and drops the sea.
+    const int kSMax = 8;
+    printf("\n   %-28s %8s %8s %7s\n", "", "<s>", "W=<s>+1", "rms");
+    for (int t = 0; t < 2; t++) {
+        int lo = t;                       // t=0 all d, t=1 drop the edge strip
+        double num = 0, den = 0;
+        for (int sv = 0; sv <= kSMax; sv++)
+            for (int i = lo; i < kN; i++) {
+                int j = sv - i;
+                if (j < lo || j >= kN) continue;
+                double v = cor[i][j] - bkg;
+                num += sv * v; den += v;
+            }
+        if (den <= 0) continue;
+        double m = num / den, var = 0;
+        for (int sv = 0; sv <= kSMax; sv++)
+            for (int i = lo; i < kN; i++) {
+                int j = sv - i;
+                if (j < lo || j >= kN) continue;
+                var += (cor[i][j] - bkg) * (sv - m) * (sv - m);
+            }
+        printf("   %-28s %8.3f %8.3f %7.2f\n",
+               t ? "eff-corrected, drop d=0" : "eff-corrected, all d",
+               m, m + 1, sqrt(var / den));
     }
-    printf("\n   (for the raw rows the accidental floor is still in, so <s> is\n"
-           "    pulled toward the middle of the window -- compare the SHAPE of\n"
-           "    the three sum rows, not the raw means.)\n");
+    printf("\n   A centroid is only unbiased if the ridge sits well inside the\n"
+           "   window on BOTH sides. For the outer, ridge at s=4 in a 0-11\n"
+           "   window, it does. For the inner the ridge is at s~0, hard against\n"
+           "   the s>=0 wall, so <s> is pushed up by the tail and cannot be\n"
+           "   turned into a width -- see the note in the page.\n");
 }
 
 void fwoPairRead(const char *fn = "fwo_pair.root")
