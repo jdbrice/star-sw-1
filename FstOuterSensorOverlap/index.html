@@ -357,6 +357,59 @@ limits them; the bars on the plot are the <i>estimator</i> systematic. An earlie
 120&thinsp;000-event run of the same measurement gave the same slope and the same conclusion
 (30.115&deg;, &minus;0.72&nbsp;mm), which is the consistency check that matters here.</p>
 
+<h3>The same width from a completely different estimator</h3>
+
+<p>Everything above is an <i>equivalent width</i>: a yield profile, summed, background
+subtracted, divided by a plateau. It needs three conventions, and the box below shows that
+two of them change the answer. So the width was re-measured a second way, with none of them.</p>
+
+<p>Fold both ends of the wedge to a distance from its edge (<i>d</i> = <i>c</i> on the low
+side, 127&nbsp;&minus;&nbsp;<i>c</i> on the high side) and histogram <b>my</b> distance
+against <b>the partner's</b>. The two strip grids run opposite ways through the overlap band,
+so every pair of strips at the same physical angle satisfies</p>
+
+<p style="margin-left:2em"><tt>s = d<sub>me</sub> + d<sub>nb</sub> = constant</tt>,
+&nbsp;&nbsp; <b>W = &lang;s&rang; + 1</b></p>
+
+<p>The ridge position <i>is</i> the width. This is a centroid, so it does not care about the
+overall normalisation at all &mdash; no plateau, no background convention, no decision about
+how to count strip 0.</p>
+
+<TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/fwo_pair.png"><img src="plots/fwo_pair.png" height=200></a></TD></TR>
+<TR><TD><font size="-1"><b>Left:</b> the pair map. The ridge is five cells at
+<i>s</i>&nbsp;=&nbsp;4 &mdash; 4091, 4184, 4437, 4195, 4169 &mdash; flat and symmetric.
+<b>Right:</b> the ridge projected onto <i>s</i>, accidentals subtracted, with and without the
+edge strip.</font></TD></TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>estimator</TH><TH>&lang;s&rang;</TH><TH>W</TH></TR>
+<TR><TD>pair centroid, <b>strip 0 dropped</b></TD><TD>4.366</TD><TD><b>5.37</b></TD></TR>
+<TR><TD>pair centroid, all strips</TD><TD>4.139</TD><TD>5.14</TD></TR>
+<TR><TD>yield profile (the table above)</TD><TD>&nbsp;</TD><TD>5.20 &ndash; 5.35</TD></TR>
+</TABLE>
+
+<p><b>Two estimators with nothing in common, agreeing inside 0.1&ndash;0.2 strips.</b> The
+0.23 between the two centroid rows is the strip-0 contamination, and it brackets the yield
+answer.</p>
+
+<p><b>Why strip 0 is dropped, and why that is the better number.</b> Its occupancy is
+<b>12% above</b> the bulk of the wedge while its coincidence fraction is about half the
+plateau. More hits, fewer partners &mdash; which is what an edge-truncated cluster looks
+like: charge cut off by the silicon edge, reconstructed position pinned to the last strip,
+true position outside the sensor, so no partner can exist. Those hits sit at
+<i>d</i>&nbsp;=&nbsp;0 and pull the centroid down, and a <i>pair</i> carries the
+contamination twice, once per side. Dropping the edge strip costs the outer little, because
+it has four more strips of ridge to work with.</p>
+
+<p><b>What this does NOT yet give.</b> A width summed over all radii cannot be split into a
+pitch term and a radial-shift term &mdash; that split is precisely the <i>r</i> dependence.
+The pair map is now filled per rStrip, so the next large sample measures
+<i>W</i>(<i>r</i>) from the ridge rather than from an equivalent width, and the
++0.46% / &minus;0.68&nbsp;mm decomposition can be re-made without any of the conventions in
+the box below. Until then the decomposition stands on the yield-profile measurement.</p>
+
 <p style="background-color:#eef; padding:6px; border:1px solid #99a;">
 <b>A note on the estimator, because getting it wrong manufactures a trend.</b> The width is an
 equivalent width: the coincidence profile summed over distance from the wedge edge, background
