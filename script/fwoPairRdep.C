@@ -50,6 +50,7 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
 
     double r[4]  = { 17.94, 20.81, 23.69, 26.56 };
     double W[4], eW[4], er[4] = {0,0,0,0};
+    double spec[4][kSMax + 1], sMean[4];   // the s distributions, for the overlay
 
     printf("\nOUTER overlap width per rStrip, pair centroid, strip 0 dropped\n");
     printf("  %-8s %6s %9s %9s %9s %10s\n", "rStrip", "<r>", "<s>", "W", "+- stat", "entries");
@@ -69,12 +70,15 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
         bkg /= nb;
 
         double num = 0, den = 0, nraw = 0;
-        for (int sv = 0; sv <= kSMax; sv++)
+        for (int sv = 0; sv <= kSMax; sv++) {
+            double rowv = 0;
             for (int i = 1; i < kN; i++) {
                 int j = sv - i; if (j < 1 || j >= kN) continue;
                 double v = cor[i][j] - bkg;
-                num += sv * v; den += v; nraw += rawc[i][j];
+                rowv += v; num += sv * v; den += v; nraw += rawc[i][j];
             }
+            spec[ib][sv] = rowv;
+        }
         double m = num / den, var = 0;
         for (int sv = 0; sv <= kSMax; sv++)
             for (int i = 1; i < kN; i++) {
@@ -83,6 +87,8 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
             }
         double rms = sqrt(var / den);
         W[ib]  = m + 1;
+        sMean[ib] = m;
+        for (int sv = 0; sv <= kSMax; sv++) spec[ib][sv] /= den;   // unit area
         eW[ib] = rms / sqrt(nraw);         // centroid error, from the raw count
         printf("  %-8d %6.2f %9.3f %9.3f %9.3f %10.0f\n", ib + 4, r[ib], m, W[ib], eW[ib], nraw);
     }
@@ -109,7 +115,43 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     // ---- the plot --------------------------------------------------------
     // CINT shares one scope for the whole macro, so "c" collides with the
     // loop variable used for the occupancy above. Unique names throughout.
-    TCanvas *cvRd = new TCanvas("cvRd", "W(r) from the pair centroid", 700, 560);
+    TCanvas *cvRd = new TCanvas("cvRd", "W(r) from the pair centroid", 1200, 520);
+    cvRd->Divide(2, 1);
+    // LEFT: the raw evidence -- the s = d_me + d_nb spectrum at each radius,
+    // strip 0 dropped, accidentals subtracted, each normalised to unit area so
+    // the SHAPES compare. The shift is only 0.18 strips on an rms of 1.15, so
+    // it is not meant to be read off the curves by eye: the dashed verticals
+    // are the centroids, and those are what the fit uses.
+    cvRd->cd(1);
+    gPad->SetGridy(); gPad->SetLeftMargin(0.13); gPad->SetBottomMargin(0.13);
+    {
+        TH2F *fs2 = new TH2F("fs2", "the ridge at each radius, strip 0 dropped;s = d_{me} + d_{nb};fraction of the ridge", 10, 1.5, 7.5, 10, 0, 0.78);
+        fs2->GetXaxis()->SetTitleSize(0.05); fs2->GetYaxis()->SetTitleSize(0.05);
+        fs2->Draw();
+        int colR[4] = { kRed + 1, kOrange + 7, kGreen + 2, kBlue + 1 };
+        int mstR[4] = { 20, 21, 22, 23 };
+        TLegend *lr = new TLegend(0.50, 0.62, 0.97, 0.90);
+        lr->SetFillStyle(0); lr->SetBorderSize(0); lr->SetTextSize(0.034);
+        for (int ic = 0; ic < 4; ic++) {
+            double xx[kSMax + 1], yy[kSMax + 1];
+            for (int sv = 0; sv <= kSMax; sv++) { xx[sv] = sv; yy[sv] = spec[ic][sv]; }
+            TGraph *gg = new TGraph(kSMax + 1, xx, yy);
+            gg->SetMarkerStyle(mstR[ic]); gg->SetMarkerSize(1.3);
+            gg->SetMarkerColor(colR[ic]); gg->SetLineColor(colR[ic]); gg->SetLineWidth(2);
+            gg->Draw("PL same");
+            TLine *lv = new TLine(sMean[ic], 0, sMean[ic], 0.66);
+            lv->SetLineColor(colR[ic]); lv->SetLineStyle(2); lv->SetLineWidth(2); lv->Draw();
+            lr->AddEntry(gg, Form("rStrip %d, r = %.1f cm:  #LTs#GT = %.3f",
+                                  ic + 4, r[ic], sMean[ic]), "pl");
+        }
+        lr->Draw();
+        TLatex tr; tr.SetNDC(); tr.SetTextSize(0.033);
+        tr.DrawLatex(0.17, 0.30, "dashed: the centroid of each");
+        tr.DrawLatex(0.17, 0.255, "they walk left as r grows:");
+        tr.DrawLatex(0.17, 0.21, "4.407 #rightarrow 4.229, a 0.18 strip shift");
+        tr.DrawLatex(0.17, 0.155, "pure pitch would put all four together");
+    }
+    cvRd->cd(2);
     gPad->SetGridy(); gPad->SetLeftMargin(0.13); gPad->SetBottomMargin(0.13);
     double ymin = 1e9, ymax = -1e9;
     for (int i = 0; i < 4; i++) { ymin = TMath::Min(ymin, W[i]); ymax = TMath::Max(ymax, W[i]); }
