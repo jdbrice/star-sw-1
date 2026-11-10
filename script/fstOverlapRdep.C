@@ -58,9 +58,6 @@ void fstOverlapRdep()
     double w[nR]  = { 5.347, 5.281, 5.211, 5.198 };   // 60.4M events
     double er[nR] = {  0.00,  0.00,  0.00,  0.00 };
     double ew[nR] = { 0.090, 0.090, 0.090, 0.090 };   // estimator systematic
-    // the original 120k measurement, for comparison -- same slope, offset by
-    // the background convention
-    double wOld[nR] = { 5.26, 5.22, 5.14, 5.10 };
 
     // free fit W = A + B/r, done in python alongside this macro; repeated here
     // so the plot is self-contained and the numbers cannot drift apart
@@ -110,10 +107,6 @@ void fstOverlapRdep()
     fFit->SetLineColor(kRed); fFit->SetLineWidth(3);
     fFit->Draw("same");
 
-    TGraph *gOld = new TGraph(nR, r, wOld);
-    gOld->SetMarkerStyle(24); gOld->SetMarkerSize(1.4); gOld->SetMarkerColor(kGray + 2);
-    gOld->Draw("P same");
-
     TGraphErrors *g = new TGraphErrors(nR, r, w, er, ew);
     g->SetMarkerStyle(20); g->SetMarkerSize(1.5); g->SetLineWidth(2);
     g->Draw("P same");
@@ -121,7 +114,6 @@ void fstOverlapRdep()
     TLegend *l1 = new TLegend(0.40, 0.60, 0.97, 0.90);
     l1->SetFillStyle(0); l1->SetBorderSize(0); l1->SetTextSize(0.035);
     l1->AddEntry(g, "measured, 60.4M events", "pe");
-    l1->AddEntry(gOld, "the earlier 120k sample", "p");
     l1->AddEntry(fPitch, Form("pure pitch  (+%.2f%%): flat", epsPure * 100), "l");
     l1->AddEntry(fShift, Form("pure shift  (d = %.2f cm): 1/r", dPure), "l");
     l1->AddEntry(fFit, Form("free fit: pitch %+.2f%%, d = %+.2f mm", eps * 100, dsh * 10), "l");
@@ -129,59 +121,56 @@ void fstOverlapRdep()
 
     TLatex t; t.SetNDC(); t.SetTextSize(0.034);
     t.DrawLatex(0.16, 0.22, Form("128 strips span %.3f#circ, not 30.000#circ", 30 * (1 + eps)));
-    t.DrawLatex(0.16, 0.17, "open circles: 120k sample (slope agrees, offset is convention)");
+    t.DrawLatex(0.16, 0.17, "bars are the estimator systematic; statistical error is ~0.003");
 
-    // ================= RIGHT: inner, predicted ============================
+    // ================= RIGHT: inner, MEASURED ============================
+    // The inner overlap is 1-2 strips, so there is no plateau to normalise an
+    // equivalent width to, and the partner-finding efficiency cannot be read off
+    // its own profile. A SHAPE ratio needs neither: n(d=2)/n(d=0) with the flat
+    // accidental pedestal (the mirrored cell) subtracted. Efficiency multiplies
+    // every distance bin alike, so it cancels.
+    //
+    // The point of the panel: a pitch error gives the same overlap in STRIPS at
+    // every radius, hence the same profile shape at every radius, hence a FLAT
+    // line here. The data falls by a factor 5.1. No model of the profile shape
+    // is needed to say that.
     c->cd(2);
     gPad->SetGridy(); gPad->SetLeftMargin(0.13); gPad->SetBottomMargin(0.13);
 
-    TH2F *fr2 = new TH2F("fr2", "INNER sensor (no 1#circ gap): the same three hypotheses;"
-                                "mean radius  r  [cm];overlap width  [strips]",
-                         10, 5.0, 17.0, 10, 0.0, 4.0);
+    const int nI = 4;
+    double ri[nI]  = {  6.44,  9.31, 12.19, 15.06 };
+    double qi[nI]  = { 0.765, 0.424, 0.304, 0.150 };
+    double eqi[nI] = { 0.023, 0.013, 0.014, 0.010 };
+    double eri[nI] = { 0, 0, 0, 0 };
+
+    TH2F *fr2 = new TH2F("fr2", "INNER sensor (no 1#circ gap): measured shape vs radius;"
+                                "mean radius  r  [cm];n(d=2) / n(d=0),  accidentals subtracted",
+                         10, 5.0, 16.5, 10, 0.0, 1.0);
     fr2->GetXaxis()->SetTitleSize(0.05); fr2->GetYaxis()->SetTitleSize(0.05);
     fr2->Draw();
 
-    TF1 *iPitch = new TF1("iPitch", "[0]", 5.0, 17.0);
-    iPitch->SetParameter(0, 128 * epsPure);
-    iPitch->SetLineColor(kBlue); iPitch->SetLineStyle(2); iPitch->SetLineWidth(3);
-    iPitch->Draw("same");
+    TF1 *flat = new TF1("flat", "[0]", 5.0, 16.5);
+    flat->SetParameter(0, qi[0]);
+    flat->SetLineColor(kBlue); flat->SetLineStyle(2); flat->SetLineWidth(3);
+    flat->Draw("same");
 
-    TF1 *iShift = new TF1("iShift", "-128*[0]/x", 5.0, 17.0);
-    iShift->SetParameter(0, dPure);
-    iShift->SetLineColor(kGreen + 2); iShift->SetLineStyle(3); iShift->SetLineWidth(3);
-    iShift->Draw("same");
-
-    TF1 *iFit = new TF1("iFit", "[0] + [1]/x", 5.0, 17.0);
-    iFit->SetParameters(A - gapStr, B);
-    iFit->SetLineColor(kRed); iFit->SetLineWidth(3);
-    iFit->Draw("same");
-
-    // the one inner number we have: 1.0 strip at <r> = 12.81, and the +-0.30
-    // is the quoted inner/outer width ratio error, so it is a ~30% band
-    double ri[1] = { 12.81 }, wi[1] = { 1.00 }, eri[1] = { 0.0 }, ewi[1] = { 0.30 };
-    TGraphErrors *gi = new TGraphErrors(1, ri, wi, eri, ewi);
-    gi->SetMarkerStyle(21); gi->SetMarkerSize(1.6); gi->SetLineWidth(2);
+    TGraphErrors *gi = new TGraphErrors(nI, ri, qi, eri, eqi);
+    gi->SetMarkerStyle(21); gi->SetMarkerSize(1.5); gi->SetLineWidth(2);
     gi->Draw("P same");
 
-    // where the four inner rStrip bins would land
-    double rb[4] = { 6.44, 9.31, 12.19, 15.06 };
-    for (int i = 0; i < 4; i++) {
-        TLine *ln = new TLine(rb[i], 0.0, rb[i], 3.6);
-        ln->SetLineColor(kGray + 1); ln->SetLineStyle(7); ln->Draw();
-    }
-
-    TLegend *l2 = new TLegend(0.36, 0.62, 0.97, 0.90);
-    l2->SetFillStyle(0); l2->SetBorderSize(0); l2->SetTextSize(0.035);
-    l2->AddEntry(gi, "measured, inner summed over r", "pe");
-    l2->AddEntry(iPitch, "pure pitch: 0.99 at every r", "l");
-    l2->AddEntry(iShift, "pure shift: 3.50 #rightarrow 1.50", "l");
-    l2->AddEntry(iFit, "this fit: 1.92 #rightarrow 1.10", "l");
-    l2->Draw();
-
+    // no TLegend here: its marker sample lands inside the frame and reads as a
+    // fifth data point. Label the line and the points directly instead.
     TLatex t2; t2.SetNDC(); t2.SetTextSize(0.034);
-    t2.DrawLatex(0.16, 0.25, "dashed grey: rStrip 0,1,2,3 bin centres");
-    t2.DrawLatex(0.16, 0.20, "spread between hypotheses at rStrip 0: #times3.5");
-    t2.DrawLatex(0.16, 0.15, "against #times1.05 anywhere on the left panel");
+    t2.SetTextColor(kBlue);
+    t2.DrawLatex(0.42, 0.835, "what pure pitch requires: flat");
+    t2.SetTextColor(kBlack);
+    t2.DrawLatex(0.42, 0.665, "#bullet  measured, inner rStrip 0-3");
+    t2.DrawLatex(0.42, 0.585, "a pitch error gives the same overlap");
+    t2.DrawLatex(0.42, 0.540, "in strips at every radius, so the same");
+    t2.DrawLatex(0.42, 0.495, "profile shape");
+    t2.DrawLatex(0.17, 0.30, Form("falls by #times%.1f  #Rightarrow  pure pitch excluded", qi[0] / qi[3]));
+    t2.DrawLatex(0.17, 0.25, "a radial shift of the strip fan is required");
+    t2.DrawLatex(0.17, 0.17, "200,956 events; the 48-job rerun adds 500#times");
 
     c->SaveAs("FstOuterSensorOverlap/plots/fwo_rdep.png");
     printf("\nfree fit W(r) = %.5f + %.4f/r\n", A, B);

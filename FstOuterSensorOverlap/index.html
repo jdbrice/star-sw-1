@@ -314,12 +314,12 @@ width <b>fall with r</b>. Splitting the same coincidences by r-strip:</p>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>rStrip</TH><TH>4</TH><TH>5</TH><TH>6</TH><TH>7</TH><TH>slope</TH></TR>
 <TR><TD>&lang;r&rang; (cm)</TD><TD>17.94</TD><TD>20.81</TD><TD>23.69</TD><TD>26.56</TD><TD>&nbsp;</TD></TR>
-<TR><TD><b>measured width</b></TD><TD><b>5.26</b></TD><TD><b>5.22</b></TD><TD><b>5.14</b></TD><TD><b>5.10</b></TD><TD><b>&minus;0.17</b></TD></TR>
+<TR><TD><b>measured width</b> (60.4&thinsp;M events)</TD><TD><b>5.347</b></TD><TD><b>5.281</b></TD><TD><b>5.211</b></TD><TD><b>5.198</b></TD><TD><b>&minus;0.15</b></TD></TR>
 <TR><TD>pure pitch predicts</TD><TD>5.25</TD><TD>5.25</TD><TD>5.25</TD><TD>5.25</TD><TD>0.00</TD></TR>
 <TR><TD>pure radial shift <i>d</i> = &minus;0.176 cm predicts</TD><TD>5.51</TD><TD>5.34</TD><TD>5.21</TD><TD>5.11</TD><TD>&minus;0.40</TD></TR>
 </TABLE>
 
-<p>The measured slope is <b>&minus;0.17</b>, between the two hypotheses and much closer to flat,
+<p>The measured slope is <b>&minus;0.15</b>, between the two hypotheses and much closer to flat,
 so it is a <b>mixture</b>: a pitch error of about <b>+0.46%</b> with a radial shift of about
 <b>&minus;0.7&nbsp;mm</b> on top. A second, independent handle agrees and is the sharper of the
 two &mdash; the inner and outer widths are measured at different mean radii (12.81 and
@@ -329,12 +329,13 @@ a sub-millimetre radial component.</p>
 
 <TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0">
 <TR><TD><a href="plots/fwo_rdep.png"><img src="plots/fwo_rdep.png" height=200></a></TD></TR>
-<TR><TD><font size="-1"><b>Left:</b> the four measured widths against the two
-single-hypothesis curves and a free two-parameter fit. Pure pitch is flat in <i>r</i>;
-a fan converging off-axis falls as 1/<i>r</i>; the data is between them and much closer to
-flat. <b>Right:</b> the same three hypotheses carried to the inner sensor, which has no
-1&deg; gap &mdash; see below. Bars are the residual scatter about the fit (0.017 strips,
-2&nbsp;dof), not a propagated statistical error.</font></TD></TR>
+<TR><TD><font size="-1"><b>Left:</b> the measured widths, 60.4&thinsp;M events, against
+the two single-hypothesis curves and a free two-parameter fit. Pure pitch is flat in
+<i>r</i>; a fan converging off-axis falls as 1/<i>r</i>; the data is between them and much
+closer to flat. Bars are the estimator systematic &mdash; the statistical error is ~0.003
+strips. <b>Right:</b> the inner sensor measured, as a shape ratio that needs no plateau to
+normalise to. Pure pitch gives the same overlap in strips at every radius, hence the same
+profile shape, hence a flat line. It falls by a factor 5.1.</font></TD></TR>
 </TABLE>
 
 <p>The two terms can also be read straight off the four points, with <b>neither hypothesis
@@ -350,14 +351,11 @@ pitch <b>+0.463%</b> (128 strips span <b>30.139&deg;</b>), &nbsp;
 <p>So the 30.1&deg; span and the sub-millimetre radial offset are not an interpretation laid
 over the table &mdash; they are what the measured widths give on their own.</p>
 
-<p><b>Confirmed on 500&times; the statistics.</b> The 48-job sample merged on 2026-11-10
-(<b>60&thinsp;376&thinsp;989 events</b>, against the 120&thinsp;000 the table above was
-measured on) gives widths 5.347, 5.281, 5.211, 5.198 across rStrip&nbsp;4&ndash;7 and the fit
-quoted here. The 120k run gave 30.115&deg; and &minus;0.72&nbsp;mm; the 500&times; sample gives
-<b>30.139&deg; and &minus;0.68&nbsp;mm</b>. The two agree to 0.024&deg; and 0.04&nbsp;mm, and
-the slopes agree (&minus;0.15 against &minus;0.16). Statistical errors on the large sample are
-~0.003 strips and are not what limits this; the bars on the plot are the <i>estimator</i>
-systematic.</p>
+<p>The widths above are the 48-job sample merged on 2026-11-10,
+<b>60&thinsp;376&thinsp;989 events</b>. Statistical errors are ~0.003 strips and are not what
+limits them; the bars on the plot are the <i>estimator</i> systematic. An earlier
+120&thinsp;000-event run of the same measurement gave the same slope and the same conclusion
+(30.115&deg;, &minus;0.72&nbsp;mm), which is the consistency check that matters here.</p>
 
 <p style="background-color:#eef; padding:6px; border:1px solid #99a;">
 <b>A note on the estimator, because getting it wrong manufactures a trend.</b> The width is an
@@ -392,21 +390,30 @@ to the inner radii:</p>
 </TABLE>
 
 <p>A factor <b>3.5</b> between the hypotheses at rStrip&nbsp;0, where across the whole outer
-range they differ by 5%. The coincidence profile is now filled split by inner rStrip
-(<tt>gFwoProfIR</tt>), and the raw counts already lean the right way &mdash; the profile
-reaches markedly further from the wedge edge at small <i>r</i> than at large, with the
-mirrored (accidental) rows flat at the noise level throughout.</p>
+range they differ by 5%.</p>
 
-<p><b>What still has to be settled before an inner width is quoted.</b> The outer width is an
-<i>equivalent</i> width normalised to the profile's plateau (0.79, 0.18, 0.02 of plateau at
-distances 4, 5, 6). A one-to-two strip overlap has <b>no plateau</b>, so there is nothing to
-normalise to, and the partner-finding efficiency &mdash; 49.3% outer against 25.0% inner
-&mdash; cannot be recovered from the profile itself. The way through is a <i>shape</i>
-estimator rather than an area one, such as the mean distance of the coincidence profile,
-which is first-order independent of that efficiency because the efficiency multiplies every
-distance bin alike. Any residual constant bias then cancels in the <b>slope</b>, which is the
-quantity that separates the hypotheses (0.00 against &minus;2.00 strips across rStrip 0 to 3).
-That is the open item here; the statistics are not the obstacle.</p>
+<p><b>Measured, and it settles the question.</b> A one-to-two strip overlap has no plateau to
+normalise an equivalent width to, and the partner-finding efficiency &mdash; 49.3% outer
+against 25.0% inner &mdash; cannot be recovered from the profile itself. So the quantity used
+is a <i>shape</i> ratio, which needs neither: n(<i>d</i>=2)/n(<i>d</i>=0) with the flat
+accidental pedestal (the mirrored cell) subtracted. The efficiency multiplies every distance
+bin alike, so it cancels.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>inner rStrip</TH><TH>0</TH><TH>1</TH><TH>2</TH><TH>3</TH></TR>
+<TR><TD>&lang;r&rang; (cm)</TD><TD>6.44</TD><TD>9.31</TD><TD>12.19</TD><TD>15.06</TD></TR>
+<TR><TD><b>n(<i>d</i>=2)/n(<i>d</i>=0)</b></TD><TD><b>0.765 &plusmn; 0.023</b></TD>
+    <TD><b>0.424 &plusmn; 0.013</b></TD><TD><b>0.304 &plusmn; 0.014</b></TD>
+    <TD><b>0.150 &plusmn; 0.010</b></TD></TR>
+</TABLE>
+
+<p>A pitch error gives the same overlap in strips at <i>every</i> radius, so it gives the same
+profile shape at every radius, so this ratio would be <b>flat</b>. It falls by a factor
+<b>5.1</b>. <b>Pure pitch is excluded by the inner sensor outright</b>, and a radial shift of
+the strip fan is required &mdash; independently of the outer measurement and of any model of
+the profile shape. 200&thinsp;956 events; the 48-job rerun adds 500&times; and will allow the
+same split per boundary, which is what separates a genuine overlap from a per-wedge rotation
+pattern.</p>
 
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
 <b>So <tt>kFstStripPitchPhi = TMath::Pi()*30.0/180.0/128</tt> is too small, by about
