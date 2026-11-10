@@ -79,8 +79,8 @@ void fstOverlapRdep()
     const double epsPure = 0.0077;                  // pitch alone explains 5.25
     const double dPure   = -0.176;                  // shift alone, cm
 
-    TCanvas *c = new TCanvas("c", "FST overlap width vs radius", 1200, 1040);
-    c->Divide(2, 2);
+    TCanvas *c = new TCanvas("c", "FST overlap width vs radius", 1200, 1560);
+    c->Divide(2, 3);
 
     // ================= LEFT: outer, measured ==============================
     c->cd(1);
@@ -275,6 +275,66 @@ void fstOverlapRdep()
     t4.DrawLatex(0.44, 0.385, "pure pitch #Rightarrow these four");
     t4.DrawLatex(0.44, 0.34, "coincide too. They do not.");
     t4.DrawLatex(0.17, 0.17, "200,956 events");
+
+
+    // ====== PANELS 5 and 6: the per-strip occupancy, i.e. is eff flat? ======
+    // akio's efficiency correction takes eff from the single-strip hit count,
+    // assuming illumination is uniform in phi across one wedge. These panels
+    // are that assumption, plotted. It does NOT hold at the edge, and not in
+    // the direction expected: strip 0 has MORE hits than the bulk, not fewer
+    // (outer +12%, inner +4%).
+    //
+    // So the d=0 deficit in the coincidence profiles above is NOT "fewer hits
+    // in strip 0". The hits are there. What is suppressed is the FRACTION of
+    // them with a partner -- consistent with the excess being edge-truncated
+    // clusters whose true position lies outside the silicon, which therefore
+    // have no partner to find. Dividing the pair map by this eff would push
+    // the d=0 cells the wrong way.
+    const int nE = 12;
+    double dE[nE];
+    for (int ie = 0; ie < nE; ie++) dE[ie] = ie;
+    double occO_lo[nE] = {1.163,1.056,1.092,1.025,0.933,0.990,0.953,0.953,0.962,0.971,0.978,0.983};
+    double occO_hi[nE] = {1.076,1.083,1.083,1.113,1.033,1.011,1.009,1.017,1.013,1.008,1.004,1.002};
+    double occI_lo[nE] = {1.086,0.988,0.967,0.969,0.980,0.978,0.979,0.975,0.981,0.985,0.988,0.990};
+    double occI_hi[nE] = {1.002,0.995,1.010,1.000,1.011,1.010,1.017,1.000,1.004,1.002,1.001,1.000};
+
+    const char *ttl[2] = { "OUTER: per-strip occupancy -- is the efficiency flat?",
+                           "INNER: per-strip occupancy -- is the efficiency flat?" };
+    double *lo[2] = { occO_lo, occI_lo };
+    double *hi[2] = { occO_hi, occI_hi };
+    for (int ip = 0; ip < 2; ip++) {
+        c->cd(5 + ip);
+        gPad->SetGridy(); gPad->SetLeftMargin(0.13); gPad->SetBottomMargin(0.13);
+        TH2F *fe = new TH2F(Form("fe%d", ip), Form("%s;strip number from the wedge edge;"
+                            "hits per strip / bulk mean", ttl[ip]),
+                            10, -0.5, 11.5, 10, 0.85, 1.25);
+        fe->GetXaxis()->SetTitleSize(0.05); fe->GetYaxis()->SetTitleSize(0.05);
+        fe->Draw();
+        TLine *one = new TLine(-0.5, 1.0, 11.5, 1.0);
+        one->SetLineStyle(2); one->SetLineWidth(2); one->Draw();
+
+        TGraph *glo = new TGraph(nE, dE, lo[ip]);
+        glo->SetMarkerStyle(20); glo->SetMarkerSize(1.3);
+        glo->SetMarkerColor(kRed + 1); glo->SetLineColor(kRed + 1); glo->SetLineWidth(2);
+        glo->Draw("PL same");
+        TGraph *ghi = new TGraph(nE, dE, hi[ip]);
+        ghi->SetMarkerStyle(21); ghi->SetMarkerSize(1.3);
+        ghi->SetMarkerColor(kBlue + 1); ghi->SetLineColor(kBlue + 1); ghi->SetLineWidth(2);
+        ghi->Draw("PL same");
+
+        TLegend *le = new TLegend(0.50, 0.70, 0.97, 0.88);
+        le->SetFillStyle(0); le->SetBorderSize(0); le->SetTextSize(0.035);
+        le->AddEntry(glo, "low end, strip c", "pl");
+        le->AddEntry(ghi, "high end, strip 127-c", "pl");
+        le->Draw();
+
+        TLatex te; te.SetNDC(); te.SetTextSize(0.034);
+        te.DrawLatex(0.17, 0.30, Form("strip 0 is %s, not suppressed",
+                                      ip ? "+4% high" : "+12% high"));
+        te.DrawLatex(0.17, 0.25, "so the d=0 coincidence deficit is NOT");
+        te.DrawLatex(0.17, 0.20, "a shortage of hits -- the hits are there,");
+        te.DrawLatex(0.17, 0.15, "fewer of them have a partner");
+    }
 
     c->SaveAs("FstOuterSensorOverlap/plots/fwo_rdep.png");
     printf("\nfree fit W(r) = %.5f + %.4f/r\n", A, B);

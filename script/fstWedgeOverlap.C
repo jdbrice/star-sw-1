@@ -195,6 +195,28 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    // plots can be read side by side; the inner band is narrower, so expect the
    // correlation to sit in the corner rather than fill the block.
    TH2F *hFineI = new TH2F("hFineI", "INNER edge strip vs neighbour edge strip, all wedges;my edge strip;neighbour edge strip", 8, 0, 8, 8, 0, 8);
+   // PAIR MAP -- the centroid method, and the sharper of the two.
+   //
+   // Fold both ends to a distance from the wedge edge (d = c for the low end,
+   // 127-c for the high end -- akio's 2*127 - i - j) and histogram my distance
+   // against the partner's. The two strip grids run OPPOSITE ways through the
+   // overlap band, so every pair at the same physical angle lies on
+   //     d_me + d_nb = const,
+   // and that constant is the overlap width less one: W = <s> + 1. The SUM is
+   // therefore a direct measure of the width, and its centroid is far sharper
+   // than an edge read off a falling yield profile -- the same reason the
+   // pairing centroid of section 5 beat the yield method there.
+   //
+   // 12 slots a side, not the 8 of hFine: with W ~ 5.3 my strip 0 pairs with
+   // the neighbour's strip ~4, and an 8-slot window (0-3) loses that cell
+   // entirely, sampling the s = 4 ridge at only three of its five cells.
+   //
+   // Strips 0 and 127 are visibly less efficient than their neighbours, which
+   // biases <s> downward, and a PAIR carries the suppression TWICE (mine and
+   // the partner's). hPhiStripPerSensor is the per-strip occupancy to correct
+   // with, on the assumption that illumination is uniform across the wedge.
+   TH2F *hPair  = new TH2F("hPair",  "OUTER pair map;my distance from the wedge edge;partner distance", 12, -0.5, 11.5, 12, -0.5, 11.5);
+   TH2F *hPairI = new TH2F("hPairI", "INNER pair map;my distance from the wedge edge;partner distance", 12, -0.5, 11.5, 12, -0.5, 11.5);
 
    // diagnostics that must be checked before believing any of it
    TH2F *hPS = new TH2F("hPhiStripPerSensor", "phiStrip by sensor;meanPhiStrip;sensor", 132, -2, 130, 4, -1, 3);
@@ -345,6 +367,18 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
             if (isCtrl) gFwoCtrl[dq - 1][par][ir]++;
          }
 
+         // the wide pair map, same partner convention as hFine
+         {
+            int dMe = (cq <= 11) ? cq : ((cq >= 116) ? 127 - cq : -1);
+            if (dMe >= 0) {
+               int nbrP = (cq <= 11) ? mPrev : mNext;
+               for (int dNb = 0; dNb < 12; dNb++) {
+                  int nstrip = (cq <= 11) ? dNb : (127 - dNb);
+                  if (gFwoOcc[((dq - 1) * 12 + (nbrP - 1)) * 128 + nstrip])
+                     hPair->Fill(dMe, dNb);
+               }
+            }
+         }
          // fine strip-to-strip, only for my edge strips and the neighbour edge
          // that our mapping says should be the partner
          if (isEdge) {
@@ -398,6 +432,17 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
             if (rsi >= 0 && rsi < 4) {
                if (yy2[pred2]) gFwoProfIR[rsi][dist][0]++;
                if (yy2[mirr2]) gFwoProfIR[rsi][dist][1]++;
+            }
+         }
+         {
+            int dMeI = (cq2 <= 11) ? cq2 : ((cq2 >= 116) ? 127 - cq2 : -1);
+            if (dMeI >= 0) {
+               int nbrPI = (cq2 <= 11) ? mP2 : mN2;
+               for (int dNbI = 0; dNbI < 12; dNbI++) {
+                  int nstripI = (cq2 <= 11) ? dNbI : (127 - dNbI);
+                  if (gFwoOccI[((dq2 - 1) * 12 + (nbrPI - 1)) * 128 + nstripI])
+                     hPairI->Fill(dMeI, dNbI);
+               }
             }
          }
          // fine strip-to-strip for the inner, same construction as hFine
@@ -601,7 +646,7 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    hAll->Write(); hOdd->Write(); hEven->Write(); hFront->Write(); hBack->Write();
    hIO->Write(); hIOs->Write(); hIOd->Write(); hAPV->Write();
    for (int i3 = 0; i3 < 3; i3++) hDisk[i3]->Write();
-   hFine->Write(); hFineI->Write(); hPS->Write(); hRS->Write(); hNH->Write();
+   hFine->Write(); hFineI->Write(); hPair->Write(); hPairI->Write(); hPS->Write(); hRS->Write(); hNH->Write();
 
    // ---- the counters, as histograms, so hadd can sum them ----
    // Everything above this point is a TH2F and merges for free. The coincidence
