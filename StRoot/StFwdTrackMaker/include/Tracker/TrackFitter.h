@@ -1010,6 +1010,8 @@ class TrackFitter {
         // in-plane components, so a z offset just moves the hit.
         int nFttPlaneMismatch = 0;
         double worstFttPlaneDz = 0.0;
+        double worstFttPlaneDxy = 0.0, worstFttPlaneDx = 0.0, worstFttPlaneDy = 0.0;
+        int    worstFttPlaneDxyIdx = -1;
         for (int globalPlaneIndex = 0; globalPlaneIndex < 16; globalPlaneIndex++)
         {
             TVector3 u(1, 0, 0); 
@@ -1020,6 +1022,25 @@ class TrackFitter {
             if ( mFttDb && mFttDb->chamberCentre( globalPlaneIndex, oDb ) ){
                 const double dz = oDb.Z() - o.Z();
                 if ( fabs(dz) > fabs(worstFttPlaneDz) ) worstFttPlaneDz = dz;
+                // IN-PLANE too, reported but not fatal. The z check alone is blind
+                // exactly where a strip-frame error lives: 17.55 mm is an in-plane
+                // quantity, so a plane origin can be right in z and 1.8 cm out in
+                // x,y and this check still passes. The plane ORIGIN cancels in a
+                // PlanarMeasurement (hit and prediction share it), so this is not a
+                // residual by itself -- but the hits come from StFttDb while the
+                // material and the cache come from TGeo, and if those disagree
+                // about where a chamber is, the hits are displaced relative to
+                // everything else in the fit.
+                const double ddx = oDb.X() - o.X(), ddy = oDb.Y() - o.Y();
+                const double dxy = sqrt( ddx*ddx + ddy*ddy );
+                if (kVerbose > 0)
+                    LOG_INFO << "FTT plane " << globalPlaneIndex
+                             << " (station " << globalPlaneIndex/4 << " pent " << globalPlaneIndex%4
+                             << ")  StFttDb-TGeo  dx " << ddx << "  dy " << ddy << " cm" << endm;
+                if ( dxy > worstFttPlaneDxy ) {
+                    worstFttPlaneDxy = dxy; worstFttPlaneDxyIdx = globalPlaneIndex;
+                    worstFttPlaneDx = ddx;  worstFttPlaneDy = ddy;
+                }
                 // 1 mm: the compiled geometry and StgmGeo1.xml already disagree
                 // by up to 9 mm in z (note_stgc_geometry_20260925.txt), so this
                 // is tight enough to catch a wrong index or a unit slip and
@@ -1064,6 +1085,10 @@ class TrackFitter {
             } else {
                 LOG_INFO << "FTT chamber planes: StFttDb agrees with the TGeo cache on all "
                          << "16 chamber z, worst " << worstFttPlaneDz << " cm" << endm;
+                LOG_INFO << "FTT chamber planes IN-PLANE: worst |dxy| = " << worstFttPlaneDxy
+                         << " cm on chamber " << worstFttPlaneDxyIdx
+                         << " (dx " << worstFttPlaneDx << ", dy " << worstFttPlaneDy
+                         << " cm). 1.755 cm here would be the strip-frame constant." << endm;
             }
         }
     }
