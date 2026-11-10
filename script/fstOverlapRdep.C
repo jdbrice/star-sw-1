@@ -79,8 +79,8 @@ void fstOverlapRdep()
     const double epsPure = 0.0077;                  // pitch alone explains 5.25
     const double dPure   = -0.176;                  // shift alone, cm
 
-    TCanvas *c = new TCanvas("c", "FST overlap width vs radius", 1200, 520);
-    c->Divide(2, 1);
+    TCanvas *c = new TCanvas("c", "FST overlap width vs radius", 1200, 1040);
+    c->Divide(2, 2);
 
     // ================= LEFT: outer, measured ==============================
     c->cd(1);
@@ -171,6 +171,91 @@ void fstOverlapRdep()
     t2.DrawLatex(0.17, 0.30, Form("falls by #times%.1f  #Rightarrow  pure pitch excluded", qi[0] / qi[3]));
     t2.DrawLatex(0.17, 0.25, "a radial shift of the strip fan is required");
     t2.DrawLatex(0.17, 0.17, "200,956 events; the 48-job rerun adds 500#times");
+
+
+    // ============ PANEL 3: the OUTER raw profiles, one per radius ==========
+    // What the two top panels are derived from. Each profile is background
+    // subtracted (the pred row's own far tail) and normalised to its own
+    // plateau, so the four would LIE ON TOP OF EACH OTHER if the overlap were
+    // the same number of strips at every radius -- which is exactly what a
+    // pure pitch error predicts. The edge walks inward as r grows.
+    c->cd(3);
+    gPad->SetGridy(); gPad->SetLeftMargin(0.13); gPad->SetBottomMargin(0.13);
+
+    const int nD = 10;
+    double po[4][nD] = {
+        { 632287, 1132550, 1438502, 1382572, 1093813, 454679, 151273, 120125, 96963, 87400 },
+        { 446710, 1216980, 1326816, 1265725, 1123143, 369082, 154236, 121799, 101260, 86378 },
+        { 301536,  838411,  911151,  801483,  727854, 195196, 106162,  86188,  69655, 59562 },
+        { 341731,  606988,  627345,  539743,  410522, 124500,  79005,  62518,  51404, 45039 } };
+
+    TH2F *fr3 = new TH2F("fr3", "OUTER: the profiles the widths come from;"
+                                "distance from the wedge edge  [strips];"
+                                "coincidences / plateau",
+                         10, -0.5, 9.5, 10, -0.05, 1.20);
+    fr3->GetXaxis()->SetTitleSize(0.05); fr3->GetYaxis()->SetTitleSize(0.05);
+    fr3->Draw();
+
+    int col[4] = { kRed + 1, kOrange + 7, kGreen + 2, kBlue + 1 };
+    int mst[4] = { 20, 21, 22, 23 };
+    TLegend *l3 = new TLegend(0.52, 0.58, 0.97, 0.88);
+    l3->SetFillStyle(0); l3->SetBorderSize(0); l3->SetTextSize(0.035);
+    for (int i3 = 0; i3 < 4; i3++) {
+        double tail = (po[i3][7] + po[i3][8] + po[i3][9]) / 3.0;
+        double plat = (po[i3][1] + po[i3][2] + po[i3][3] + po[i3][4]) / 4.0 - tail;
+        double xx[nD], yy[nD];
+        for (int j3 = 0; j3 < nD; j3++) { xx[j3] = j3; yy[j3] = (po[i3][j3] - tail) / plat; }
+        TGraph *gg = new TGraph(nD, xx, yy);
+        gg->SetMarkerStyle(mst[i3]); gg->SetMarkerSize(1.3);
+        gg->SetMarkerColor(col[i3]); gg->SetLineColor(col[i3]); gg->SetLineWidth(2);
+        gg->Draw("PL same");
+        l3->AddEntry(gg, Form("rStrip %d,  r = %.1f cm", i3 + 4, r[i3]), "pl");
+    }
+    l3->Draw();
+    TLatex t3; t3.SetNDC(); t3.SetTextSize(0.034);
+    t3.DrawLatex(0.17, 0.30, "pure pitch #Rightarrow these four coincide");
+    t3.DrawLatex(0.17, 0.25, "the edge walks inward as r grows");
+    t3.DrawLatex(0.17, 0.17, "60.4M events");
+
+    // ============ PANEL 4: the INNER raw profiles =========================
+    // Same idea, but there is no plateau to normalise to, so each profile is
+    // normalised to its OWN d=0 bin. That is what makes this a shape
+    // comparison and nothing else: any difference in exposure or in
+    // partner-finding efficiency between radii divides out exactly.
+    c->cd(4);
+    gPad->SetGridy(); gPad->SetLeftMargin(0.13); gPad->SetBottomMargin(0.13);
+
+    double pi4[4][nD] = {
+        { 2450, 1814, 1892, 1502, 895, 548, 344, 254, 211, 202 },
+        { 3267, 2597, 1426,  592, 304, 250, 222, 188, 195, 175 },
+        { 2047, 1655,  653,  241, 180, 173, 139, 109, 118,  93 },
+        { 1647,  961,  279,  152, 135, 130,  95,  68,  76,  80 } };
+    double mi4[4] = { 71.7, 69.2, 43.4, 37.9 };   // mirrored cell, flat in d
+
+    TH2F *fr4 = new TH2F("fr4", "INNER: the same, normalised to each profile's own d = 0;"
+                                "distance from the wedge edge  [strips];"
+                                "coincidences / n(d = 0)",
+                         10, -0.5, 9.5, 10, -0.05, 1.20);
+    fr4->GetXaxis()->SetTitleSize(0.05); fr4->GetYaxis()->SetTitleSize(0.05);
+    fr4->Draw();
+
+    TLegend *l4 = new TLegend(0.52, 0.58, 0.97, 0.88);
+    l4->SetFillStyle(0); l4->SetBorderSize(0); l4->SetTextSize(0.035);
+    for (int i4 = 0; i4 < 4; i4++) {
+        double n0 = pi4[i4][0] - mi4[i4];
+        double xx[nD], yy[nD];
+        for (int j4 = 0; j4 < nD; j4++) { xx[j4] = j4; yy[j4] = (pi4[i4][j4] - mi4[i4]) / n0; }
+        TGraph *gg = new TGraph(nD, xx, yy);
+        gg->SetMarkerStyle(mst[i4]); gg->SetMarkerSize(1.3);
+        gg->SetMarkerColor(col[i4]); gg->SetLineColor(col[i4]); gg->SetLineWidth(2);
+        gg->Draw("PL same");
+        l4->AddEntry(gg, Form("rStrip %d,  r = %.1f cm", i4, ri[i4]), "pl");
+    }
+    l4->Draw();
+    TLatex t4; t4.SetNDC(); t4.SetTextSize(0.034);
+    t4.DrawLatex(0.17, 0.33, "pure pitch #Rightarrow these four coincide too");
+    t4.DrawLatex(0.17, 0.28, "they do not, by a long way");
+    t4.DrawLatex(0.17, 0.17, "200,956 events");
 
     c->SaveAs("FstOuterSensorOverlap/plots/fwo_rdep.png");
     printf("\nfree fit W(r) = %.5f + %.4f/r\n", A, B);

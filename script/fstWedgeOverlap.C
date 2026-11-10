@@ -189,6 +189,12 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    // strip-to-strip in the overlap band: does my s0 really meet the neighbour's
    // s3?  x = my strip (0-3 then 124-127), y = neighbour strip, same 8 slots
    TH2F *hFine = new TH2F("hFine", "edge strip vs neighbour edge strip, all wedges;my edge strip;neighbour edge strip", 8, 0, 8, 8, 0, 8);
+   // the same for the INNER sensor. The inner has no 1 deg gap, so on nominal
+   // geometry there is nothing to see here at all -- any structure is the
+   // overlap the pitch excess produces. Same 8 slots as the outer so the two
+   // plots can be read side by side; the inner band is narrower, so expect the
+   // correlation to sit in the corner rather than fill the block.
+   TH2F *hFineI = new TH2F("hFineI", "INNER edge strip vs neighbour edge strip, all wedges;my edge strip;neighbour edge strip", 8, 0, 8, 8, 0, 8);
 
    // diagnostics that must be checked before believing any of it
    TH2F *hPS = new TH2F("hPhiStripPerSensor", "phiStrip by sensor;meanPhiStrip;sensor", 132, -2, 130, 4, -1, 3);
@@ -211,6 +217,8 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    for (int ii = 0; ii < 8; ii++) {
       hFine->GetXaxis()->SetBinLabel(ii + 1, el[ii]);
       hFine->GetYaxis()->SetBinLabel(ii + 1, el[ii]);
+      hFineI->GetXaxis()->SetBinLabel(ii + 1, el[ii]);
+      hFineI->GetYaxis()->SetBinLabel(ii + 1, el[ii]);
    }
 
    for (int ij = 0; ij < 3; ij++) for (int ik = 0; ik < 2; ik++) {
@@ -390,6 +398,16 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
             if (rsi >= 0 && rsi < 4) {
                if (yy2[pred2]) gFwoProfIR[rsi][dist][0]++;
                if (yy2[mirr2]) gFwoProfIR[rsi][dist][1]++;
+            }
+         }
+         // fine strip-to-strip for the inner, same construction as hFine
+         if (cq2 <= 3 || cq2 >= 124) {
+            int myslotI = (cq2 <= 3) ? cq2 : (cq2 - 120);
+            for (int isI = 0; isI < 8; isI++) {
+               int nstripI = (isI <= 3) ? isI : (isI + 120);
+               int nbrI = (cq2 <= 3) ? mP2 : mN2;
+               if (gFwoOccI[((dq2 - 1) * 12 + (nbrI - 1)) * 128 + nstripI])
+                  hFineI->Fill(myslotI, isI);
             }
          }
          if (cq2 <= 1 || cq2 >= 126) {
@@ -583,7 +601,7 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    hAll->Write(); hOdd->Write(); hEven->Write(); hFront->Write(); hBack->Write();
    hIO->Write(); hIOs->Write(); hIOd->Write(); hAPV->Write();
    for (int i3 = 0; i3 < 3; i3++) hDisk[i3]->Write();
-   hFine->Write(); hPS->Write(); hRS->Write(); hNH->Write();
+   hFine->Write(); hFineI->Write(); hPS->Write(); hRS->Write(); hNH->Write();
 
    // ---- the counters, as histograms, so hadd can sum them ----
    // Everything above this point is a TH2F and merges for free. The coincidence
