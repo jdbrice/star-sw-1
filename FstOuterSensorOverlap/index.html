@@ -343,13 +343,39 @@ assumed</b>. The model is <tt>W(r) = G/p + 128&epsilon; &minus; 128<i>d</i>/r</t
 pitch error and <i>d</i> the radial offset of the point the strip fan converges on. That is
 linear in 1/<i>r</i>, so a two-parameter fit needs no prior:</p>
 
-<p style="margin-left:2em"><tt>W(r) = 4.7586 + 9.1782/r</tt> &nbsp;&rarr;&nbsp;
-pitch <b>+0.384%</b> (128 strips span <b>30.115&deg;</b>), &nbsp;
-<i>d</i> = <b>&minus;0.72&nbsp;mm</b></p>
+<p style="margin-left:2em"><tt>W(r) = 4.8597 + 8.7016/r</tt> &nbsp;&rarr;&nbsp;
+pitch <b>+0.463%</b> (128 strips span <b>30.139&deg;</b>), &nbsp;
+<i>d</i> = <b>&minus;0.68&nbsp;mm</b></p>
 
 <p>So the 30.1&deg; span and the sub-millimetre radial offset are not an interpretation laid
-over the table &mdash; they are what the four numbers give on their own, and they agree with
-the mixture argument above to better than the quoted precision.</p>
+over the table &mdash; they are what the measured widths give on their own.</p>
+
+<p><b>Confirmed on 500&times; the statistics.</b> The 48-job sample merged on 2026-11-10
+(<b>60&thinsp;376&thinsp;989 events</b>, against the 120&thinsp;000 the table above was
+measured on) gives widths 5.347, 5.281, 5.211, 5.198 across rStrip&nbsp;4&ndash;7 and the fit
+quoted here. The 120k run gave 30.115&deg; and &minus;0.72&nbsp;mm; the 500&times; sample gives
+<b>30.139&deg; and &minus;0.68&nbsp;mm</b>. The two agree to 0.024&deg; and 0.04&nbsp;mm, and
+the slopes agree (&minus;0.15 against &minus;0.16). Statistical errors on the large sample are
+~0.003 strips and are not what limits this; the bars on the plot are the <i>estimator</i>
+systematic.</p>
+
+<p style="background-color:#eef; padding:6px; border:1px solid #99a;">
+<b>A note on the estimator, because getting it wrong manufactures a trend.</b> The width is an
+equivalent width: the coincidence profile summed over distance from the wedge edge, background
+subtracted, divided by the plateau. Two choices are not free.
+<br>&nbsp;&nbsp;&bull; <b>The background is the predicted row's own far tail</b> (mean of
+distances 7, 8, 9), <i>not</i> the mirrored cell. The mirror sits at 68.9k per bin where the
+tail is 329k &mdash; the predicted row carries same-event combinatoric background that the
+mirrored cell, being a different pairing, never sees. Subtracting the mirror leaves that
+background in and inflates the width.
+<br>&nbsp;&nbsp;&bull; <b>Strip 0 is counted as one full strip of overlap, not by its measured
+count.</b> The <i>d</i>&thinsp;=&thinsp;0 bin is edge-suppressed, and the suppression is not
+even monotonic in r: (n<sub>0</sub>&minus;tail)/plateau runs 0.457, 0.304, 0.307, 0.585 across
+rStrip 4&ndash;7. Using it gives widths 4.81, 4.59, 4.52, 4.78 &mdash; non-monotonic, the trend
+gone, and an apparent structure that is pure acceptance. Strip 0 is inside the overlap by
+construction, so it counts as one.
+<br>With both choices made this way the 500&times; sample reproduces the 120k numbers to a
+uniform +0.09 offset and the same slope.</p>
 
 <p><b>The inner sensor is the sharper test of the two, not the weaker one</b>, which is worth
 saying because its overlap is only about one strip wide. Discriminating power is not absolute

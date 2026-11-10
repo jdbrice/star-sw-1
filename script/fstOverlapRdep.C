@@ -37,11 +37,30 @@ void fstOverlapRdep()
     const double gapStr = 1.0 / pitch;      // 1 deg gap in strips = 4.2667
 
     // ---- the measurement, outer rStrip 4-7 -------------------------------
+    // Primary points are the 48-job condor sample merged 2026-11-10:
+    // 60,376,989 events, 500x the 120k run the first version of this page used.
+    // Statistical errors are ~0.003 strips and invisible; the bars drawn are the
+    // ESTIMATOR systematic, the spread over reasonable background and plateau
+    // conventions, which is what actually limits these numbers.
+    //
+    // THE ESTIMATOR MATTERS, and getting it wrong looks like a real effect. The
+    // d=0 bin is edge-suppressed and its suppression is not even monotonic in r
+    // ((n0-tail)/plateau = 0.457, 0.304, 0.307, 0.585 across rStrip 4-7), so a
+    // width that uses its measured count comes out 4.81, 4.59, 4.52, 4.78 --
+    // non-monotonic, trend destroyed. Counting strip 0 as one full strip of
+    // overlap instead, which is what it is, gives the monotonic row below. The
+    // background subtracted is the pred row's own far tail (mean of d=7,8,9),
+    // NOT the mirrored cell: the mirror is 68.9k per bin where the tail is
+    // 329k, because the pred row carries same-event combinatoric background
+    // that the mirrored cell does not see.
     const int    nR = 4;
     double r[nR]  = { 17.94, 20.81, 23.69, 26.56 };
-    double w[nR]  = {  5.26,  5.22,  5.14,  5.10 };
+    double w[nR]  = { 5.347, 5.281, 5.211, 5.198 };   // 60.4M events
     double er[nR] = {  0.00,  0.00,  0.00,  0.00 };
-    double ew[nR] = { 0.017, 0.017, 0.017, 0.017 };
+    double ew[nR] = { 0.090, 0.090, 0.090, 0.090 };   // estimator systematic
+    // the original 120k measurement, for comparison -- same slope, offset by
+    // the background convention
+    double wOld[nR] = { 5.26, 5.22, 5.14, 5.10 };
 
     // free fit W = A + B/r, done in python alongside this macro; repeated here
     // so the plot is self-contained and the numbers cannot drift apart
@@ -72,7 +91,7 @@ void fstOverlapRdep()
 
     TH2F *fr1 = new TH2F("fr1", "OUTER sensor: measured, and what each hypothesis needs;"
                                 "mean radius  r  [cm];overlap width  [strips]",
-                         10, 16.5, 28.0, 10, 4.95, 5.70);
+                         10, 16.5, 28.0, 10, 5.00, 5.75);
     fr1->GetXaxis()->SetTitleSize(0.05); fr1->GetYaxis()->SetTitleSize(0.05);
     fr1->Draw();
 
@@ -91,13 +110,18 @@ void fstOverlapRdep()
     fFit->SetLineColor(kRed); fFit->SetLineWidth(3);
     fFit->Draw("same");
 
+    TGraph *gOld = new TGraph(nR, r, wOld);
+    gOld->SetMarkerStyle(24); gOld->SetMarkerSize(1.4); gOld->SetMarkerColor(kGray + 2);
+    gOld->Draw("P same");
+
     TGraphErrors *g = new TGraphErrors(nR, r, w, er, ew);
     g->SetMarkerStyle(20); g->SetMarkerSize(1.5); g->SetLineWidth(2);
     g->Draw("P same");
 
     TLegend *l1 = new TLegend(0.40, 0.60, 0.97, 0.90);
     l1->SetFillStyle(0); l1->SetBorderSize(0); l1->SetTextSize(0.035);
-    l1->AddEntry(g, "measured, rStrip 4-7", "pe");
+    l1->AddEntry(g, "measured, 60.4M events", "pe");
+    l1->AddEntry(gOld, "the earlier 120k sample", "p");
     l1->AddEntry(fPitch, Form("pure pitch  (+%.2f%%): flat", epsPure * 100), "l");
     l1->AddEntry(fShift, Form("pure shift  (d = %.2f cm): 1/r", dPure), "l");
     l1->AddEntry(fFit, Form("free fit: pitch %+.2f%%, d = %+.2f mm", eps * 100, dsh * 10), "l");
@@ -105,7 +129,7 @@ void fstOverlapRdep()
 
     TLatex t; t.SetNDC(); t.SetTextSize(0.034);
     t.DrawLatex(0.16, 0.22, Form("128 strips span %.3f#circ, not 30.000#circ", 30 * (1 + eps)));
-    t.DrawLatex(0.16, 0.17, "measured trend is between the two, much closer to flat");
+    t.DrawLatex(0.16, 0.17, "open circles: 120k sample (slope agrees, offset is convention)");
 
     // ================= RIGHT: inner, predicted ============================
     c->cd(2);
