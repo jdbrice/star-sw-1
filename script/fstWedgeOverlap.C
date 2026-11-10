@@ -646,7 +646,16 @@ void fstWedgeOverlap(const Char_t *fileList = "run24_mudst.txt",
    cTot->SetBinContent(5, (double) nRawTot);
    cTot->SetBinContent(6, (double) nIOPair);
 
-   cProfR->Write(); cProfI->Write(); cCoin->Write(); cCoinI->Write();
+   // gFwoProfIR must be persisted too or a condor run cannot be merged: the
+   // printouts above go to stdout, and only what is packed into a TH1D here
+   // survives hadd. Same packing order as cProfR.
+   TH1D *cProfIR = new TH1D("cProfIR", "gFwoProfIR[r 0-3][dist 0-11][pred,mirr]", 96, 0, 96);
+   int kbIR = 0;
+   for (int cw6 = 0; cw6 < 4; cw6++)
+      for (int cw7 = 0; cw7 < 12; cw7++)
+         for (int cw8 = 0; cw8 < 2; cw8++) cProfIR->SetBinContent(++kbIR, (double) gFwoProfIR[cw6][cw7][cw8]);
+
+   cProfR->Write(); cProfI->Write(); cProfIR->Write(); cCoin->Write(); cCoinI->Write();
    cEdge->Write();  cEdgeI->Write(); cCtrl->Write(); cCtrlN->Write(); cTot->Write();
 
    fout->Close();
