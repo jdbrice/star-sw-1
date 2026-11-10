@@ -1,0 +1,76 @@
+OWED: rename getGloablOffset -> getGlobalOffset
+================================================
+noted 2026-11-10
+
+
+What
+----
+
+StFttDb spells it "Gloabl". Two names carry the typo:
+
+    getGloablOffset
+    getGloablOffset_ClusterPoint
+
+24 occurrences across 11 files:
+
+    StRoot/StFttDbMaker/StFttDb.h                             5
+    StRoot/StFttDbMaker/StFttDb.cxx                           3
+    StRoot/StFwdTrackMaker/include/Tracker/FwdTracker.h       4
+    StRoot/StFwdTrackMaker/include/Tracker/FwdGeomUtils.h     2
+    StRoot/StFttClusterPointMaker/StFttClusterPointMaker.cxx  2
+    StRoot/StFttPointMaker/StFttPointMaker.cxx                2
+    script/fttPlaneVsDb.C                                     2
+    StRoot/StFttSimMaker/StFttSlowSimMaker.h                  1
+    StRoot/StFttSimMaker/StFttSlowSimMaker.cxx                1
+    StRoot/StFttSimMaker/macro/testFttSlowSim.C               1
+    script/fttQuadConvention.C                                1
+
+
+Why it is not done yet
+----------------------
+
+It touches files that four open PRs also touch, and a pure rename colliding
+with real work is the worst kind of conflict to resolve: every hunk looks
+identical and the merge tool cannot tell which side meant what. So it waits
+until the PRs that touch those files are in.
+
+GATE, as of 2026-11-10:
+
+    #22  MERGED
+    #23  MERGED  (with a real merge commit)
+    #39  MERGED
+    #47  OPEN    StFttClusterPointMaker -- touches StFttClusterPointMaker.cxx
+    #49  PUSHED, open -- touches FwdGeomUtils.h, FwdTracker.h
+
+So the gate is now just #47 and #49. When both land, do it.
+
+
+How, when the gate opens
+------------------------
+
+One commit, nothing else in it, so the diff is reviewable at a glance:
+
+    git grep -l getGloablOffset | xargs sed -i 's/getGloablOffset/getGlobalOffset/g'
+    cons +StFttDbMaker +StFttClusterPointMaker +StFttPointMaker \
+         +StFttSimMaker +StFwdTrackMaker
+
+Check before pushing:
+
+  - "git grep -c getGloablOffset" returns nothing.
+  - The count of getGlobalOffset is 24, matching the table above. A different
+    number means something else was renamed by accident.
+  - All five packages build. StFwdTrackMaker is the one that breaks late,
+    because it only sees the header change at dlopen.
+
+NOT a behaviour change, and it must not be bundled with one. If the mm->cm
+Tier 1 work (ftt_mm_cm.txt) happens around the same time, keep them separate:
+that one changes what the function RETURNS, this one only what it is called,
+and a reviewer should never have to tell them apart inside one diff.
+
+
+Related
+-------
+
+ftt_mm_cm.txt -- Tier 1 also touches getGloablOffset*'s mixed-unit return.
+Do the rename first if both are in play; it is the trivial one and it makes
+the units diff smaller.
