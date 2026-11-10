@@ -403,12 +403,51 @@ true position outside the sensor, so no partner can exist. Those hits sit at
 contamination twice, once per side. Dropping the edge strip costs the outer little, because
 it has four more strips of ridge to work with.</p>
 
-<p><b>What this does NOT yet give.</b> A width summed over all radii cannot be split into a
-pitch term and a radial-shift term &mdash; that split is precisely the <i>r</i> dependence.
-The pair map is now filled per rStrip, so the next large sample measures
-<i>W</i>(<i>r</i>) from the ridge rather than from an equivalent width, and the
-+0.46% / &minus;0.68&nbsp;mm decomposition can be re-made without any of the conventions in
-the box below. Until then the decomposition stands on the yield-profile measurement.</p>
+<p>A width summed over all radii cannot be split into a pitch term and a radial-shift term
+&mdash; that split <i>is</i> the <i>r</i> dependence. So the pair map is filled per rStrip as
+well, and the decomposition re-made from the ridge alone.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>rStrip</TH><TH>&lang;r&rang; (cm)</TH><TH>&lang;s&rang;</TH>
+    <TH>W</TH><TH>&plusmn; stat</TH><TH>ridge entries</TH></TR>
+<TR><TD>4</TD><TD>17.94</TD><TD>4.407</TD><TD><b>5.407</b></TD><TD>0.012</TD><TD>7947</TD></TR>
+<TR><TD>5</TD><TD>20.81</TD><TD>4.402</TD><TD><b>5.402</b></TD><TD>0.013</TD><TD>7747</TD></TR>
+<TR><TD>6</TD><TD>23.69</TD><TD>4.341</TD><TD><b>5.341</b></TD><TD>0.017</TD><TD>5088</TD></TR>
+<TR><TD>7</TD><TD>26.56</TD><TD>4.229</TD><TD><b>5.229</b></TD><TD>0.022</TD><TD>3560</TD></TR>
+</TABLE>
+
+<TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/fwo_pair_rdep.png"><img src="plots/fwo_pair_rdep.png" height=200></a></TD></TR>
+<TR><TD><font size="-1">The same decomposition as above, from the ridge position alone.
+Monotonic, 5.407 &rarr; 5.229, a fall of 0.178 against errors of 0.012&ndash;0.022.</font></TD></TR>
+</TABLE>
+
+<p style="background-color:#ddffdd; padding:6px; border:1px solid #6a6;">
+<b>The two methods agree, and the second one carries an error bar.</b></p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>&nbsp;</TH><TH>128 strips span</TH><TH><i>d</i></TH></TR>
+<TR><TD>yield profile, 60.4&thinsp;M events</TD><TD>30.139&deg;</TD><TD>&minus;0.68&nbsp;mm</TD></TR>
+<TR><TD>pair centroid, 0.2&thinsp;M events</TD><TD>30.173&deg;</TD><TD><b>&minus;0.59 &plusmn; 0.09&nbsp;mm</b></TD></TR>
+</TABLE>
+
+<p>Agreement to 0.034&deg; in the span and inside one sigma in <i>d</i>, between two
+estimators that share no convention: the pair centroid has no plateau, no background
+definition and no equivalent width, only the position of the ridge. The fit is
+<tt>W(r) = 5.0063 + 7.5435/r</tt>.</p>
+
+<p><b>What is new is the uncertainty.</b> The yield-profile version never had one &mdash; its
+error was the estimator convention, not statistics, which is why the earlier text here argued
+from a slope sitting between two hypotheses. The centroid gives
+<i>d</i> = <b>&minus;0.59 &plusmn; 0.09&nbsp;mm, 6.5&nbsp;sigma from zero</b>. The radial
+shift is measured, not inferred.</p>
+
+<p>Twenty files suffice for this and the large sample is not needed: ~8000 ridge entries per
+radius at an rms of 1.15 strips gives &sigma;(&lang;s&rang;)&nbsp;&asymp;&nbsp;0.012 against a
+0.178 effect. The condor sample is for the <b>per-boundary</b> split, which is the one
+remaining caveat &mdash; coincidence yield is non-linear, so a per-wedge rotation pattern
+could fake part of an apparent overlap, and only splitting the 36 boundaries separates the
+two: geometry is common to all 36, a rotation pattern is not.</p>
 
 <p style="background-color:#eef; padding:6px; border:1px solid #99a;">
 <b>A note on the estimator, because getting it wrong manufactures a trend.</b> The width is an
@@ -470,10 +509,12 @@ pattern.</p>
 
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #999;">
 <b>So <tt>kFstStripPitchPhi = TMath::Pi()*30.0/180.0/128</tt> is too small, by about
-0.46%</b> once the radial-shift part is taken out &mdash; the 128 strips span ~30.14&deg;, not
+0.5%</b> once the radial-shift part is taken out &mdash; the 128 strips span
+<b>30.14&ndash;30.17&deg;</b> by two independent measurements, not
 30.00&deg;. That is most likely by design &mdash; silicon slightly oversized so adjacent wedges
 tile with no dead &phi;, the same intent as the outer's 0.5&deg; overhang &mdash; but our
-constant assumes exactly 30&deg;. The remaining ~0.7&nbsp;mm is a different kind of error: not
+constant assumes exactly 30&deg;. The remaining <b>&minus;0.59&nbsp;&plusmn;&nbsp;0.09&nbsp;mm</b>
+is a different kind of error: not
 the pitch but <i>where the fan converges</i>, which no strip-pitch constant can express.
 <br><br>
 <b>This matters for alignment.</b> A program that treats the &phi; pitch as fixed and fits only
@@ -510,7 +551,8 @@ Per-boundary widths would settle it and need the larger sample.</p>
   <li><b>What the measurement adds</b> is the one thing a bench sheet cannot carry: which way each
       module faces once installed. The observable is (channel map) &otimes; (installed
       orientation), and the sheet supplies only the first factor.</li>
-  <li><b>The strip pitch is ~0.46% larger than 30/128, plus a ~0.7&nbsp;mm radial shift of the
+  <li><b>The strip pitch is ~0.5% larger than 30/128 (128 strips span 30.14&ndash;30.17&deg;),
+      plus a &minus;0.59&nbsp;&plusmn;&nbsp;0.09&nbsp;mm radial shift of the
       strip fan</b>, the 1&deg; gap is nominal, and an
       alignment fit that holds the pitch fixed cannot absorb the difference (section 6).</li>
   <li><b>The alternating mounting is confirmed</b> directly: same-numbered edges meet.</li>
@@ -550,6 +592,9 @@ since <tt>kFstzFilp</tt> inverts it. Narrow band, so it needs much more data.</p
       list name must contain <tt>.lis</tt>, <tt>.files</tt> or <tt>.MuDst.root</tt>, or
       <tt>StMuChainMaker</tt> refuses it.</li>
   <li><tt>script/fstWedgeDrawing.C</tt> &mdash; the figure, drawn from <tt>stripPhi</tt>'s own formula.</li>
+  <li><tt>script/fwoPairRead.C</tt>, <tt>script/fwoPairPlot.C</tt>,
+      <tt>script/fwoPairRdep.C</tt> &mdash; the pair-centroid measurement: the summed width,
+      its figure, and the per-rStrip version with the free fit.</li>
   <li><tt>script/fstOverlapRdep.C</tt> &mdash; the radial-dependence figure and the free
       <tt>W(r) = A + B/r</tt> fit. Self-contained: it carries the four measured widths, so the
       numbers on the plot cannot drift away from the table above.</li>
