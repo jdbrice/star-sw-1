@@ -1,0 +1,85 @@
+Draft note to Dmitri Smirnov (cc Jerome), 2026-11-10.
+Ask: allow "Create merge commit" alongside squash on STAR/star-sw.
+======================================================================
+
+Subject: STAR/star-sw -- could we allow "Create merge commit" alongside squash?
+
+Hi Dmitri,
+
+Could the STAR/star-sw merge styles be widened to allow "Create merge commit"
+in addition to squash? I am not asking to change the default or to turn squash
+off -- just to have the option in the dropdown.
+
+The reason is the forward-upgrade work, which necessarily comes as stacked
+PRs: the StFttDb geometry changes split into dependent pieces so each one
+stays reviewable. When a dependency is squash-merged, the squash shares no
+ancestry with the branch it came from, so git takes the merge base of every
+stacked PR back to the old main and sees the whole dependency as new on both
+sides. Each stacked PR then reports conflicts -- including in files it never
+touched.
+
+That happened this morning. #22 went in, and #23, #26 and #45 all showed
+conflicts within the hour. Two of the three were pure artefacts of the squash,
+with no real disagreement in them; resolving them safely meant proving which
+side was newer rather than reading the hunks. A merge commit would have left
+the branch tip an ancestor of main and all three would have stayed clean.
+
+I suspect this is a per-repository setting rather than anything instance-wide:
+my own fork akio/star-sw on the same server has merge commits enabled, and
+STAR/star-sw itself used them through #15. I have push but not admin on the
+org repo, so I cannot check the box myself -- and since I am usually the one
+clicking Merge on the FWDTRK PRs, squash is not a preference I am choosing,
+it is the only style available to me.
+
+Happy for squash to stay the default for ordinary single-purpose PRs. It is
+only the ones with other PRs stacked on them where the style matters, and
+that is a handful: #22, #23, #39.
+
+Thanks,
+Akio
+
+
+----------------------------------------------------------------------
+Backing numbers, if he asks (not part of the note)
+----------------------------------------------------------------------
+
+Settings, read from the API on 2026-11-10:
+
+    STAR/star-sw   allow_merge_commits False  allow_rebase False
+                   allow_squash_merge  True   allow_ff_only False
+                   default_merge_style "merge" (stale -- cannot be used)
+                   default_delete_branch_after_merge True
+                   my permissions: admin False, push True
+
+    akio/star-sw   allow_merge_commits True   allow_rebase True
+                   allow_squash_merge  True   allow_ff_only True
+                   my permissions: admin True
+
+Same Gitea instance, so the server permits merge commits and the restriction
+is the org repo's own setting.
+
+History: #2, #5, #11, #12, #14, #15 are real merge commits; everything from
+roughly #10/#31 onward is squashed. So the policy tightened partway through,
+it was not always this way.
+
+Why rebase would NOT solve it, if he offers that instead: Gitea's rebase
+styles replay the PR's commits onto main with new SHAs, so the original branch
+tip is still not an ancestor of main and stacked PRs break identically. Only a
+merge commit preserves the ancestry the stacked PRs need.
+
+NOT in the note, deliberately: default_delete_branch_after_merge. The box can
+be unchecked per merge by whoever merges, so it needs no setting change, and
+bundling a second ask weakens a one-checkbox request.
+
+What we do regardless of the answer (see
+reference_squash_merge_conflict_rule in memory):
+  - keep each stacked branch merged up to its dependency's current tip while
+    that dependency is open -- that was the whole difference between #23's
+    mechanical resolution and #26's dangerous one
+  - tag the dependency's final head before it merges, since branches are
+    deleted on merge and the squash leaves no other record of what it held
+  - resolve by the ancestor test, never by reading hunks first
+  - keep PRs to disjoint file sets where the work allows. This matters more
+    than any of the above: #24 is 57 commits behind its base and merges with
+    ZERO conflicts because its files are its own, while #26 was 5 behind and
+    was the hard case. Overlap decides, not staleness.
