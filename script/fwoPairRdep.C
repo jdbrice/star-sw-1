@@ -184,7 +184,7 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     for (int i = 0; i < 4; i++) { ymin = TMath::Min(ymin, W[i]); ymax = TMath::Max(ymax, W[i]); }
     TH2F *fr = new TH2F("fr", "Overlap width vs radius, from the pair centroid (strip 0 dropped);"
                               "mean radius  r  [cm];overlap width  W = #LTs#GT + 1  [strips]",
-                        10, 16.5, 28.0, 10, ymin - 0.25, ymax + 0.25);
+                        10, 16.5, 28.0, 10, ymin - 0.52, ymax + 0.46);
     fr->GetXaxis()->SetTitleSize(0.045); fr->GetYaxis()->SetTitleSize(0.045);
     fr->Draw();
 
@@ -205,18 +205,26 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     TGraphErrors *g = new TGraphErrors(4, r, W, er, eW);
     g->SetMarkerStyle(20); g->SetMarkerSize(1.6); g->SetLineWidth(2); g->Draw("P same");
 
-    TLegend *l = new TLegend(0.40, 0.66, 0.97, 0.90);
+    TLegend *l = new TLegend(0.50, 0.73, 0.97, 0.93);
     l->SetFillStyle(0); l->SetBorderSize(0); l->SetTextSize(0.034);
     l->AddEntry(g,  "pair centroid, 20 files", "pe");
     l->AddEntry(fp, "pure pitch: flat in r", "l");
     l->AddEntry(fs, "pure radial shift: 1/r", "l");
-    l->AddEntry(ff, Form("free fit: d = %+.2f #pm %.2f mm  (#chi^{2}/ndf = %.1f)", dsh*10, eD*10*scale, c2/2.0), "l");
+    l->AddEntry(ff, "free fit: A + B/r", "l");
     l->Draw();
 
-    TLatex t; t.SetNDC(); t.SetTextSize(0.033);
-    t.DrawLatex(0.17, 0.26, "no plateau, no background convention,");
-    t.DrawLatex(0.17, 0.215, "no equivalent width -- the ridge position only");
-    t.DrawLatex(0.17, 0.155, Form("yield-profile method: 30.139#circ, -0.68 mm"));
+    // The text goes in the band opened up below the curves, not over them:
+    // the pure-shift curve runs diagonally through the middle of the frame and
+    // was being hidden by this block.
+    TLatex t; t.SetNDC(); t.SetTextSize(0.032);
+    t.DrawLatex(0.17, 0.260, Form("free fit:  d = %+.2f #pm %.2f mm,  #chi^{2}/ndf = %.1f",
+                                  dsh*10, eD*10*scale, c2/2.0));
+    t.DrawLatex(0.17, 0.215, "ridge position only -- no plateau, no background convention");
+    t.DrawLatex(0.17, 0.170, Form("#chi^{2}/ndf = %.1f: the 1/r form does NOT fit, see the page", c2/2.0));
+    t.DrawLatex(0.17, 0.125, "yield-profile method: 30.139#circ, -0.68 mm");
+
+    // redraw the curves last so nothing can sit on top of them
+    fp->Draw("same"); fs->Draw("same"); ff->Draw("same"); g->Draw("P same");
 
     cvRd->SaveAs("FstOuterSensorOverlap/plots/fwo_pair_rdep.png");
     printf("wrote FstOuterSensorOverlap/plots/fwo_pair_rdep.png\n");
