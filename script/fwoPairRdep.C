@@ -107,9 +107,36 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     double eps = (A - gapS) / 128.0, dsh = -B / 128.0;
     double eB = sqrt(1.0 / Suu), eEps = (eB / 128.0) / 128.0, eD = eB / 128.0;
 
+    // FIT QUALITY, printed because the two-parameter model does NOT describe
+    // these four points and a d quoted without that is an overclaim.
+    double c2 = 0, c2const = 0, wsum = 0, wmean = 0;
+    for (int i = 0; i < 4; i++) { double w = 1.0/(eW[i]*eW[i]); wsum += w; wmean += w*W[i]; }
+    wmean /= wsum;
+    for (int i = 0; i < 4; i++) {
+        double res = (W[i] - (A + B/r[i])) / eW[i];
+        c2 += res*res;
+        double rc = (W[i] - wmean) / eW[i];
+        c2const += rc*rc;
+    }
+    double scale = sqrt(c2 / 2.0);
+
     printf("\n  free fit  W(r) = %.4f + %.4f/r\n", A, B);
     printf("     pitch  %+.3f%%  ->  128 strips span %.3f deg\n", eps * 100, 30 * (1 + eps));
-    printf("     d      %+.4f +- %.4f cm = %+.2f +- %.2f mm\n", dsh, eD, dsh * 10, eD * 10);
+    printf("     d      %+.2f +- %.2f mm  (stat only)\n", dsh * 10, eD * 10);
+    printf("\n  FIT QUALITY -- read this before quoting d:\n");
+    printf("     A + B/r   chi2 = %.2f / 2 dof   chi2/ndf = %.1f\n", c2, c2/2.0);
+    printf("     residuals ");
+    for (int i = 0; i < 4; i++) printf(" %+.1f", (W[i] - (A + B/r[i])) / eW[i]);
+    printf(" sigma\n");
+    printf("     constant  chi2 = %.2f / 3 dof   <- pure pitch, excluded outright\n", c2const);
+    printf("     measured steps between adjacent radii:");
+    for (int i = 0; i < 3; i++) printf(" %+.3f", W[i+1] - W[i]);
+    printf("\n     A + B/r predicts:                     ");
+    for (int i = 0; i < 3; i++) printf(" %+.3f", (A + B/r[i+1]) - (A + B/r[i]));
+    printf("\n     A+B/r is CONVEX, the data is flat then accelerating -- opposite\n");
+    printf("     curvature, so the model is dragged through points not on it.\n");
+    printf("\n     errors scaled to chi2/ndf = 1 (x%.1f):  d = %+.2f +- %.2f mm, %.1f sigma\n",
+           scale, dsh * 10, eD * 10 * scale, fabs(dsh / (eD * scale)));
     printf("     yield-profile method gave  30.139 deg,  -0.68 mm\n");
 
     // ---- the plot --------------------------------------------------------
@@ -183,7 +210,7 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     l->AddEntry(g,  "pair centroid, 20 files", "pe");
     l->AddEntry(fp, "pure pitch: flat in r", "l");
     l->AddEntry(fs, "pure radial shift: 1/r", "l");
-    l->AddEntry(ff, Form("free fit: pitch %+.2f%%, d = %+.2f mm", eps * 100, dsh * 10), "l");
+    l->AddEntry(ff, Form("free fit: d = %+.2f #pm %.2f mm  (#chi^{2}/ndf = %.1f)", dsh*10, eD*10*scale, c2/2.0), "l");
     l->Draw();
 
     TLatex t; t.SetNDC(); t.SetTextSize(0.033);

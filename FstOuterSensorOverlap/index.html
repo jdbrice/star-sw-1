@@ -435,19 +435,39 @@ it, not the eye. Pure pitch would put all four on top of each other.
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>&nbsp;</TH><TH>128 strips span</TH><TH><i>d</i></TH></TR>
 <TR><TD>yield profile, 60.4&thinsp;M events</TD><TD>30.139&deg;</TD><TD>&minus;0.68&nbsp;mm</TD></TR>
-<TR><TD>pair centroid, 0.2&thinsp;M events</TD><TD>30.173&deg;</TD><TD><b>&minus;0.59 &plusmn; 0.09&nbsp;mm</b></TD></TR>
+<TR><TD>pair centroid, 0.2&thinsp;M events</TD><TD>30.173&deg;</TD><TD><b>&minus;0.58 &plusmn; 0.27&nbsp;mm</b></TD></TR>
 </TABLE>
 
-<p>Agreement to 0.034&deg; in the span and inside one sigma in <i>d</i>, between two
+<p>Agreement to 0.034&deg; in the span and well inside one sigma in <i>d</i>, between two
 estimators that share no convention: the pair centroid has no plateau, no background
 definition and no equivalent width, only the position of the ridge. The fit is
 <tt>W(r) = 5.0063 + 7.5435/r</tt>.</p>
 
-<p><b>What is new is the uncertainty.</b> The yield-profile version never had one &mdash; its
-error was the estimator convention, not statistics, which is why the earlier text here argued
-from a slope sitting between two hypotheses. The centroid gives
-<i>d</i> = <b>&minus;0.59 &plusmn; 0.09&nbsp;mm, 6.5&nbsp;sigma from zero</b>. The radial
-shift is measured, not inferred.</p>
+<p style="background-color:#ffe0e0; padding:6px; border:1px solid #c66;">
+<b>But the 1/<i>r</i> model does not fit, and that limits what can be claimed.</b>
+With statistical errors alone the fit gives <b>&chi;&sup2; = 17.9 for 2 d.o.f.</b>,
+&chi;&sup2;/ndf&nbsp;=&nbsp;9.0, residuals &minus;1.6, +2.6, +1.0, &minus;2.8 sigma. The
+failure is structural rather than scatter: <tt>A&nbsp;+&nbsp;B/r</tt> is <b>convex</b>, falling
+fastest at small <i>r</i>, while the measured steps between adjacent radii are
+&minus;0.005, &minus;0.061, &minus;0.112 &mdash; <b>flat and then accelerating, the opposite
+curvature</b>. The model is being dragged through four points that do not lie on it.
+<br><br>
+So the quoted <i>d</i> carries errors scaled to &chi;&sup2;/ndf&nbsp;=&nbsp;1, a factor 3:
+<b><i>d</i> = &minus;0.58 &plusmn; 0.27&nbsp;mm, about 2 sigma</b>. Treating the
+statistical-only &plusmn;0.09 as the uncertainty would claim 6.5 sigma for a decomposition
+whose functional form the data rejects.</p>
+
+<p><b>What survives this, and what does not.</b> The <i>r</i> dependence itself is not in
+doubt: a constant &mdash; which is exactly what a pure pitch error predicts &mdash; gives
+<b>&chi;&sup2; = 59.4 for 3 d.o.f.</b>, so pure pitch is excluded by a wide margin, and the
+inner sensor excludes it independently. What is <i>not</i> established is the specific
+<b>pitch + 1/<i>r</i></b> decomposition: the width falls with radius, but not in the way a
+strip fan converging off the beam axis would make it fall. Either something else varies with
+<i>r</i> &mdash; the efficiency correction and the accidental floor are both measured per
+rStrip and could carry residual <i>r</i> dependence &mdash; or the geometry has a term the
+two-parameter model does not contain. The per-boundary condor sample is the next thing to
+look at, because a per-wedge rotation pattern would also show up as unmodelled structure
+here.</p>
 
 <p>Twenty files suffice for this and the large sample is not needed: ~8000 ridge entries per
 radius at an rms of 1.15 strips gives &sigma;(&lang;s&rang;)&nbsp;&asymp;&nbsp;0.012 against a
@@ -520,7 +540,7 @@ pattern.</p>
 <b>30.14&ndash;30.17&deg;</b> by two independent measurements, not
 30.00&deg;. That is most likely by design &mdash; silicon slightly oversized so adjacent wedges
 tile with no dead &phi;, the same intent as the outer's 0.5&deg; overhang &mdash; but our
-constant assumes exactly 30&deg;. The remaining <b>&minus;0.59&nbsp;&plusmn;&nbsp;0.09&nbsp;mm</b>
+constant assumes exactly 30&deg;. The remaining <b>&minus;0.6&nbsp;&plusmn;&nbsp;0.3&nbsp;mm</b>
 is a different kind of error: not
 the pitch but <i>where the fan converges</i>, which no strip-pitch constant can express.
 <br><br>
@@ -559,7 +579,7 @@ Per-boundary widths would settle it and need the larger sample.</p>
       module faces once installed. The observable is (channel map) &otimes; (installed
       orientation), and the sheet supplies only the first factor.</li>
   <li><b>The strip pitch is ~0.5% larger than 30/128 (128 strips span 30.14&ndash;30.17&deg;),
-      plus a &minus;0.59&nbsp;&plusmn;&nbsp;0.09&nbsp;mm radial shift of the
+      plus a &minus;0.6&nbsp;&plusmn;&nbsp;0.3&nbsp;mm radial shift of the
       strip fan</b>, the 1&deg; gap is nominal, and an
       alignment fit that holds the pitch fixed cannot absorb the difference (section 6).</li>
   <li><b>The alternating mounting is confirmed</b> directly: same-numbered edges meet.</li>
