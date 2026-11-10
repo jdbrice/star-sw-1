@@ -190,8 +190,8 @@ void fstOverlapRdep()
         { 341731,  606988,  627345,  539743,  410522, 124500,  79005,  62518,  51404, 45039 } };
 
     TH2F *fr3 = new TH2F("fr3", "OUTER: the profiles the widths come from;"
-                                "distance from the wedge edge  [strips];"
-                                "coincidences / plateau",
+                                "strip number from the wedge edge;"
+                                "fraction of hits with a partner",
                          10, -0.5, 9.5, 10, -0.05, 1.20);
     fr3->GetXaxis()->SetTitleSize(0.05); fr3->GetYaxis()->SetTitleSize(0.05);
     fr3->Draw();
@@ -212,10 +212,22 @@ void fstOverlapRdep()
         l3->AddEntry(gg, Form("rStrip %d,  r = %.1f cm", i3 + 4, r[i3]), "pl");
     }
     l3->Draw();
+    // The WIDTH is where each curve dies, and equals the AREA under it -- it is
+    // not a value on the y axis. Mark the span of the four measured widths so
+    // the 5.2-5.4 of the top-left panel is visibly the same number as this.
+    for (int iv = 0; iv < 2; iv++) {
+        double xv = iv ? 5.347 : 5.198;
+        TLine *lv = new TLine(xv, -0.05, xv, 1.05);
+        lv->SetLineStyle(2); lv->SetLineWidth(2); lv->SetLineColor(kBlack); lv->Draw();
+    }
     TLatex t3; t3.SetNDC(); t3.SetTextSize(0.034);
-    t3.DrawLatex(0.17, 0.30, "pure pitch #Rightarrow these four coincide");
-    t3.DrawLatex(0.17, 0.25, "the edge walks inward as r grows");
-    t3.DrawLatex(0.17, 0.17, "60.4M events");
+    t3.DrawLatex(0.455, 0.47, "#leftarrow the measured");
+    t3.DrawLatex(0.455, 0.425, "widths, 5.20 - 5.35:");
+    t3.DrawLatex(0.455, 0.38, "where the curves end");
+    t3.DrawLatex(0.17, 0.32, "pure pitch #Rightarrow these four coincide");
+    t3.DrawLatex(0.17, 0.27, "the edge walks inward as r grows");
+    t3.DrawLatex(0.17, 0.22, "0 = the edge strip itself, counting inward");
+    t3.DrawLatex(0.17, 0.17, "width = AREA under the curve. 60.4M events");
 
     // ============ PANEL 4: the INNER raw profiles =========================
     // Same idea, but there is no plateau to normalise to, so each profile is
@@ -233,8 +245,8 @@ void fstOverlapRdep()
     double mi4[4] = { 71.7, 69.2, 43.4, 37.9 };   // mirrored cell, flat in d
 
     TH2F *fr4 = new TH2F("fr4", "INNER: the same, normalised to each profile's own d = 0;"
-                                "distance from the wedge edge  [strips];"
-                                "coincidences / n(d = 0)",
+                                "strip number from the wedge edge;"
+                                "fraction, normalised to strip 0",
                          10, -0.5, 9.5, 10, -0.05, 1.20);
     fr4->GetXaxis()->SetTitleSize(0.05); fr4->GetYaxis()->SetTitleSize(0.05);
     fr4->Draw();
@@ -252,9 +264,16 @@ void fstOverlapRdep()
         l4->AddEntry(gg, Form("rStrip %d,  r = %.1f cm", i4, ri[i4]), "pl");
     }
     l4->Draw();
+    for (int iw = 0; iw < 2; iw++) {
+        double xw = iw ? 1.92 : 1.10;
+        TLine *lw = new TLine(xw, -0.05, xw, 1.05);
+        lw->SetLineStyle(2); lw->SetLineWidth(2); lw->SetLineColor(kBlack); lw->Draw();
+    }
     TLatex t4; t4.SetNDC(); t4.SetTextSize(0.034);
-    t4.DrawLatex(0.17, 0.33, "pure pitch #Rightarrow these four coincide too");
-    t4.DrawLatex(0.17, 0.28, "they do not, by a long way");
+    t4.DrawLatex(0.44, 0.52, "1.1 - 1.9: where the fit says");
+    t4.DrawLatex(0.44, 0.475, "the inner overlap ends");
+    t4.DrawLatex(0.44, 0.385, "pure pitch #Rightarrow these four");
+    t4.DrawLatex(0.44, 0.34, "coincide too. They do not.");
     t4.DrawLatex(0.17, 0.17, "200,956 events");
 
     c->SaveAs("FstOuterSensorOverlap/plots/fwo_rdep.png");
