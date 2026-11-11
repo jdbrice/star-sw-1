@@ -170,6 +170,10 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
         stamp[0]="20211015.000001"; stamp[1]="20211015.000001"; stamp[2]="20211015.000003";
         storeTime = "2021-10-15 00:00:03";
         what = "Run 22 iteration 3: iter2 + measured deltas (FINAL Run 22)";
+    } else if ( t == "run22iter4" ) {
+        stamp[0]="20211015.000001"; stamp[1]="20211015.000001"; stamp[2]="20211015.000004";
+        storeTime = "2021-10-15 00:00:04";
+        what = "Run 22 iter 3 MINUS the 17.55 mm strip-frame constant (FINAL Run 22)";
     } else if ( t == "run23ideal" ) {
         stamp[0]="20230410.000000"; stamp[1]="20230410.000000"; stamp[2]="20230410.000000";
         storeTime = "2023-04-10 00:00:00";
@@ -178,6 +182,10 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
         stamp[0]="20230415.000001"; stamp[1]="20230415.000001"; stamp[2]="20230415.000001";
         storeTime = "2023-04-15 00:00:01";
         what = "Run 23 estimate: Run 22 iter 3 carried over (best guess, no Run 23 measurement)";
+    } else if ( t == "run23est2" ) {
+        stamp[0]="20230415.000001"; stamp[1]="20230415.000001"; stamp[2]="20230415.000002";
+        storeTime = "2023-04-15 00:00:02";
+        what = "Run 23 estimate, 17.55 mm corrected (Run 22 iter4 carried over)";
     } else if ( t == "run24ideal" ) {
         stamp[0]="20231210.000000"; stamp[1]="20231210.000000"; stamp[2]="20231210.000000";
         storeTime = "2023-12-10 00:00:00";
@@ -190,6 +198,10 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
         stamp[0]="20231215.000001"; stamp[1]="20231215.000001"; stamp[2]="20231215.000002";
         storeTime = "2023-12-15 00:00:02";
         what = "Run 24 iteration 1: first actual Run 24 measurement (90-job campaign)";
+    } else if ( t == "run24iter2" ) {
+        stamp[0]="20231215.000001"; stamp[1]="20231215.000001"; stamp[2]="20231215.000003";
+        storeTime = "2023-12-15 00:00:03";
+        what = "Run 24 iter 1 MINUS the 17.55 mm strip-frame constant (FINAL Run 24)";
     } else if ( t == "run25ideal" ) {
         stamp[0]="20241210.000000"; stamp[1]="20241210.000000"; stamp[2]="20241210.000000";
         storeTime = "2024-12-10 00:00:00";
@@ -198,6 +210,10 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
         stamp[0]="20241215.000001"; stamp[1]="20241215.000001"; stamp[2]="20241215.000001";
         storeTime = "2024-12-15 00:00:01";
         what = "Run 25 estimate: Run 24 iter 1 carried over (best guess)";
+    } else if ( t == "run25est2" ) {
+        stamp[0]="20241215.000001"; stamp[1]="20241215.000001"; stamp[2]="20241215.000002";
+        storeTime = "2024-12-15 00:00:02";
+        what = "Run 25 estimate, 17.55 mm corrected (Run 24 iter2 carried over)";
     } else {
         std::cout << "fttGeometry_db: unknown tag \"" << tag << "\"\n"
                   << "  known tags:\n"
@@ -205,14 +221,18 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
                   << "    run22survey  2021-10-11 00:00:00   survey, no alignment\n"
                   << "    run22iter1   2021-10-15 00:00:01   per-quadrant x/y\n"
                   << "    run22iter2   2021-10-15 00:00:02   + per-quadrant z\n"
-                  << "    run22iter3   2021-10-15 00:00:03   + deltas  (BEST for Run 22)\n"
+                  << "    run22iter3   2021-10-15 00:00:03   + deltas\n"
+                  << "    run22iter4   2021-10-15 00:00:04   -17.55 mm  (BEST for Run 22)\n"
                   << "    run23ideal   2023-04-10 00:00:00   identity (link)\n"
                   << "    run23est     2023-04-15 00:00:01   Run 22 iter 3 carried over\n"
+                  << "    run23est2    2023-04-15 00:00:02   -17.55 mm  (BEST for Run 23)\n"
                   << "    run24ideal   2023-12-10 00:00:00   identity (link)\n"
                   << "    run24est     2023-12-15 00:00:01   Run 22 iter 3 carried over\n"
                   << "    run24iter1   2023-12-15 00:00:02   first Run 24 measurement\n"
+                  << "    run24iter2   2023-12-15 00:00:03   -17.55 mm  (BEST for Run 24)\n"
                   << "    run25ideal   2024-12-10 00:00:00   identity (link)\n"
                   << "    run25est     2024-12-15 00:00:01   Run 24 iter 1 carried over\n"
+                  << "    run25est2    2024-12-15 00:00:02   -17.55 mm  (BEST for Run 25)\n"
                   << "\n  The 00:00:0x lane is the baseline kept in this directory; the\n"
                   << "  The next day, <year>-<mm>-16 00:00:0x, is the alignment program's lane.\n"
                   << "  Reserved and empty: 00:00:00 on each estimate date, against the\n"
@@ -224,12 +244,12 @@ bool fttGeometry_db( const char* tag = "", const char* opt = "", const char* onl
     }
 
     if ( t == "all" ) {
-        const char *every[12] = { "run22ideal","run22survey",
-                                  "run22iter1","run22iter2","run22iter3",
-                                  "run23ideal","run23est",
-                                  "run24ideal","run24est","run24iter1",
-                                  "run25ideal","run25est" };
-        for ( int i = 0; i < 12; i++ ) {
+        const char *every[16] = { "run22ideal","run22survey",
+                                  "run22iter1","run22iter2","run22iter3","run22iter4",
+                                  "run23ideal","run23est","run23est2",
+                                  "run24ideal","run24est","run24iter1","run24iter2",
+                                  "run25ideal","run25est","run25est2" };
+        for ( int i = 0; i < 16; i++ ) {
             if ( !fttGeometry_db( every[i], opt, onlyTable ) ) {
                 std::cout << "\n*** STOPPING at tag \"" << every[i]
                           << "\" -- nothing further was attempted ***\n";
