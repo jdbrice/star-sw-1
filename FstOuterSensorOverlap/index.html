@@ -478,7 +478,9 @@ the outermost and they swap at <i>s</i>&nbsp;=&nbsp;3. Dashed verticals are the 
 shift is 0.20 strips on an rms of 1.15, so it is the centroid that measures it, not the eye.
 Pure pitch would put all four on top of each other.
 <b>Right:</b> the widths that follow, and the fit. Monotonic, 5.447 &rarr; 5.244, a fall of
-0.203 against statistical errors of 0.001.</font></TD></TR>
+0.203 against statistical errors of 0.001 &mdash; and against an estimator systematic of
+~0.05&ndash;0.1, which is what actually limits them. The &chi;&sup2; printed on the plot uses
+the statistical errors and should be read with the box below.</font></TD></TR>
 </TABLE>
 
 <p style="background-color:#ddffdd; padding:6px; border:1px solid #6a6;">
@@ -496,25 +498,28 @@ the limit.</b> The summed width is 5.383 on 60.4&thinsp;M events against 5.37 on
 pair centroid has no plateau, no background definition and no equivalent width, only the
 position of the ridge. The fit is <tt>W(r) = 4.8938 + 10.1971/r</tt>.</p>
 
-<p style="background-color:#ffcccc; padding:6px; border:2px solid #c33;">
-<b>But at full statistics the 1/<i>r</i> model is not a poor fit &mdash; it is rejected.</b>
-On 0.2&thinsp;M events it gave &chi;&sup2;/ndf&nbsp;=&nbsp;9.2, which could fairly be called
-a bad fit. On 60.4&thinsp;M:
-<br>&nbsp;&nbsp;&bull; <tt>A&nbsp;+&nbsp;B/r</tt>: <b>&chi;&sup2; = 2758 for 2 d.o.f.</b>,
-&chi;&sup2;/ndf&nbsp;=&nbsp;1379, residuals &minus;21.2, <b>+40.3</b>, &minus;4.9,
-&minus;25.7 sigma.
-<br>&nbsp;&nbsp;&bull; a constant &mdash; pure pitch &mdash; <b>&chi;&sup2; = 25497 for 3
-d.o.f.</b>
-<br>The failure is structural, not scatter: the measured steps between adjacent radii are
-&minus;0.034, &minus;0.094, &minus;0.075 where <tt>A&nbsp;+&nbsp;B/r</tt> predicts
-&minus;0.078, &minus;0.060, &minus;0.047. The model is <b>convex</b> and the data is flat and
-then accelerating &mdash; the opposite curvature.
+<p style="background-color:#ffffcc; padding:6px; border:1px solid #99a;">
+<b>The fit quality, and why the &chi;&sup2; must not be read at face value.</b>
+With statistical errors alone (0.001 strips per radius at 60.4&thinsp;M events)
+<tt>A&nbsp;+&nbsp;B/r</tt> gives <b>&chi;&sup2;/ndf&nbsp;=&nbsp;1379</b> and a constant gives
+25497/3. Taken literally both models are excluded, and the residual pattern is structural
+rather than scatter: the measured steps between adjacent radii are &minus;0.034,
+&minus;0.094, &minus;0.075 where <tt>A&nbsp;+&nbsp;B/r</tt> predicts &minus;0.078,
+&minus;0.060, &minus;0.047.
 <br><br>
-<b>So <i>d</i> = &minus;0.80&nbsp;mm is a parameter of a rejected model, not a measurement,
-and no significance should be attached to it.</b> Scaling the errors by
-&radic;(&chi;&sup2;/ndf) is the standard recipe for a fit that is merely noisy; it assumes the
-model is right and only the errors are too small. Here the model is the thing the data
-rejects, so the inflated error still describes the wrong curve.</p>
+<b>But 0.001 strips is not the uncertainty on these points.</b> The same data gives 5.447 or
+5.029 depending on whether the edge strip is dropped &mdash; <b>0.42 strips</b> &mdash; and
+the yield profile and the pair centroid differ by <b>0.10 strips</b>. The estimator
+systematic is 100&ndash;400&times; the statistical error, and the wide-cluster anomaly three
+strips inside the edge is an uncontrolled contribution on top of that. At a realistic
+&sigma;&nbsp;=&nbsp;0.05 strips the same &chi;&sup2; becomes <b>0.55 per d.o.f.</b>
+<br><br>
+So the honest statement is the weaker one: <b>the data has no power to reject
+<tt>A&nbsp;+&nbsp;B/r</tt>, and none to confirm it either.</b> A constant is excluded by a
+wide margin at any plausible &sigma;, because the fall of 0.20 strips is four times the
+estimator spread between the two methods. The <i>r</i> dependence is real; its functional
+form is not tested. <i>d</i> is a legitimate reading of the slope with a
+systematics-dominated error that has not been evaluated.</p>
 
 <p><b>What survives this, and what does not.</b> The <i>r</i> dependence itself is not in
 doubt &mdash; a constant, which is what a pure pitch error predicts, is excluded at
@@ -736,6 +741,93 @@ strips of excess for the outer. Those do not agree, which is the same message th
 outer &chi;&sup2; already sent: <b>one pair of mounting numbers does not describe all 36
 boundaries.</b></p>
 
+<h3>Which mounting error, and what else would see it</h3>
+
+<p>With the sensors exonerated, the width becomes a direct measurement of wedge placement,
+and it is worth being precise about <b>which</b> placement errors it can see. Treat each
+wedge's silicon as a sector whose vertex is wherever the wedge is, and ask what the azimuth
+of its edge does at radius <i>r</i>:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>wedge placement error</TH><TH>what the overlap does</TH>
+    <TH>size</TH></TR>
+<TR><TD><b>All 36 wedges seated radially inward by &delta;</b></TD>
+    <TD>every boundary widens, as <b>1/<i>r</i></b></TD>
+    <TD BGCOLOR="#ffe0a0"><b>+0.73 strips per mm at <i>r</i>=18</b></TD></TR>
+<TR><TD>rigid translation of the disk in x or y</TD>
+    <TD>opposite sign at opposite boundaries, averages away over 36</TD>
+    <TD>0.006&ndash;0.023 strips per mm, and cancelling</TD></TR>
+<TR><TD>rigid rotation of the disk about z</TD>
+    <TD>both edges move together</TD><TD><b>exactly zero</b></TD></TR>
+<TR><TD><b>tilt &tau; about any in-plane axis (YZ or XZ)</b></TD>
+    <TD>the silhouette only foreshortens as cos&tau;</TD>
+    <TD BGCOLOR="#ffe0a0"><b>2&times;10<sup>&minus;4</sup> strips at 10&nbsp;mrad</b></TD></TR>
+</TABLE>
+
+<p style="background-color:#ffcccc; padding:6px; border:2px solid #c33;">
+<b>A tilt cannot be the cause of any of this.</b> The measurement uses strip
+<i>indices</i> and never uses <i>z</i>, so a tilt reaches it only through the
+cos&tau; foreshortening of the silicon &mdash; second order. Reproducing the observed
+1.18-strip excess that way would take <b>&tau; = 44&deg;</b>. The overlap is sensitive to
+<b>in-plane radial seating and nothing else</b>, which also makes it an unusually clean
+constraint: it cannot be contaminated by z, by tilts, or by any rigid motion of the disk.</p>
+
+<p>Converting the measured <i>r</i> dependence with the exact geometry
+(<tt>&Delta;W = K&delta;/r</tt>, <i>K</i> = 130.66 outer and 126.54 inner, where the page's
+earlier model wrote 128):</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>from</TH><TH>inward seating &delta;</TH>
+    <TH>extra azimuthal overlap, constant in <i>r</i></TH></TR>
+<TR><TD>outer, free two-parameter split</TD><TD><b>0.78&nbsp;mm</b></TD><TD>+0.147&deg;</TD></TR>
+<TR><TD>inner, same split on its two end radii</TD><TD><b>1.17&nbsp;mm</b></TD><TD>+0.370&deg;</TD></TR>
+</TABLE>
+
+<p><b>So the wedges sit about a millimetre closer to the beam than design</b> &mdash; which
+is exactly why the FST itself cannot see it directly. Its strips run along <i>R</i> at a
+2.875&nbsp;cm pitch, so 1&nbsp;mm is 3% of an r-strip and invisible in a dR residual. The
+overlap sees it only because moving a wedge inward moves the vertex its strip fan radiates
+from, and that <i>is</i> an azimuthal effect.</p>
+
+<p>Inner and outer agree in sign and order and not yet in value, which is unsurprising at
+this systematic level. <b>The constant term should be treated with more suspicion than the
+1/<i>r</i> term</b>: a width bias that sits at fixed distance from the edge &mdash; which is
+precisely what the wide-cluster anomaly at <i>d</i>&nbsp;=&nbsp;1,2,3 is &mdash; adds a
+constant and cannot fake an <i>r</i> dependence. Clean that up before reading +0.147&deg; as
+azimuth.</p>
+
+<h3>What this predicts for the FCS projection, and what it does not</h3>
+
+<p>A uniform inward seating means every FST hit is reconstructed at a radius 0.78&nbsp;mm too
+<i>large</i> (the silicon is inside where the code believes it is). With a vertex-constrained
+track that scales to the FCS by z<sub>FCS</sub>/z<sub>FST</sub> = 725/165 = 4.4:</p>
+
+<ul>
+  <li><b>dR = +0.34&nbsp;cm, uniform and north/south symmetric.</b></li>
+  <li>a dY-versus-Y <b>slope</b> of 0.34/<i>y</i>: <b>0.34% at y = 100&nbsp;cm</b>,
+      0.17% at 200&nbsp;cm &mdash; and the same slope in dX.</li>
+  <li><b>No contribution to the north/south antisymmetric r&middot;d&phi; offset</b>, which
+      is the 2&ndash;3&nbsp;cm effect that actually needs explaining. That one is odd in y;
+      this one is not.</li>
+</ul>
+
+<p>For completeness, since a tilt is the natural suspect for the FCS side: an FST tilt
+&tau; about x puts a hit at height y at z<sub>0</sub>&nbsp;+&nbsp;y&tau; while the code reads
+z<sub>0</sub>, so the projection error is <tt>dY = &tau;&thinsp;y&sup2;/z<sub>FCS</sub></tt>
+&mdash; <b>quadratic in y and even in y</b>. 10&nbsp;mrad gives 0.14&nbsp;cm at
+y&nbsp;=&nbsp;100&nbsp;cm and 0.55&nbsp;cm at 200. Top and bottom shift the <i>same</i> way,
+so a tilt cannot produce an antisymmetric offset either. A <b>rigid y translation</b> can:
+dY&nbsp;=&nbsp;4.4&nbsp;&times;&nbsp;&Delta;y, so the observed 2.5&nbsp;cm wants
+&Delta;y&nbsp;&asymp;&nbsp;5.7&nbsp;mm of FST, and the overlap is <b>blind</b> to exactly
+that.</p>
+
+<p style="background-color:#ddffdd; padding:6px; border:1px solid #6a6;">
+<b>The two problems are orthogonal, not two symptoms of one tilt.</b> The overlap constrains
+radial seating and is blind to rigid translations, rotations about z and tilts. The FCS
+north/south offset constrains a rigid transverse translation and is barely sensitive to
+radial seating (0.34&nbsp;cm on residuals whose core &sigma; is 3&ndash;4&nbsp;cm). They
+should be fitted together, but neither can be made to explain the other.</p>
+
 <HR>
 <a name="conclusion"></a>
 <H1>8. Conclusion, and what this does not settle</H1>
@@ -766,11 +858,10 @@ boundaries.</b></p>
       of the two parameters this page fitted is available (section 7). The excess is how the
       wedges are <b>mounted</b>: about <b>+0.15&deg; of extra azimuthal overlap</b> plus a
       radial term.</li>
-  <li><b>No functional form fits it yet.</b> Constant is excluded at
-      &chi;&sup2;&nbsp;=&nbsp;25497/3 and <tt>A&nbsp;+&nbsp;B/r</tt> at 2758/2 with the wrong
-      curvature, so <i>d</i>&nbsp;=&nbsp;&minus;0.80&nbsp;mm is a fit parameter and not a
-      measurement. The likeliest reason is that 36 boundaries are being averaged as if they
-      were one.</li>
+  <li><b>A constant is excluded; the 1/<i>r</i> form is neither confirmed nor excluded.</b>
+      The statistical errors are 100&ndash;400&times; smaller than the estimator systematic,
+      so the &chi;&sup2; cannot be read at face value. The <i>r</i> dependence is real, its
+      functional form untested.</li>
   <li><b>The alternating mounting is confirmed</b> directly: same-numbered edges meet.</li>
   <li><b>The 0.5&deg; overhang and the 1&deg; dead gap are confirmed</b> &mdash; the
       design's 4.27 overlapping strips are there, with more on top.</li>
