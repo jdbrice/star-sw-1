@@ -59,6 +59,38 @@ StarDb is the one data directory the build genuinely needs: St_db_Maker
 searches ./StarDb before $STAR/StarDb, and without it a job falls back to
 hardcoded geometry and looks like "the tables do nothing".
 
+WHICH TABLES COME FROM WHERE, because "it is all in MySQL now" is not yet true
+for this branch (checked 2026-11-11):
+
+  Geometry/ftt/fttHardwareMap, fttDataWindowsB   MySQL, really served
+  Geometry/stgc/stgcOnTpc                        LOCAL FILES ONLY
+  Geometry/stgc/stationOnStgc                    LOCAL FILES ONLY
+  Geometry/stgc/pentOnStation                    LOCAL FILES ONLY
+
+stgc is NOT a DB namespace -- Dmitry's point, and the reason the rename to
+Geometry/ftt exists. This branch still asks for Geometry/stgc in both
+StFttDbMaker.cxx and the StgmGeo1.xml <Misalign> paths, so the three survey
+tables can only come from ./StarDb/Geometry/stgc. Verified by moving that
+directory aside for one event:
+
+  StWarning: StFttDb: no Geometry/stgc/pentOnStation table, falling back to
+             the hardcoded quadrant offsets
+
+The copies pushed to the MySQL Geometry_ftt namespace are therefore INERT for
+this branch: the code never asks for them. They become live only once the
+rename lands here (PR #20 for the XML paths, #23 for the code -- both already
+merged on main, not yet merged down into akio202607).
+
+So: do NOT delete ./StarDb. And note the fallbacks differ, which is what makes
+deleting it dangerous rather than merely wrong -- StFttDb falls back to
+hardcoded offsets while AGML falls back to no misalignment at all, so the hits
+and the built geometry end up at different places, silently, with one warning
+line between them.
+
+On main it is the other way round: the three tables come from MySQL
+Geometry_ftt, and the three stale StarDb/Geometry/stgc/*.20221220* files still
+shipped there are dead weight that nothing reads.
+
 *** Compile
 
 cons +StarVMC |& tee cons.geom.log
