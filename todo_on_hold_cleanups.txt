@@ -1,0 +1,89 @@
+CLEANUPS ON HOLD, and what each is waiting for
+===============================================
+2026-11-11
+
+One page so these are not rediscovered one at a time. Every item here is
+deliberately NOT done yet, and the reason is the same in each case: a pure
+rename or reformat colliding with real work is the worst kind of conflict to
+resolve, because every hunk looks identical and the merge cannot tell which
+side meant what. So they wait until the PRs that touch the same files are in.
+
+Items are listed with their GATE. When a gate opens, do that item alone, in
+one commit containing nothing else, so the diff is reviewable at a glance.
+
+
+1. getGloablOffset -> getGlobalOffset
+-------------------------------------
+    StFttDb spells it "Gloabl". Two names, 24 occurrences, 11 files.
+    GATE: #47 (StFttClusterPointMaker.cxx) and #49 (FwdGeomUtils.h,
+          FwdTracker.h). #22, #23, #39 already merged.
+    FULL RECIPE: todo_getGloablOffset_rename.txt -- file table, the one-line
+          sed, the five packages to rebuild, and the check that matters
+          (24 occurrences of the new name, zero of the old).
+
+
+2. macro -> macros, directory name
+----------------------------------
+    Jerome, in person, 2026-11-11. He is right about the convention: across
+    StRoot it is macros 1280 files in 31 packages against macro 234 in 9, and
+    most of the singular ones are ours.
+
+    NOT a change to the three DB macro PRs, which is how it was first put:
+
+      StFstDbMaker/macro   main has 0 files -- #30 CREATES the directory, so
+                           it should simply be named macros from the start.
+                           Free, no rename, nothing for a reviewer to check.
+      StFttDbMaker/macro   main has 11 files from #22, so renaming inside #29
+                           or #46 moves files those PRs did not add, and
+                           whichever merges second conflicts with the first.
+
+    GATE: #29, #30, #46 landed.
+    THEN: one small PR, pure git mv, covering the forward packages at once --
+          StFttDbMaker (11), StFwdTrackMaker (36), StFttSimMaker (1), plus the
+          12 files that reference those paths (READMEs, fwd_afterburner_db.C,
+          howto). Decide at the time whether to include StFcsDbMaker,
+          StFcsDiLeptonMaker and StFcsFastSimulatorMaker, which are also ours
+          and also singular.
+
+
+3. mm -> cm, Tier 1: StFttDb internals and its API
+--------------------------------------------------
+    ~1 day, 2 files, no schema risk. Jerome's "c'est la vie" on the mm/cm mix
+    in #22 is what prompted the estimate.
+    GATE: none technically, but it touches getGloablOffset*'s mixed-unit
+          return, so do the RENAME (item 1) first -- it is the trivial one and
+          it makes the units diff smaller.
+    FULL ESTIMATE: ftt_mm_cm.txt, three tiers with the reasoning.
+
+
+4. mm -> cm, Tier 3: the persistent classes
+-------------------------------------------
+    StFttPoint v4, StFttCluster v5, StFttRawHit v5, StMuFttPoint v3. NOT a
+    cleanup -- a data format migration. Changing the UNITS of an existing
+    persistent field is the nastiest schema change there is, because the bytes
+    are identical and only the meaning moves, so ROOT cannot notice. Needs a
+    ClassDef bump on each plus a read rule scaling by 0.1, or every existing
+    MuDst and picoDst silently reads ten times wrong.
+    GATE: schedule it WITH the retirement of StFttPointMaker, never as a tidy-
+          up. StFttClusterPointMaker already writes cm, so that switch is when
+          FTT point units change anyway -- one migration instead of two.
+
+
+5. getSurveyDeltaSensorOnGlobal naming, FST side
+------------------------------------------------
+    Already done upstream in #41; nothing owed here. Listed so it is not
+    re-proposed: see reference_fst_matrix_is_a_survey_delta in memory.
+
+
+NOT ON THIS LIST, because they are NOT on hold
+----------------------------------------------
+  * StFttPointMaker's two bugs (rob-0 loop, mm/cm + reflection order). Ungated
+    and live corruption -- every production MuDst meanwhile is missing a
+    quadrant of plane 0 and carries global x,y ten times too large. Branch
+    fwd-fttpoint-units has only the second fix and is 45 behind main; the
+    rob-0 fix has to come across from fcstrk11. Do this BEFORE items 1 and 3,
+    which touch the same file. See note_ftt_point_maker_retirement_20261106.txt.
+  * pentOnStation row Id=5, the 0.86 cm of dy alignment quad A station 2 never
+    received. Waiting on a decision, not on a PR -- Geometry_ftt is INSERT
+    only, so it costs a new slot and a matched fGeom cache rebuild. See
+    planar_integration_20261109.txt.
