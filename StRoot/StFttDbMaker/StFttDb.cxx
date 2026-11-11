@@ -1275,7 +1275,7 @@ int StFttDb::loadGeometryFromDb( St_Survey *stgcOnTpc, St_Survey *stationOnStgc,
     // rather than produce something plausible-looking and wrong.
     if ( !pentOnStation ) {
         resetGeometryToHardcoded();
-        LOG_WARN << "StFttDb: no Geometry/stgc/pentOnStation table, "
+        LOG_WARN << "StFttDb: no Geometry/ftt/pentOnStation table, "
                  << "falling back to the hardcoded quadrant offsets" << endm;
         return kStWarn;
     }
