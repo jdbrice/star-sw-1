@@ -59,37 +59,39 @@ StarDb is the one data directory the build genuinely needs: St_db_Maker
 searches ./StarDb before $STAR/StarDb, and without it a job falls back to
 hardcoded geometry and looks like "the tables do nothing".
 
-WHICH TABLES COME FROM WHERE, because "it is all in MySQL now" is not yet true
-for this branch (checked 2026-11-11):
+WHICH TABLES COME FROM WHERE (updated 2026-11-11 -- this branch now matches
+production):
 
-  Geometry/ftt/fttHardwareMap, fttDataWindowsB   MySQL, really served
-  Geometry/stgc/stgcOnTpc                        LOCAL FILES ONLY
-  Geometry/stgc/stationOnStgc                    LOCAL FILES ONLY
-  Geometry/stgc/pentOnStation                    LOCAL FILES ONLY
+  Geometry/ftt/fttHardwareMap, fttDataWindowsB   MySQL
+  Geometry/ftt/stgcOnTpc                         MySQL
+  Geometry/ftt/stationOnStgc                     MySQL
+  Geometry/ftt/pentOnStation                     MySQL
 
-stgc is NOT a DB namespace -- Dmitry's point, and the reason the rename to
-Geometry/ftt exists. This branch still asks for Geometry/stgc in both
-StFttDbMaker.cxx and the StgmGeo1.xml <Misalign> paths, so the three survey
-tables can only come from ./StarDb/Geometry/stgc. Verified by moving that
-directory aside for one event:
+The branch used to ask for Geometry/stgc, which is NOT a DB namespace, so those
+three could only come from ./StarDb/Geometry/stgc. The rename to Geometry/ftt
+landed upstream as PR #20 (the StgmGeo1.xml <Misalign> paths) plus #23 (the
+code), and was followed here on 2026-11-11.
 
-  StWarning: StFttDb: no Geometry/stgc/pentOnStation table, falling back to
-             the hardcoded quadrant offsets
+Content did not change. The ftt tables carry the same 16 rows as the stgc ones,
+re-stamped onto Gene's -15 lane (20211015.* in place of 20211112.*), compared
+row by row first, and the chain reproduces the same numbers afterwards:
+chamber z agreement 9.15527e-08 cm, in-plane worst |dxy| 1.95246 cm. Both
+unchanged to every digit.
 
-The copies pushed to the MySQL Geometry_ftt namespace are therefore INERT for
-this branch: the code never asks for them. They become live only once the
-rename lands here (PR #20 for the XML paths, #23 for the code -- both already
-merged on main, not yet merged down into akio202607).
+Verified by moving ./StarDb/Geometry/stgc aside for one event: it still reports
+"quadrant offsets built from AGML placeholder + DB survey tables". Before the
+rename the same test fell back to the hardcoded offsets.
 
-So: do NOT delete ./StarDb. And note the fallbacks differ, which is what makes
-deleting it dangerous rather than merely wrong -- StFttDb falls back to
-hardcoded offsets while AGML falls back to no misalignment at all, so the hits
-and the built geometry end up at different places, silently, with one warning
-line between them.
+CONSEQUENCE: ./StarDb/Geometry/stgc is now DEAD on this branch -- nothing reads
+Geometry/stgc. Left in place rather than deleted, because those files are also
+the record of how the Run 22 constants were derived. Do not edit them expecting
+an effect.
 
-On main it is the other way round: the three tables come from MySQL
-Geometry_ftt, and the three stale StarDb/Geometry/stgc/*.20221220* files still
-shipped there are dead weight that nothing reads.
+REBUILDING fGeom AFTER THIS: the <Misalign> paths live in StgmGeo1.xml, which is
+compiled into the geometry library, so rebuild it properly -- cons
++StarVMC/Geometry first (that directory owns the generator), then +StarGeometry
+and +xgeometry. A green cons does NOT mean your XML is in the library. Caches
+built before 2026-11-11 stay valid, because the table content is identical.
 
 *** Compile
 
