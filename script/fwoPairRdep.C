@@ -25,7 +25,11 @@ const int kN = 12;
 const int kBkgFrom = 14;
 const int kSMax = 8;
 
-void fwoPairRdep(const char *fn = "fwo_pairR.root")
+// sampleLabel: what the points are, for the legend. It cannot be derived from
+// the merged histograms -- hadd keeps no record of how many files went in --
+// so it is passed, and it must be updated with the sample.
+void fwoPairRdep(const char *fn = "fwo_pairR.root",
+                 const char *sampleLabel = "60.4M events, 48 files")
 {
     gStyle->SetOptStat(0);
     TFile *f = TFile::Open(fn);
@@ -135,8 +139,16 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     for (int i = 0; i < 3; i++) printf(" %+.3f", (A + B/r[i+1]) - (A + B/r[i]));
     printf("\n     A+B/r is CONVEX, the data is flat then accelerating -- opposite\n");
     printf("     curvature, so the model is dragged through points not on it.\n");
-    printf("\n     errors scaled to chi2/ndf = 1 (x%.1f):  d = %+.2f +- %.2f mm, %.1f sigma\n",
-           scale, dsh * 10, eD * 10 * scale, fabs(dsh / (eD * scale)));
+    // Scaling the errors by sqrt(chi2/ndf) is the standard recipe for a fit
+    // that is merely NOISY. It is not valid here: the residual pattern is
+    // systematic, not scatter, so the inflated error still describes the wrong
+    // model and the "sigma" it implies is meaningless. Print the number so the
+    // size is on record, and say in the same breath not to quote it.
+    printf("\n     errors scaled by sqrt(chi2/ndf) = %.1f:  d = %+.2f +- %.2f mm\n",
+           scale, dsh * 10, eD * 10 * scale);
+    printf("     DO NOT quote a significance from this. Error scaling assumes the\n");
+    printf("     model is right and only the errors are small; here the model is\n");
+    printf("     the thing the data rejects.\n");
     printf("     yield-profile method gave  30.139 deg,  -0.68 mm\n");
 
     // ---- the plot --------------------------------------------------------
@@ -178,7 +190,11 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
         TLatex tr; tr.SetNDC(); tr.SetTextSize(0.033);
         tr.DrawLatex(0.17, 0.30, "dashed: the centroid of each");
         tr.DrawLatex(0.17, 0.255, "they walk left as r grows:");
-        tr.DrawLatex(0.17, 0.21, "4.407 #rightarrow 4.229, a 0.18 strip shift");
+        // computed, not written in: these numbers move with the sample and a
+        // stale caption that disagrees with the legend beside it is worse
+        // than no caption at all.
+        tr.DrawLatex(0.17, 0.21, Form("%.3f #rightarrow %.3f, a %.2f strip shift",
+                                      sMean[0], sMean[3], sMean[0] - sMean[3]));
         tr.DrawLatex(0.17, 0.155, "pure pitch would put all four together");
     }
     cvRd->cd(2);
@@ -208,9 +224,9 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     TGraphErrors *g = new TGraphErrors(4, r, W, er, eW);
     g->SetMarkerStyle(20); g->SetMarkerSize(1.6); g->SetLineWidth(2); g->Draw("P same");
 
-    TLegend *l = new TLegend(0.50, 0.73, 0.97, 0.93);
+    TLegend *l = new TLegend(0.40, 0.73, 0.97, 0.93);
     l->SetFillStyle(0); l->SetBorderSize(0); l->SetTextSize(0.034);
-    l->AddEntry(g,  "pair centroid, 20 files", "pe");
+    l->AddEntry(g,  Form("pair centroid, %s", sampleLabel), "pe");
     l->AddEntry(fp, "pure pitch: flat in r", "l");
     l->AddEntry(fs, "pure radial shift: 1/r", "l");
     l->AddEntry(ff, "free fit: A + B/r", "l");
@@ -219,12 +235,18 @@ void fwoPairRdep(const char *fn = "fwo_pairR.root")
     // The text goes in the band opened up below the curves, not over them:
     // the pure-shift curve runs diagonally through the middle of the frame and
     // was being hidden by this block.
-    TLatex t; t.SetNDC(); t.SetTextSize(0.032);
-    t.DrawLatex(0.17, 0.260, Form("free fit:  d = %+.2f #pm %.2f mm,  #chi^{2}/ndf = %.1f",
-                                  dsh*10, eD*10*scale, c2/2.0));
-    t.DrawLatex(0.17, 0.215, "ridge position only -- no plateau, no background convention");
-    t.DrawLatex(0.17, 0.170, Form("#chi^{2}/ndf = %.1f: the 1/r form does NOT fit, see the page", c2/2.0));
-    t.DrawLatex(0.17, 0.125, "yield-profile method: 30.139#circ, -0.68 mm");
+    // Lead with what the data says, not with the fit parameter. At 60M events
+    // BOTH models are excluded: flat in r by a mile, and A + B/r by chi2/ndf
+    // ~ 1379 with the wrong curvature. So d is a parameter of a rejected
+    // model, and printing it first invites it to be quoted as a measurement.
+    TLatex t; t.SetNDC(); t.SetTextSize(0.029);
+    t.DrawLatex(0.16, 0.260, Form("W falls %.3f #rightarrow %.3f from r = %.1f to %.1f cm",
+                                  W[0], W[3], r[0], r[3]));
+    t.DrawLatex(0.16, 0.215, Form("A + B/r rejected too: #chi^{2}/ndf = %.0f, curvature opposite",
+                                  c2/2.0));
+    t.DrawLatex(0.16, 0.170, Form("d = %+.2f mm: parameter of a rejected model, not a result",
+                                  dsh*10));
+    t.DrawLatex(0.16, 0.125, "yield-profile method: 30.139#circ, -0.68 mm");
 
     // redraw the curves last so nothing can sit on top of them
     fp->Draw("same"); fs->Draw("same"); ff->Draw("same"); g->Draw("P same");
