@@ -31,8 +31,9 @@ and all 36 wedges agree.</b></p>
   <li><a href="#result">3. Result</a></li>
   <li><a href="#width">4. The overlap width, measured</a></li>
   <li><a href="#pairing">5. Strip-to-strip pairing: a coherent one-strip offset</a></li>
-  <li><a href="#inner">6. The inner sensors overlap too &mdash; it is the pitch, not the gap</a></li>
-  <li><a href="#conclusion">7. Conclusion, and what this does not settle</a></li>
+  <li><a href="#inner">6. The inner sensors overlap too, and the width depends on radius</a></li>
+  <li><a href="#mask">7. What the sensor mask says, and what that leaves</a></li>
+  <li><a href="#conclusion">8. Conclusion, and what this does not settle</a></li>
 </ul>
 
 <HR>
@@ -54,8 +55,9 @@ numbers wedges 0&ndash;11, so its wedge 0 is this page's wedge 1.</p>
   <li>12 wedges per disk, 3 disks. Wedge pitch 30&deg;. Strip pitch
       30/128 = 0.234375&deg;.</li>
   <li>The <b>inner</b> sensor is 128 strips = exactly 30&deg;. It abuts its neighbours:
-      <b>no overlap</b> &mdash; nominally. The measurement finds it overlapping by about one
-      strip anyway, which is one of the two numbers section 6 rests on.</li>
+      <b>no overlap</b> &mdash; by design, confirmed to six decimals from the mask. The
+      measurement finds it overlapping by <b>2.6 to 3.9 strips</b> anyway, falling with
+      radius, which is the sharpest single result on this page.</li>
   <li>The <b>outer</b> pair is 64+64 strips at the same pitch = 30&deg; of silicon
       <i>plus</i> the 1&deg; dead gap on the wedge centreline &rarr;
       <b>31&deg; of silhouette for a 30&deg; pitch</b>. AGML carries exactly this: the two
@@ -266,12 +268,13 @@ sensors can, and do &mdash; next section.</p>
 
 <HR>
 <a name="inner"></a>
-<H1>6. The inner sensors overlap too &mdash; it is the pitch, not the gap</H1>
+<H1>6. The inner sensors overlap too, and the width depends on radius</H1>
 
 <p>The inner sensor is 128 strips with <b>no gap</b>, so on nominal geometry it spans exactly
-30&deg; and <b>cannot overlap its neighbours at all</b>. A wider gap would leave it that way; a
-pitch larger than 30/128 makes it spill past 30&deg; and overlap. So running the same
-coincidence on inner hits separates the two hypotheses outright.</p>
+30&deg; and <b>cannot overlap its neighbours at all</b> &mdash; a fact the mask confirms to
+six decimal places in <a href="#mask">section 7</a>. Anything that makes it spill past 30&deg;
+shows up here with no pedestal underneath it, so running the same coincidence on inner hits
+is the sharper of the two measurements, not the weaker one.</p>
 
 <p>It overlaps. Same 120&thinsp;000 events, inner edge window s0&ndash;1 and s126&ndash;127:</p>
 
@@ -291,8 +294,10 @@ flat mirrored floor of ~135 per bin:</p>
 </TABLE>
 
 <p>25.0% of inner edge hits have a partner, against 49.3% for the outer where the strips are
-fully inside the band &mdash; so the inner overlap is <b>about one strip</b>, where the outer is
-<b>about 5.2</b>. The two widths then over-determine the geometry, and agree:</p>
+fully inside the band &mdash; so at the radius this 120&thinsp;k sample averages over, the
+inner overlap is <b>about one strip</b> by this estimator where the outer is <b>about
+5.2</b>. (The pair centroid on the full sample puts the inner higher and resolves its radial
+dependence; see <a href="#mask">section 7</a>.) The two widths over-determine the geometry:</p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>from</TH><TH>measured width</TH><TH>implied pitch <i>if pure pitch</i></TH><TH>128 strips span</TH></TR>
@@ -300,10 +305,11 @@ fully inside the band &mdash; so the inner overlap is <b>about one strip</b>, wh
 <TR><TD>inner (no gap)</TD><TD>1.0 strip</TD><TD>0.23622&deg; (+0.79%)</TD><TD>30.236&deg;</TD></TR>
 </TABLE>
 
-<p>Two independent measurements, agreeing to 0.03% if the whole excess is pitch. And their
-difference is the gap in units of pitch: measured <b>5.2 &minus; 1.0 = 4.2</b> against
-<b>1.0&deg;/pitch = 4.27</b> nominal, so <b>the 1&deg; gap is confirmed</b> &mdash; the gap is
-the innocent one, and the excess is in the strips.</p>
+<p>Two independent measurements, agreeing to 0.03% <i>if</i> the whole excess is pitch. And
+their difference is the gap in units of pitch: measured <b>5.2 &minus; 1.0 = 4.2</b> against
+<b>1.0&deg;/pitch = 4.27</b> nominal, so <b>the 1&deg; dead gap between the two outer sensors
+is confirmed</b>. Where the excess itself comes from is settled in
+<a href="#mask">section 7</a>, and it is not the strips.</p>
 
 <p>But <i>pitch</i> is not the only geometry that widens the overlap. If the strip fan converges
 a distance <i>d</i> off the beam axis instead of on it, the apparent pitch scales by
@@ -324,8 +330,17 @@ so it is a <b>mixture</b>: a pitch error of about <b>+0.46%</b> with a radial sh
 <b>&minus;0.7&nbsp;mm</b> on top. A second, independent handle agrees and is the sharper of the
 two &mdash; the inner and outer widths are measured at different mean radii (12.81 and
 23.10&nbsp;cm), and their ratio is <b>1.04&nbsp;&plusmn;&nbsp;0.30</b> where a pure radial shift
-predicts 1.80 and pure pitch 1.00. Both tests therefore say <b>pitch-dominant</b>, with room for
-a sub-millimetre radial component.</p>
+predicts 1.80 and pure pitch 1.00. Both tests therefore say the width is <b>much closer to
+constant in <i>r</i> than to 1/<i>r</i></b>, with a sub-millimetre 1/<i>r</i> component on
+top.</p>
+
+<p style="background-color:#ffcccc; padding:6px; border:2px solid #c33;">
+<b>Read "pitch" here as a label, not a cause.</b> The two hypotheses separated by this
+section are <i>constant in r</i> and <i>1/r</i>, and that separation stands. Attaching them
+to a strip-pitch error and an off-axis fan does not:
+<a href="#mask">section 7</a> reads both numbers out of the GDS mask and finds the pitch
+exact to 30/128&deg; and the fan on the beam axis to 0.1&nbsp;&micro;m. The constant term is
+an as-built <b>azimuthal</b> mounting offset and the 1/<i>r</i> term a <b>radial</b> one.</p>
 
 <TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0">
 <TR><TD><a href="plots/fwo_rdep.png"><img src="plots/fwo_rdep.png" height=200></a></TD></TR>
@@ -385,23 +400,60 @@ edge strip.</font></TD></TR>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>estimator</TH><TH>&lang;s&rang;</TH><TH>W</TH></TR>
-<TR><TD>pair centroid, <b>strip 0 dropped</b></TD><TD>4.366</TD><TD><b>5.37</b></TD></TR>
-<TR><TD>pair centroid, all strips</TD><TD>4.139</TD><TD>5.14</TD></TR>
+<TR><TD>pair centroid, <b>strip 0 dropped</b></TD><TD>4.383</TD><TD><b>5.38</b></TD></TR>
+<TR><TD>pair centroid, all strips</TD><TD>4.144</TD><TD>5.14</TD></TR>
 <TR><TD>yield profile (the table above)</TD><TD>&nbsp;</TD><TD>5.20 &ndash; 5.35</TD></TR>
+<TR><TD colspan="3"><font size="-1">Both rows are 60.4&thinsp;M events. On 0.2&thinsp;M the
+same two centroids gave 5.37 and 5.14.</font></TD></TR>
 </TABLE>
 
 <p><b>Two estimators with nothing in common, agreeing inside 0.1&ndash;0.2 strips.</b> The
 0.23 between the two centroid rows is the strip-0 contamination, and it brackets the yield
 answer.</p>
 
-<p><b>Why strip 0 is dropped, and why that is the better number.</b> Its occupancy is
-<b>12% above</b> the bulk of the wedge while its coincidence fraction is about half the
-plateau. More hits, fewer partners &mdash; which is what an edge-truncated cluster looks
-like: charge cut off by the silicon edge, reconstructed position pinned to the last strip,
-true position outside the sensor, so no partner can exist. Those hits sit at
-<i>d</i>&nbsp;=&nbsp;0 and pull the centroid down, and a <i>pair</i> carries the
+<p><b>Why strip 0 is dropped.</b> Its occupancy is <b>12% above</b> the bulk of the wedge
+while its coincidence fraction is about half the plateau. More hits, fewer partners. Those
+hits sit at <i>d</i>&nbsp;=&nbsp;0 and pull the centroid down, and a <i>pair</i> carries the
 contamination twice, once per side. Dropping the edge strip costs the outer little, because
 it has four more strips of ridge to work with.</p>
+
+<p style="background-color:#ffe0e0; padding:6px; border:1px solid #c66;">
+<b>The obvious explanation for strip 0 is wrong, and the full sample says so.</b>
+Edge-<i>truncated</i> clusters &mdash; charge cut off by the silicon edge, position pinned to
+the last strip, true position outside the sensor, no partner possible &mdash; would be both
+narrower and <b>lower in charge</b> than bulk clusters. The charge is the half that cannot be
+faked. Measured: the <i>d</i>&nbsp;=&nbsp;0 strip carries <b>0.999</b> of the bulk charge.
+There is no deficit, so nothing is being truncated.
+<br><br>
+Its clusters <i>are</i> 3% narrower, and that is pure geometry: a cluster centred on the last
+strip cannot extend outward, so <i>n</i>&nbsp;&ge;&nbsp;4 at <i>d</i>&nbsp;=&nbsp;0 is 0.0001
+against 0.003 in the bulk. A one-sided window clips the measured <i>size</i> without removing
+any charge. <b>Strip 0's excess remains unexplained</b>; it is dropped because it is
+anomalous, not because its anomaly is understood.</p>
+
+<p style="background-color:#ffe0e0; padding:6px; border:1px solid #c66;">
+<b>And the same test found something nobody was looking for.</b> Three strips <i>inside</i>
+the edge there is a large excess of wide clusters, confined to
+<i>d</i>&nbsp;=&nbsp;1,&nbsp;2,&nbsp;3 and gone by <i>d</i>&nbsp;=&nbsp;5:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH><i>d</i> from the edge</TH><TH>0</TH><TH>1</TH><TH>2</TH><TH>3</TH>
+    <TH>4</TH><TH>5</TH><TH>bulk (6&ndash;11)</TH></TR>
+<TR><TD>fraction with <i>n</i>&nbsp;&ge;&nbsp;5 strips</TD>
+    <TD>0.0000</TD><TD><b>0.0159</b></TD><TD><b>0.0616</b></TD><TD><b>0.0402</b></TD>
+    <TD>0.0031</TD><TD>0.0014</TD><TD>0.0008</TD></TR>
+<TR><TD>mean charge / bulk</TD>
+    <TD>0.999</TD><TD>1.091</TD><TD><b>1.210</b></TD><TD>1.182</TD>
+    <TD>1.064</TD><TD>1.016</TD><TD>1.000</TD></TR>
+</TABLE>
+
+<p>At <i>d</i>&nbsp;=&nbsp;2 that is <b>80&times; the bulk rate</b> of wide clusters, with the
+charge excess to match, and it is <b>25&times; weaker on the inner sensor</b> &mdash; so it is
+something about the outer sensors, not about the wedge edge as such. It sits inside the band
+the width is measured in. The pair map carries no cluster-size axis, so the systematic on
+<i>W</i> cannot be bounded from the existing sample; the clean test is a short rerun
+requiring <tt>nRawHitsPhi&nbsp;&lt;&nbsp;5</tt>, and 200&thinsp;k events suffice because
+200&thinsp;k already reproduced the 60&thinsp;M width to 0.01 strips.</p>
 
 <p>A width summed over all radii cannot be split into a pitch term and a radial-shift term
 &mdash; that split <i>is</i> the <i>r</i> dependence. So the pair map is filled per rStrip as
@@ -410,10 +462,10 @@ well, and the decomposition re-made from the ridge alone.</p>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>rStrip</TH><TH>&lang;r&rang; (cm)</TH><TH>&lang;s&rang;</TH>
     <TH>W</TH><TH>&plusmn; stat</TH><TH>ridge entries</TH></TR>
-<TR><TD>4</TD><TD>17.94</TD><TD>4.407</TD><TD><b>5.407</b></TD><TD>0.012</TD><TD>7947</TD></TR>
-<TR><TD>5</TD><TD>20.81</TD><TD>4.402</TD><TD><b>5.402</b></TD><TD>0.013</TD><TD>7747</TD></TR>
-<TR><TD>6</TD><TD>23.69</TD><TD>4.341</TD><TD><b>5.341</b></TD><TD>0.017</TD><TD>5088</TD></TR>
-<TR><TD>7</TD><TD>26.56</TD><TD>4.229</TD><TD><b>5.229</b></TD><TD>0.022</TD><TD>3560</TD></TR>
+<TR><TD>4</TD><TD>17.94</TD><TD>4.447</TD><TD><b>5.447</b></TD><TD>0.001</TD><TD>2&thinsp;540&thinsp;207</TD></TR>
+<TR><TD>5</TD><TD>20.81</TD><TD>4.413</TD><TD><b>5.413</b></TD><TD>0.001</TD><TD>2&thinsp;300&thinsp;559</TD></TR>
+<TR><TD>6</TD><TD>23.69</TD><TD>4.320</TD><TD><b>5.320</b></TD><TD>0.001</TD><TD>1&thinsp;509&thinsp;514</TD></TR>
+<TR><TD>7</TD><TD>26.56</TD><TD>4.244</TD><TD><b>5.244</b></TD><TD>0.001</TD><TD>1&thinsp;031&thinsp;461</TD></TR>
 </TABLE>
 
 <TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0">
@@ -421,60 +473,62 @@ well, and the decomposition re-made from the ridge alone.</p>
 <TR><TD><font size="-1"><b>Left:</b> the raw evidence &mdash; the
 <i>s</i>&nbsp;=&nbsp;<i>d</i><sub>me</sub>&nbsp;+&nbsp;<i>d</i><sub>nb</sub> spectrum at each
 radius, strip 0 dropped, accidentals subtracted, each normalised to unit area so the shapes
-compare. The tilt is the signal: at <i>s</i>&nbsp;=&nbsp;5 the innermost ring sits at 0.27
-and the outermost at 0.11, and they swap at <i>s</i>&nbsp;=&nbsp;3. Dashed verticals are the
-centroids; the shift is 0.18 strips on an rms of 1.15, so it is the centroid that measures
-it, not the eye. Pure pitch would put all four on top of each other.
-<b>Right:</b> the widths that follow, and the fit. Monotonic, 5.407 &rarr; 5.229, a fall of
-0.178 against errors of 0.012&ndash;0.022.</font></TD></TR>
+compare. The tilt is the signal: at <i>s</i>&nbsp;=&nbsp;5 the innermost ring sits well above
+the outermost and they swap at <i>s</i>&nbsp;=&nbsp;3. Dashed verticals are the centroids; the
+shift is 0.20 strips on an rms of 1.15, so it is the centroid that measures it, not the eye.
+Pure pitch would put all four on top of each other.
+<b>Right:</b> the widths that follow, and the fit. Monotonic, 5.447 &rarr; 5.244, a fall of
+0.203 against statistical errors of 0.001.</font></TD></TR>
 </TABLE>
 
 <p style="background-color:#ddffdd; padding:6px; border:1px solid #6a6;">
-<b>The two methods agree, and the second one carries an error bar.</b></p>
+<b>The two methods agree on the width, and the full sample shows the statistics were never
+the limit.</b> The summed width is 5.383 on 60.4&thinsp;M events against 5.37 on 0.2&thinsp;M
+&mdash; 300&times; the sample moves it by 0.013 strips.</p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>&nbsp;</TH><TH>128 strips span</TH><TH><i>d</i></TH></TR>
 <TR><TD>yield profile, 60.4&thinsp;M events</TD><TD>30.139&deg;</TD><TD>&minus;0.68&nbsp;mm</TD></TR>
-<TR><TD>pair centroid, 0.2&thinsp;M events</TD><TD>30.173&deg;</TD><TD><b>&minus;0.58 &plusmn; 0.27&nbsp;mm</b></TD></TR>
+<TR><TD>pair centroid, 60.4&thinsp;M events</TD><TD>30.147&deg;</TD><TD>&minus;0.80&nbsp;mm</TD></TR>
 </TABLE>
 
-<p>Agreement to 0.034&deg; in the span and well inside one sigma in <i>d</i>, between two
-estimators that share no convention: the pair centroid has no plateau, no background
-definition and no equivalent width, only the position of the ridge. The fit is
-<tt>W(r) = 5.0063 + 7.5435/r</tt>.</p>
+<p>Agreement to 0.008&deg; in the span, between two estimators that share no convention: the
+pair centroid has no plateau, no background definition and no equivalent width, only the
+position of the ridge. The fit is <tt>W(r) = 4.8938 + 10.1971/r</tt>.</p>
 
-<p style="background-color:#ffe0e0; padding:6px; border:1px solid #c66;">
-<b>But the 1/<i>r</i> model does not fit, and that limits what can be claimed.</b>
-With statistical errors alone the fit gives <b>&chi;&sup2; = 17.9 for 2 d.o.f.</b>,
-&chi;&sup2;/ndf&nbsp;=&nbsp;9.0, residuals &minus;1.6, +2.6, +1.0, &minus;2.8 sigma. The
-failure is structural rather than scatter: <tt>A&nbsp;+&nbsp;B/r</tt> is <b>convex</b>, falling
-fastest at small <i>r</i>, while the measured steps between adjacent radii are
-&minus;0.005, &minus;0.061, &minus;0.112 &mdash; <b>flat and then accelerating, the opposite
-curvature</b>. The model is being dragged through four points that do not lie on it.
+<p style="background-color:#ffcccc; padding:6px; border:2px solid #c33;">
+<b>But at full statistics the 1/<i>r</i> model is not a poor fit &mdash; it is rejected.</b>
+On 0.2&thinsp;M events it gave &chi;&sup2;/ndf&nbsp;=&nbsp;9.2, which could fairly be called
+a bad fit. On 60.4&thinsp;M:
+<br>&nbsp;&nbsp;&bull; <tt>A&nbsp;+&nbsp;B/r</tt>: <b>&chi;&sup2; = 2758 for 2 d.o.f.</b>,
+&chi;&sup2;/ndf&nbsp;=&nbsp;1379, residuals &minus;21.2, <b>+40.3</b>, &minus;4.9,
+&minus;25.7 sigma.
+<br>&nbsp;&nbsp;&bull; a constant &mdash; pure pitch &mdash; <b>&chi;&sup2; = 25497 for 3
+d.o.f.</b>
+<br>The failure is structural, not scatter: the measured steps between adjacent radii are
+&minus;0.034, &minus;0.094, &minus;0.075 where <tt>A&nbsp;+&nbsp;B/r</tt> predicts
+&minus;0.078, &minus;0.060, &minus;0.047. The model is <b>convex</b> and the data is flat and
+then accelerating &mdash; the opposite curvature.
 <br><br>
-So the quoted <i>d</i> carries errors scaled to &chi;&sup2;/ndf&nbsp;=&nbsp;1, a factor 3:
-<b><i>d</i> = &minus;0.58 &plusmn; 0.27&nbsp;mm, about 2 sigma</b>. Treating the
-statistical-only &plusmn;0.09 as the uncertainty would claim 6.5 sigma for a decomposition
-whose functional form the data rejects.</p>
+<b>So <i>d</i> = &minus;0.80&nbsp;mm is a parameter of a rejected model, not a measurement,
+and no significance should be attached to it.</b> Scaling the errors by
+&radic;(&chi;&sup2;/ndf) is the standard recipe for a fit that is merely noisy; it assumes the
+model is right and only the errors are too small. Here the model is the thing the data
+rejects, so the inflated error still describes the wrong curve.</p>
 
 <p><b>What survives this, and what does not.</b> The <i>r</i> dependence itself is not in
-doubt: a constant &mdash; which is exactly what a pure pitch error predicts &mdash; gives
-<b>&chi;&sup2; = 59.4 for 3 d.o.f.</b>, so pure pitch is excluded by a wide margin, and the
-inner sensor excludes it independently. What is <i>not</i> established is the specific
-<b>pitch + 1/<i>r</i></b> decomposition: the width falls with radius, but not in the way a
-strip fan converging off the beam axis would make it fall. Either something else varies with
-<i>r</i> &mdash; the efficiency correction and the accidental floor are both measured per
-rStrip and could carry residual <i>r</i> dependence &mdash; or the geometry has a term the
-two-parameter model does not contain. The per-boundary condor sample is the next thing to
-look at, because a per-wedge rotation pattern would also show up as unmodelled structure
-here.</p>
+doubt &mdash; a constant, which is what a pure pitch error predicts, is excluded at
+&chi;&sup2;&nbsp;=&nbsp;25497/3, and the inner sensor excludes it independently. What is
+<i>not</i> established is the <b>pitch + 1/<i>r</i></b> decomposition: the width falls with
+radius, but not in the way a strip fan converging off the beam axis would make it fall. The
+next section shows why that should not have been a surprise &mdash; the sensor mask has
+neither a pitch error nor an off-axis fan to offer.</p>
 
-<p>Twenty files suffice for this and the large sample is not needed: ~8000 ridge entries per
-radius at an rms of 1.15 strips gives &sigma;(&lang;s&rang;)&nbsp;&asymp;&nbsp;0.012 against a
-0.178 effect. The condor sample is for the <b>per-boundary</b> split, which is the one
-remaining caveat &mdash; coincidence yield is non-linear, so a per-wedge rotation pattern
-could fake part of an apparent overlap, and only splitting the 36 boundaries separates the
-two: geometry is common to all 36, a rotation pattern is not.</p>
+<p>Both free parameters are therefore <b>mounting</b> quantities, not sensor ones, and the
+most likely reason a single pair of them cannot fit is that the measurement averages
+<b>36 boundaries that are not mounted alike</b>. That is the one caveat left, and the
+per-boundary maps needed to settle it are in the same sample: a real geometric overlap is
+common to all 36, a mounting spread is not.</p>
 
 <p style="background-color:#eef; padding:6px; border:1px solid #99a;">
 <b>A note on the estimator, because getting it wrong manufactures a trend.</b> The width is an
@@ -494,11 +548,10 @@ construction, so it counts as one.
 <br>With both choices made this way the 500&times; sample reproduces the 120k numbers to a
 uniform +0.09 offset and the same slope.</p>
 
-<p><b>The inner sensor is the sharper test of the two, not the weaker one</b>, which is worth
-saying because its overlap is only about one strip wide. Discriminating power is not absolute
-width: the inner has <b>no 1&deg; gap</b>, so <tt>G/p = 0</tt> and its width <i>is</i> the
-signal rather than a 4% ripple on a 4.27-strip pedestal. Carrying the same three hypotheses
-to the inner radii:</p>
+<p><b>The inner sensor is the sharper test of the two, not the weaker one.</b> Discriminating
+power is not absolute width: the inner has <b>no 1&deg; gap</b>, so <tt>G/p = 0</tt> and its
+width <i>is</i> the signal rather than a 4% ripple on a 4.27-strip pedestal. Carrying the same
+three hypotheses to the inner radii:</p>
 
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
 <TR BGCOLOR="#c0c0f0"><TH>rStrip</TH><TH>0</TH><TH>1</TH><TH>2</TH><TH>3</TH><TH>change</TH></TR>
@@ -558,8 +611,134 @@ distances 4, 5, 6 &mdash; where a mixture of boundaries at 4.5 and 6.0 strips wo
 Per-boundary widths would settle it and need the larger sample.</p>
 
 <HR>
+<a name="mask"></a>
+<H1>7. What the sensor mask says, and what that leaves</H1>
+
+<p>Every number above was fitted with two free parameters: a fractional <b>pitch error</b>
+&epsilon; and a <b>radial offset <i>d</i></b> of the point the strip fan converges on. Both
+are properties of the silicon, so both can be checked against the thing the silicon was cut
+from &mdash; the GDS mask files <tt>STAR-FST-INNER-190301.gds</tt> and
+<tt>STAR-FST-OUTER-190313.gds</tt>, read directly rather than through any drawing.</p>
+
+<p>The mask places each strip as a line with an explicit angle. Taking the perpendicular
+distance from the beam axis to every one of those lines:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>&nbsp;</TH><TH>strips drawn</TH><TH>angular step</TH>
+    <TH>fan distance from the axis</TH><TH>full fan</TH><TH>strip-start radii (cm)</TH></TR>
+<TR><TD>inner</TD><TD>256 (64 angles &times; 4 r)</TD><TD>0.234375&deg;</TD>
+    <TD>max <b>0.008&nbsp;&micro;m</b></TD><TD><b>30.000000&deg;</b></TD>
+    <TD>5.000, 7.875, 10.750, 13.625</TD></TR>
+<TR><TD>outer</TD><TD>128 (32 angles &times; 4 r)</TD><TD>0.234375&deg;</TD>
+    <TD>max <b>0.082&nbsp;&micro;m</b></TD><TD><b>15.000000&deg;</b></TD>
+    <TD>16.500, 19.375, 22.250, 25.125</TD></TR>
+</TABLE>
+
+<p style="background-color:#ffcccc; padding:6px; border:2px solid #c33;">
+<b>Neither free parameter exists in the design.</b> The angular step is exactly
+30/128&nbsp;=&nbsp;0.234375&deg;, so &epsilon;&nbsp;=&nbsp;0. Every strip line passes within
+<b>0.1&nbsp;&micro;m</b> of the beam axis, so <i>d</i>&nbsp;=&nbsp;0 &mdash; the fan converges
+on the axis to the precision of the 1&nbsp;nm mask grid. The fitted
+&epsilon;&nbsp;=&nbsp;+0.49% would be a 0.15&deg; error in a file that is exact to a
+nanometre.
+<br><br>
+So <b>the overlap is not telling us anything about the sensors.</b> Both fitted parameters
+are describing how the wedges are <b>mounted</b>: <i>A</i>, the <i>r</i>&nbsp;&rarr;&nbsp;&infin;
+intercept, is the as-built azimuthal overlap (4.894 strips = <b>1.147&deg;</b> against
+1.000&deg; by design), and <i>B</i> is a radial offset of the wedge pair. Calling <i>A</i> a
+"pitch error" was the wrong name for a real effect.</p>
+
+<p>The only extra width in the design is outside the active area: the die outline is a
+trapezoid rather than a sector, its straight side edges missing the axis by
+<b>0.50&ndash;0.63&nbsp;mm</b> (the two drawn contours of the dicing street;
+<i>identical on inner and outer</i>), and the substrate runs ~0.1&nbsp;cm past the last strip
+radially. That is dicing and guard-ring margin, not silicon that can register a hit &mdash;
+but it is the right order of magnitude to be worth remembering, because it is how much the
+die can overhang its sector before it touches anything.</p>
+
+<h3>Our constants are the mask, exactly</h3>
+
+<p>The design document (<tt>Speci-V.005.1</tt>) specifies the inner active area as
+5&ndash;16.5&nbsp;cm &times; 30&deg; with 4&nbsp;&times;&nbsp;128 strips, and the outer as
+16.5&ndash;28&nbsp;cm &times; 15&deg; with 4&nbsp;&times;&nbsp;64. All three sources agree:</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>quantity</TH><TH>spec document</TH><TH>GDS mask</TH>
+    <TH>AGML <tt>FstmGeoSM.xml</tt></TH><TH><tt>StFstConsts.h</tt></TH></TR>
+<TR><TD>inner active <i>r</i></TD><TD>5 &ndash; 16.5 cm</TD><TD>5.000 &ndash; 16.5</TD>
+    <TD><tt>innersilicon rmin=5.0 rmax=16.5</tt></TD>
+    <TD><tt>kFstrStart[0]=5.000</tt>, <tt>kFstrStop[3]=16.500</tt></TD></TR>
+<TR><TD>outer active <i>r</i></TD><TD>16.5 &ndash; 28 cm</TD><TD>16.500 &ndash; 28.0</TD>
+    <TD><tt>outersilicon rmin=16.5 rmax=28.0</tt></TD>
+    <TD><tt>kFstrStart[4]=16.500</tt>, <tt>kFstrStop[7]=28.000</tt></TD></TR>
+<TR><TD>r-strip pitch</TD><TD>4 strips each</TD><TD>2.875 cm</TD><TD>&mdash;</TD>
+    <TD><tt>kFstStripPitchR = 2.875</tt></TD></TR>
+<TR><TD>&phi; pitch</TD><TD>128 / 64 strips</TD><TD>0.234375&deg;</TD>
+    <TD>&mdash;</TD><TD><tt>kFstStripPitchPhi = 30&deg;/128</tt></TD></TR>
+<TR><TD>inner &phi; span</TD><TD>30&deg;</TD><TD>30.000000&deg;</TD>
+    <TD><tt>phi1=&minus;15, phi2=+15</tt></TD><TD>&mdash;</TD></TR>
+<TR><TD>outer &phi; span</TD><TD>15&deg; each</TD><TD>15.000000&deg;</TD>
+    <TD><tt>phi1={&minus;15.5, 0.5}, phi2={&minus;0.5, 15.5}</tt></TD>
+    <TD><tt>kFstStripGapPhi = 1&deg;</tt></TD></TR>
+</TABLE>
+
+<p>Note that 30&deg;/128 and 15&deg;/64 are the same number, which is why one constant serves
+both sensors. The AGML outer placement is where the 1&deg; gap and the 1&deg; wedge-to-wedge
+overlap both come from: each outer sensor is 15&deg; of active silicon, the pair is centred
+&plusmn;8&deg; with 1&deg; dead between them, and the pair reaches &plusmn;15.5&deg; on a
+30&deg; wedge pitch &mdash; so adjacent wedges share <b>1.0&deg;&nbsp;=&nbsp;4.267 outer
+strips</b>. The inner sensors reach exactly &plusmn;15&deg; and share <b>nothing</b>.</p>
+
+<h3>The inner, measured the same way</h3>
+
+<p>Which makes the inner the cleaner measurement of the two, now that the full sample can
+support it. The earlier reading &mdash; that the inner pair centroid cannot work because its
+ridge sits at <i>s</i>&nbsp;=&nbsp;0, hard against the <i>s</i>&nbsp;&ge;&nbsp;0 wall &mdash;
+turns out to hold only at the large inner radii. At rStrip&nbsp;0 the ridge is at
+<i>s</i>&nbsp;=&nbsp;3, clear of the wall, and it walks inward as <i>r</i> grows.</p>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0">
+<TR BGCOLOR="#c0c0f0"><TH>rStrip</TH><TH>&lang;r&rang; (cm)</TH><TH>ridge peak</TH>
+    <TH>&lang;s&rang;</TH><TH>W</TH><TH>&plusmn; stat</TH><TH>design W</TH></TR>
+<TR><TD>0</TD><TD>6.44</TD><TD><i>s</i>=3</TD><TD>2.876</TD><TD><b>3.88</b></TD><TD>0.001</TD><TD>0</TD></TR>
+<TR><TD>1</TD><TD>9.31</TD><TD><i>s</i>=1</TD><TD>1.906</TD><TD><b>2.91</b></TD><TD>0.002</TD><TD>0</TD></TR>
+<TR><TD>2</TD><TD>12.19</TD><TD><i>s</i>=1</TD><TD>1.678</TD><TD><b>2.68</b></TD><TD>0.002</TD><TD>0</TD></TR>
+<TR><TD>3</TD><TD>15.06</TD><TD><i>s</i>=1</TD><TD>1.560</TD><TD><b>2.56</b></TD><TD>0.004</TD><TD>0</TD></TR>
+</TABLE>
+
+<TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD><a href="plots/fwo_pair_inner.png"><img src="plots/fwo_pair_inner.png" height=200></a></TD></TR>
+<TR><TD><font size="-1"><b>Left:</b> the inner ridge at each radius, accidentals subtracted,
+normalised to unit area. It is at <i>s</i>&nbsp;=&nbsp;3 at <i>r</i>&nbsp;=&nbsp;6.4&nbsp;cm
+and against the wall at 15&nbsp;cm, so the large-<i>r</i> widths are upper limits and the
+true fall is steeper than drawn. <b>Right:</b> both sensors against what the mask says the
+overlap should be &mdash; zero for the inner, 4.267 strips and flat for the outer. Open
+circles are the outer with the edge strip kept, as the spread between conventions.</font></TD></TR>
+</TABLE>
+
+<p>A second, convention-free reading of the same maps gives the same fall: the shape ratio
+n(<i>s</i>=2)/n(<i>s</i>=0) runs <b>2.094, 1.774, 1.117, 0.430</b> across the four inner
+radii, a factor <b>4.9</b> &mdash; against the factor <b>5.1</b> the independent yield-profile
+shape ratio gives. Two methods sharing no convention, agreeing on the <i>r</i> dependence to
+4%.</p>
+
+<p style="background-color:#ffcccc; padding:6px; border:2px solid #c33;">
+<b>The inner sensors have no design overlap at all, and they overlap by 2.6&ndash;3.9
+strips.</b> That is 0.6&ndash;0.9&deg; of azimuth which the mask says should not be there,
+and it is the whole signal rather than a ripple on a pedestal. A pure pitch error is excluded
+outright &mdash; it would make the strip overlap constant in <i>r</i>, and it falls by a
+third. The mask forbids a pitch error anyway.</p>
+
+<p>The two sensors are consistent in sign and in trend, and that is as far as it goes: a
+two-point fit to the inner wants <i>d</i>&nbsp;&asymp;&nbsp;&minus;1.2&nbsp;mm and an
+intercept of 1.6 strips, against &minus;0.8&nbsp;mm and 4.89&nbsp;&minus;&nbsp;4.27&nbsp;=&nbsp;0.63
+strips of excess for the outer. Those do not agree, which is the same message the
+outer &chi;&sup2; already sent: <b>one pair of mounting numbers does not describe all 36
+boundaries.</b></p>
+
+<HR>
 <a name="conclusion"></a>
-<H1>7. Conclusion, and what this does not settle</H1>
+<H1>8. Conclusion, and what this does not settle</H1>
 
 <ul>
   <li><b>The strip-phi sense used in reconstruction is the installed one.</b> P/M = 27361/547,
@@ -578,13 +757,26 @@ Per-boundary widths would settle it and need the larger sample.</p>
   <li><b>What the measurement adds</b> is the one thing a bench sheet cannot carry: which way each
       module faces once installed. The observable is (channel map) &otimes; (installed
       orientation), and the sheet supplies only the first factor.</li>
-  <li><b>The strip pitch is ~0.5% larger than 30/128 (128 strips span 30.14&ndash;30.17&deg;),
-      plus a &minus;0.6&nbsp;&plusmn;&nbsp;0.3&nbsp;mm radial shift of the
-      strip fan</b>, the 1&deg; gap is nominal, and an
-      alignment fit that holds the pitch fixed cannot absorb the difference (section 6).</li>
+  <li><b>The overlap is wider than the design and the excess depends on radius.</b> Outer:
+      5.447 &rarr; 5.244 strips over <i>r</i> = 17.9 &rarr; 26.6&nbsp;cm, against
+      <b>4.267 flat</b> by design. Inner: 3.88 &rarr; 2.56 strips against <b>zero</b>. Both
+      estimators and both sensors agree on this, on 60.4&thinsp;M events.</li>
+  <li><b>It is not the sensors.</b> The GDS mask gives the strip pitch as exactly
+      30/128&deg; and puts the fan vertex on the beam axis to 0.1&nbsp;&micro;m, so neither
+      of the two parameters this page fitted is available (section 7). The excess is how the
+      wedges are <b>mounted</b>: about <b>+0.15&deg; of extra azimuthal overlap</b> plus a
+      radial term.</li>
+  <li><b>No functional form fits it yet.</b> Constant is excluded at
+      &chi;&sup2;&nbsp;=&nbsp;25497/3 and <tt>A&nbsp;+&nbsp;B/r</tt> at 2758/2 with the wrong
+      curvature, so <i>d</i>&nbsp;=&nbsp;&minus;0.80&nbsp;mm is a fit parameter and not a
+      measurement. The likeliest reason is that 36 boundaries are being averaged as if they
+      were one.</li>
   <li><b>The alternating mounting is confirmed</b> directly: same-numbered edges meet.</li>
-  <li><b>The 0.5&deg; overhang and 4 overlapping strips per wedge are confirmed</b> by the
-      measured coincidence width.</li>
+  <li><b>The 0.5&deg; overhang and the 1&deg; dead gap are confirmed</b> &mdash; the
+      design's 4.27 overlapping strips are there, with more on top.</li>
+  <li><b>Open:</b> strip 0's excess occupancy, which is <i>not</i> edge truncation (no charge
+      deficit); the 80&times; excess of wide clusters two strips inside the outer edge; and
+      the per-boundary split.</li>
 </ul>
 
 <p style="background-color:#ffffcc; padding:6px; border:1px solid #99a;">
@@ -622,12 +814,21 @@ since <tt>kFstzFilp</tt> inverts it. Narrow band, so it needs much more data.</p
   <li><tt>script/fwoPairRead.C</tt>, <tt>script/fwoPairPlot.C</tt>,
       <tt>script/fwoPairRdep.C</tt> &mdash; the pair-centroid measurement: the summed width,
       its figure, and the per-rStrip version with the free fit.</li>
+  <li><tt>script/fwoPairInner.C</tt> &mdash; the inner sensors through the same estimator,
+      and both sensors against the mask.</li>
+  <li><tt>script/fwoClusterEdge.C</tt> &mdash; cluster size and charge against distance from
+      the wedge edge: the edge-truncation test, and the wide-cluster excess it turned up.</li>
   <li><tt>script/fstOverlapRdep.C</tt> &mdash; the radial-dependence figure and the free
       <tt>W(r) = A + B/r</tt> fit. Self-contained: it carries the four measured widths, so the
       numbers on the plot cannot drift away from the table above.</li>
-  <li>Data: Run&nbsp;24 zero-field, <tt>/star/data110/reco/zeroFieldAlignment_2024/FieldOff/</tt>,
-      120&thinsp;000 events of the 12.9&thinsp;M available in the 300-file chain. Output histograms
-      are additive, so a larger sample can be run as condor jobs and merged with <tt>hadd</tt>.</li>
+  <li>Data: Run&nbsp;24 zero-field, <tt>/star/data110/reco/zeroFieldAlignment_2024/FieldOff/</tt>.
+      The widths on this page are the 48-job condor campaign,
+      <b>60&thinsp;376&thinsp;989 events</b> over 1433 files, merged with <tt>hadd</tt>; the
+      strip-sense result is the original 120&thinsp;000-event run. Output histograms are
+      additive, which is what makes the campaign a single <tt>hadd</tt>.</li>
+  <li>Design references: <tt>Speci-V.005.1.pdf</tt>, and the mask files
+      <tt>STAR-FST-INNER-190301.gds</tt> / <tt>STAR-FST-OUTER-190313.gds</tt>, read record by
+      record rather than through a drawing.</li>
 </ul>
 
 <HR>
