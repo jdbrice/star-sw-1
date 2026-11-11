@@ -49,15 +49,38 @@ The first must show the /StRoot/StFcs* ... patterns, not "/*" and "!/*/" --
 those two mean sparseCheckout was initialised rather than copied, and you have
 the whole tree.
 
-The second must be 12. StarDb is the one data directory the build genuinely
-needs: St_db_Maker searches ./StarDb before $STAR/StarDb, and without it a job
-falls back to hardcoded geometry and looks like "the tables do nothing".
+The second must be 8 (fstOnTpc, fstSensorOnWedge, fstWedgeOnHss and hssOnFst,
+each at 20211110 and 20211112). It said 12 until 2026-11-11, which was wrong
+for everyone but me: my tree also holds a 20211111 lane that was never
+committed and that nothing references. If you have 12, four of them are your
+own untracked files.
+
+StarDb is the one data directory the build genuinely needs: St_db_Maker
+searches ./StarDb before $STAR/StarDb, and without it a job falls back to
+hardcoded geometry and looks like "the tables do nothing".
 
 *** Compile
 
 cons +StarVMC |& tee cons.geom.log
 cons |& tee cons.log
 grep -niE "error|Error 1|undefined reference" cons.log | head -40
+
+StChain MUST be among what you built, and it is worth checking explicitly:
+
+  strings .$STAR_HOST_SYS/lib/libStChain.so | grep -c '^y2022c$'     # want 1
+
+If that is 0, or the file is missing, run "cons +StChain" and check again.
+WHY THIS ONE MATTERS. The y2022c geometry tag is registered in
+StRoot/StChain/GeometryDbAliases.h, which is compiled into libStChain.so and
+read back by StMaker::AliasGeometry(). DEV ships its own libStChain.so, and
+DEV's copy of that header does NOT have y2022c. So a tree that does not
+rebuild StChain silently loads DEV's table and BFC answers
+
+  QA :INFO  -  Invalid Option y2022c. !! ABORT !!
+
+which reads like a missing geometry file and is not one: Geometry.y2022c.C,
+StarGeo.xml and xgeometry.age can all be present and correct, and it still
+aborts. The same applies to any tag added on this branch.
 
 *** Build fGeom.root
 
