@@ -17,8 +17,13 @@
 // Expected, once Geometry_ftt is populated (see ftt/README):
 //
 //   2021-10-12   pentOnStation row0 t = (+0.80900, +3.63400, 0)   the SURVEY
-//   2022-03-22   pentOnStation row0 t = (+2.09845, +4.60535, 0)   Run 22 iter 3
-//   2024-02-10   pentOnStation row0 t = (+1.94794, +5.75562, 0)   Run 24 iter 1
+//   2022-03-22   pentOnStation row0 t = (+0.34345, +2.85035, 0)   Run 22 iter 4
+//   2024-02-10   pentOnStation row0 t = (+0.19294, +4.00062, 0)   Run 24 iter 2
+//
+//   Those two are iter3 / run24iter1 MINUS the 17.55 mm strip-frame constant,
+//   pushed 2026-11-11. Seeing (+2.09845, +4.60535) or (+1.94794, +5.75562) here
+//   means the reader resolved the pre-correction slot -- a lagging read replica,
+//   or a timestamp before 2021-10-15 00:00:04 / 2023-12-15 00:00:03.
 //   before 2021-10-10                                             nothing served
 //
 // All three tables must answer, and with 1 / 4 / 16 rows: StFttDb::loadGeometry()

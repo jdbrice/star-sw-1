@@ -116,15 +116,37 @@ St_db_Maker in all four run years: 2022-03-22 and 2023-05-01 give iter3,
 2024-02-10 and 2025-03-15 give run24iter1.
 
 THE -11 SURVEY SLOT WAS MISSING and was added afterwards as tag `run22survey`,
-pushed 2026-11-06. Final state: 12 slots per table, 12 / 48 / 192 = 252 rows,
-all 36 table-slots verified identical to these files, replicated to all eight
-read servers, and sdt20211012 now serves the survey (pent row 1 = 0.809, 3.634)
-where it served identity before. Nothing at 10-15 or later moved.
+pushed 2026-11-06, and sdt20211012 now serves the survey (pent row 1 = 0.809,
+3.634) where it served identity before.
 The three 20211011.000000.C files had always been here, but no tag mapped to
 them, so `all` could not push them and did not: sdt20211012 was served the
 2021-10-10 identity instead of the survey, silently, which is the whole 48.49 mm.
 If another slot is ever added as files only, it is invisible to this macro --
 the tag list is the only index of what exists.
+
+AND IT HAPPENED AGAIN, to the four slots written on 2026-10-24 by the 17.55 mm
+strip-offset re-derivation. Same cause exactly: files with no tag. It stayed
+hidden two weeks longer because ./StarDb/Geometry/stgc held the same numbers, so
+every local run read the corrected lane and only the DB was stale -- until the
+tables were renamed to Geometry/ftt (29ad06284c) cut that lane off and the chain
+fell back 17.55 mm. Tags run22iter4 / run23est2 / run24iter2 / run25est2 added
+and pushed 2026-11-11.
+
+The lesson is not "remember to add a tag". It is that a file in this directory
+with no tag is INVISIBLE, and nothing in the chain complains: write the tag in
+the same commit as the file, always.
+
+Final state 2026-11-11: 16 slots per table, 16 / 64 / 256 = 336 rows, all 48
+table-slots verified identical to these files, replicated to all eight read
+servers. What each run year resolves to:
+
+    2022-03-22, 2023-05-01   run22iter4 / run23est2   pent row 1 = 0.34345, 2.85035
+    2024-02-10, 2025-03-15   run24iter2 / run25est2   pent row 1 = 0.19294, 4.00062
+
+Both are the matched pair for the fGeom caches built on 2026-10-24/25
+(dev2022sm.misalign1.sdt20211112.000004 and y2024.misalign1.sdt20240622.iter2):
+the DB entry is byte-equal to the local file each cache was built from, so no
+cache rebuild was needed and none should be done to "match" this push.
 
 Those two README figures are checkable against the files, which is a cheap way
 to confirm the right slot went in: max |t0| over the -11 pentOnStation rows is
