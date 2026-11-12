@@ -42,6 +42,15 @@ TString _sdt = "sdt20211016";
 // the Run-22 cache, so leaving this at the default while reconstructing a
 // Run-24 sample silently tracks with the wrong geometry. Set it explicitly:
 //
+// PREFER THE ARGUMENTS. Both knobs are also trailing arguments of sim(), which
+// is the safe way to set them -- one call, nothing to get out of order:
+//
+//   root4star -l -b -q 'sim.C("fwd_lambda_gun.fzd",10,"sdt20240622","fGeom.y2024.misalign0.sdt20240622.root")'
+//
+// The globals remain for the LoadMacro-then-set route, which is still required
+// for every OTHER toggle above (RunFcsChain, UseConstBz, RaveMethod, ...)
+// because those are not arguments:
+//
 //   gROOT->LoadMacro("StRoot/StFwdTrackMaker/macro/sim/sim.C");
 //   _sdt = "sdt20240622";
 //   _geomCache = "fGeom.y2024.misalign0.sdt20240622.root";
@@ -69,9 +78,16 @@ void DoOnlyGlobalTrackFitting() {
     }
 }
 
+// sdt and geomCache: "" means "leave the global as it is", so every existing
+// caller -- including the LoadMacro-then-set route -- behaves exactly as before.
+// Passing either one overrides the corresponding global.
 void sim(   char *inFile =  "/gpfs01/star/pwg/mrosales/jetFinderTest2024/star-sw/Jet_Data_NoFilter_500/pythia_jet_vz0_run100.fzd",
-            int n = 100 // nEvents to run
+            int n = 100, // nEvents to run
+            const char *sdt = "",       // DB lane, e.g. "sdt20211112.000004"
+            const char *geomCache = ""  // e.g. "fGeom.y2022c.misalign0.sdt20211112.000004.root"
         ) {
+    if ( sdt       && sdt[0]       ) _sdt       = sdt;
+    if ( geomCache && geomCache[0] ) _geomCache = geomCache;
     // report all of the parameters passed in
     cout << "inFile = " << inFile << endl;
     cout << "# of Events = " << n << endl;

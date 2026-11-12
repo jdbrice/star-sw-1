@@ -275,11 +275,20 @@ genSdt now, defaulting to the pair above):
 
   root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/sim/single_particle_gun.C(10,541512,"mu-",1,1.0,1.01,2.5,4.0)'
 
-Reconstruct. sim.C keeps the lane and the cache in file-scope globals, so they
-have to be set BETWEEN loading the macro and calling it -- LoadMacro does not
-execute. sim_lambda.C does exactly that and nothing else:
+Reconstruct. The lane and the cache are ARGUMENTS of sim() now (2026-11-12),
+so one call does it, in the order (file, n, sdt, geomCache):
 
-  root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/sim/sim_lambda.C(10,"fwd_lambda_gun.fzd","sdt20211112.000004","fGeom.y2022c.misalign0.sdt20211112.000004.root")'
+  root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/sim/sim.C("fwd_lambda_gun.fzd",10,"sdt20211112.000004","fGeom.y2022c.misalign0.sdt20211112.000004.root")'
+
+Pass both. An omitted argument leaves the file-scope default, and the defaults
+are the unaligned lane (sdt20211016) and the fGeom.root symlink -- Run-22 DATA
+geometry -- so a y2022c sample then reconstructs against the wrong geometry
+without one word of complaint in the log.
+
+sim_lambda.C still works and forwards here, but it is DEPRECATED and takes its
+arguments in the other order, (n, file, sdt, geomCache). Nothing in it was ever
+Lambda-specific. The other sim.C toggles -- RunFcsChain, UseConstBz, RaveMethod
+and the rest -- are still globals and still need LoadMacro, set, then call.
 
 *** Check the reco log, in this order
 
