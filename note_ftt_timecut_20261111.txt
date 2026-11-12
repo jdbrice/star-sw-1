@@ -1,0 +1,138 @@
+THE FTT TIME CUT COSTS A FACTOR 2.4 IN CHI2 -- and that is a bug to find,
+not a cut to remove
+=========================================================================
+2026-11-11
+
+
+THE MEASUREMENT
+---------------
+
+60 events, st_fwd_23081001_raw_0000002.MuDst, everything identical across the
+three arms except fttTimeCutMode. Read with script/planarAB.C.
+
+  arm        FTT time cut                     points/event   Primary chi2
+  ---------  -------------------------------  ------------   ------------
+  ab_iter4   mode 0, per-VMM DB windows               260          171.9
+  ab_tc1     mode 1, AcceptAll (no cut)              3467           73.0
+  ab_tc2     mode 2, calibrated, [-65,100]           2100           70.5
+
+  full table, mode 0 as the reference:
+
+  track type   AcceptAll   [-65,100]   DB windows
+  Global            9.78        8.17        29.81
+  Beamline         52.70       62.53       145.30
+  Primary          72.96       70.50       171.90
+  BLCVtx           64.71      104.05       226.24
+  FCSConstr        56.96       99.85       148.64
+
+Two INDEPENDENT controls -- no cut at all, and the pre-2026-10-16 wide window --
+agree with each other to 3% on Primary and both sit 2.4x BELOW the per-VMM DB
+windows. One configuration against two controls that agree: this localises to
+Calibrations/ftt/fttDataWindowsB, the 58 runs pushed 2026-10-16.
+
+nSeed is flat to 0.5% across all three arms (6.12 / 6.14 / 6.17).
+
+
+WHY THIS IS NOT "TURN THE TIME CUT OFF"
+---------------------------------------
+
+The FTT needs a time cut. Out-of-time pile-up is real, the wide window is not
+a physics choice, and AcceptAll is a diagnostic arm, never a configuration to
+ship. The result above says the present windows are applied WRONG, and the job
+is to find out how. Do not read the table as an argument for mode 1 or 2.
+
+
+THE ARGUMENT THAT IT IS MIS-CENTRED
+-----------------------------------
+
+The windows drop 87-93% of the points (2100 -> 260 against the old window).
+That much is intended; one bunch crossing instead of a wide window.
+
+But a tight window that keeps signal and drops out-of-time background leaves
+the good hits where they were, so chi2 should improve, or at worst stay flat.
+It TRIPLED. Keeping 12% of the points and tripling chi2 means the surviving
+12% is not the physics subset.
+
+This also explains the anomaly recorded in planar_integration_20261109.txt and
+never understood: added hits per track went UP, 1.90 against 1.650, when the
+window got tighter. A correct tighter window cannot do that.
+
+The per-VMM time anchors are the obvious place for a sign or a unit error, and
+they are enabled for this run:
+
+  StFttDbMaker::loadDataWindows - per-VMM time anchors ENABLED: entry stamped
+  for run 23081001
+
+Candidates, in order: anchor sign; units (dbcid ticks vs ns); per-VMM indexing
+-- the open VMM 140-143 question lives in exactly this area.
+
+
+THE SURVIVING ALTERNATIVE
+-------------------------
+
+The windows are right and the TRACKER substitutes: a correct tight window
+removes the real hit, and the tracker then takes a noise hit on that plane
+rather than leaving it empty. Flat nSeed with tripled chi2 is what that looks
+like too. If so the bug is in hit association, not in the calibration, and the
+fix is a different file.
+
+
+THE ONE MEASUREMENT THAT SEPARATES THEM
+---------------------------------------
+
+Per-chamber, better per-VMM, counts of the surviving points in mode 0.
+
+  mis-centred anchors  ->  uneven survivor map, some VMMs near zero while
+                           others look normal
+  correct selection    ->  the 260 spread evenly over the 16 chambers
+
+Either from a rerun with the cluster-maker diagnostics on, or by reading the
+blind histograms already in fcstrk.root.
+
+
+SCOPE -- THIS IS NOT ONLY OUR PROBLEM
+-------------------------------------
+
+Production FTT reco uses fttTimeCutMode=0. Every run reconstructed since the
+windows were pushed on 2026-10-16 carries whatever this is. Check before
+telling anyone, but do not sit on it either.
+
+
+WHAT IT DOES AND DOES NOT EXPLAIN
+---------------------------------
+
+172 -> 71 is 58% of the excess over the 2026-10-01 figure of 16.7.
+
+At 71 against 16.7 a factor 4.2 REMAINS, and the 10-01 campaign predates the
+windows, so that residual is a different change in the same five weeks. The
+bisect is still owed: 60-event probe, script/planarAB.C, 4 minutes an arm,
+between the 10-01 campaign commit and HEAD.
+
+Candidates already dead for the residual, each with its reason:
+  * measurement sigma -- would have to shrink below the 0.924 mm single-strip
+    floor in StFttClusterMaker, which clamps from below.
+  * planar vs space-point measurement model -- chi2-neutral, measured.
+  * geometry displacement at the cm scale -- bounded at 10%: the Nov 9 A/B
+    moves every FTT hit by 17.55 mm and costs 163 -> 148.
+  * pentOnStation row Id=5's missing 0.86 cm of dy -- real, worth 4-5 of ~159.
+
+Caveat on every number here: macro defaults, so applyFstGapFix=false where
+production uses GEOFIX 1,0,0. Identical in all three arms, so the ratios hold;
+the absolute values are not production-configured.
+
+
+FILES
+-----
+
+  ab_iter4.picoDst.root  ab_tc1.picoDst.root  ab_tc2.picoDst.root  in the tree
+  logs in the session scratchpad, ab_*.log
+
+  rerun any arm with:
+    root4star -l -b -q 'StRoot/StFwdTrackMaker/macro/mudst/fwd_afterburner_db.C(
+      "<MuDst>",60,0,0,"",false,false,false,false,1,false,<MODE>,true,450.,
+      <LOW>,<HIGH>,-1,false,false,true,false)'
+  compare with:
+    root4star -l -b -q 'script/planarAB.C("<a>.picoDst.root","<b>.picoDst.root")'
+  NB planarAB.C's column headers say "space points" and "planar"; they are
+  hardcoded from its original use and mean nothing here. Column 1 is the first
+  argument.
