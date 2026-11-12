@@ -35,6 +35,11 @@
 /StRoot/StPico*
 /StRoot/StBFChain/
 /StRoot/StDbUtilities/
+# StChain -- NOT optional, and the failure does not name it. y2022c/ft2022c are
+# registered through a StChain alias (PR28), so without this directory the
+# geometry tag is unknown and `cons +StChain' cannot help: there is nothing on
+# disk to build. Found by Diego and Barak, 2026-11-12.
+/StRoot/StChain/
 
 # --- geometry -------------------------------------------------------------
 # StgmGeo1.xml carries the sTGC zplane int->float fix, FstmGeo the FST survey.
@@ -43,6 +48,11 @@
 # Holds only a README, but cons writes the AgML-generated TGeo sources into it,
 # so the directory has to exist.
 /StarVMC/StarGeometry/
+# xgeometry -- the generator loads xgeometry.so explicitly (macro/sim/gen.C),
+# and it is the third of the three build steps for a geometry change
+# (StarVMC/Geometry, then StarGeometry, then xgeometry). Same report as
+# StChain above.
+/StarVMC/xgeometry/
 
 # --- data, not code -------------------------------------------------------
 # DB table definitions (idl) and the local survey/misalign tables. St_db_Maker
